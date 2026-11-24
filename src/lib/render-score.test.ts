@@ -1,13 +1,14 @@
+// @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ScoreDocument } from '@m3n/notation'
 import { chooseNumberedScoreWidth, chooseStaffScoreWidth, renderScoreInto, type RenderPhase } from './render-score'
 
 const { numberedQuality } = vi.hoisted(() => ({ numberedQuality: vi.fn() }))
 const { prepareFonts, createScore } = vi.hoisted(() => ({ prepareFonts: vi.fn(), createScore: vi.fn() }))
-const { staffPageCount, staffLayoutInfo } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn() }))
+const { staffPageCount, staffLayoutInfo, prepareStaff } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn(), prepareStaff: vi.fn() }))
 vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
-  prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
+  prepareStaffScore: prepareStaff,
 }))
 vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {} }))
 vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
@@ -16,6 +17,9 @@ vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
     return { candidate: { width, ...quality, rows: 1, outside: [], overlaps: [] } }
   },
 }))
+
+vi.mock('./score-accessibility', () => ({ describeAccessibleScore: () => '' }))
+vi.mock('./score-reading-dom', () => ({ attachScoreReading: vi.fn(), preserveScoreReading: () => () => {} }))
 
 function deferred() {
   let resolve!: () => void
@@ -118,7 +122,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(580)
+    expect(selected).toBe(570)
   })
 
   it('never trades a page for a higher balance score', async () => {
@@ -136,7 +140,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(580)
+    expect(selected).toBe(570)
   })
 })
 
@@ -149,7 +153,7 @@ describe('staff automatic width range', () => {
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(Math.max(480, Math.ceil(requiredWidth / 20) * 20))
+    expect(selected).toBe(Math.max(480, Math.ceil(requiredWidth / 10) * 10))
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 480 && width <= 720)).toBe(true)
   })
 
@@ -163,6 +167,64 @@ describe('staff automatic width range', () => {
           ? [{ minimum: width * 0.55, target: width }, { minimum: width * 0.73, target: width }, { minimum: width * 0.59, target: width }]
           : [{ minimum: width * 0.99, target: width }, { minimum: width * 0.81, target: width }],
     }))
-    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(580)
+    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(570)
+  })
+})
+
+
+describe('first render at the selected width', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it.each(['movable', 'staff'] as const)('mounts only the optimal-width %s score', async notationMode => {
+    const host = document.createElement('div')
+    const render = vi.fn((_settings: unknown) => notationMode === 'staff'
+      ? [document.createElementNS('http://www.w3.org/2000/svg', 'svg')]
+      : ['<svg></svg>'])
+    prepareStaff.mockImplementation(async (_document, settings) => {
+      expect(settings.width).toBe(600)
+      return render
+    })
+    createScore.mockReturnValue({ render, diagnostics: [] })
+    prepareFonts.mockResolvedValue(undefined)
+    numberedQuality.mockImplementation((_document, { width }) => ({ pageCount: width < 600 ? 2 : 1, lineDensityVariation: 0, lastLineSlack: 0 }))
+    staffPageCount.mockImplementation((_paged, width) => width < 600 ? 2 : 1)
+    staffLayoutInfo.mockImplementation(width => ({ availableWidth: width, lines: [{ minimum: width * 0.6, target: width }] }))
+    const paints: string[] = []
+    vi.stubGlobal('requestIdleCallback', (callback: () => void) => {
+      paints.push(host.innerHTML)
+      callback()
+      return 1
+    })
+
+    const result = await renderScoreInto(host, {
+      scoreDocument: {} as ScoreDocument, width: 720, autoWidth: true, paged: true, notationMode,
+    })
+
+    expect(result.width).toBe(600)
+    expect(host.dataset.selectedWidth).toBe('600')
+    expect(host.querySelectorAll('svg')).toHaveLength(1)
+    expect(paints.length).toBeGreaterThan(0)
+    expect(paints.every(markup => markup === '')).toBe(true)
+    expect(render).toHaveBeenCalledOnce()
+    if (notationMode === 'movable') {
+      expect(render.mock.calls[0][0]).toMatchObject({ width: 600 })
+    }
+  })
+
+  it('cancels automatic width selection before mounting a score', async () => {
+    const controller = new AbortController()
+    const host = document.createElement('div')
+    createScore.mockClear()
+    prepareFonts.mockResolvedValue(undefined)
+    vi.stubGlobal('requestIdleCallback', (callback: () => void) => {
+      controller.abort()
+      callback()
+      return 1
+    })
+    await expect(renderScoreInto(host, {
+      scoreDocument: {} as ScoreDocument, autoWidth: true, paged: true, signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError' })
+    expect(host.innerHTML).toBe('')
+    expect(createScore).not.toHaveBeenCalled()
   })
 })

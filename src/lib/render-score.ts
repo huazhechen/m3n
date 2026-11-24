@@ -3,7 +3,7 @@ import type { NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
-import { selectBestWidth, widthMaximum } from '../../tools/scorebook-width.mjs'
+import { selectBestWidth } from '../../tools/scorebook-width.mjs'
 import type { NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
@@ -24,7 +24,6 @@ export type ScoreRenderInput = {
   sheetClass?: string
   signal?: AbortSignal
   onPhase?: (phase: RenderPhase) => void
-  onWidthSelected?: (width: number) => void
 }
 
 const yieldToBrowser = () => new Promise<void>(resolve => {
@@ -38,7 +37,7 @@ const yieldToPaint = () => new Promise<void>(resolve => {
   else setTimeout(resolve, 0)
 })
 
-type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>
+type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase'>
 
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
   const { prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
@@ -62,19 +61,6 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
     return measureStaffWidth(scoreDocument, width, settings, signal)
   }, { signal })
   return best.width
-}
-
-function selectWidthInBackground(target: HTMLElement, input: ScoreRenderInput, choose: typeof chooseNumberedScoreWidth) {
-  void yieldToBrowser().then(() => choose(input.scoreDocument, input, input.signal))
-    .then(selected => {
-      if (!input.signal?.aborted) {
-        target.dataset.selectedWidth = String(selected)
-        input.onWidthSelected?.(selected)
-      }
-    })
-    .catch(error => {
-      if (error instanceof Error && error.name !== 'AbortError') console.error('曲谱版宽选择失败', error)
-    })
 }
 
 /** Screen, print preview and downloads share the selected notation and settings. */
@@ -118,8 +104,11 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   input.onPhase?.('loading-library')
   if (input.notationMode === 'staff') {
     const { prepareStaffScore } = await loadStaffResources(input.onPhase)
-    const width = input.autoWidth ? widthMaximum : input.width
     check(); input.onPhase?.('layout')
+    await yieldToPaint()
+    check()
+    const width = input.autoWidth ? await chooseStaffScoreWidth(input.scoreDocument, input, input.signal) : input.width
+    check()
     const render = await prepareStaffScore(input.scoreDocument, { ...input, width }, input.signal)
     const pages = render(input.paged)
     check()
@@ -128,8 +117,8 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
     attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
     restoreReading()
-    if (input.autoWidth) selectWidthInBackground(target, input, chooseStaffScoreWidth)
-    return { message: '', width, widthPending: Boolean(input.autoWidth) }
+    if (input.autoWidth) target.dataset.selectedWidth = String(width)
+    return { message: '', width }
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
@@ -138,9 +127,12 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   await yieldToPaint()
   check()
   // Paper margins and image framing belong to the outer container.
-  const width = input.autoWidth ? widthMaximum : input.width ?? DEFAULT_PREFERRED_WIDTH
-  const score = NumberedNotationScore.create(input.scoreDocument)
   const textMeasurementCache = input.textMeasurementCache ?? new NumberedTextMeasurementCache()
+  const width = input.autoWidth
+    ? await chooseNumberedScoreWidth(input.scoreDocument, { ...input, textMeasurementCache }, input.signal)
+    : input.width ?? DEFAULT_PREFERRED_WIDTH
+  check()
+  const score = NumberedNotationScore.create(input.scoreDocument)
   const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap, textMeasurementCache }).join('')
   check()
   const restoreReading = preserveScoreReading(target, input.scoreDocument)
@@ -148,6 +140,6 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
   restoreReading()
-  if (input.autoWidth) selectWidthInBackground(target, { ...input, textMeasurementCache }, chooseNumberedScoreWidth)
-  return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width, widthPending: Boolean(input.autoWidth) }
+  if (input.autoWidth) target.dataset.selectedWidth = String(width)
+  return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width }
 }
