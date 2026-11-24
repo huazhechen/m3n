@@ -69,10 +69,84 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number,
     bottomSlope: onLeft ? Math.max(...bottomSlopes) : Math.min(...bottomSlopes) }
 }
 
+
+/** Immutable, curve-local preparation. Preserve Bernstein evaluation and the
+ * exact 32-step inverse search; repeated x queries share their result only
+ * while this curve exists, never across render tasks. */
+export function prepareNativeArc(commands: readonly NativeArcCommand[]) {
+  type Slice = NonNullable<ReturnType<typeof nativeArcSlice>>
+  let cursor: Point = {x:0,y:0}
+  const edges = commands.flatMap(command => {
+    if (command.op === 'Z') return []
+    if (command.op === 'M') { cursor = {x:command.x,y:command.y}; return [] }
+    const start = cursor, end = {x:command.x,y:command.y}; cursor = end
+    const points = command.op === 'C' ? [start,{x:command.cx1,y:command.cy1},{x:command.cx2,y:command.cy2},end]
+      : command.op === 'Q' ? [start,{x:command.cx,y:command.cy},end] : [start,end]
+    const degree = points.length-1
+    const derivatives = points.slice(1).map((p,i)=>({x:degree*(p.x-points[i]!.x),y:degree*(p.y-points[i]!.y)}))
+    return [{start,end,points,derivatives,xs:points.map(point=>point.x),left:Math.min(start.x,end.x)-1e-8,right:Math.max(start.x,end.x)+1e-8,
+      vertical:Math.abs(start.x-end.x)<1e-8,forward:start.x<end.x}]
+  })
+  const xs = commands.flatMap(command=>command.op==='Z'?[]:[command.x])
+  const middle = (Math.min(...xs)+Math.max(...xs))/2
+  const cache = new Map<number,{plain?:Slice;full?:Slice}>()
+  return {slice(x:number,slopes=false): Slice | undefined {
+    const saved = cache.get(x)
+    if (saved && (!slopes || saved.full)) return slopes?saved.full:saved.plain
+    const values: {y:number;slope:number}[] = []
+    for (const edge of edges) {
+      if (x<edge.left || x>edge.right) continue
+      if (edge.vertical) { values.push({y:edge.start.y,slope:0},{y:edge.end.y,slope:0}); continue }
+      let t: number
+      if (x===edge.start.x) t=0
+      else if (x===edge.end.x) t=1
+      else {
+        let low=0,high=1
+        const [x0,x1,x2,x3]=edge.xs
+        for(let iteration=0;iteration<32;iteration++) {
+          const at=(low+high)/2,u=1-at
+          // Same Bernstein arithmetic, with scalar coordinates prepared once.
+          let value=0
+          if(edge.xs.length===4) {
+            value+=x0!*(u**3); value+=x1!*(3*u*u*at)
+            value+=x2!*(3*u*at*at); value+=x3!*(at**3)
+          } else if(edge.xs.length===3) {
+            value+=x0!*(u*u); value+=x1!*(2*u*at); value+=x2!*(at*at)
+          } else { value+=x0!*u; value+=x1!*at }
+          if ((value<x)===edge.forward) low=at
+          else high=at
+        }
+        t=(low+high)/2
+      }
+      let slope=0
+      if(slopes) {
+        const dx=edge.derivatives.length===1?edge.derivatives[0]!.x:curveCoordinate(edge.derivatives,t,'x')
+        const dy=edge.derivatives.length===1?edge.derivatives[0]!.y:curveCoordinate(edge.derivatives,t,'y')
+        slope=dy/dx
+      }
+      values.push({y:curveCoordinate(edge.points,t,'y'),slope})
+    }
+    if (!values.length) { if(cache.size<512)cache.set(x,{}); return undefined }
+    const top=Math.min(...values.map(value=>value.y)),bottom=Math.max(...values.map(value=>value.y))
+    if(!slopes) {
+      const plain=Object.freeze({top,bottom,topSlope:0,bottomSlope:0})
+      if(cache.size<512)cache.set(x,{plain})
+      return plain
+    }
+    const topSlopes=values.filter(value=>Math.abs(value.y-top)<1e-9).map(value=>value.slope)
+    const bottomSlopes=values.filter(value=>Math.abs(value.y-bottom)<1e-9).map(value=>value.slope)
+    const full=Object.freeze({top,bottom,topSlope:x<=middle?Math.min(...topSlopes):Math.max(...topSlopes),
+      bottomSlope:x<=middle?Math.max(...bottomSlopes):Math.min(...bottomSlopes)})
+    const plain=Object.freeze({top,bottom,topSlope:0,bottomSlope:0})
+    if(cache.size<512)cache.set(x,{plain,full})
+    return slopes?full:plain
+  }}
+}
+
 /** Lift only when a real primitive intersects the ribbon. A side component
  * already wholly above it can stay there; moving past one component can expose
  * another, so resolve the finite set of candidate clearances to a fixed point. */
-export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: number, right: number, pieces: readonly NativeInk[], initial = 0): number {
+export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: number, right: number, pieces: readonly NativeInk[], initial = 0, slicer = prepareNativeArc(commands)): number {
   const middle = (left + right) / 2
   // A Bezier stays inside the convex hull of its control points. Obstacles
   // wholly below that hull cannot meet this ribbon, even after further lifts.
@@ -90,7 +164,7 @@ export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: nu
     const a = Math.max(left, piece.left), b = Math.min(right, piece.right)
     if (b - a < 1e-8) return []
     const edges = [a, b, ...(middle > a && middle < b ? [middle] : [])].flatMap(x => {
-      const slice = nativeArcSlice(commands, x)
+      const slice = slicer.slice(x)
       return slice ? [slice] : []
     })
     return edges.length ? [{ piece, top: Math.min(...edges.map(e => e.top)), bottom: Math.max(...edges.map(e => e.bottom)) }] : []
@@ -106,7 +180,7 @@ export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: nu
   return lift
 }
 
-export type NativeRibbon = { commands: readonly NativeArcCommand[]; left: number; right: number }
+export type NativeRibbon = { commands: readonly NativeArcCommand[]; left: number; right: number; slicer?: ReturnType<typeof prepareNativeArc> }
 
 /** Our bows have a single y extremum at the horizontal midpoint; opening,
  * closing and plateau edges are monotone. Thus the ends and that extremum
@@ -115,8 +189,9 @@ export function nativeRibbonRange(ribbon: NativeRibbon, left: number, right: num
   const a = Math.max(left, ribbon.left), b = Math.min(right, ribbon.right)
   if (a > b) return undefined
   const middle = (ribbon.left + ribbon.right) / 2
+  const slicer = ribbon.slicer ?? prepareNativeArc(ribbon.commands)
   const slices = [a, b, ...(middle > a && middle < b ? [middle] : [])]
-    .flatMap(x => { const slice = nativeArcSlice(ribbon.commands, x); return slice ? [slice] : [] })
+    .flatMap(x => { const slice = slicer.slice(x); return slice ? [slice] : [] })
   return slices.length ? { top: Math.min(...slices.map(s => s.top)), bottom: Math.max(...slices.map(s => s.bottom)) } : undefined
 }
 
@@ -124,6 +199,8 @@ export function nativeRibbonRange(ribbon: NativeRibbon, left: number, right: num
  * has a certified upper bound from its curve extrema; refine only intervals
  * that can improve the maximum. No screen-pixel sampling or extra lift. */
 export function nativeRibbonClearance(outer: NativeRibbon, inner: NativeRibbon, gap: number, precision: number) {
+  if (!outer.slicer) outer = {...outer,slicer:prepareNativeArc(outer.commands)}
+  if (!inner.slicer) inner = {...inner,slicer:prepareNativeArc(inner.commands)}
   const left = Math.max(outer.left, inner.left), right = Math.min(outer.right, inner.right)
   if (right <= left) return 0
   const pending = [[left, right]]
@@ -131,14 +208,14 @@ export function nativeRibbonClearance(outer: NativeRibbon, inner: NativeRibbon, 
   while (pending.length) {
     const [a, b] = pending.pop()!, middle = (a! + b!) / 2
     for (const x of [a!, middle, b!]) {
-      const outside = nativeArcSlice(outer.commands, x), inside = nativeArcSlice(inner.commands, x)
+      const outside = outer.slicer!.slice( x), inside = inner.slicer!.slice( x)
       if (outside && inside) best = Math.max(best, outside.bottom - inside.top + gap)
     }
     const outside = nativeRibbonRange(outer, a!, b!), inside = nativeRibbonRange(inner, a!, b!)
     if (!outside || !inside) continue
     let upper = outside.bottom - inside.top + gap
-    const al = nativeArcSlice(outer.commands, a!, true)!, ar = nativeArcSlice(outer.commands, b!, true)!
-    const bl = nativeArcSlice(inner.commands, a!, true)!, br = nativeArcSlice(inner.commands, b!, true)!
+    const al = outer.slicer!.slice( a!, true)!, ar = outer.slicer!.slice( b!, true)!
+    const bl = inner.slicer!.slice( a!, true)!, br = inner.slicer!.slice( b!, true)!
     // Both facing edges are convex, so their derivative bounds are given by
     // interval endpoints. Prove monotonic intervals or tighten the envelope
     // near a stationary point instead of subdividing broad flat spans.

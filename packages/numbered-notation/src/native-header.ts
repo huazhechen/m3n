@@ -15,24 +15,31 @@ import { numberedHeadingLines as wrapNativeText } from './header-text.js'
 
 export type NativeOrderItem = { text: string; framed: boolean; x: number; y: number; width: number; height: number; baseline: number; textInset: number }
 export { wrapNativeText }
+/** Scoped to one candidate and font state; never stores placed header output. */
+export type NativeHeaderPreparation = Map<string, unknown>
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}, preparation?: NativeHeaderPreparation) {
+  const once = <T>(key: string, create: () => T): T => {
+    if (!preparation) return create()
+    if (preparation.has(key)) return preparation.get(key) as T
+    const value = create(); preparation.set(key,value); return value
+  }
   const available = width - 2 * margin
   const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
-  const title = wrapNativeText(document.title, available - em(2), nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT)
-  const headerContent = numberedHeaderContent(document)
-  const subtitleBlocks = headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer))
+  const title = once('title',()=>wrapNativeText(document.title, available - em(2), nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
+  const headerContent = once('content',()=>numberedHeaderContent(document))
+  const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer)))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
-  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT) => {
+  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT) => once(JSON.stringify([lines,size,weight,family]), () => {
     if (!lines.length) return { rows: [], height: 0 }
     const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: weight }))
     const advance = size * 1.25
     const top = Math.min(...metrics.map((m, index) => index * advance - m.baseline))
     const bottom = Math.max(...metrics.map((m, index) => index * advance - m.baseline + m.h))
     return { rows: lines.map((text, index) => ({ text, baseline: index * advance - top })), height: bottom - top }
-  }
+  })
   const titleBlock = textBlock(title, nativeStyle.title, SCORE_TITLE_WEIGHT, SCORE_TITLE_FONT), titleRows = titleBlock.rows
   let subtitleHeight = 0
   const subtitleRows = subtitleBlocks.flatMap((lines, index) => {
@@ -64,8 +71,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const axis = nativeMusicAxis(measurer)
     const pitchBaseline = axis - nativeMusicAxis(measurer, size)
     const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,pitchBaseline,size)
-    const low = rawPitch(range[0]), high = rawPitch(range[1])
-    const lowInk = nativeSvgInk(low,measurer), highInk = nativeSvgInk(high,measurer)
+    const low = once('low-svg',()=>rawPitch(range[0])), high = once('high-svg',()=>rawPitch(range[1]))
+    const lowInk = once('low-ink',()=>nativeSvgInk(low,measurer)), highInk = once('high-ink',()=>nativeSvgInk(high,measurer))
     const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: 'M3N Numbers' })
     // Display-only notes reserve the measured numeral body, including its
     // advance bearings; zero-duration cells use the minimum clearance.

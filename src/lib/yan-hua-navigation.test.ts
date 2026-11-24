@@ -61,6 +61,7 @@ it('uses the AB repeat, D.S. to B and an ordinary continuation into C', () => {
   expect(document.sections ?? []).toHaveLength(0)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(bars).toHaveLength(41)
+  // The repeat end returns to the implicit score start; no printed start is needed.
   expect(bars[0]!.left).toBeUndefined()
   expect(bars[33]!.right).toBe('rptend')
   expect(bars[17]!.navigation).toContain('segno')

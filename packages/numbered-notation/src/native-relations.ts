@@ -4,7 +4,7 @@ import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath, type NativeArc } from './native-arc.js'
-import { nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
+import { prepareNativeArc, nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSvgInk, nativeSvgPieces, type NativeInk } from './native-ink.js'
@@ -117,13 +117,14 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (edge) lift = Math.max(lift, edge.bottom - piece.top + nativeStyle.music * .15)
         }
       }
-      dy = -nativeArcInkLift(arc.commands, arc.left, arc.right, [...pieces, ...labels, ...bars], lift)
+      dy = -nativeArcInkLift(arc.commands, arc.left, arc.right, [...pieces, ...labels, ...bars], lift, arc.slicer)
       placedArc = { ...arc, top: arc.top - dy, commands: arc.commands.map(command => {
         if (command.op === 'Z') return command
         if (command.op === 'C') return { ...command, y: command.y + dy, cy1: command.cy1 + dy, cy2: command.cy2 + dy }
         if (command.op === 'Q') return { ...command, y: command.y + dy, cy: command.cy + dy }
         return { ...command, y: command.y + dy }
       }) }
+      Object.defineProperty(placedArc, 'slicer', { value: dy ? prepareNativeArc(placedArc.commands) : arc.slicer })
 
     }
     if (dy) {

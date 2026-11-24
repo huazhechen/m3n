@@ -118,3 +118,40 @@ it('shares immutable fixed symbol geometry only inside a task and resets it with
     expect(timings).toMatchObject({fixedSymbolRequests:5,fixedSymbolCacheHits:1,fixedSymbolBuilds:4})
   } finally {vi.unstubAllGlobals()}
 })
+
+it('uses immutable metrics internally while public calls stay isolated', () => {
+  const cache = new NumberedTextMeasurementCache(), timings: Record<string, number> = {}
+  const layout = new CanvasTextMeasurer(context(), timings, cache, true)
+  const measurer = new CanvasTextMeasurer(context(), undefined, cache)
+  const style = {fontSize:20}
+  const first = layout.measureText('A', style)
+  expect(Object.isFrozen(first)).toBe(true)
+  expect(layout.measureText('A', {...style, fontWeight:500, fontStyle:'normal', textAlign:'right'})).toBe(first)
+  const publicMetrics = measurer.measureText('A',style)
+  publicMetrics.w=999
+  expect(layout.measureText('A',style)).toBe(first)
+  expect(first.w).toBe(8.5)
+  expect(new CanvasTextMeasurer(context(), undefined, cache, true).measureText('A',style)).toBe(first)
+  expect(new CanvasTextMeasurer(context(), undefined, new NumberedTextMeasurementCache(), true).measureText('A',style)).not.toBe(first)
+  expect(timings).toMatchObject({textMeasureRequests:3,textMeasureCalls:1,textMeasureCacheHits:2,textMeasureFontKeyBuilds:1})
+  for (const changed of [{fontSize:21},{fontFamily:'serif'},{fontWeight:700},{fontStyle:'italic' as const}])
+    expect(layout.measureText('A',{...style,...changed})).not.toBe(first)
+})
+
+it('refreshes an existing layout font bucket after membership and status changes', () => {
+  const face={status:'loaded'}, faces=new Set([face])
+  vi.stubGlobal('document',{fonts:faces})
+  try {
+    const cache=new NumberedTextMeasurementCache(),timings:Record<string,number>={}
+    cache.synchronizeFonts()
+    const layout=new CanvasTextMeasurer(context(),timings,cache,true),style={fontSize:20}
+    const a=layout.measureText('A',style)
+    expect(layout.measureText('A',style)).toBe(a)
+    face.status='loading'; cache.synchronizeFonts()
+    const b=layout.measureText('A',style)
+    expect(b).not.toBe(a)
+    faces.clear(); faces.add({status:'loaded'}); cache.synchronizeFonts()
+    expect(layout.measureText('A',style)).not.toBe(b)
+    expect(timings).toMatchObject({textMeasureCalls:3,textMeasureCacheHits:1,textMeasureFontKeyBuilds:1})
+  } finally {vi.unstubAllGlobals()}
+})

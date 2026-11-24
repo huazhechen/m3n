@@ -1,7 +1,7 @@
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
-import { nativeArcSlice, nativeArcInkLift } from './native-curve.js'
+import { prepareNativeArc, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 import { placedNativeControlInk } from './native-controls.js'
 
@@ -10,7 +10,7 @@ export type NativeArcCommand =
   | { op: 'Q'; cx: number; cy: number; x: number; y: number }
   | { op: 'C'; cx1: number; cy1: number; cx2: number; cy2: number; x: number; y: number }
   | { op: 'Z' }
-export type NativeArc = { commands: NativeArcCommand[]; left: number; right: number; top: number; height: number }
+export type NativeArc = { commands: NativeArcCommand[]; left: number; right: number; top: number; height: number; slicer?: ReturnType<typeof prepareNativeArc> }
 
 /** Closed musical ribbons in coordinates relative to the lane's baseline.
  * Measurement and SVG consume the same geometry, including split-line tails.
@@ -66,6 +66,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   }
   // An interior note only needs to clear the ribbon at its actual horizontal
   // footprint. Its height must not become a new endpoint for the whole arc.
+  const slicer = prepareNativeArc(commands)
   let lift = 0
   for (const glyph of covered) {
     if (glyph === relation.first || glyph === relation.last) continue
@@ -80,7 +81,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
       const a = Math.max(left, range.left), b = Math.min(right, range.right)
       if (a > b) continue
       for (const x of [a, b]) {
-        const slice = nativeArcSlice(commands, x)
+        const slice = slicer.slice(x)
         if (slice) lift = Math.max(lift, slice.bottom + nativeTiePortTop(glyph))
       }
     }
@@ -90,14 +91,16 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   lift = nativeArcInkLift(commands, left, right, members.flatMap(glyph => [
     ...(glyph.musicInk ?? []).map(piece => ({ ...piece, left: glyph.x + piece.left, right: glyph.x + piece.right })),
     ...glyph.controls.flatMap(placedNativeControlInk),
-  ]), lift)
+  ]), lift, slicer)
   if (lift > 0) commands = commands.map(command => {
     if (command.op === 'Z') return command
     if (command.op === 'C') return { ...command, y: command.y - lift, cy1: command.cy1 - lift, cy2: command.cy2 - lift }
     if (command.op === 'Q') return { ...command, y: command.y - lift, cy: command.cy - lift }
     return { ...command, y: command.y - lift }
   })
-  return { commands, left, right, top: height - port + lift, height }
+  // Keep operational preparation out of the public geometric value.
+  return Object.defineProperty({ commands, left, right, top: height - port + lift, height }, 'slicer',
+    { value: lift > 0 ? prepareNativeArc(commands) : slicer })
 }
 
 export function nativeArcPath(arc: NativeArc): string {

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
+import { writtenEventSpans } from './fixtures/written-event-spans'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 
 // Performance fingerprints captured before migrating the written choices to houses.
@@ -75,7 +76,7 @@ it.each(cases)('preserves every performed note and lyric after house migration: 
   const music = measures.flatMap(measure => measure.events.map(event => [pitches.get(event) ?? [], event.beats, event.tie, event.postfixes, event.dynamic ?? null, event.tempo]))
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-  const lyrics = compileScorePerformance(document).elements.filter(element => element.voice === 'score:melody')
+  const lyrics = writtenEventSpans(compileScorePerformance(document).elements).filter(element => element.voice === 'score:melody')
     .flatMap(element => (byId.get(element.xmlId) ?? []).filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => [element.start, element.end, lyric.text]))
   const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
