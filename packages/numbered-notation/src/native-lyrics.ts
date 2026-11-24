@@ -88,7 +88,7 @@ export function nativeLyricInk(data: LyricRowData, measurer: TextMeasurer) {
 
 export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number, system: number, measurer: TextMeasurer): string {
   const data = glyph.lyrics.get(row)!
-  const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system, 'data-m3n-measure': glyph.measureId }
+  const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-tuplet-slot': glyph.event?.kind === 'tuplet' ? glyph.slot : undefined, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system, 'data-m3n-measure': glyph.measureId }
   return `<g${attrs({ ...meta, 'data-m3n-role': 'lyric-fragment' })}>${lyricFragment(data, glyph.x, baseline, measurer, meta)}</g>`
 }
 

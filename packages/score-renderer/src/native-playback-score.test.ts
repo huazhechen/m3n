@@ -8,6 +8,20 @@ import { NativePlaybackScore } from './native-playback-score.js'
 const prepare = (source: string) => NativePlaybackScore.create(parseM3NDocument(source))
 
 describe('native MIDI and playback index', () => {
+  it('indexes tuplet subdivisions at MIDI boundaries through tempo changes and ties', async () => {
+    const score = await prepare('{2/4}{120qpm}\nN: ([1 2 3:2]) {60qpm}([4~ 4 5:2]) |||')
+    expect(score.elementsAtTime(166)[0]).toMatchObject({ tupletSlot: 0 })
+    expect(score.elementsAtTime(167)[0]).toMatchObject({ tupletSlot: 1 })
+    expect(score.elementsAtTime(334)[0]).toMatchObject({ tupletSlot: 2 })
+    expect(score.elementsAtTime(500)[0]).toMatchObject({ tupletSlot: 0 })
+    expect(score.elementsAtTime(834)[0]).toMatchObject({ tupletSlot: 1 })
+    expect(score.elementsAtTime(1167)[0]).toMatchObject({ tupletSlot: 2 })
+    expect(score.nextElementAtTime(100)).toMatchObject({ tupletSlot: 1 })
+    expect(score.resumeTimeAt(100)).toBeCloseTo(1000 / 6)
+    expect(score.resumeTimeAt(600)).toBeCloseTo(500 + 2000 / 3)
+    expect(score.resumeTimeAt(900)).toBeCloseTo(500 + 2000 / 3)
+    score.destroy()
+  })
   it('resumes after interrupted notes and ties, keeps rests and restarts at the end', async () => {
     const score = await prepare('{4/4}{120qpm}\nN: 1 0 2 3 |||')
     expect(score.resumeTimeAt(250)).toBe(500)

@@ -184,6 +184,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       svg.dataset.notation = 'staff'
       for (const event of svg.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.tuplet[id], g.rest[id]')) {
         if (!/^m3n-e-\d+(?:-rend\d+)?(?:-n\d+)?$/.test(event.id)) continue
+        const slot = /-n(\d+)$/.exec(event.id)?.[1]
+        if (slot) event.dataset.m3nTupletSlot = String(Number(slot) - 1)
         event.dataset.m3nId = event.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
         if (needsStaffExpansion(score)) event.dataset.m3nPasses = /-rend(\d+)/.exec(event.id)?.[1] ?? '1'
       }

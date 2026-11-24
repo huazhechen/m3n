@@ -19,6 +19,8 @@ describe('staff page packing', () => {
     const holder = document.createElement('div')
     holder.innerHTML = markup
     expect(holder.querySelector('#m3n-e-1-n1-v1')?.textContent).toBe('春')
+    expect(holder.querySelector('#m3n-e-1-n1-v1')?.getAttribute('data-m3n-tuplet-slot')).toBe('0')
+    expect(holder.querySelector('#m3n-e-1-n3-v1')?.getAttribute('data-m3n-tuplet-slot')).toBe('2')
     expect(holder.querySelector('#m3n-e-1-n2-v1')).toBeNull()
     expect(holder.querySelector('#m3n-e-1-n3-v1')?.textContent).toBe('夏')
   })

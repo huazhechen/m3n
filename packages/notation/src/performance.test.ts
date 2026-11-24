@@ -49,7 +49,8 @@ describe('native performance compiler', () => {
       expect(result.notes[index]!.start).toBeCloseTo(start!)
       expect(result.notes[index]!.end).toBeCloseTo(end!)
     }
-    expect(result.elements).toHaveLength(4)
+    expect(result.elements).toHaveLength(8)
+    expect(result.elements.map(element => element.tupletSlot)).toEqual([undefined, 0, 1, 2, 0, 1, 2, undefined])
   })
   it('keeps a tied continuation sounding through its on-beat grace', () => {
     const result = compile('{2/4}\nN: 6e~ 6e{ac(5e)} |||')
@@ -62,6 +63,7 @@ describe('native performance compiler', () => {
   it('expands tuplets including rests with exact domain durations', () => {
     const result = compile('{2/4}\nN: [102:2] |||')
     expect(result.beats).toBe(2)
+    expect(result.elements.map(element => [element.start, element.end, element.tupletSlot])).toEqual([[0, 2 / 3, 0], [2 / 3, 4 / 3, 1], [4 / 3, 2, 2]])
     expect(result.notes.map(note => [note.pitch, note.start, note.end])).toEqual([[60, 0, 2 / 3], [62, 4 / 3, 2]])
   })
   it('restores the written tempo and meter when revisiting a section', () => {

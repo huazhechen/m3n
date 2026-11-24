@@ -90,6 +90,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               for (const lyric of child.lyrics) {
                 const attrs: Record<string, string> = { id: `${child.id}-v${lyric.verseIndex}`, class: `verse${lyric.passes && lyric.passes.size > 1 ? ` m3n-passes-${[...lyric.passes].join('-')}` : ''}` }
                 attrs['data-m3n-id'] = child.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
+                if (item.children) attrs['data-m3n-tuplet-slot'] = String(i)
                 attrs['data-m3n-rendition'] = String(lyric.verseIndex)
                 const performedPass = /-rend(\d+)/.exec(child.id)?.[1]
                 if (performedPass) attrs['data-m3n-passes'] = performedPass

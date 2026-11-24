@@ -1,7 +1,7 @@
 import { compileScorePerformance, type ScoreDocument } from '@m3n/notation'
 import { MIDI_PPQ, performanceTick, writePerformanceMidi } from './midi-writer.js'
 
-export type TimedScoreElement = { xmlId: string; rendition: number; orderIndex?: number }
+export type TimedScoreElement = { xmlId: string; rendition: number; tupletSlot?: number; orderIndex?: number }
 
 /** MIDI generation and source timing share the exact same quantized clock. */
 export class NativePlaybackScore {
@@ -67,7 +67,8 @@ export class NativePlaybackScore {
       const span = spans[low - 1]
       if (span && span.end > milliseconds) active.push(span)
     }
-    return active.sort((a, b) => a.start - b.start).map(({ xmlId, rendition, orderIndex }) => ({ xmlId, rendition,
+    return active.sort((a, b) => a.start - b.start).map(({ xmlId, rendition, tupletSlot, orderIndex }) => ({ xmlId, rendition,
+      ...(tupletSlot === undefined ? {} : { tupletSlot }),
       ...(orderIndex === undefined ? {} : { orderIndex }) }))
   }
 
@@ -84,8 +85,8 @@ export class NativePlaybackScore {
       if (candidate && (!next || candidate.start < next.start)) next = candidate
     }
     if (!next) return undefined
-    const { xmlId, rendition, orderIndex } = next
-    return { xmlId, rendition, ...(orderIndex === undefined ? {} : { orderIndex }) }
+    const { xmlId, rendition, tupletSlot, orderIndex } = next
+    return { xmlId, rendition, ...(tupletSlot === undefined ? {} : { tupletSlot }), ...(orderIndex === undefined ? {} : { orderIndex }) }
   }
 
   timeForElement(xmlId: string) { this.check(); return this.starts.get(xmlId) ?? -1 }

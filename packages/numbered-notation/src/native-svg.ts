@@ -13,10 +13,10 @@ class SvgPainter extends NativeMusicPainter {
 
   glyph(glyph: NativeGlyph, system: NativeSystem, lane: NativeLane, claimedBeams?: ReadonlySet<number>): string {
     const music = this.music(glyph, claimedBeams), role = glyph.sustain ? 'sustain' : undefined
-    const group = `<g${attrs({ class: 'note', id: glyph.id, 'data-m3n-id': glyph.xmlId, 'data-m3n-role': role, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId, 'data-m3n-passes': glyph.passes?.join('-') })}>${music}</g>`
+    const group = `<g${attrs({ class: 'note', id: glyph.id, 'data-m3n-id': glyph.xmlId, 'data-m3n-tuplet-slot': glyph.event?.kind === 'tuplet' ? glyph.slot : undefined, 'data-m3n-role': role, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId, 'data-m3n-passes': glyph.passes?.join('-') })}>${music}</g>`
     const annotations: string[] = []
     for (const annotation of glyph.annotationLayout ?? []) {
-      annotations.push(nativeAnnotationSvg(annotation, lane.y, this, { 'data-m3n-id': glyph.xmlId, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }))
+      annotations.push(nativeAnnotationSvg(annotation, lane.y, this, { 'data-m3n-id': glyph.xmlId, 'data-m3n-tuplet-slot': glyph.event?.kind === 'tuplet' ? glyph.slot : undefined, 'data-m3n-system': system.index, 'data-m3n-measure': glyph.measureId }))
     }
     const lyrics: string[] = []
     for (const [row, baseline] of glyph.lyricBaselines ?? []) if (glyph.lyrics.has(row)) lyrics.push(nativeLyricSvg(glyph, row, lane.y + baseline, system.index, this.layout.measurer))
