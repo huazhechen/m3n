@@ -33,7 +33,7 @@ it('uses full-measure repeat and DS boundaries with pickups inside the first and
   for (const bar of structural) expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
   expect(source).toMatch(/---V1\nN: 1e\^ 0 \(1 2\) :\|\|/)
   expect(source).toMatch(/---V2\nN: 1e\^ \(0 3e\) \(2e 1e\) \{ds\}/)
-  expect(source).toContain('---V3\nN: 1e^. {fine} |||')
+  expect(source).toContain('---V3\nN: 1e^. |||')
 })
 
 it('includes the new score once in the modern pop library and book', () => {
