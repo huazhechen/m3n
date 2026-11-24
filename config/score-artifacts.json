@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "66eed4e311b37f160f7f2240caaa8621b93ab86053d6e25502b37dd1635f0896",
+  "rendererSha256": "c37f3bb38f3c94a2186f7239c147cbe1623e9eb00639c2dd35030c88b874b85f",
   "fontManifestSha256": "2accc2160be4572110eaae87d1c98009cd96b76b88763d3ecbea147ea2beb386",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -325,7 +325,7 @@
       "fontSha256": "b3fa7f6b2a529cbca0538b963d7c9a56d21343c9d1c7e5a5a6b8836d96266223"
     },
     "src/scores/shi_jie_zeng_yu_wo_de_01.m3n": {
-      "sourceSha256": "00dfebdfdc2c2aacc5f04877b68225679834907205d8d96da6372214e15366d4",
+      "sourceSha256": "818a268b880fff46b166be61e652a394fe70f6cb3bf1eaee0f3278d86999a0bb",
       "font": "NotoSansSC-cd19f4c52eee7f4b.ttf",
       "fontSha256": "c65cd09559cbbf13b5667d31e0a882f1491c51fbb186b6bccb0fd3a856a5a051"
     },
