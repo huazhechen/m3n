@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 104,
+  "sourceCount": 105,
   "sections": [
     {
       "id": "basics",
@@ -696,6 +696,14 @@
       "section": "pop",
       "group": "切分与延音",
       "reason": "切分节奏与延音"
+    },
+    {
+      "id": "si_le_dou_yao_ai",
+      "file": "si_le_dou_yao_ai_01.m3n",
+      "title": "死了都要爱",
+      "section": "pop",
+      "group": "密集节奏与反复",
+      "reason": "密集副歌、D.S.返回与Coda导航"
     },
     {
       "id": "mei_li_de_shen_hua",
