@@ -1,8 +1,7 @@
-import { chooseBestWidth } from './scorebook-width.mjs'
+import { chooseBestWidth, widthCandidates } from './scorebook-width.mjs'
 
-// 32 logical px at 560px A4 width = 12mm, never compressed to fit more works.
+// Keep at least 32 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = 32
-export const sharedScoreWidth = 560
 export const sharedPreferredWidth = 540
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
@@ -27,22 +26,31 @@ function soloOption(entry, index) {
 
 function sharedOption(entries, members) {
   if (members.length < 2) return null
-  const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === sharedScoreWidth))
-  if (members.some(index => entries[index].sharePage === false) || candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
-  const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
-  if (usedHeight > capacity(sharedScoreWidth) + .001) return null
-  // Every member must fit together at all three perturbation widths.
-  const probeWidths = new Set(candidates.flatMap(candidate => (candidate.stabilityCases ?? [candidate]).map(probe => probe.width)))
-  for (const width of probeWidths) {
-    let height = sharedScoreGap * (members.length - 1)
-    for (const candidate of candidates) {
-      const probe = (candidate.stabilityCases ?? [candidate]).find(item => item.width === width)
-      if (!probe || !safe(probe) || probe.pageCount !== 1 || !Number.isFinite(probe.naturalHeight)) return null
-      height += probe.naturalHeight
-    }
-    if (height > capacity(width) + .001) return null
+  if (members.some(index => entries[index].sharePage === false)) return null
+  // The editorial eligibility rule is anchored at 640px. Once a group passes,
+  // choose its narrowest stable common width from the current width search.
+  const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === 640))
+  if (eligible.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
+  const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
+  if (eligibilityHeight > capacity(640) + .001) return null
+  for (const width of widthCandidates) {
+    const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width))
+    if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) continue
+    const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
+    if (usedHeight > capacity(width) + .001) continue
+    const offsets = [-5, 5]
+    const stableTogether = offsets.every(offset => {
+      const probeWidth = width + offset
+      const height = members.reduce((sum, index) => {
+        const candidate = entries[index].candidates.find(item => item.width === width)
+        const probe = candidate?.stabilityCases?.find(item => item.width === probeWidth)
+        return sum + (probe && safe(probe) && probe.pageCount === 1 && Number.isFinite(probe.naturalHeight) ? probe.naturalHeight : Infinity)
+      }, sharedScoreGap * (members.length - 1))
+      return height <= capacity(probeWidth) + .001
+    })
+    if (stableTogether) return { members, width, pageCount: 1, fill: usedHeight / capacity(width) }
   }
-  return { members, width: sharedScoreWidth, pageCount: 1, fill: usedHeight / capacity(sharedScoreWidth) }
+  return null
 }
 
 const empty = () => ({ cost: 0, pages: 0, density: 0, widthCost: 0, groups: [] })
@@ -87,7 +95,7 @@ function unorderedPacking(entries) {
   const indexes = new Map(bits.map((bit, index) => [bit, index]))
   const choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
   const eligible = entries.flatMap((entry, index) => {
-    const candidate = entry.candidates.find(item => item.width === sharedScoreWidth)
+    const candidate = entry.candidates.find(item => item.width === 640)
     return entry.sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight) ? [index] : []
   })
   // Only enumerate feasible groups; oversized prefixes need no supersets.

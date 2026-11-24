@@ -6,8 +6,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
-import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
-import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedScoreWidth, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { chooseBestWidth, probeWidthCandidates, widthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
+import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(root, 'config/scorebook/editorial-plan.json'))
@@ -54,7 +54,7 @@ try {
     const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
       try { return await window.scorebook.measure(source, width) }
       catch (error) { return { width, error: error.message } }
-    }, { source, width }), { requiredWidths: [sharedScoreWidth] })
+    }, { source, width }), { requiredWidths: widthCandidates })
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
@@ -133,7 +133,7 @@ const report = { title: plan.title, edition: plan.edition, renderer: 'web', rend
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile, orderOptimization,
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: 480, maximum: 640, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
-  sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedScoreWidth, sharedPreferredWidth,
+  sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')

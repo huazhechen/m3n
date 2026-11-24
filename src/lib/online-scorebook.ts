@@ -5,7 +5,8 @@ import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderShar
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
-import { optimizeScorebook, sharedScoreGap, sharedScoreWidth, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+import { widthCandidates } from '../../tools/scorebook-width.mjs'
+import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
 
 export const scorebookTitle = plan.title
@@ -115,7 +116,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         const preferredWidth = await chooseNumberedScoreWidth(document, { paged: true, pageMargin: 0 }, signal)
         const candidates: WidthMeasurement[] = []
         const prepared = new Map<number, PreparedNumberedNotationScore>()
-        const widths = [...new Set('sharePage' in entry && entry.sharePage === false ? [preferredWidth] : [preferredWidth, sharedScoreWidth])]
+        const widths = [...new Set('sharePage' in entry && entry.sharePage === false ? [preferredWidth] : [...widthCandidates, ...widthCandidates.flatMap(width => [width - 5, width + 5])])]
         for (const [widthIndex, width] of widths.entries()) {
           await pause()
           let result: WidthMeasurement
@@ -129,6 +130,12 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           signal.throwIfAborted()
           candidates.push(result)
           progress((widthIndex + 1) / widths.length)
+        }
+        if (!('sharePage' in entry) || entry.sharePage !== false) for (const width of widthCandidates) {
+          const candidate = candidates.find(item => item.width === width)!
+          const stabilityCases = [width - 5, width, width + 5].map(probeWidth => candidates.find(item => item.width === probeWidth)!)
+          candidate.stabilityCases = stabilityCases
+          candidate.stable = stabilityCases.every(item => !item.error && item.pageCount === stabilityCases[1].pageCount)
         }
         const solo = candidates.find(candidate => candidate.width === preferredWidth)!
         if (solo.error || !solo.pageCount) throw new Error('当前自适应宽度无法完成排版，请检查谱源。')

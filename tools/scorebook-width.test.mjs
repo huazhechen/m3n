@@ -16,22 +16,25 @@ test('prefer fewer A4 pages, then larger music, excluding unsafe or failed rende
   assert.equal(chooseBestWidth([{ width: 640, error: 'render failed' }]), null)
 })
 
-const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [], ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates, ...extra })
+const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
+  stable: true, stabilityCases: [-5, 0, 5].map(offset => ({ width: width + offset, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [] })), ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 640)
+  ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('sharing always renders at 560px and recommends 540px for solo reading', () => {
+test('640px determines sharing eligibility, then the narrowest stable common width is selected', () => {
   assert.equal(sharedPreferredWidth, 540)
-  const entries = [entry('A', [candidate(540, 380), candidate(560, 380)]), entry('B', [candidate(540, 380), candidate(560, 380)])]
-  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 560, pageCount: 1 }])
-  entries[1].candidates[1].overlaps.push('lyric')
+  const make = height => widthCandidates.map(width => candidate(width, height))
+  const entries = [entry('A', make(380)), entry('B', make(380))]
+  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 550, pageCount: 1 }])
+  entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
 })
 
 test('packing optimizes the complete sequence instead of greedily choosing the narrowest first page', () => {
   const entries = [200, 200, 700, 200].map((height, index) => entry(String(index), [candidate(560, height), candidate(620, height), candidate(640, height)]))
   const packed = packScorebook(entries)
-  assert.equal(packed.length, 3)
-  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 560], [2, 3, 560], [3, 4, 560]])
+  assert.equal(packed.length, 2)
+  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 560], [2, 4, 640]])
 })
 
 test('section boundaries, explicit breaks, opt-outs and long works stay on separate pages', () => {
@@ -100,10 +103,10 @@ test('failed renders are recorded and never bypass stability verification', asyn
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
 
-test('shared pages must fit at 555 and 565 during stability verification', () => {
+test('640px eligibility is followed by common-width stability checks', () => {
   const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 440), { ...candidate(560, 440), stable: true,
     stabilityCases: [candidate(555, 530), candidate(560, 440), candidate(565, 440)] }]))
-  assert.equal(packScorebook(entries).length, 2)
+  assert.equal(packScorebook(entries).length, 1)
 })
 
 test('chapter works can share across distant positions while preserving chapter boundaries and anchors', () => {
@@ -156,7 +159,7 @@ test('exact chapter set partitioning matches exhaustive permutation search', () 
 
 test('large chapters retain exact packing across the 32-bit boundary without a chapter-size cap', () => {
   const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(540, 900), candidate(560, 900)]))
-  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200)]
+  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(640, 200)]
   const result = optimizeScorebook(entries, new Set(['basics']))
   assert.equal(result.metrics.pages, 39)
   assert.deepEqual(result.metrics.pageGroups.find(group => group.titles.length === 2).titles, ['0', '39'])
