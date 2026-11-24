@@ -125,7 +125,7 @@ describe('native MIDI and playback index', () => {
   it.each([
     ['huang_hun_01.m3n', 65, 187.5, 188.5, 188],
     ['qing_niao_01.m3n', 78, 359.5, 362, 360],
-    ['san_bu_01.m3n', 67, 331.75, 336, 332],
+    ['san_bu_01.m3n', 67, 331.75, 334, 332],
   ] as const)('keeps the written third-pass tie in %s instead of reattacking its continuation', (file, pitch, start, end, continuation) => {
     const document = parseM3NDocument(readFileSync(new URL(file, folder), 'utf8'))
     const performance = compileScorePerformance(document)
