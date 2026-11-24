@@ -4,9 +4,8 @@ import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { attachScoreReading } from '../src/lib/score-reading-dom'
 import { renderScoreInto } from '../src/lib/render-score'
 import { describeAccessibleScore } from '../src/lib/score-accessibility'
-import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
-import { numberedLayoutScore } from './scorebook-width.mjs'
 import { inspectScorePages } from './lib/score-geometry.mjs'
+import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
 
 export async function prepare(fontBase64) {
   // Publishing supplies a freshly generated subset for the actual book text.
@@ -37,54 +36,16 @@ async function prepareMeasurement(source) {
 }
 
 export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
-  const started = performance.now(), timings = {}
-  let stage = started
+  const started = performance.now()
   const scoreDocument = await prepareMeasurement(source)
-  timings.parseFontsMs = performance.now() - stage; stage = performance.now()
-  const score = new PreparedNumberedNotationScore(scoreDocument, { width, pageMargin: 0 }, timings)
-  timings.layoutMs = performance.now() - stage; stage = performance.now()
-  const quality = score.quality
-  timings.qualityMs = performance.now() - stage; stage = performance.now()
-  const markup = (paged ? score.renderPaged(coreGap) : score.renderContinuous(coreGap)).join('')
-  timings.svgRenderMs = performance.now() - stage; stage = performance.now()
-  host.innerHTML = markup
-  attachScoreReading(host, measurementDescription)
-  const pages = [...host.querySelectorAll(':scope > svg')]
-  timings.svgMountMs = performance.now() - stage
-  // Keep the aggregate render stage for comparisons with the old renderer.
-  timings.pagedRenderMs = timings.parseFontsMs + timings.layoutMs + timings.svgRenderMs + timings.svgMountMs
-  const { outside, overlaps } = inspectScorePages(pages, timings)
-  const rows = pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0)
-  const result = { width, timings, pageCount: pages.length, rows, outside, overlaps,
-    lineDensityVariation: quality.lineDensityVariation, lastLineSlack: quality.lastLineSlack,
-    qualityScore: numberedLayoutScore({ width, ...quality }) }
-  if (!paged) result.naturalHeight = pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
-  if (paged && pages.length === 1 && !outside.length && !overlaps.length) {
-    stage = performance.now()
-    const markup = pages[0].outerHTML
-    const continuousTimings = {}
-    const continuousStarted = performance.now()
-    const continuousMarkup = score.renderContinuous().join('')
-    continuousTimings.svgRenderMs = performance.now() - continuousStarted
-    const mountStarted = performance.now()
-    host.innerHTML = continuousMarkup
-    attachScoreReading(host, measurementDescription)
-    const continuousPages = [...host.querySelectorAll(':scope > svg')]
-    continuousTimings.svgMountMs = performance.now() - mountStarted
-    const continuous = inspectScorePages(continuousPages, continuousTimings)
-    continuousTimings.totalMs = performance.now() - continuousStarted
-    result.outside.push(...continuous.outside)
-    result.overlaps.push(...continuous.overlaps)
-    if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuousPages[0].viewBox.baseVal.height
-    host.innerHTML = markup
-    timings.continuousMs = performance.now() - stage
-    timings.continuous = continuousTimings
-  }
-  timings.totalMs = performance.now() - started
-  return result
+  const parseFontsMs = performance.now() - started
+  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, settings: { coreGap },
+    afterMount: host => attachScoreReading(host, measurementDescription) })
+  candidate.timings.parseFontsMs = parseFontsMs
+  candidate.timings.totalMs += parseFontsMs
+  return candidate
 }
 
-/** Fit whole scores at one shared core parameter before A4 placement. */
 export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch')) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
 
-test('online and local PDF paths choose identical safe solo and shared layouts in a real browser', async () => {
+test('reader, online and local PDF paths share safe width selection; staff reader matches local measurement', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-pdf-parity-'))
   const files = ['xiao_xing_xing_01.m3n', 'hong_he_gu_01.m3n']
   const sources = files.map(file => readFileSync(join(root, 'src/scores', file), 'utf8'))
@@ -20,6 +20,9 @@ test('online and local PDF paths choose identical safe solo and shared layouts i
       export {default as parityPlan} from ${JSON.stringify(join(root, 'config/scorebook/editorial-plan.json'))};
       export {buildOnlineScorebook} from ${JSON.stringify(join(root, 'src/lib/online-scorebook.ts'))};
       export {probeWidthCandidates, chooseBestWidth, widthCandidates} from ${JSON.stringify(join(root, 'tools/scorebook-width.mjs'))};
+      export {chooseNumberedScoreWidth, chooseStaffScoreWidth} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))};
+      export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))};
+      export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
       export {optimizeScorebook} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
     await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') },
       plugins: [{ name: 'parity-fixtures', enforce: 'pre', resolveId(id) {
@@ -55,10 +58,24 @@ test('online and local PDF paths choose identical safe solo and shared layouts i
       const soloLocal = api.optimizeScorebook(entries).groups
       const solo = await api.buildOnlineScorebook(new AbortController().signal, () => {})
       const soloOnline = solo.pages.slice(2).map(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.viewBox.baseVal.width))
-      return { sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
+      const readerWidths = [], staffWidths = []
+      for (const source of sources) {
+        const document = api.parseM3NDocument(source)
+        readerWidths.push(await api.chooseNumberedScoreWidth(document, { paged: true }))
+        const local = await api.staffSearch(source)
+        const best = api.chooseBestWidth(local.candidates)
+        staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
+          candidates: local.candidates.map(candidate => candidate.width) })
+      }
+      return { readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
     assert.equal(comparison.sharedPages, 1)
     assert.deepEqual(comparison.sharedOnline, comparison.sharedLocal.map(group => Array(group.end - group.start).fill(group.width)))
+    assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
+    for (const staff of comparison.staffWidths) {
+      assert.equal(staff.reader, staff.local)
+      assert.deepEqual(staff.candidates, Array.from({ length: 10 }, (_, i) => 540 + i * 20))
+    }
     assert.equal(comparison.soloSharedPages, 0)
     assert.deepEqual(comparison.soloOnline, comparison.soloLocal.map(group => Array(group.end - group.start).fill(group.width)))
   } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }

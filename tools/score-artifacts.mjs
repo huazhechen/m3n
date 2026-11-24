@@ -20,7 +20,7 @@ export function sourceFiles() {
 function rendererInputs() {
   const inputs = ['packages/notation/src', 'packages/numbered-notation/src'].flatMap(filesBelow)
     .filter(file => /\.(ts|json)$/.test(file) && !file.endsWith('.test.ts') && !file.endsWith('/font-resources.ts'))
-  inputs.push('tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
+  inputs.push('tools/lib/numbered-width-measurement.mjs', 'tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
   for (const file of readdirSync(assetPath).filter(file => /^(Barlow|Bravura)/.test(file))) inputs.push(`packages/numbered-notation/src/font-assets/${file}`)
   return [...new Set(inputs)].sort()
 }

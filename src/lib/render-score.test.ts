@@ -8,18 +8,32 @@ vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
   prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
 }))
-vi.mock('@m3n/numbered-notation', () => ({
-  numberedLayoutQuality: numberedQuality,
+vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: vi.fn() }))
+vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
+  measureNumberedWidth: (document: ScoreDocument, width: number, { settings }: { settings: Record<string, unknown> }) => {
+    const quality = numberedQuality(document, { ...settings, width, paged: true, pageMargin: settings.pageMargin ?? 0 })
+    return { candidate: { width, ...quality, rows: 1, outside: [], overlaps: [] } }
+  },
+}))
+vi.mock('../../tools/lib/staff-width-measurement.mjs', () => ({
+  measureStaffWidth: async (_document: ScoreDocument, width: number) => {
+    const info = staffLayoutInfo(width)
+    const densities = info.lines.map((line: { minimum: number }) => line.minimum / info.availableWidth)
+    const mean = densities.reduce((a: number, b: number) => a + b, 0) / densities.length
+    const lineDensityVariation = Math.sqrt(densities.reduce((sum: number, density: number) => sum + (density - mean) ** 2, 0) / densities.length) / mean
+    return { width, pageCount: staffPageCount(true, width), rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation,
+      lastLineSlack: 1 - info.lines.at(-1).target / info.availableWidth }
+  },
 }))
 
 describe('numbered automatic width margins', () => {
   it.each([undefined, 0, 32])('uses the display margin %s for every layout pass', async margin => {
     numberedQuality.mockReset()
-    numberedQuality.mockImplementation((_document, { width, pageMargin }) => ({ pageCount: width >= (pageMargin === 32 ? 610 : 590) ? 2 : 3, lineDensityVariation: 0, lastLineSlack: 0 }))
+    numberedQuality.mockImplementation((_document, { width, pageMargin }) => ({ pageCount: width >= (pageMargin === 32 ? 620 : 600) ? 2 : 3, lineDensityVariation: 0, lastLineSlack: 0 }))
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true, pageMargin: margin })
 
-    expect(selected).toBe(margin === 32 ? 610 : 590)
+    expect(selected).toBe(margin === 32 ? 620 : 600)
     expect(numberedQuality.mock.calls.every(([, options]) => options.pageMargin === (margin ?? 0))).toBe(true)
     expect(numberedQuality.mock.calls.every(([, options]) => options.paged === true)).toBe(true)
   })
@@ -31,7 +45,7 @@ describe('numbered automatic width margins', () => {
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
     expect(selected).toBe(540)
-    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 540 && options.width <= 640)).toBe(true)
+    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 540 && options.width <= 720)).toBe(true)
   })
 
   it('prefers balanced three-row spacing over a short, uneven last row', async () => {
@@ -44,7 +58,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(570)
+    expect(selected).toBe(580)
   })
 
   it('never trades a page for a higher balance score', async () => {
@@ -62,12 +76,12 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(570)
+    expect(selected).toBe(580)
   })
 })
 
 describe('staff automatic width range', () => {
-  it.each([510, 590, 640])('selects within 540–640px when the required width is %s', async requiredWidth => {
+  it.each([510, 590, 640])('selects within 540–720px when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
     staffLayoutInfo.mockImplementation(width => ({ pageCount: width >= requiredWidth ? 2 : 3, availableWidth: width,
@@ -75,8 +89,8 @@ describe('staff automatic width range', () => {
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(Math.max(540, requiredWidth))
-    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 540 && width <= 640)).toBe(true)
+    expect(selected).toBe(Math.max(540, Math.ceil(requiredWidth / 20) * 20))
+    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 540 && width <= 720)).toBe(true)
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {
@@ -89,6 +103,6 @@ describe('staff automatic width range', () => {
           ? [{ minimum: width * 0.55, target: width }, { minimum: width * 0.73, target: width }, { minimum: width * 0.59, target: width }]
           : [{ minimum: width * 0.99, target: width }, { minimum: width * 0.81, target: width }],
     }))
-    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(570)
+    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(580)
   })
 })

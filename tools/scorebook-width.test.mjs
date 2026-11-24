@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseBestWidth, widthCandidates, probeWidthCandidates } from './scorebook-width.mjs'
+import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap } from './scorebook-packing.mjs'
 
-test('the shared online and offline search uses 540–640px in 10px steps', () => {
-  assert.deepEqual(widthCandidates, Array.from({ length: 11 }, (_, index) => 540 + index * 10))
+test('the shared online and offline search uses 540–720px in 20px steps', () => {
+  assert.deepEqual(widthCandidates, Array.from({ length: 10 }, (_, index) => 540 + index * 20))
 })
 test('prefer fewer A4 pages, then the shared quality score, excluding unsafe renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
@@ -18,15 +18,15 @@ test('prefer fewer A4 pages, then the shared quality score, excluding unsafe ren
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 640)
-  ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 720)
+  ? candidates : [...candidates, candidate(720, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('640px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
+test('search maximum determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
   assert.equal(sharedPreferredWidth, 540)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(380)), entry('B', make(380))]
   assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 540, pageCount: 1 }])
-  entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
+  entries[1].candidates.find(item => item.width === 720).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
 })
 
@@ -63,21 +63,21 @@ test('search measures exactly the formal candidates, including page-count transi
     return candidate(width, 100, width < 570 ? 2 : 1)
   })
   assert.deepEqual(measured, widthCandidates)
-  assert.equal(renderCache.uniqueWidths, 11)
-  assert.equal(chooseBestWidth(candidates).width, 570)
+  assert.equal(renderCache.uniqueWidths, 10)
+  assert.equal(chooseBestWidth(candidates).width, 580)
 })
 
 test('scoring checks every formal width and chooses the best composite score', async () => {
   const result = await probeWidthCandidates(async width => candidate(width, 100, 1,
-    { qualityScore: width === 590 ? 2 : .5 }))
+    { qualityScore: width === 600 ? 2 : .5 }))
   assert.deepEqual(result.candidates.map(item => item.width), widthCandidates)
-  assert.equal(chooseBestWidth(result.candidates).width, 590)
-  assert.equal(result.renderCache.uniqueWidths, 11)
+  assert.equal(chooseBestWidth(result.candidates).width, 600)
+  assert.equal(result.renderCache.uniqueWidths, 10)
 })
 
 test('nonmonotone pagination is evaluated across the complete grid', async () => {
-  const result = await probeWidthCandidates(async width => candidate(width, 100, width === 570 ? 1 : 2))
-  assert.equal(chooseBestWidth(result.candidates).width, 570)
+  const result = await probeWidthCandidates(async width => candidate(width, 100, width === 580 ? 1 : 2))
+  assert.equal(chooseBestWidth(result.candidates).width, 580)
 })
 
 test('SVG checks reject unsafe candidates without probing additional widths', async () => {
@@ -98,7 +98,7 @@ test('failed renders are recorded and excluded', async () => {
     return candidate(width, 100)
   })
   assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.equal(result.candidates.filter(c => c.error).length, 2)
+  assert.equal(result.candidates.filter(c => c.error).length, 1)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
@@ -128,8 +128,8 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 32)
-  const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(560, 455)]))
-  // 455 + 455 + the old 22px gap would fit the 822px content box.
+  const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(560, 455), candidate(720, 515)]))
+  // At 720px, 515 + 515 + 22 would fit; the required 32px gap does not.
   assert.equal(packScorebook(entries).length, 2)
   for (const work of entries) work.candidates[1] = candidate(560, 450)
   assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 560px capacity.
@@ -152,7 +152,7 @@ test('exact chapter set partitioning matches exhaustive permutation search', () 
 
 test('large chapters retain exact packing across the 32-bit boundary without a chapter-size cap', () => {
   const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(540, 900), candidate(560, 900)]))
-  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(640, 200)]
+  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(720, 200)]
   const result = optimizeScorebook(entries, new Set(['basics']))
   assert.equal(result.metrics.pages, 39)
   assert.deepEqual(result.metrics.pageGroups.find(group => group.titles.length === 2).titles, ['0', '39'])
@@ -168,4 +168,13 @@ test('forced solo works in a large chapter do not change the optimal partition o
   assert(Math.abs(result.metrics.cost - expected.metrics.cost - 70) < 1e-9)
   assert.equal(result.metrics.pages, expected.metrics.pages + 70)
   assert.deepEqual(result.entries.slice(35), expected.entries)
+})
+
+test('common selection propagates cancellation and rejects every unsafe candidate', async () => {
+  const controller = new AbortController(), widths = []
+  await assert.rejects(selectBestWidth(async width => {
+    widths.push(width); controller.abort(); return candidate(width, 100)
+  }, { signal: controller.signal }), { name: 'AbortError' })
+  assert.deepEqual(widths, [540])
+  await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /安全版面/)
 })

@@ -1,11 +1,11 @@
 import plan from '../../config/scorebook/editorial-plan.json'
+import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
 import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
 import { parseM3NDocument } from '@m3n/notation'
 import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
-import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
-import { chooseBestWidth, numberedLayoutScore, widthCandidates } from '../../tools/scorebook-width.mjs'
+import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
 
@@ -13,7 +13,7 @@ export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
   measurementTimings: { totalMs: number; stages: Record<string, number>; scores: {
-    file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: Record<string, number> }[]
+    file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: WidthTimings }[]
   }[] }
 }
 type BookEntry = PackingEntry & { file: string; prepared: Map<number, PreparedNumberedNotationScore>; slug: string; musicStart: number; pageCount: number }
@@ -132,49 +132,28 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         const document = parseM3NDocument(source)
         await prepareNumberedNotationFonts(document)
         const scoreTiming = { file: entry.file, parseFontsMs: performance.now() - scoreStarted, wallMs: 0,
-          candidates: [] as { width: number; timings: Record<string, number> }[] }
+          candidates: [] as { width: number; timings: WidthTimings }[] }
         measurementTimings.scores.push(scoreTiming)
-        const candidates: WidthMeasurement[] = []
         const prepared = new Map<number, PreparedNumberedNotationScore>()
-        const widths = widthCandidates
-        for (const [widthIndex, width] of widths.entries()) {
+        let completedWidths = 0
+        const { candidates } = await selectBestWidth(async width => {
           await pause()
-          const widthStarted = performance.now(), timings: Record<string, number> = {}
-          let result: WidthMeasurement
-          try {
-            const score = new PreparedNumberedNotationScore(document, { width, pageMargin: 0 }, timings)
-            timings.layoutMs = performance.now() - widthStarted
-            signal.throwIfAborted()
-            prepared.set(width, score)
-            const renderStarted = performance.now()
-            const markup = score.renderPaged()
-            timings.svgRenderMs = performance.now() - renderStarted
-            const geometry = inspectScoreMarkup(markup, timings)
-            if (score.pageCount === 1) {
-              const continuousStarted = performance.now()
-              const markup = score.renderContinuous()
-              timings.svgRenderMs += performance.now() - continuousStarted
-              const continuous = inspectScoreMarkup(markup, timings)
-              geometry.outside.push(...continuous.outside)
-              geometry.overlaps.push(...continuous.overlaps)
-            }
-            const quality = score.quality
-            result = { width, pageCount: score.pageCount, rows: 0, ...geometry,
-              naturalHeight: score.pageCount === 1 ? score.continuousHeight() : undefined,
-              lineDensityVariation: quality.lineDensityVariation, lastLineSlack: quality.lastLineSlack,
-              qualityScore: numberedLayoutScore({ width, ...quality }) }
-          }
-          catch (error) { result = { width, error: error instanceof Error ? error.message : String(error), pageCount: 0, rows: 0, outside: [], overlaps: [] } }
           signal.throwIfAborted()
-          timings.totalMs = performance.now() - widthStarted
-          scoreTiming.candidates.push({ width, timings: { ...timings } })
-          candidates.push(result)
-          progress((widthIndex + 1) / widths.length)
-        }
+          const widthStarted = performance.now()
+          let timings: WidthTimings = {}
+          try {
+            const measured = measureNumberedWidth(document, width, { signal })
+            prepared.set(width, measured.prepared)
+            timings = measured.candidate.timings
+            return measured.candidate
+          } finally {
+            timings.totalMs ??= performance.now() - widthStarted
+            scoreTiming.candidates.push({ width, timings })
+            progress(++completedWidths / widthCandidates.length)
+          }
+        }, { signal })
         scoreTiming.wallMs = performance.now() - scoreStarted
-        const solo = chooseBestWidth(candidates.filter(candidate => widthCandidates.includes(candidate.width)))
-        if (!solo) throw new Error('没有通过边界和碰撞检查的安全版面。')
-        entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates: candidates.filter(candidate => widthCandidates.includes(candidate.width)), musicStart: 0, pageCount: 0 })
+        entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
         signal.throwIfAborted()
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)

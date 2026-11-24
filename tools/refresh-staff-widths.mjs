@@ -4,12 +4,11 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
-import { chooseBestWidth, widthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
+import { chooseBestWidth, widthCandidates, widthSearchStrategy, widthStep } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const directory = join(root, 'src'), output = join(root, '.tmp/staff-widths')
 const probeOnly = process.argv.includes('--probe-only')
-const fresh = process.argv.includes('--fresh')
 assert(process.argv.slice(2).every(arg => ['--probe-only', '--fresh'].includes(arg)), 'Only --probe-only and --fresh are supported')
 mkdirSync(output, { recursive: true })
 // Keep the hosted dist/ untouched; Playwright serves these files in memory, with no dev server.
@@ -20,9 +19,7 @@ await build({ configFile: false, logLevel: 'error', base: '/', define: { 'import
 const launchOptions = { executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true }
 const entries = [], hash = value => createHash('sha256').update(value).digest('hex')
 const rendererSha256 = hash(readFileSync(join(output, 'bundle/bundle.js')))
-const previous = existsSync(join(output, 'report.json')) ? JSON.parse(readFileSync(join(output, 'report.json'), 'utf8')) : undefined
-const reusable = new Map(!fresh && previous?.rendererSha256 === rendererSha256 ? previous.entries.map(entry => [entry.file, entry]) : [])
-const report = { rendererSha256, strategy: widthSearchStrategy, range: [widthCandidates[0], widthCandidates.at(-1)], step: 10, criterion: 'minimum page count, then minimum width', entries }
+const report = { rendererSha256, strategy: widthSearchStrategy, range: [widthCandidates[0], widthCandidates.at(-1)], step: widthStep, criterion: 'safe geometry, minimum page count, maximum composite quality, then minimum width', entries }
 const saveReport = () => {
   const path = join(output, 'report.json')
   writeFileSync(path + '.tmp', JSON.stringify({ ...report, entries: entries.filter(Boolean) }, null, 2) + '\n')
@@ -52,8 +49,9 @@ async function refresh() {
       await page.goto('http://staff-widths.local/')
       await page.addScriptTag({ url: 'http://staff-widths.local/bundle.js' })
       await page.evaluate(() => window.staffWidths.prepare())
-      const cached = reusable.get(file)
-      const { candidates, renderCache } = cached?.sourceSha256 === hash(source) ? cached : await page.evaluate(source => window.staffWidths.search(source), source)
+      const measurementStarted = performance.now()
+      const { candidates, renderCache } = await page.evaluate(source => window.staffWidths.search(source), source)
+      const measurement = { wallMs: performance.now() - measurementStarted, reused: false }
       assert(candidates.length, `${file}: no width candidates`)
       let best, verification
       // Recheck the actual chosen width, including reused search results.
@@ -62,8 +60,8 @@ async function refresh() {
         if (verification.pageCount === best.pageCount && !verification.outside.length && !verification.overlaps.length) break
         Object.assign(best, verification, { error: 'Full SVG verification failed at the candidate width' })
       }
-      assert(best, `${file}: no safe width in 540–640px`)
-      entries[index] = { file, sourceSha256: hash(source), width: best.width, pageCount: best.pageCount, candidates, renderCache, verification }
+      assert(best, `${file}: no safe width in 540–720px`)
+      entries[index] = { file, sourceSha256: hash(source), width: best.width, pageCount: best.pageCount, candidates, renderCache, measurement, verification }
       saveReport()
       console.log(`${index + 1}/${inputs.length} ${file}: ${best.width}px, ${best.pageCount} pages`)
     } finally { await browser.close() }

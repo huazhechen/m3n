@@ -107,7 +107,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
   const selectedWidth = Number(await paper.locator('svg').first().getAttribute('width'))
   expect(selectedWidth).toBeGreaterThanOrEqual(540)
-  expect(selectedWidth).toBeLessThanOrEqual(640)
+  expect(selectedWidth).toBeLessThanOrEqual(720)
 })
 
 test('a non-touch portrait window keeps desktop page fitting', async ({ page }) => {

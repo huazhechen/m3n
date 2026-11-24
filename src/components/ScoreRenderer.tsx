@@ -1,3 +1,4 @@
+import { widthMaximum } from '../../tools/scorebook-width.mjs'
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
@@ -247,7 +248,7 @@ export function ScoreRenderer({
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
   const autoWidthPending = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
     && (autoWidthSelectionRef.current?.scoreDocument !== scoreDocument || autoWidthSelectionRef.current.notationMode !== notationMode)
-  const renderWidth = previewWidth ?? (autoWidthPending ? 640 : fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
+  const renderWidth = previewWidth ?? (autoWidthPending ? widthMaximum : fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
   useEffect(() => {
     transposeRef.current = DEFAULT_PLAYBACK_TRANSPOSE
     setPlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
