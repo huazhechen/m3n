@@ -3,6 +3,8 @@ export type PackingEntry = { title: string; section: string; preferredWidth?: nu
 export type PackingGroup = { start: number; end: number; width: number; pageCount: number }
 export const sharedScoreGap: number
 export const sharedPreferredWidth: number
+export const sharedWidthMaximum: number
+export const sharedWidthCandidates: number[]
 export const packingPolicy: Readonly<{ targetFill: number; sparseBelow: number; crowdedAbove: number; sparseWeight: number; crowdedWeight: number; balanceWeight: number; pageWeight: number }>
 export function pageDensityPenalty(fill: number): number
 export function optimizeScorebook<T extends PackingEntry>(entries: T[], movableSections?: Set<string>): {

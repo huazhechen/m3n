@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
-import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap } from './scorebook-packing.mjs'
+import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
 
 test('the shared online and offline search uses 540–720px in 20px steps', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 10 }, (_, index) => 540 + index * 20))
@@ -18,16 +18,34 @@ test('prefer fewer A4 pages, then the shared quality score, excluding unsafe ren
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 720)
-  ? candidates : [...candidates, candidate(720, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 640)
+  ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('search maximum determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
+test('640px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
   assert.equal(sharedPreferredWidth, 540)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(380)), entry('B', make(380))]
   assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 540, pageCount: 1 }])
-  entries[1].candidates.find(item => item.width === 720).overlaps.push('lyric')
+  entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
+})
+
+test('shared widths stop at 640px while solo selection can still choose 720px', () => {
+  assert.equal(sharedWidthMaximum, 640)
+  assert.deepEqual(sharedWidthCandidates, [540, 560, 580, 600, 620, 640])
+  const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
+    { qualityScore: width === 720 ? 10 : width === 620 ? 2 : 1 }))))
+  assert.equal(chooseBestWidth(entries[0].candidates).width, 720)
+  assert.equal(packScorebook(entries)[0].width, 620)
+  assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 620)
+})
+
+test('passing 720px or narrower widths cannot bypass 640px admission', () => {
+  for (const at640 of [candidate(640, 250, 2), candidate(640, 470)]) {
+    const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 250), at640, candidate(720, 250)]))
+    assert.equal(packScorebook(entries).length, 2)
+    assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups.length, 2)
+  }
 })
 
 test('a shared page prefers balanced quality over the narrowest feasible width', () => {
@@ -129,7 +147,7 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 32)
   const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(560, 455), candidate(720, 515)]))
-  // At 720px, 515 + 515 + 22 would fit; the required 32px gap does not.
+  // The 640px admission check rejects the combined height, even if 720px fits.
   assert.equal(packScorebook(entries).length, 2)
   for (const work of entries) work.candidates[1] = candidate(560, 450)
   assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 560px capacity.
@@ -152,7 +170,7 @@ test('exact chapter set partitioning matches exhaustive permutation search', () 
 
 test('large chapters retain exact packing across the 32-bit boundary without a chapter-size cap', () => {
   const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(540, 900), candidate(560, 900)]))
-  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(720, 200)]
+  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(640, 200), candidate(720, 200)]
   const result = optimizeScorebook(entries, new Set(['basics']))
   assert.equal(result.metrics.pages, 39)
   assert.deepEqual(result.metrics.pageGroups.find(group => group.titles.length === 2).titles, ['0', '39'])

@@ -1,8 +1,10 @@
-import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMaximum } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates } from './scorebook-width.mjs'
 
 // Keep at least 32 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = 32
 export const sharedPreferredWidth = 540
+export const sharedWidthMaximum = 640
+export const sharedWidthCandidates = widthCandidates.filter(width => width <= sharedWidthMaximum)
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
 const safe = candidate => !candidate.error && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
@@ -27,14 +29,14 @@ function soloOption(entry, index) {
 function sharedOption(entries, members) {
   if (members.length < 2) return null
   if (members.some(index => entries[index].sharePage === false)) return null
-  // The editorial eligibility rule is anchored at the shared search maximum. Once a group passes,
+  // Sharing eligibility is checked at 640px, independently of the solo search. Once a group passes,
   // choose its highest-quality common width.
-  const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === widthMaximum))
+  const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === sharedWidthMaximum))
   if (eligible.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
   const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
-  if (eligibilityHeight > capacity(widthMaximum) + .001) return null
+  if (eligibilityHeight > capacity(sharedWidthMaximum) + .001) return null
   const options = []
-  for (const width of widthCandidates) {
+  for (const width of sharedWidthCandidates) {
     const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) continue
     const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
@@ -91,7 +93,7 @@ function unorderedPacking(entries) {
   const indexes = new Map(bits.map((bit, index) => [bit, index]))
   const choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
   const eligible = entries.flatMap((entry, index) => {
-    const candidate = entry.candidates.find(item => item.width === widthMaximum)
+    const candidate = entry.candidates.find(item => item.width === sharedWidthMaximum)
     return entry.sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight) ? [index] : []
   })
   // Only enumerate feasible groups; oversized prefixes need no supersets.

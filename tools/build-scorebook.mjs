@@ -9,7 +9,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy, widthMinimum, widthMaximum, widthStep } from './scorebook-width.mjs'
 import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
-import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth } from './scorebook-packing.mjs'
+import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
 
 const runStarted = performance.now(), stages = {}
 let phaseStarted = runStarted
@@ -170,6 +170,7 @@ const report = { title: plan.title, edition: plan.edition, renderer: 'web', rend
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: widthMinimum, maximum: widthMaximum, step: widthStep, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
+  sharedWidthSearch: { minimum: widthMinimum, maximum: sharedWidthMaximum, step: widthStep, eligibilityWidth: sharedWidthMaximum },
   entries: records, validation: { outside: auditLayout ? 0 : null, overlaps: auditLayout ? 0 : null, geometryAudited: auditLayout, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
