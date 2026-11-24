@@ -795,6 +795,22 @@ textarea::selection {
   background: #dcebe6;
 }
 
+.score-zoom-actions {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(var(--ui-control-size) + var(--ui-space) * 6 + env(safe-area-inset-bottom));
+  z-index: 4;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.score-zoom-reset {
+  flex-shrink: 0;
+  box-shadow: 0 3px 16px rgb(31 35 38 / 18%);
+  pointer-events: auto;
+}
+
 .score-paper {
   --score-zoom: 1;
   touch-action: pan-x pan-y;

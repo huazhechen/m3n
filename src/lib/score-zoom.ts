@@ -1,10 +1,11 @@
 /** Scale the displayed score without changing engraving or export settings. */
-export function attachScoreZoom(paper: HTMLElement) {
+export function attachScoreZoom(paper: HTMLElement, onScaleChange: (scale: number) => void) {
   let scale = 1
   let pinch: { distance: number; scale: number } | undefined
   let suppressClick = false
   const zoom = (next: number, x: number, y: number) => {
-    next = Math.max(0.5, Math.min(4, next))
+    next = Math.max(0.5, Math.min(2, next))
+    if (Math.abs(next - 1) < 0.000001) next = 1
     if (!Number.isFinite(next) || next === scale) return
     const target = document.elementFromPoint(x, y)?.closest('.score-page-sheet, .score-paper > svg')
     const anchor = target && paper.contains(target) ? target : paper.firstElementChild
@@ -19,6 +20,7 @@ export function attachScoreZoom(paper: HTMLElement) {
       paper.scrollLeft += after.left + fractionX * after.width - x
       window.scrollBy({ top: after.top + fractionY * after.height - y, behavior: 'instant' })
     }
+    onScaleChange(scale)
   }
   const wheel = (event: WheelEvent) => {
     if (!event.deltaY || !paper.firstElementChild) return
@@ -65,7 +67,7 @@ export function attachScoreZoom(paper: HTMLElement) {
   paper.addEventListener('touchcancel', touchEnd)
   paper.addEventListener('click', click, true)
   paper.addEventListener('pointerdown', pointerDown)
-  return () => {
+  const destroy = () => {
     paper.removeEventListener('wheel', wheel)
     paper.removeEventListener('touchstart', touchStart)
     paper.removeEventListener('touchmove', touchMove)
@@ -76,4 +78,12 @@ export function attachScoreZoom(paper: HTMLElement) {
     paper.style.removeProperty('--score-zoom')
     delete paper.dataset.zoomed
   }
+  const reset = () => {
+    const bounds = paper.getBoundingClientRect()
+    const x = (Math.max(0, bounds.left) + Math.min(window.innerWidth, bounds.right)) / 2
+    const y = (Math.max(0, bounds.top) + Math.min(window.innerHeight, bounds.bottom)) / 2
+    zoom(1, x, y)
+    paper.scrollLeft = 0
+  }
+  return { destroy, reset }
 }

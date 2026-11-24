@@ -169,9 +169,18 @@ export function ScoreRenderer({
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
+  const zoomRef = useRef<ReturnType<typeof attachScoreZoom> | null>(null)
+  const [zoomed, setZoomed] = useState(false)
   useEffect(() => {
     const paper = paperRef.current
-    if (paper) return attachScoreZoom(paper)
+    setZoomed(false)
+    if (!paper) return
+    const zoom = attachScoreZoom(paper, scale => setZoomed(scale !== 1))
+    zoomRef.current = zoom
+    return () => {
+      zoom.destroy()
+      zoomRef.current = null
+    }
   }, [scoreId])
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
@@ -739,6 +748,11 @@ export function ScoreRenderer({
           if (!event.currentTarget.contains(event.relatedTarget)) onPaperBlur?.()
         }}
       />
+      {zoomed && <div className="score-zoom-actions">
+        <button type="button" className="control-button score-zoom-reset" onClick={() => zoomRef.current?.reset()}>
+          恢复原始大小
+        </button>
+      </div>}
       {message && <p className="render-message">{message}</p>}
     </section>
   )

@@ -13,22 +13,43 @@ for (const [notation, mode] of ['movable', 'staff'].flatMap(notation =>
     }, { mode, notation })
     await page.goto('/scores/local-zoom-test')
     const paper = page.locator('.score-paper')
+    const reset = page.getByRole('button', { name: '恢复原始大小' })
+    await expect(reset).toHaveCount(0)
     const svg = paper.locator('svg').first()
     await expect(svg).toBeVisible()
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
     if (mode === 'paged') await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
+    if (notation === 'movable' && mode === 'paged') {
+      await expect.poll(() => svg.getAttribute('viewBox')).not.toMatch(/^0 0 640 /)
+      await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    }
     const before = await svg.boundingBox()
     const markup = await svg.evaluate(element => element.outerHTML)
     await svg.evaluate(element => { element.setAttribute('data-zoom-original', '') })
     await page.mouse.move(before!.x + before!.width / 2, before!.y + Math.min(100, before!.height / 2))
     await page.mouse.wheel(0, -150)
     await expect.poll(async () => (await svg.boundingBox())!.width).toBeGreaterThan(before!.width * 1.2)
+    await expect(reset).toBeInViewport()
     await expect(svg).toHaveAttribute('data-zoom-original', '')
     expect(await svg.evaluate(element => { element.removeAttribute('data-zoom-original'); return element.outerHTML })).toBe(markup)
     await page.keyboard.down('Control')
     await page.mouse.wheel(0, 150)
     await page.keyboard.up('Control')
     await expect.poll(async () => Math.abs((await svg.boundingBox())!.width - before!.width)).toBeLessThan(1)
+    await expect(reset).toHaveCount(0)
+    for (const [deltaY, scale] of [[-200, 2], [200, 0.5]]) {
+      await paper.evaluate((element, deltaY) => {
+        const bounds = element.getBoundingClientRect()
+        for (let i = 0; i < 10; i++) element.dispatchEvent(new WheelEvent('wheel', {
+          deltaY, clientX: bounds.left + 50, clientY: bounds.top + 50, cancelable: true,
+        }))
+      }, deltaY!)
+      await expect.poll(async () => Math.abs((await svg.boundingBox())!.width / before!.width - scale!)).toBeLessThan(0.01)
+      await expect(reset).toBeInViewport()
+      await reset.click()
+      await expect(reset).toHaveCount(0)
+      await expect.poll(async () => Math.abs((await svg.boundingBox())!.width - before!.width)).toBeLessThan(1)
+    }
   })
 }
 
@@ -52,7 +73,7 @@ test('touch pinch scales only the score and leaves single-finger scrolling avail
   const session = await context.newCDPSession(page)
   const y = before!.y + 100
   await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 130, y, id: 1 }, { x: 230, y, id: 2 }] })
-  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 80, y, id: 1 }, { x: 280, y, id: 2 }] })
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 30, y, id: 1 }, { x: 330, y, id: 2 }] })
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await expect.poll(async () => (await svg.boundingBox())!.width).toBeGreaterThan(before!.width * 1.8)
   expect(await page.evaluate(() => visualViewport!.scale)).toBe(1)
@@ -63,5 +84,10 @@ test('touch pinch scales only the score and leaves single-finger scrolling avail
   }
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(scrollBefore)
+  const reset = page.getByRole('button', { name: '恢复原始大小' })
+  await expect(reset).toBeInViewport()
+  await reset.tap()
+  await expect(reset).toHaveCount(0)
+  await expect.poll(async () => Math.abs((await svg.boundingBox())!.width - before!.width)).toBeLessThan(1)
   await context.close()
 })
