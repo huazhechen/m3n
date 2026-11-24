@@ -4,13 +4,25 @@ import type { NativeInk } from './native-ink.js'
 type Point = { x: number; y: number }
 
 /** Bernstein coefficients for the linear, quadratic and cubic edges we draw. */
-function curvePoint(points: Point[], t: number): Point {
+function curveCoordinate(points: Point[], t: number, coordinate: 'x' | 'y'): number {
   const u = 1 - t
-  const weights = points.length === 2 ? [u, t] : points.length === 3 ? [u * u, 2 * u * t, t * t]
-    : [u ** 3, 3 * u * u * t, 3 * u * t * t, t ** 3]
-  let x = 0, y = 0
-  for (let index = 0; index < points.length; index++) { x += points[index]!.x * weights[index]!; y += points[index]!.y * weights[index]! }
-  return { x, y }
+  // Preserve the original Bernstein evaluation order, computing only the
+  // coordinate requested by the inverse search. No weights or point objects.
+  let value = 0
+  if (points.length === 2) {
+    value += points[0]![coordinate] * u
+    value += points[1]![coordinate] * t
+  } else if (points.length === 3) {
+    value += points[0]![coordinate] * (u * u)
+    value += points[1]![coordinate] * (2 * u * t)
+    value += points[2]![coordinate] * (t * t)
+  } else {
+    value += points[0]![coordinate] * (u ** 3)
+    value += points[1]![coordinate] * (3 * u * u * t)
+    value += points[2]![coordinate] * (3 * u * t * t)
+    value += points[3]![coordinate] * (t ** 3)
+  }
+  return value
 }
 
 /** Vertical slice of a closed ribbon whose individual edges are monotone in x.
@@ -35,15 +47,16 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number,
     const forward = start.x < command.x
     for (let iteration = 0; iteration < 32; iteration++) {
       const t = (low + high) / 2
-      if ((curvePoint(points, t).x < x) === forward) low = t
+      if ((curveCoordinate(points, t, 'x') < x) === forward) low = t
       else high = t
     }
     const t = x === start.x ? 0 : x === command.x ? 1 : (low + high) / 2
-    if (!slopes) { edges.push({ y: curvePoint(points, t).y, slope: 0 }); continue }
+    if (!slopes) { edges.push({ y: curveCoordinate(points, t, 'y'), slope: 0 }); continue }
     const degree = points.length - 1
     const derivatives = points.slice(1).map((point, i) => ({ x: degree * (point.x - points[i]!.x), y: degree * (point.y - points[i]!.y) }))
-    const derivative = derivatives.length === 1 ? derivatives[0]! : curvePoint(derivatives, t)
-    edges.push({ y: curvePoint(points, t).y, slope: derivative.y / derivative.x })
+    const dx = derivatives.length === 1 ? derivatives[0]!.x : curveCoordinate(derivatives, t, 'x')
+    const dy = derivatives.length === 1 ? derivatives[0]!.y : curveCoordinate(derivatives, t, 'y')
+    edges.push({ y: curveCoordinate(points, t, 'y'), slope: dy / dx })
   }
   if (!edges.length) return undefined
   const top = Math.min(...edges.map(edge => edge.y)), bottom = Math.max(...edges.map(edge => edge.y))

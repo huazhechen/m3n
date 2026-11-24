@@ -24,8 +24,10 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
     const group = previous?.end === begin && entries[previous.begin]!.measure.part === measure.part ? previous.group : begin
     spans.push({ begin, end, ending, group }); begin = end
   }
+  if (!spans.length) return
   const halfBody = nativeNoteBody(measurer).width / 2
   for (const system of systems) {
+    if (!system.measures.some(measure => measure.source.ending)) continue
     const lane = system.lanes.find(lane => lane.id === 'melody')
     if (!lane) continue
     // Measure numbers sit outside the ending, so they must not lift its roof.

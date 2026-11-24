@@ -18,6 +18,8 @@ describe('prepared export layouts', () => {
     expect(prepared.quality).toEqual(quality)
     expect(timings.layoutTrials).toBeGreaterThan(0)
     expect(timings.projectionMs).toBeGreaterThanOrEqual(0)
+    for (const name of ['scoreProjectionMs', 'headerGeometryMs', 'relationsMs', 'voltasMs', 'lyricsPlacementMs'])
+      expect(timings[name]).toBeGreaterThanOrEqual(0)
     expect(prepared.pageCount).toBe(paged.length)
     expect(prepared.continuousHeight()).toBe(Number(/^<svg\b[^>]*\bheight="([^"]+)"/.exec(fresh(false)[0]!)![1]))
     expect(prepared.renderPaged()).toEqual(paged)

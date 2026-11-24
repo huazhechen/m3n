@@ -14,7 +14,7 @@ import type { TextMeasurer } from './native-measure.js'
 export type NativeRelationLayout = { svg: string; ink: NativeInk; arc?: NativeArc }
 class NativeRelationPainter extends NativeSymbols {
   constructor(measurer: TextMeasurer, private readonly systems: readonly NativeSystem[]) { super(measurer) }
-  relation(relation: NativeRelation, system: NativeSystem): string {
+  relation(relation: NativeRelation, system: NativeSystem, preparedArc?: NativeArc): string {
     const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === relation.first.lane)
     const lane = system.lanes.find(lane => lane.id === relation.first.lane)
     if (!members.length || !lane) return ''
@@ -39,7 +39,7 @@ class NativeRelationPainter extends NativeSymbols {
         + this.text(')', last.x + right + nativeStyle.music * 0.05, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role })
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
-      const arc = nativeArcGeometry(relation, system)
+      const arc = preparedArc ?? nativeArcGeometry(relation, system)
       return `<path${attrs({ d: nativeArcPath(arc), fill: '#000', transform: 'translate(0 0)', 'data-m3n-relation': relation.kind })}/>`
     }
     if (relation.kind === 'cresc' || relation.kind === 'decres') {
@@ -62,7 +62,9 @@ class NativeRelationPainter extends NativeSymbols {
 /** Cache the final geometry, after clearing actual overlapping painted regions. */
 export function placeNativeRelation(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer, systems: readonly NativeSystem[] = [system]): NativeRelationLayout {
   const painter = new NativeRelationPainter(measurer,systems)
-  let svg = painter.relation(relation, system), ink = nativeSvgInk(svg, measurer)
+  const isArc = relation.kind === 'tie' || relation.kind === 'slur'
+  const initialArc = isArc ? nativeArcGeometry(relation, system) : undefined
+  let svg = painter.relation(relation, system, initialArc), ink = nativeSvgInk(svg, measurer)
   let placedArc: NativeArc | undefined
   if (relation.kind !== 'inst') {
     const obstacles = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -76,9 +78,6 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane)
       .flatMap(label => nativeSvgPieces(label.svg, measurer))
       .filter(label => label.right > ink.left && label.left < ink.right)
-    const bars = system.measures.flatMap((_, index) =>
-      nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
-    const isArc = relation.kind === 'tie' || relation.kind === 'slur'
     const blockers = relation.kind === 'tuplet' ? [...previous, ...labels] : [...obstacles, ...controls, ...previous, ...labels]
     const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
     // Continuations reach the system boundary and therefore also cover bars.
@@ -91,7 +90,9 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     }
     let dy = isArc ? 0 : Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
     if (isArc) {
-      const arc = nativeArcGeometry(relation, system)
+      const arc = initialArc!
+      const bars = system.measures.flatMap((_, index) =>
+        nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
       const pieces = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
         .filter(g => g.lane === relation.first.lane)
         .flatMap(g => [

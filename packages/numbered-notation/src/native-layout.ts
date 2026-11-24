@@ -199,6 +199,9 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     timings[name] = (timings[name] ?? 0) + now - stageStarted
     stageStarted = now
   }
+  const recordPart = (name: string, since: number) => {
+    if (timings) timings[name] = (timings[name] ?? 0) + performance.now() - since
+  }
   if (timings) timings.layoutTrials = (timings.layoutTrials ?? 0) + 1
   validate(supplied)
   if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
@@ -217,9 +220,13 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     if (context) measurer = new CanvasTextMeasurer(context, timings)
   }
   measurer ??= new DefaultTextMeasurer()
+  const projectionStarted = timings ? performance.now() : 0
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
+  recordPart('scoreProjectionMs', projectionStarted)
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
+  const headerStarted = timings ? performance.now() : 0
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options)
+  recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
   record('projectionMs')
   measureNativeHorizontal(projection.measures, options)
@@ -286,6 +293,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     relationBounds.set(system, regions)
   }
   for (const system of systems) placeNativeBarLabels(system, relationBounds.get(system)!, measurer, Boolean(options.measureNumbers), options.width)
+  const relationsStarted = timings ? performance.now() : 0
   // Populate peers before measuring any relation; adjacent groups share height.
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
@@ -315,6 +323,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       }
     }
   }
+  recordPart('relationsMs', relationsStarted)
   // Single-note marks already belong to the measured note and its arc port.
   // Dynamics and expression text clear relations outside that local stack.
   const symbols = new NativeSymbols(measurer)
@@ -342,7 +351,9 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     relationBounds.set(system, regions)
   }
   // Endings share measured geometry across wrapping and pagination.
+  const voltasStarted = timings ? performance.now() : 0
   placeNativeVoltas(systems, relationBounds, measurer, options.width)
+  recordPart('voltasMs', voltasStarted)
   // Place chord names before local descriptions and section headings.
   for (const system of systems) {
     const regions = relationBounds.get(system) ?? []
@@ -350,7 +361,9 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     placeNativeAnnotations(system, regions, measurer, options.width, margin, false)
   }
   for (const system of systems) placeNativeNavigation(system)
+  const lyricsStarted = timings ? performance.now() : 0
   for (const system of systems) for (const lane of system.lanes) placeNativeLyrics(system, lane, measurer)
+  recordPart('lyricsPlacementMs', lyricsStarted)
   for (const system of systems) {
     const hasHeading = system.measures.some(measure => measure.columns.some(column => column.glyphs.some(glyph => glyph.event?.sectionLabelBreakAfter)))
     const coreTops = hasHeading ? new Map([...nativeLanePieces(system, measurer, true)]
