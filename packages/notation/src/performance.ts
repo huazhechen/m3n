@@ -60,12 +60,13 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     if (result.tempos.at(-1)!.qpm !== tempo) result.tempos.push({ beat, qpm: tempo })
     if (result.meters.at(-1)!.count !== meter.count || result.meters.at(-1)!.unit !== meter.unit) result.meters.push({ beat, ...meter })
   }
-  const trills = new Map<PerformanceNote, { start: number; upper: number }>()
+  type Ornament = { kind: 'tr' | 'prall'; start: number; upper: number }
+  const ornaments = new Map<PerformanceNote, Ornament[]>()
   let partStart = 0
   let firstMeasure = true
   for (const [partName, part] of unfolded.parts) {
     const pitches = { melody: resolveScorePitches(part.melody), bass: resolveScorePitches(part.bass) }
-    const trillPitches = { melody: resolveScoreTrillPitches(part.melody), bass: resolveScoreTrillPitches(part.bass) }
+    const upperPitches = { melody: resolveScoreTrillPitches(part.melody), bass: resolveScoreTrillPitches(part.bass) }
     const pendingTies = { melody: new Map<number, { note: PerformanceNote; target: string | undefined }>(), bass: new Map<number, { note: PerformanceNote; target: string | undefined }>() }
     let measureStart = partStart
     for (let index = 0; index < Math.max(part.melody.length, part.bass.length); index++) {
@@ -101,10 +102,14 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
           const addNote = (token: string, slot: number, start: number, end: number, outgoing: boolean) => {
             if (token === '0') return
             const pitch = midiPitch(resolved[slot]!)
-            const markTrill = (note: PerformanceNote) => {
-              if (event.postfixes.includes('tr') && !trills.has(note)) {
-                trills.set(note, { start, upper: midiPitch(trillPitches[staff].get(event)![slot]!) })
-              }
+            const markOrnament = (note: PerformanceNote) => {
+              const kind = event.postfixes.includes('tr') ? 'tr' : event.postfixes.includes('prall') ? 'prall' : undefined
+              if (!kind) return
+              const marks = ornaments.get(note) ?? []
+              // Repeated trill marks continue the current trill; each prall is a new turn.
+              if (kind === 'tr' && marks.at(-1)?.kind === 'tr') return
+              marks.push({ kind, start, upper: midiPitch(upperPitches[staff].get(event)![slot]!) })
+              ornaments.set(note, marks)
             }
             const tied = previous.get(pitch)
             const internal = event.kind === 'tuplet' && event.tupletTies?.includes(slot - 1) ? previousTupletNote : undefined
@@ -118,12 +123,12 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
               const note = { start, end, pitch, channel, velocity: 64 }
               result.notes.push(note)
               previousTupletNote = note
-              markTrill(note)
+              markOrnament(note)
               if (outgoing) next.set(pitch, { note, target: tieTargets.get(xmlId) })
               return
             }
             previousTupletNote = tied.note
-            markTrill(tied.note)
+            markOrnament(tied.note)
             if (outgoing) next.set(pitch, { note: tied.note, target: tieTargets.get(xmlId) })
           }
           if (event.kind !== 'rest') {
@@ -170,19 +175,24 @@ export function compileScorePerformance(document: ScoreDocument): ScorePerforman
     }
     partStart = measureStart
   }
-  // Expand after tie merging so a trill continues over the entire tied sustain.
-  // Use roughly 32nd-note attacks, starting and ending on the principal pitch.
+  // Expand after tie merging so ornaments retain the full tied sustain.
   result.notes = result.notes.flatMap(note => {
-    const trill = trills.get(note)
-    if (!trill) return [note]
-    const duration = note.end - trill.start
-    const count = Math.max(3, Math.round(duration * 8) | 1)
-    const notes: PerformanceNote[] = note.start < trill.start ? [{ ...note, end: trill.start }] : []
-    for (let index = 0; index < count; index++) {
-      notes.push({ ...note, pitch: index % 2 ? trill.upper : note.pitch,
-        start: trill.start + duration * index / count,
-        end: index === count - 1 ? note.end : trill.start + duration * (index + 1) / count })
-    }
+    const marks = ornaments.get(note)
+    if (!marks) return [note]
+    const notes: PerformanceNote[] = note.start < marks[0]!.start ? [{ ...note, end: marks[0]!.start }] : []
+    marks.forEach((mark, slot) => {
+      const end = marks[slot + 1]?.start ?? note.end
+      const duration = end - mark.start
+      // A prall makes one quick upper turn, then sustains the principal.
+      // Short hosts divide into thirds; longer hosts use two 32nd-note attacks.
+      const count = mark.kind === 'prall' ? 3 : Math.max(3, Math.round(duration * 8) | 1)
+      const step = mark.kind === 'prall' ? Math.min(1 / 8, duration / 3) : duration / count
+      for (let index = 0; index < count; index++) {
+        notes.push({ ...note, pitch: index % 2 ? mark.upper : note.pitch,
+          start: mark.start + step * index,
+          end: index === count - 1 ? end : mark.start + step * (index + 1) })
+      }
+    })
     return notes
   })
   result.beats = partStart

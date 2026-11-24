@@ -134,6 +134,51 @@ describe('native performance compiler', () => {
     expect(result.notes[2]!.end).toBe(0.125)
     expect(result.notes[6]!.end).toBe(2.125)
   })
+  it('plays one upper turn for pralls and sustains the remaining duration', () => {
+    const result = compile('{4/4}\nN: 1{prall} 3^.{prall} |||')
+    expect(result.notes.map(note => [note.pitch, note.start, note.end])).toEqual([
+      [60, 0, .125], [62, .125, .25], [60, .25, 1],
+      [64, 1, 1.125], [65, 1.125, 1.25], [64, 1.25, 4],
+    ])
+    expect(result.elements.map(element => [element.start, element.end])).toEqual([[0, 1], [1, 4]])
+    expect(result.beats).toBe(4)
+  })
+  it.each([
+    ['{key=F}\nN: 3{prall}', 69, 70],
+    ['N: 2# 1{prall}', 60, 63],
+    ['N: 2# | 1{prall}', 60, 62],
+    ['N: {8va}7d{prall}{/}', 71, 72],
+  ])('resolves prall auxiliaries in %s', (source, principal, upper) => {
+    expect(compile(source).notes.slice(-3).map(note => note.pitch)).toEqual([principal, upper, principal])
+  })
+  it('bounds short pralls and plays them on each repeat', () => {
+    const result = compile('{2/4}\nN: ||: (((1{prall}))) 2... :||')
+    expect(result.notes).toHaveLength(8)
+    expect(result.notes.slice(0, 3).map(note => note.pitch)).toEqual([60, 62, 60])
+    expect(result.notes[2]!.end).toBe(.125)
+    expect(result.notes[6]!.end).toBe(2.125)
+    expect(result.notes.every(note => note.end > note.start)).toBe(true)
+    expect(result.beats).toBe(4)
+  })
+  it('plays pralls at their written tie onsets and holds through unmarked ties', () => {
+    const result = compile('{4/4}\nN: 1~ 1~{prall} 1~ 1{prall} |||')
+    expect(result.notes.map(note => [note.pitch, note.start, note.end])).toEqual([
+      [60, 0, 1], [60, 1, 1.125], [62, 1.125, 1.25], [60, 1.25, 3],
+      [60, 3, 3.125], [62, 3.125, 3.25], [60, 3.25, 4],
+    ])
+  })
+  it('plays pralls on chord tones and bass after grace notes and arpeggios', () => {
+    const result = compile('{2/4}\nN: [135:h]{prall}{arp}{ac(7d)} 0 |||\nB: 7d{prall} 0 |||')
+    expect(result.notes[0]).toMatchObject({ pitch: 59, channel: 0, start: 0, end: 1 / 16 })
+    for (const [pitch, upper, start] of [[60, 62, 1 / 16], [64, 65, 2 / 16], [67, 69, 3 / 16]]) {
+      const notes = result.notes.filter(note => note.channel === 0 && note.start! >= start! && note.start! <= start! + .25)
+      expect(notes).toContainEqual(expect.objectContaining({ pitch, start }))
+      expect(notes).toContainEqual(expect.objectContaining({ pitch: upper, start: start! + .125 }))
+      expect(result.notes).toContainEqual(expect.objectContaining({ pitch, start: start! + .25, end: 1 }))
+    }
+    expect(result.notes.filter(note => note.channel === 1).map(note => note.pitch)).toEqual([59, 60, 59])
+    expect(result.notes.every(note => note.end > note.start && note.velocity === 64)).toBe(true)
+  })
   it('does not read or mutate source text and is deterministic', () => {
     const document = parseM3NDocument('{2/4}\nN: ||: 1 2 :||')
     const original = structuredClone(document)
