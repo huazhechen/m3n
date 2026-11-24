@@ -39,5 +39,5 @@ it.each(['|', '||', '|||', ':||'])('aligns the white-backed number to the painte
   const [background, text] = nativeSvgPieces(number.svg, measurer)
   expect(background).toEqual(text)
   expect(text!.right).toBeCloseTo(barInk.right, 4)
-  expect(text!.bottom).toBeCloseTo(barInk.top, 4)
+  expect(text!.bottom).toBeCloseTo(barInk.top - 2, 4)
 })

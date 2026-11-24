@@ -116,7 +116,7 @@ export function arrangeStaffSystem(
           const barInk = union(bars.flatMap((bar) => geometry.pieces(bar)))
           const ink = geometry.ink(number)
           number.children.unshift(element('rect', { x: String(ink.left), y: String(ink.top), width: String(ink.right - ink.left), height: String(ink.bottom - ink.top), fill: '#fff' }))
-          translate(number, barInk.right - ink.right, barInk.top - ink.bottom)
+          translate(number, barInk.right - ink.right, barInk.top - 2 / scale - ink.bottom)
         }
     }
   }

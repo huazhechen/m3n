@@ -46,7 +46,7 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
         raw = painter.text(text, bar.x + dx, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
         ink = nativeSvgInk(raw, measurer)
       }
-      const y = (rightAligned ? barInk.top : top - nativeStyle.music * 0.12) - ink.bottom
+      const y = (rightAligned ? barInk.top - 2 : top - nativeStyle.music * 0.12) - ink.bottom
       if (rightAligned) {
         lane.top = Math.max(lane.top, -(y + ink.top))
         raw = `<rect x="${n(ink.left)}" y="${n(ink.top)}" width="${n(ink.right - ink.left)}" height="${n(ink.bottom - ink.top)}" fill="#fff"/>${raw}`

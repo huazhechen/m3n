@@ -50,7 +50,7 @@ describe('measured native volta fragments', () => {
     if (measureNumbers) {
       const number = system.decorationLayout!.find(decoration => decoration.svg.includes('>2</text>'))!
       const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
-      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top, 4)
+      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top - 2, 4)
     }
   })
 
@@ -67,7 +67,7 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
       const number = system.decorationLayout?.find(label => label.svg.includes('data-m3n-role="measure-number"'))
       if (!ending || !number) continue
       const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
-      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top, 4)
+      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top - 2, 4)
       expect(number.svg).toContain('fill="#fff"')
       checked++
     }
