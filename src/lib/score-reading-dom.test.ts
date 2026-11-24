@@ -2,28 +2,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { describeAccessibleScore } from './score-accessibility'
-import { attachScoreReading, currentReadingMeasure, focusScoreMeasure, preserveScoreReading, rememberScorePosition, resumeScoreReading, updateScoreReadingStatus } from './score-reading-dom'
+import { attachScoreReading, currentReadingMeasure, focusScoreMeasure, preserveScoreReading, resumeScoreReading } from './score-reading-dom'
 
 describe('reading text attached to music geometry', () => {
-  it('keeps reading position independent from playing and editing status', () => {
-    const paper = document.createElement('div')
-    paper.innerHTML = '<svg><g data-reading-measure="bar-1" data-reading-label="第1小节"><g data-reading-event="event-1" data-reading-source="event-1" data-reading-label="哆" /></g><g data-reading-measure="bar-2" data-reading-label="第2小节" /></svg>'
-    const first = paper.querySelector('[data-reading-event]')!
-    const other = paper.querySelector('[data-reading-measure="bar-2"]')!
-    rememberScorePosition(paper, first)
-    other.classList.add('is-playing-measure', 'is-cursor-active-measure')
-    updateScoreReadingStatus(other)
-    updateScoreReadingStatus(other)
-    expect(other.getAttribute('aria-label')).toBe('第2小节；正在播放；编辑选中')
-    expect(other.getAttribute('aria-current')).toBe('true')
-    expect(currentReadingMeasure(paper)).toBe('bar-1')
-    expect(paper.querySelector('[data-reading-current]')!.getAttribute('data-reading-measure')).toBe('bar-1')
-    other.classList.remove('is-playing-measure')
-    updateScoreReadingStatus(other)
-    expect(other.getAttribute('aria-label')).toBe('第2小节；编辑选中')
-    expect(other.hasAttribute('aria-current')).toBe(false)
-  })
-
   it('restores the focused note after reflow and preserves outside control focus', () => {
     const paper = document.createElement('div')
     const control = document.createElement('button')

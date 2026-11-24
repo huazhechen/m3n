@@ -113,13 +113,30 @@ test('editor selection and playback keep their visual colors without focusing hi
   await measure.locator('summary').click()
   const text=await measure.locator('p').textContent()
   const transport=page.getByRole('group',{name:'乐谱控制',exact:true})
+  // Observe every mutation so a brief per-note aria-current update cannot escape
+  // a snapshot assertion. Playback and editing highlights must stay visual.
+  await paper.evaluate(root=>{
+    const mutations: string[]=[]
+    const observer=new MutationObserver(records=>{
+      mutations.push(...records.map(record=>record.attributeName!))
+    })
+    observer.observe(root,{subtree:true,attributes:true,attributeFilter:['aria-current','aria-label']})
+    Object.assign(root,{readingMutations:mutations,readingObserver:observer})
+  })
   await transport.getByRole('button',{name:'播放',exact:true}).click()
-  await expect(notes.first()).toHaveAttribute('aria-current','true',{timeout:15000})
+  await expect(notes.first()).toHaveClass(/is-playing/,{timeout:15000})
   await expect.poll(()=>notes.first().locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(184, 130, 0)')
   await expect(transport.getByRole('button',{name:'暂停',exact:true})).toBeFocused()
   await expect(measure).toHaveAttribute('open','')
   await expect(measure.locator('p')).toHaveText(text!)
+  await expect(notes.nth(1)).toHaveClass(/is-playing/)
+  await expect(paper.locator('[aria-current]')).toHaveCount(0)
   await transport.getByRole('button',{name:'暂停',exact:true}).click()
+  expect(await paper.evaluate(root=>{
+    const observed=root as HTMLElement & {readingMutations:string[];readingObserver:MutationObserver}
+    observed.readingObserver.disconnect()
+    return observed.readingMutations
+  })).toEqual([])
 })
 
 test('closed reader leaves the visual score layout unchanged and remains accessible',async({page})=>{

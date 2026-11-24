@@ -11,18 +11,6 @@ const readingState = (paper: HTMLElement) => {
   return state
 }
 
-export function updateScoreReadingStatus(element: Element) {
-  const base = element.getAttribute('data-reading-label')
-  if (!base) return
-  const playing = element.matches('.is-playing, .is-playing-measure')
-  const editing = element.matches('.is-cursor-active, .is-cursor-active-measure')
-  const status = [playing && '正在播放', editing && '编辑选中'].filter(Boolean)
-  const label = [base, ...status].join('；')
-  if (element.getAttribute('aria-label') !== label) element.setAttribute('aria-label', label)
-  if (playing && element.getAttribute('aria-current') !== 'true') element.setAttribute('aria-current', 'true')
-  else if (!playing && element.hasAttribute('aria-current')) element.removeAttribute('aria-current')
-}
-
 function resolvePosition(paper: HTMLElement, position?: ReadingPosition) {
   if (!position) return null
   const notes = [...paper.querySelectorAll<SVGGElement>('[data-reading-event]')]

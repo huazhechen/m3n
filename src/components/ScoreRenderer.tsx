@@ -2,7 +2,6 @@ import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '..
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
 import { ScoreAccessibleText } from './ScoreAccessibleText'
-import { updateScoreReadingStatus } from '../lib/score-reading-dom'
 import { PlaybackLoadingDialog } from './PlaybackLoadingDialog'
 import { ResourceLoadingDialog } from './ResourceLoadingDialog'
 import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
@@ -350,22 +349,18 @@ export function ScoreRenderer({
     const paper = paperRef.current
     paper?.querySelectorAll('.is-cursor-active').forEach((element) => {
       element.classList.remove('is-cursor-active')
-      updateScoreReadingStatus(element)
     })
     paper?.querySelectorAll('.is-cursor-active-measure').forEach((measure) => {
       measure.classList.remove('is-cursor-active-measure')
-      updateScoreReadingStatus(measure)
     })
     const xmlId = onNoteClick ? activeXmlId ?? selectedXmlId : null
     const element = xmlId ? queryScoreElement(paper, xmlId) : null
     if (element) {
       element.classList.add('is-cursor-active')
-      updateScoreReadingStatus(element)
       const measure = element.closest<SVGGElement>('g.measure')
       if (measure) {
         addMeasureHighlight(measure, 'measure-cursor-highlight')
         measure.classList.add('is-cursor-active-measure')
-        updateScoreReadingStatus(measure)
       }
     }
   }, [activeXmlId, isRendering, selectedXmlId, onNoteClick])
@@ -373,14 +368,12 @@ export function ScoreRenderer({
   const clearPlaybackHighlight = () => {
     highlightedElementsRef.current.forEach((element) => {
       element.classList.remove('is-playing')
-      updateScoreReadingStatus(element)
     })
     highlightedElementsRef.current = []
     paperRef.current?.querySelectorAll('.startup-beat-highlight').forEach(element => element.remove())
     startupBeatRef.current = null
     highlightedMeasuresRef.current.forEach((measure) => {
       measure.classList.remove('is-playing-measure')
-      updateScoreReadingStatus(measure)
     })
     highlightedMeasuresRef.current = []
     onActiveXmlId?.(null)
@@ -389,7 +382,6 @@ export function ScoreRenderer({
   const highlightMeasure = (measure: SVGGElement) => {
     addMeasureHighlight(measure, 'measure-playback-highlight')
     measure.classList.add('is-playing-measure')
-    updateScoreReadingStatus(measure)
   }
 
   stopPlaybackRef.current = () => {
@@ -417,19 +409,16 @@ export function ScoreRenderer({
     highlightedElementsRef.current.forEach((element) => {
       if (!elements.includes(element)) {
         element.classList.remove('is-playing')
-        updateScoreReadingStatus(element)
       }
     })
     elements.forEach((element) => {
       element.classList.add('is-playing')
-      updateScoreReadingStatus(element)
     })
     highlightedElementsRef.current = elements
     const measures = [...new Set(elements.map((element) => element.closest<SVGGElement>('g.measure')).filter((measure): measure is SVGGElement => Boolean(measure)))]
     highlightedMeasuresRef.current.forEach((measure) => {
       if (!measures.includes(measure)) {
         measure.classList.remove('is-playing-measure')
-        updateScoreReadingStatus(measure)
       }
     })
     measures.forEach(highlightMeasure)
