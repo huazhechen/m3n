@@ -39,7 +39,16 @@ function prepareSystemRelations(document: StaffDocument) {
   const intervalEndpoints = new Set<string>()
   for (const { start, end } of [...intervals, ...ties]) { endpoints.add(start.id); endpoints.add(end.id) }
   for (const { start, end } of intervals) { intervalEndpoints.add(start.id); intervalEndpoints.add(end.id) }
-  return { intervals, ties, endpoints, intervalEndpoints }
+  const endingRanges = new Map<string, { start: string; index: number }>()
+  let range: { start: string; index: number } | undefined, rangeCount = 0
+  let previousEnding: string | undefined
+  for (const measure of document.measures) {
+    const ending = measure.source.ending
+    if (ending && ending !== previousEnding) range = { start: measure.id, index: ++rangeCount }
+    if (ending && range) endingRanges.set(measure.id, range)
+    previousEnding = ending
+  }
+  return { intervals, ties, endpoints, intervalEndpoints, endingRanges }
 }
 
 function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number], slot?: number): Record<string, string> {
@@ -65,7 +74,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   if (preparation && !plans) { plans = new WeakMap(); relationPlans.set(preparation, plans) }
   let relations = plans?.get(document)
   if (!relations) { relations = prepareSystemRelations(document); plans?.set(document, relations) }
-  const { intervals, ties, endpoints, intervalEndpoints } = relations
+  const { intervals, ties, endpoints, intervalEndpoints, endingRanges } = relations
   const lineOf = new Map<string, number>()
   lines.forEach((line, i) => line.measures.forEach(m => {
     for (const lane of [m.measure.melody, m.measure.bass]) for (const e of lane) {
@@ -191,10 +200,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const start = index
         while (index < line.measures.length && line.measures[index]!.measure.source.ending === ending) index++
         const left = start === 0 ? models[start]!.staves[0]!.getNoteStartX() : models[start]!.staves[0]!.getX() + 3, right = models[index - 1]!.staves[0]!.getX() + models[index - 1]!.staves[0]!.getWidth() - 3
-        const original = document.measures.find(m => m.source.ending === ending && m.number <= member.measure.number)
-        const first = original?.number === member.measure.number && !member.measure.id.includes('-fragment-2')
-        const globalEndings = [...new Set(document.measures.map(m => m.source.ending).filter(Boolean))]
-        const cls = `ending voltaBracket id-m3n-ending-${globalEndings.indexOf(ending) + 1}`
+        const originalId = member.measure.id.replace(/-fragment-\d+$/, '')
+        const range = endingRanges.get(originalId)!
+        const first = range.start === originalId && (!member.measure.fragment || member.measure.id.endsWith('-fragment-1'))
+        const cls = `ending voltaBracket id-m3n-ending-${range.index}`
         node.children.push(element('g', { class: cls }, [
           ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} 17 V5`, stroke: '#000', 'stroke-width': '1', fill: 'none' })] : []),
           element('path', { d: `M${left} 5 H${right}`, stroke: '#000', 'stroke-width': '1', fill: 'none' }),
