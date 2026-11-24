@@ -13,13 +13,13 @@ import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
 import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
-import { nativeHeaderGeometry } from './native-header.js'
+import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, nativeMeasureBars, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
-import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
+import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
@@ -172,6 +172,8 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
   return lines
 }
 
+type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation }
+
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
   validate(supplied)
   const cache = supplied.textMeasurementCache ?? new NumberedTextMeasurementCache()
@@ -182,9 +184,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   // custom vertical gaps must not change the horizontal line breaks.
   if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied, timings)
   const minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
+  const preparation: NativeLayoutPreparation = {header:new Map()}
   let baseline: NativeLayout
   try {
-    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 }, timings)
+    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 }, timings, preparation)
   } catch (error) {
     // Continuous engraving still supports a single row taller than A4.
     if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
@@ -197,7 +200,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     let candidate: NativeLayout
     try {
       candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer }, timings)
+        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer }, timings, preparation)
     } catch (error) {
       // Wider spacing can make a decorated row too tall for one A4 page.
       // Other layout failures remain visible instead of becoming fallbacks.
@@ -212,7 +215,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   return selected
 }
 
-function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -227,7 +230,8 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   validate(supplied)
   if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
-  const expanded = supplied.fixedDo && (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? keyedDisplayPerformance(document) : undefined
+  const expanded = preparation?.projection ? preparation.expanded
+    : supplied.fixedDo && (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
   const minimumNoteGapEm = supplied.minimumNoteGapEm ?? 0.4
   const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? 0
@@ -242,11 +246,20 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   }
   measurer ??= new DefaultTextMeasurer()
   const projectionStarted = timings ? performance.now() : 0
-  const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
+  let projection: NativeProjection
+  if (preparation?.projection) {
+    projection = cloneNativeProjection(preparation.projection)
+    if (timings) timings.projectionReuses = (timings.projectionReuses ?? 0) + 1
+  } else {
+    const measured = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
+    if (timings) timings.projectionBuilds = (timings.projectionBuilds ?? 0) + 1
+    if (preparation) { preparation.projection = measured; preparation.expanded = expanded; projection = cloneNativeProjection(measured) }
+    else projection = measured
+  }
   recordPart('scoreProjectionMs', projectionStarted)
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
   const headerStarted = timings ? performance.now() : 0
-  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options)
+  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options, preparation?.header)
   recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
   record('projectionMs')

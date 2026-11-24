@@ -281,3 +281,21 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
   }
   return result
 }
+
+/** Copy only placement state. Musical inputs and measured local geometry remain
+ * read-only; every spacing trial owns its glyphs, controls, marks and columns. */
+export function cloneNativeProjection(source: NativeProjection): NativeProjection {
+  const controls = new Map<NativeControl, NativeControl>()
+  const glyphs = new Map(source.glyphs.map(glyph => [glyph, {
+    ...glyph,
+    controls: glyph.controls.map(control => {
+      let copy = controls.get(control)
+      if (!copy) { copy = {...control}; controls.set(control,copy) }
+      return copy
+    }),
+    markLayout: glyph.markLayout?.map(mark=>({...mark})),
+  }]))
+  return {...source, diagnostics:[...source.diagnostics], glyphs:source.glyphs.map(glyph=>glyphs.get(glyph)!),
+    measures:source.measures.map(measure=>({...measure, navigation:measure.navigation?.map(mark=>({...mark})),
+      columns:measure.columns.map(column=>({...column,glyphs:column.glyphs.map(glyph=>glyphs.get(glyph)!)}))}))}
+}

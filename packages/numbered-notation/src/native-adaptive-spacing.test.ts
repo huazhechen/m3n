@@ -1,7 +1,9 @@
+import { renderNativePages } from './native-svg.js'
+import { nativeStyle } from './native-style.js'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
-import { layoutNativeScore } from './native-layout.js'
+import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js'
 import { NativeNumberedNotationScore, PreparedNumberedNotationScore } from './native-score.js'
 
 describe('page-aware automatic note spacing', () => {
@@ -53,4 +55,22 @@ describe('page-aware automatic note spacing', () => {
     expect(layoutNativeScore(document, { ...options, minimumNoteGapEm: .5 }).options.minimumNoteGapEm).toBe(.5)
     expect(() => layoutNativeScore(document, { ...options, coreGap: -1 })).toThrow('非负有限数值')
   })
+})
+
+it.each([false,true].flatMap(fixedDo=>[480,640,720].map(width=>({fixedDo,width}))))('isolates projection state between automatic spacing trials ($width, fixedDo=$fixedDo)', ({width,fixedDo}) => {
+  const source = readFileSync(new URL('../../../src/scores/valsentino_01.m3n',import.meta.url),'utf8')
+  const document = parseM3NDocument(source), before = structuredClone(document)
+  const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
+  const automatic = layoutNativeScore(document,settings,timings)
+  let reference = layoutNativeScore(document,{...settings,coreGap:nativeStyle.minimumCoreGap,minimumNoteGapEm:.4})
+  const pages = reference.pages.length
+  for (const gap of [.6,.55,.5,.45]) {
+    const trial = layoutNativeScore(document,{...settings,coreGap:nativeStyle.minimumCoreGap,minimumNoteGapEm:gap})
+    if (trial.pages.length <= pages) { reference = trial; break }
+  }
+  repaginateNativeLayout(reference,true)
+  expect(renderNativePages(automatic)).toEqual(renderNativePages(reference))
+  expect(document).toEqual(before)
+  expect(timings.projectionBuilds).toBe(1)
+  expect(timings.projectionReuses).toBe(timings.layoutTrials!-1)
 })
