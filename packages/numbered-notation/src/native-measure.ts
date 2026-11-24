@@ -8,6 +8,14 @@ export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMe
 /** Owned by one render/export task, never shared by independent tasks. */
 export class NumberedTextMeasurementCache {
   private readonly fonts = new Map<string, Map<string, TextMetrics>>()
+  private fontRevision = 0
+  get revision() { return this.fontRevision }
+  /** Internal read-only bucket; replaced when the task font set changes. */
+  readFont(font: string): ReadonlyMap<string, TextMetrics> {
+    let texts = this.fonts.get(font)
+    if (!texts) { texts = new Map(); this.fonts.set(font, texts) }
+    return texts
+  }
   private readonly symbols = new Map<string, object>()
   readSymbol<T extends object>(key: string) { return this.symbols.get(key) as T | undefined }
   writeSymbol(key: string, value: object) { this.symbols.set(key,value) }
@@ -16,12 +24,15 @@ export class NumberedTextMeasurementCache {
   write(font: string, text: string, metrics: TextMetrics) {
     let texts = this.fonts.get(font)
     if (!texts) { texts = new Map(); this.fonts.set(font, texts) }
-    texts.set(text, { ...metrics })
+    const saved = Object.freeze({ ...metrics })
+    texts.set(text, saved)
+    return saved
   }
   /** Check once per layout, including changes made by another concurrent task. */
   synchronizeFonts() {
     const faces = typeof document === 'undefined' || !document.fonts ? [] : Array.from(document.fonts)
     if (faces.length === this.faces.length && faces.every((face, i) => face === this.faces[i]!.face && face.status === this.faces[i]!.status)) return false
+    this.fontRevision++
     this.fonts.clear()
     this.symbols.clear()
     this.faces = faces.map(face => ({ face, status: face.status }))
@@ -40,9 +51,12 @@ export class DefaultTextMeasurer implements TextMeasurer {
 }
 
 export class CanvasTextMeasurer implements TextMeasurer {
+  private lastStyle?: { family: string; weight: number; size: number; italic: string; font: string }
+  private fontTexts?: ReadonlyMap<string, TextMetrics>
+  private fontRevision = -1
   private requestedFont?: string
   private appliedFont?: string
-  constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>, private readonly cache?: NumberedTextMeasurementCache) {}
+  constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>, private readonly cache?: NumberedTextMeasurementCache, private readonly shareMetrics = false) {}
   fixedSymbol<T extends object>(key: string, create: () => T): T {
     if (this.timings) this.timings.fixedSymbolRequests = (this.timings.fixedSymbolRequests ?? 0) + 1
     const saved = this.cache?.readSymbol<T>(key)
@@ -56,11 +70,26 @@ export class CanvasTextMeasurer implements TextMeasurer {
     return result
   }
   measureText(text: string, style: TextStyle): TextMetrics {
+    const metrics = this.measureShared(text, style)
+    return this.shareMetrics ? metrics : { ...metrics }
+  }
+  private measureShared(text: string, style: TextStyle): TextMetrics {
     if (this.timings) this.timings.textMeasureRequests = (this.timings.textMeasureRequests ?? 0) + 1
     const family = style.fontFamily ?? SCORE_TEXT_FONT
     const weight = style.fontWeight ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : 400)
-    const font = `${style.fontStyle ?? 'normal'} ${weight} ${style.fontSize}px ${family}`
-    const saved = this.cache?.read(font, text)
+    const italic = style.fontStyle ?? 'normal'
+    let current = this.lastStyle
+    if (!current || current.family !== family || current.weight !== weight || current.size !== style.fontSize || current.italic !== italic) {
+      current = this.lastStyle = { family, weight, size: style.fontSize, italic, font: `${italic} ${weight} ${style.fontSize}px ${family}` }
+      this.fontTexts = this.cache?.readFont(current.font)
+      this.fontRevision = this.cache?.revision ?? -1
+      if (this.timings) this.timings.textMeasureFontKeyBuilds = (this.timings.textMeasureFontKeyBuilds ?? 0) + 1
+    } else if (this.cache && this.fontRevision !== this.cache.revision) {
+      this.fontTexts = this.cache.readFont(current.font)
+      this.fontRevision = this.cache.revision
+    }
+    const font = current.font
+    const saved = this.fontTexts?.get(text)
     if (saved) {
       if (this.timings) this.timings.textMeasureCacheHits = (this.timings.textMeasureCacheHits ?? 0) + 1
       return saved
@@ -81,7 +110,6 @@ export class CanvasTextMeasurer implements TextMeasurer {
     const result = { w: Math.max(metrics.width, style.fontSize * 0.25),
       h: ascent + descent, baseline: ascent, advance: metrics.width, inkLeft: -metrics.actualBoundingBoxLeft, inkRight: metrics.actualBoundingBoxRight,
       centerOffset: (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft - metrics.width) / 2 }
-    this.cache?.write(font, text, result)
-    return result
+    return this.cache?.write(font, text, result) ?? Object.freeze(result)
   }
 }

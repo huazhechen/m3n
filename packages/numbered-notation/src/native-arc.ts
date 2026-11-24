@@ -98,7 +98,9 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
     if (command.op === 'Q') return { ...command, y: command.y - lift, cy: command.cy - lift }
     return { ...command, y: command.y - lift }
   })
-  return { commands, left, right, top: height - port + lift, height, slicer:lift>0?prepareNativeArc(commands):slicer }
+  // Keep operational preparation out of the public geometric value.
+  return Object.defineProperty({ commands, left, right, top: height - port + lift, height }, 'slicer',
+    { value: lift > 0 ? prepareNativeArc(commands) : slicer })
 }
 
 export function nativeArcPath(arc: NativeArc): string {

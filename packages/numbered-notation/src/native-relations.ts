@@ -124,7 +124,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
         if (command.op === 'Q') return { ...command, y: command.y + dy, cy: command.cy + dy }
         return { ...command, y: command.y + dy }
       }) }
-      placedArc.slicer = dy ? prepareNativeArc(placedArc.commands) : arc.slicer
+      Object.defineProperty(placedArc, 'slicer', { value: dy ? prepareNativeArc(placedArc.commands) : arc.slicer })
 
     }
     if (dy) {
