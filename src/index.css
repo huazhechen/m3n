@@ -798,7 +798,7 @@ textarea::selection {
 .score-zoom-actions {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
-  bottom: calc(var(--ui-control-size) + var(--ui-space) * 6 + env(safe-area-inset-bottom));
+  top: calc(var(--ui-toolbar-height) + var(--ui-space) * 2 + env(safe-area-inset-top));
   z-index: 4;
   display: flex;
   justify-content: flex-end;

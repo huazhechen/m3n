@@ -749,8 +749,8 @@ export function ScoreRenderer({
         }}
       />
       {zoomed && <div className="score-zoom-actions">
-        <button type="button" className="control-button score-zoom-reset" onClick={() => zoomRef.current?.reset()}>
-          恢复原始大小
+        <button type="button" className="control-button score-zoom-reset" title="恢复原始大小" aria-label="恢复原始大小" onClick={() => zoomRef.current?.reset()}>
+          复原
         </button>
       </div>}
       {message && <p className="render-message">{message}</p>}
