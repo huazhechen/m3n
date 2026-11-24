@@ -79,6 +79,17 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(document.body.children).toHaveLength(0)
   })
 
+  it('finishes installing all score fonts before measuring the first candidate', async () => {
+    layouts()
+    mocks.prepared.mockImplementation(() => {
+      expect(mocks.load).toHaveBeenCalledTimes(2)
+      expect(mocks.prepare).toHaveBeenCalledTimes(3)
+      expect(mocks.prepare.mock.calls.slice(1).map(([score]) => score.title)).toEqual(['first', 'second'])
+    })
+    const result = await buildOnlineScorebook(new AbortController().signal, () => {})
+    expect(result.measurementTimings.stages.fontPreparationMs).toBeGreaterThan(0)
+  })
+
   it('honors no-sharing anchors and keeps the automatic solo width', async () => {
     layouts(); mocks.plan.entries[0].sharePage = false
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})

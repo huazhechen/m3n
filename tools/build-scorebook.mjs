@@ -60,10 +60,12 @@ try {
   await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
   endPhase('browserSetupMs')
+  for (const entry of plan.entries) sources.set(entry.id, readFileSync(join(root, 'src/scores', entry.file), 'utf8'))
+  await page.evaluate(sources => window.scorebook.prepareSources(sources), [...sources.values()])
+  endPhase('fontPreparationMs')
   for (const [index, entry] of plan.entries.entries()) {
     const scoreStarted = performance.now()
-    const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
-    sources.set(entry.id, source)
+    const source = sources.get(entry.id)
     const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source) && item.renderCache?.strategy === widthSearchStrategy)
     const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width, auditLayout }) => {
       try { return await window.scorebook.measure(source, width, true, undefined, undefined, auditLayout) }

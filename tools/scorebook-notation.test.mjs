@@ -198,5 +198,32 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert(long.pageCount > 1)
     assert.equal(long.pageCount, long.exported)
     assert.deepEqual(long.outside, [])
+
+    // A fresh browser reproduces the book's real loading order. Overlapping
+    // CJK subsets must all be installed before measuring the opening work.
+    await page.reload()
+    await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
+    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
+    const bookSources = JSON.parse(readFileSync(join(root, 'config/scorebook/editorial-plan.json'), 'utf8')).entries
+      .map(entry => readFileSync(join(root, 'src/scores', entry.file), 'utf8'))
+    const stable = await page.evaluate(async ({ sources, basics }) => {
+      const api = window.scorebook
+      await api.prepareSources(sources)
+      const results = []
+      for (const width of [540, 640, 720]) {
+        const before = await api.measure(basics, width)
+        await api.prepareSources([...sources].reverse())
+        const after = await api.auditWidth(basics, width)
+        const exported = await api.a4Pages(basics, width)
+        results.push({ width, before: before.pageCount, after: after.pageCount, exported: exported.length, rowsBefore: before.rows, rowsAfter: after.rows })
+      }
+      return results
+    }, { sources: bookSources, basics })
+    for (const result of stable) {
+      assert.equal(result.before, result.after, `${result.width}px: later font preparation must preserve measured pages`)
+      assert.equal(result.before, result.exported, `${result.width}px: final rendering must match measurement`)
+      assert.equal(result.rowsBefore, result.rowsAfter)
+    }
+    assert.equal(stable.at(-1).exported, 3, 'The 720px opening work uses the fully prepared book fonts')
   } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
 })

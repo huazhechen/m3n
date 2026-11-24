@@ -17,6 +17,12 @@ export async function prepare(fontBase64) {
   await prepareNumberedNotationFonts()
 }
 
+/** Finish the book's font installation before any width is measured. Later
+ * overlapping CJK subsets must not change canvas metrics between songs. */
+export async function prepareSources(sources) {
+  for (const source of sources) await prepareNumberedNotationFonts(parseM3NDocument(source))
+}
+
 export async function render(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
   await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged, coreGap })
   return [...host.querySelectorAll(':scope > svg')]

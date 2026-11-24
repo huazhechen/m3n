@@ -120,18 +120,35 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
   try {
     signal.throwIfAborted()
     await prepareNumberedNotationFonts([plan.title, plan.sections.map(section => section.title), plan.entries.map(entry => entry.title), '目录'])
+    // Install every score font before measuring: later overlapping CJK subsets
+    // can otherwise alter canvas text metrics of already measured scores.
+    const documents = new Map<string, { document: ReturnType<typeof parseM3NDocument>; parseFontsMs: number }>()
+    for (const entry of plan.entries) {
+      signal.throwIfAborted()
+      onProgress({ completed: 0, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      try {
+        const preparationStarted = performance.now()
+        const source = await loadPresetScore(files.get(entry.file)!.slug)
+        signal.throwIfAborted()
+        if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
+        const document = parseM3NDocument(source)
+        await prepareNumberedNotationFonts(document)
+        documents.set(entry.file, { document, parseFontsMs: performance.now() - preparationStarted })
+      } catch (error) {
+        signal.throwIfAborted()
+        throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
+      }
+    }
+    measurementTimings.stages.fontPreparationMs = performance.now() - started
+    const measurementStarted = performance.now()
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
       const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
       progress()
       try {
         const scoreStarted = performance.now()
-        const source = await loadPresetScore(files.get(entry.file)!.slug)
-        signal.throwIfAborted()
-        if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
-        const document = parseM3NDocument(source)
-        await prepareNumberedNotationFonts(document)
-        const scoreTiming = { file: entry.file, parseFontsMs: performance.now() - scoreStarted, wallMs: 0,
+        const { document, parseFontsMs } = documents.get(entry.file)!
+        const scoreTiming = { file: entry.file, parseFontsMs, wallMs: 0,
           candidates: [] as { width: number; timings: WidthTimings }[] }
         measurementTimings.scores.push(scoreTiming)
         const prepared = new Map<number, PreparedNumberedNotationScore>()
@@ -152,14 +169,14 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
             progress(++completedWidths / widthCandidates.length)
           }
         }, { signal })
-        scoreTiming.wallMs = performance.now() - scoreStarted
+        scoreTiming.wallMs = parseFontsMs + performance.now() - scoreStarted
         entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
         signal.throwIfAborted()
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
       }
     }
-    measurementTimings.stages.measurementMs = performance.now() - started
+    measurementTimings.stages.measurementMs = performance.now() - measurementStarted
     const packingStarted = performance.now()
     onProgress({ completed: 0, total: entries.length, title: '正在安排章节与合页…', phase: 'packing' })
     await pause()

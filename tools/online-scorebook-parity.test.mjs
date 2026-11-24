@@ -44,6 +44,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
     const comparison = await page.evaluate(async ({ sources, plan }) => {
       const api = window.scorebook
+      await api.prepareSources(sources)
       const entries = [], auditedEntries = []
       for (const [index, source] of sources.entries()) {
         const { candidates } = await api.probeWidthCandidates(width => api.measure(source, width))
