@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "4c94775d0ba1caea57a940fa1c2b1e831a860d7c935df7429ccccea7a70fc659",
+  "rendererSha256": "5d4a4ecedd45a01996595f80505b009704f70ab35ebd2282d8c35fd595470dab",
   "fontManifestSha256": "0214416336592e408a04eab9ca3c85c79d8e59c26c81b538ea84d905d60516b0",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -370,7 +370,7 @@
       "fontSha256": "51d6ce59d623c97fb657e7e4598b88f515d9f97372da41dd0c5cd5b02256bfa6"
     },
     "src/scores/tong_zhuo_de_ni_01.m3n": {
-      "sourceSha256": "275c05917d7ba417e01dc11dafd39ccc5a3265e8d09b188b14d1b9453fdb009b",
+      "sourceSha256": "0effa3f48becdbcbb6124b84f164fa3868003eba7de4aff189b92b47fe51b18f",
       "font": "NotoSansSC-ff7d794c40ae5603.ttf",
       "fontSha256": "7e33b12ced6d4dc23deb57358ce585cfdd61c11c45c6b1c12b0fb9bce7336b90"
     },

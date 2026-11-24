@@ -26,6 +26,19 @@ describe('repeat planning', () => {
     expect(plan.passesByNode.get('n4')).toEqual(new Set([1]))
   })
 
+  it('ignores revisited repeats after D.S. and resumes the independent tail repeat', () => {
+    const plan = planPlayback(nodes(
+      { kind: 'section' },
+      { kind: 'section', navigation: ['segno'] },
+      { kind: 'section', repeatCount: 2, navigation: ['ds'] },
+      { kind: 'section', repeatStart: true },
+      { kind: 'section', repeatCount: 2 },
+    ))
+    expect(plan.sequence).toEqual(['n1', 'n2', 'n3', 'n1', 'n2', 'n3', 'n2', 'n3', 'n4', 'n5', 'n4', 'n5'])
+    expect(plan.passesByNode.get('n2')).toEqual(new Set([1, 2, 3]))
+    expect(plan.passesByNode.get('n4')).toEqual(new Set([1, 2]))
+  })
+
   it('stops a D.S. return at Fine before an ordinary tail', () => {
     expect(buildPlaybackSequence(nodes(
       { kind: 'section', repeatStart: true, navigation: ['segno'] },

@@ -304,7 +304,12 @@ function appendNavigationReturn(nodes: readonly PlaybackNode[], initial: string[
     .map((node) => node.id)
   const endingNodes = nodes.filter((node) => node.kind === 'ending')
   if (jumpPass === undefined || !Number.isFinite(jumpPass)) {
-    return [...initial.slice(0, played + 1), ...sections]
+    // Ignore repeats in the revisited passage, then resume ordinary repeats
+    // after the D.S./D.C. bar when continuing into previously unplayed music.
+    const revisited = nodes.slice(destination, Math.min(sectionEnd, jumpIndex + 1))
+      .filter(node => node.kind === 'section').map(node => node.id)
+    const tail = nodes.slice(Math.max(destination, jumpIndex + 1), sectionEnd)
+    return [...initial.slice(0, played + 1), ...revisited, ...expandInitialPasses(tail)]
   }
 
   // A D.S. may appear in more than one alternate ending. Continue through
