@@ -256,3 +256,7 @@ node tools/summarize-staff-width-benchmarks.mjs .tmp/staff-mainline-baseline/rou
 ```sh
 node tools/summarize-staff-width-benchmarks.mjs .tmp/staff-next/round-1.json .tmp/staff-next/round-2.json --instrument=.tmp/staff-next/instrumented.json --profile=.tmp/staff-next/profile.json --output=.tmp/staff-next/summary.json
 ```
+
+## 60秒目标的后续路线
+
+结合最新分段与实际调用职责，建议逐步建立统一数值图元层，让选宽直接消费精确墨迹，选中宽度后再生成SVG，并逐步替换VexFlow局部模型与绘图。目标预算、字体转换限制、过渡策略及验证门槛见[五线谱60秒路线](STAFF_RENDERER_PERFORMANCE_PLAN.md)。这属于下一轮设计，本轮尚未实施或测得新耗时。
