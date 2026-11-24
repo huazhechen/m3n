@@ -4,8 +4,6 @@ import { layoutNativeScore } from './native-layout.js'
 import { nativeBarSvg, nativeBarPieces, nativeBarInk, nativeMeasureBarPositions, nativeLaneBarPositions } from './native-bars.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
-import { nativeArcGeometry } from './native-arc.js'
-import { nativeArcSlice } from './native-curve.js'
 import { nativeStyle } from './native-style.js'
 
 const measurer = new DefaultTextMeasurer()
@@ -40,23 +38,16 @@ describe('measured bar obstacles', () => {
     const closing = nativeMeasureBarPositions(system.measures, 1).at(-1)!
     const first = system.decorationLayout!.find(label => label.svg.includes('>2</text>'))!
     const ink = nativeSvgInk(first.svg, measurer)
-    expect(ink.right).toBeCloseTo(closing.x, 4)
+    expect(ink.right).toBeCloseTo(nativeBarInk(closing.kind, closing.x, 0, measurer).right, 4)
     expect(system.decorationLayout!.filter(label => label.svg.includes('data-m3n-role="measure-number"'))).toHaveLength(1)
   })
-  it('clears measured bar-label ink with the arc ribbon instead of drawing through the number', () => {
-    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: {lg}1 2 3 4 | {br}5 6 7 1e{/} |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers: true })
-    const system = score.systems[0]!, relation = system.relations.find(relation => relation.kind === 'slur')!
-    const label = system.decorationLayout!.find(label => label.svg.includes('>1</text>'))!
-    const ink = nativeSvgInk(label.svg, measurer), arc = nativeArcGeometry(relation, system)
-    const placed = system.relationLayout!.get(relation)!
-    const dy = placed.ink.top + arc.top
-    // A tapered continuation can pass wholly below a high label near the
-    // bar. Require disjoint ink, rather than forcing that label inside it.
-    for (let i = 0; i <= 100; i++) {
-      const x = ink.left + (ink.right - ink.left) * i / 100
-      const slice = nativeArcSlice(arc.commands, x)
-      if (slice) expect(slice.bottom + dy <= ink.top + .001 || slice.top + dy >= ink.bottom - .001).toBe(true)
-    }
+  it('does not move slurs to avoid overlay numbers', () => {
+    const document = parseM3NDocument('{4/4}\nN: {lg}1 2 3 4 | {br}5 6 7 1e{/} |||')
+    const options = { width: 800, paged: false, textMeasurer: measurer }
+    const plain = layoutNativeScore(document, options)
+    const numbered = layoutNativeScore(document, { ...options, measureNumbers: true })
+    for (const [index, system] of plain.systems.entries())
+      expect([...numbered.systems[index]!.relationLayout!.values()]).toEqual([...system.relationLayout!.values()])
   })
   it('keeps the repeat label local when an unrelated high note raises the lane', () => {
     const plain = layout(), high = layout('1eeee')

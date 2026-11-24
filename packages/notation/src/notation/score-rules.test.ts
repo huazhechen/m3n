@@ -8,10 +8,10 @@ describe('score document rules', () => {
     expect(validateScoreDocument(parseM3NDocument(source), { source })).toEqual([])
   })
 
-  it('pairs a repeat pickup with each complementary alternate ending', () => {
+  it.each(['', '||: '])('pairs a repeat pickup with each complementary alternate ending (start: %s)', start => {
     const source = [
       '{4/4}',
-      'N: ||: 1 | 1 2 3 4 |',
+      `N: ${start}1 | 1 2 3 4 |`,
       '---V1',
       'N: 1 2 3 :||',
       '---V2,V3,V4',

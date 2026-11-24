@@ -5,7 +5,7 @@
 // Melody only; omit guitar accompaniment, intro and interlude.
 // Play=A, capo=1: concert keys Bb / Db. Keep the opening repeat; write both chorus visits in full.
 {key=Bb} {4/4} {63qpm}
-N: ||: 3 (3. (3)) (4 3) (2 1) | 3 (3. (3)) (4 3) (2 1) | (7d 1~) (1. (1)) (5 4) (3 {lg}(2 1){/}) |
+N: 3 (3. (3)) (4 3) (2 1) | 3 (3. (3)) (4 3) (2 1) | (7d 1~) (1. (1)) (5 4) (3 {lg}(2 1){/}) |
 L1: 难过是因为闷了 | 很久是因为想了 | 太多是心理起了%
 L2: 你说苦笑常常陪 | 着你在一起有点 | 勉强该不该现在%
 ---V1

@@ -68,7 +68,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
   let placedArc: NativeArc | undefined
   if (relation.kind !== 'inst') {
     const preceding = [...(system.relationLayout ?? [])].filter(([r, placed]) => r.kind !== 'inst' && r.first.lane === relation.first.lane && placed.ink.right > ink.left && placed.ink.left < ink.right)
-    const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane)
+    const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane && !label.svg.includes('data-m3n-role="measure-number"'))
       .flatMap(label => nativeSvgPieces(label.svg, measurer))
       .filter(label => label.right > ink.left && label.left < ink.right)
     let dy = 0

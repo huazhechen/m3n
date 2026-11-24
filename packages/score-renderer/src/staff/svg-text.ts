@@ -10,8 +10,7 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
     for (const system of svg.querySelectorAll('g.system')) {
       const measures = [...system.querySelectorAll('g.measure')]
       const last = measures.at(-1)
-      // Alignment is finalized before collision measurement in arrangeStaffSystem.
-      // Moving numbers here would invalidate the measured inter-system clearance.
+      // Overlay geometry is finalized in arrangeStaffSystem.
       for (const number of system.querySelectorAll('g.mNum'))
         if (!measureNumbers || number.closest('g.measure') !== last) number.remove()
     }
@@ -42,6 +41,15 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
         group.append(glyph)
       }
       text.replaceWith(group)
+    }
+    for (const number of svg.querySelectorAll('g.mNum')) {
+      const transforms: string[] = []
+      for (let parent: Element | null = number.parentElement; parent && parent !== svg; parent = parent.parentElement)
+        if (parent.hasAttribute('transform')) transforms.unshift(parent.getAttribute('transform')!)
+      const overlay = document.createElementNS(ns, 'g')
+      overlay.setAttribute('transform', transforms.join(' '))
+      overlay.append(number)
+      svg.append(overlay)
     }
   } finally { svg.remove(); host.remove() }
 }

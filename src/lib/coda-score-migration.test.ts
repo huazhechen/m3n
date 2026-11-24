@@ -39,7 +39,7 @@ it.each(baselines)('preserves every performed event and lyric after simplifying 
   } else if (name === 'hei_se_you_mo') {
     expect(houses.map(bar => bar.ending)).toEqual(['1', '2'])
     expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
-    expect(source.match(/\|\|:/g)).toHaveLength(1)
+    expect(source).not.toMatch(/\|\|:/)
     expect(source.match(/:\|\|/g)).toHaveLength(1)
   } else {
     expect(source).toContain('{tocoda}')

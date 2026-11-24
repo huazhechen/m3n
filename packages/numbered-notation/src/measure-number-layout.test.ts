@@ -31,6 +31,6 @@ describe('visible row-end measure numbers', () => {
         const bar = [...label.closest('g.system')!.querySelectorAll('g.measure')].at(-1)!.querySelector('[data-m3n-role="bar"] rect')!;
         expect(bar).not.toBeNull();
         const ink = nativeSvgInk(label.outerHTML, textMeasurer);
-        expect(ink.right).toBeCloseTo(Number(bar.getAttribute('x')) + Number(bar.getAttribute('width')) / 2, 4);
+        expect(ink.right).toBeCloseTo(Number(bar.getAttribute('x')) + Number(bar.getAttribute('width')), 4);
     });
 });

@@ -113,8 +113,10 @@ export function arrangeStaffSystem(
       const bars = findAll(measure, (n) => hasClass(n, 'barLine'))
       if (bars.length)
         for (const number of findAll(measure, (n) => hasClass(n, 'mNum'))) {
-          const right = union(bars.flatMap((bar) => geometry.pieces(bar))).right
-          translate(number, right - geometry.ink(number).right, 0)
+          const barInk = union(bars.flatMap((bar) => geometry.pieces(bar)))
+          const ink = geometry.ink(number)
+          number.children.unshift(element('rect', { x: String(ink.left), y: String(ink.top), width: String(ink.right - ink.left), height: String(ink.bottom - ink.top), fill: '#fff' }))
+          translate(number, barInk.right - ink.right, barInk.top - ink.bottom)
         }
     }
   }
@@ -220,10 +222,10 @@ export function arrangeStaffSystem(
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
     isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
-      hasClass(attachment, 'mNum') || hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
+      hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
   // heading above directions, then music. Place the outer levels last.
-  const attachments = findAll(node, (n) => isMovableDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
+  const attachments = findAll(node, (n) => isMovableDecoration(n) && !hasClass(n, 'mNum') && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
     (a, b) => placementOrder(a) - placementOrder(b),
   )
   for (const attachment of attachments) {
@@ -247,12 +249,6 @@ export function arrangeStaffSystem(
       if (local.length) dy = Math.min(...local.map(other => other.top)) - localGap - ink.bottom
     }
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - 12 / scale - ink.bottom
-    if (hasClass(attachment, 'mNum')) {
-      const endings = findAll(node, (n) => hasClass(n, 'ending'))
-        .map((ending) => geometry.ink(ending))
-        .filter((ending) => ending.right > ending.left && ending.bottom > ending.top && overlapsX(ink, ending))
-      if (endings.length) dy = Math.min(0, Math.min(...endings.map((ending) => ending.top)) - 8 / scale - ink.bottom)
-    }
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
@@ -316,9 +312,9 @@ export function arrangeStaffSystem(
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   const spacingPieces = geometry.pieces(filtered(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')))
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const edgePieces = ['ending', 'mNum'].flatMap(kind =>
+  const edgePieces = ['ending'].flatMap(kind =>
     geometry.pieces(selected(node, child => hasClass(child, kind)))
-      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'mNum' ? 4 : 2 })))
+      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: 2 })))
   return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()

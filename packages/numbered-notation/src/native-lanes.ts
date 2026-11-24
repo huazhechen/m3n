@@ -31,7 +31,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
       if (!coreOnly) for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) pieces.push(...nativeBarPieces(bar.kind, bar.x, 0, measurer))
     }
     if (includeRelations && !coreOnly) for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)
-    if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) add(decoration.svg)
+    if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id && !decoration.svg.includes('data-m3n-role="measure-number"')) add(decoration.svg)
     if (includeRelations && !coreOnly && lane.id === 'melody') for (const volta of system.voltas ?? []) add(volta.svg)
     result.set(lane.id, pieces)
   }
