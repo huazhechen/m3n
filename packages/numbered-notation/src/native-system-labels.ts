@@ -19,8 +19,7 @@ export function placeNativeNavigation(system: NativeSystem) {
   }
 }
 
-/** Bar-owned labels are measured before endings, which must clear the whole
- * bar attachment. The measure number stacks above an optional repeat count. */
+/** Repeat counts reserve space; row-end numbers overlay the bar without avoidance. */
 export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer, measureNumbers: boolean, width: number) {
   const lane = system.lanes.find(lane => lane.id === 'melody')
   if (!lane) return
@@ -32,24 +31,30 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
       ?? (next?.part === measure.part ? nativeMeasureBarPositions(system.measures, index + 1).find(bar => bar.kind === 'rptstart') : undefined)
     if (!bar) continue
     const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
-    let top = nativeBarInk(bar.kind, bar.x, 0, measurer).top
+    const barInk = nativeBarInk(bar.kind, bar.x, 0, measurer)
+    let top = barInk.top
     const place = (text: string, size: number, meta: Record<string, string>) => {
       const rightAligned = meta['data-m3n-role'] === 'measure-number'
       const anchor = rightAligned ? 'end' : 'middle'
       let raw = painter.text(text, bar.x, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
       let ink = nativeSvgInk(raw, measurer)
       // A small page margin must not clip multi-digit labels or font overhang.
-      // Measure numbers end at the bar's anchor, including serif overhang.
+      // Measure numbers end at the bar's outer painted edge.
       // Repeat counts retain centred alignment unless they leave the canvas.
-      const dx = Math.max(-ink.left, Math.min(rightAligned ? bar.x - ink.right : 0, width - ink.right))
+      const dx = Math.max(-ink.left, Math.min(rightAligned ? barInk.right - ink.right : 0, width - ink.right))
       if (dx) {
         raw = painter.text(text, bar.x + dx, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
         ink = nativeSvgInk(raw, measurer)
       }
-      const y = top - nativeStyle.music * 0.12 - ink.bottom
-      top = y + ink.top
-      lane.top = Math.max(lane.top, -top)
-      regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
+      const y = (rightAligned ? barInk.top : top - nativeStyle.music * 0.12) - ink.bottom
+      if (rightAligned) {
+        lane.top = Math.max(lane.top, -(y + ink.top))
+        raw = `<rect x="${n(ink.left)}" y="${n(ink.top)}" width="${n(ink.right - ink.left)}" height="${n(ink.bottom - ink.top)}" fill="#fff"/>${raw}`
+      } else {
+        top = y + ink.top
+        lane.top = Math.max(lane.top, -top)
+        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
+      }
       system.decorationLayout ??= []
       system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
     }

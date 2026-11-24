@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { placedNativeControlInk } from './native-controls.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarInk, nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -39,7 +39,7 @@ describe('measured native volta fragments', () => {
       } else if (!last) expect(pieces[0]!.bottom - pieces[0]!.top).toBeCloseTo(1.21, 4)
     })
 
-  it.each([false, true])('keeps bar-owned counts below the ending and stacks measure numbers above counts, numbers=%s', measureNumbers => {
+  it.each([false, true])('keeps bar-owned counts below the ending and overlays measure numbers at the bar, numbers=%s', measureNumbers => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1,V3\nN: 1 2 3 4 :||{x4}{br}\n---V2,V4\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers })
     const system = score.systems[0]!, count = system.decorationLayout!.find(decoration => decoration.svg.includes('repeat-count'))!
     const countInk = nativeSvgInk(count.svg, measurer)
@@ -49,11 +49,12 @@ describe('measured native volta fragments', () => {
     expect(firstInk.bottom).toBeLessThanOrEqual(countInk.top - 2 + .001)
     if (measureNumbers) {
       const number = system.decorationLayout!.find(decoration => decoration.svg.includes('>2</text>'))!
-      expect(nativeSvgInk(number.svg, measurer).bottom).toBeLessThanOrEqual(countInk.top - 2.64 + .001)
+      const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
+      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top, 4)
     }
   })
 
-  it.each([false, true])('keeps row-end measure numbers outside ending brackets, paged=%s', paged => {
+  it.each([false, true])('keeps row-end measure numbers at the bar beneath ending brackets, paged=%s', paged => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}
 N: ||: 1 2 3 4 |
 ---V1
@@ -65,8 +66,9 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
       const ending = system.voltas?.[0]
       const number = system.decorationLayout?.find(label => label.svg.includes('data-m3n-role="measure-number"'))
       if (!ending || !number) continue
-      expect(nativeSvgInk(number.svg, measurer).bottom)
-        .toBeLessThanOrEqual(nativeSvgInk(ending.svg, measurer).top - 2 + .001)
+      const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
+      expect(nativeSvgInk(number.svg, measurer).bottom).toBeCloseTo(nativeBarInk(bar.kind, bar.x, 0, measurer).top, 4)
+      expect(number.svg).toContain('fill="#fff"')
       checked++
     }
     expect(checked).toBeGreaterThan(0)
