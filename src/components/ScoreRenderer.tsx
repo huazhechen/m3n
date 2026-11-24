@@ -124,6 +124,12 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   const system = measure.closest<SVGGElement>('g.system')
   const measureBounds = measure.getBBox()
   const systemBounds = system?.getBBox() ?? measureBounds
+  // Music-font getBBox() includes em-box whitespace well outside the engraved
+  // row. Use the numbered layout's measured vertical bounds for every band.
+  const numberedSystemTop = Number(system?.dataset.m3nTop)
+  const numberedSystemBottom = Number(system?.dataset.m3nBottom)
+  const hasNumberedSystemBounds = Number.isFinite(numberedSystemTop)
+    && Number.isFinite(numberedSystemBottom) && numberedSystemBottom > numberedSystemTop
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
   // Native numbered bounds remain valid when a measure continues on another system.
@@ -137,9 +143,9 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
   band.classList.add(className)
   band.setAttribute('aria-hidden', 'true')
   band.setAttribute('x', String(left))
-  band.setAttribute('y', String(systemBounds.y))
+  band.setAttribute('y', String(hasNumberedSystemBounds ? numberedSystemTop : systemBounds.y))
   band.setAttribute('width', String(Math.max(0, right - left)))
-  band.setAttribute('height', String(systemBounds.height))
+  band.setAttribute('height', String(hasNumberedSystemBounds ? numberedSystemBottom - numberedSystemTop : systemBounds.height))
   measure.appendChild(band)
 }
 
