@@ -13,7 +13,7 @@ import { loadPresetScore, presetScores } from './samples'
 
 describe('bundled score corpus', () => {
   it.each([
-    ['feng', '枫', maple, 39, 4],
+    ['feng', '枫', maple, 67, 4],
     ['yan_hua_yi_leng', '烟花易冷', smoke, 41, 4],
     ['dan_huang_guan_bo_er_ka', '单簧管波尔卡', polka, 43, 2],
     ['zhi_ai_li_si', '致爱丽丝', elise, 58, 3],

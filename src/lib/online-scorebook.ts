@@ -1,11 +1,11 @@
 import plan from '../../config/scorebook/editorial-plan.json'
-import { chooseNumberedScoreWidth } from './render-score'
+import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
 import { parseM3NDocument } from '@m3n/notation'
-import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
+import { numberedLayoutQuality, PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
-import { widthCandidates } from '../../tools/scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 
 
@@ -92,6 +92,15 @@ function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
   })
 }
 
+function inspectScoreMarkup(markup: string[]) {
+  const host = document.createElement('div')
+  host.style.cssText = 'position:absolute;left:-100000px;top:0'
+  host.innerHTML = markup.join('')
+  document.body.append(host)
+  try { return inspectScorePages([...host.querySelectorAll<SVGSVGElement>(':scope > svg')]) }
+  finally { host.remove() }
+}
+
 /** Reuse measured layouts within one export; every invocation starts from the current sources. */
 export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void): Promise<OnlineScorebook> {
   const files = new Map(presetScores.map(score => [score.sourcePath, score]))
@@ -113,33 +122,36 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
         const document = parseM3NDocument(source)
         await prepareNumberedNotationFonts(document)
-        const preferredWidth = await chooseNumberedScoreWidth(document, { paged: true, pageMargin: 0 }, signal)
         const candidates: WidthMeasurement[] = []
         const prepared = new Map<number, PreparedNumberedNotationScore>()
-        const widths = [...new Set('sharePage' in entry && entry.sharePage === false ? [preferredWidth] : [...widthCandidates, ...widthCandidates.flatMap(width => [width - 5, width + 5])])]
+        const widths = widthCandidates
         for (const [widthIndex, width] of widths.entries()) {
           await pause()
           let result: WidthMeasurement
           try {
             const score = new PreparedNumberedNotationScore(document, { width, pageMargin: 0 })
+            signal.throwIfAborted()
             prepared.set(width, score)
-            result = { width, pageCount: score.pageCount, rows: 0, outside: [], overlaps: [],
-              naturalHeight: score.pageCount === 1 ? score.continuousHeight() : undefined }
+            const geometry = inspectScoreMarkup(score.renderPaged())
+            if (score.pageCount === 1) {
+              const continuous = inspectScoreMarkup(score.renderContinuous())
+              geometry.outside.push(...continuous.outside)
+              geometry.overlaps.push(...continuous.overlaps)
+            }
+            const quality = numberedLayoutQuality(document, { width, paged: true, pageMargin: 0 })
+            result = { width, pageCount: score.pageCount, rows: 0, ...geometry,
+              naturalHeight: score.pageCount === 1 ? score.continuousHeight() : undefined,
+              lineDensityVariation: quality.lineDensityVariation, lastLineSlack: quality.lastLineSlack,
+              qualityScore: numberedLayoutScore({ width, ...quality }) }
           }
           catch (error) { result = { width, error: error instanceof Error ? error.message : String(error), pageCount: 0, rows: 0, outside: [], overlaps: [] } }
           signal.throwIfAborted()
           candidates.push(result)
           progress((widthIndex + 1) / widths.length)
         }
-        if (!('sharePage' in entry) || entry.sharePage !== false) for (const width of widthCandidates) {
-          const candidate = candidates.find(item => item.width === width)!
-          const stabilityCases = [width - 5, width, width + 5].map(probeWidth => candidates.find(item => item.width === probeWidth)!)
-          candidate.stabilityCases = stabilityCases
-          candidate.stable = stabilityCases.every(item => !item.error && item.pageCount === stabilityCases[1].pageCount)
-        }
-        const solo = candidates.find(candidate => candidate.width === preferredWidth)!
-        if (solo.error || !solo.pageCount) throw new Error('当前自适应宽度无法完成排版，请检查谱源。')
-        entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, preferredWidth, candidates, musicStart: 0, pageCount: 0 })
+        const solo = chooseBestWidth(candidates.filter(candidate => widthCandidates.includes(candidate.width)))
+        if (!solo) throw new Error('没有通过边界和碰撞检查的安全版面。')
+        entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates: candidates.filter(candidate => widthCandidates.includes(candidate.width)), musicStart: 0, pageCount: 0 })
       } catch (error) {
         signal.throwIfAborted()
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
@@ -156,6 +168,8 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       const start = music.length
       if (members.length > 1) {
         const rendered = renderSharedPreparedNumberedNotationScores(members.map(entry => entry.prepared.get(group.width)!), sharedScoreGap)
+        const safety = inspectScoreMarkup(rendered.markup)
+        if (safety.outside.length || safety.overlaps.length) throw new Error(`合页实绘未通过边界或碰撞检查：${members.map(entry => entry.title).join(' / ')}`)
         const svg = page(rendered.markup.join(''))
         let top = 0
         for (const score of svg.querySelectorAll<SVGSVGElement>(':scope > svg')) {

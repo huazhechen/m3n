@@ -1,11 +1,11 @@
-import { chooseBestWidth, widthCandidates } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates } from './scorebook-width.mjs'
 
 // Keep at least 32 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = 32
 export const sharedPreferredWidth = 540
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
-const safe = candidate => !candidate.error && candidate.stable !== false && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
+const safe = candidate => !candidate.error && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
 const capacity = width => Math.floor(width * 273 / 186)
 
 /** Score natural content at the source minimum core gap, before stretching page spacing. */
@@ -18,53 +18,48 @@ export function pageDensityPenalty(fill) {
 }
 
 function soloOption(entry, index) {
-  const solo = chooseBestWidth(entry.preferredWidth === undefined ? entry.candidates : entry.candidates.filter(candidate => candidate.width === entry.preferredWidth))
+  const solo = chooseBestWidth(entry.candidates)
   if (!solo) throw new Error(`No safe layout: ${entry.title}`)
   const fill = solo.pageCount === 1 && Number.isFinite(solo.naturalHeight) ? solo.naturalHeight / capacity(solo.width) : undefined
-  return { members: [index], width: solo.width, pageCount: solo.pageCount, fill }
+  return { members: [index], width: solo.width, pageCount: solo.pageCount, fill, qualityScore: numberedLayoutScore(solo) }
 }
 
 function sharedOption(entries, members) {
   if (members.length < 2) return null
   if (members.some(index => entries[index].sharePage === false)) return null
   // The editorial eligibility rule is anchored at 640px. Once a group passes,
-  // choose its narrowest stable common width from the current width search.
+  // choose its highest-quality common width.
   const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === 640))
   if (eligible.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
   const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
   if (eligibilityHeight > capacity(640) + .001) return null
+  let selected
   for (const width of widthCandidates) {
     const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) continue
     const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
     if (usedHeight > capacity(width) + .001) continue
-    const offsets = [-5, 5]
-    const stableTogether = offsets.every(offset => {
-      const probeWidth = width + offset
-      const height = members.reduce((sum, index) => {
-        const candidate = entries[index].candidates.find(item => item.width === width)
-        const probe = candidate?.stabilityCases?.find(item => item.width === probeWidth)
-        return sum + (probe && safe(probe) && probe.pageCount === 1 && Number.isFinite(probe.naturalHeight) ? probe.naturalHeight : Infinity)
-      }, sharedScoreGap * (members.length - 1))
-      return height <= capacity(probeWidth) + .001
-    })
-    if (stableTogether) return { members, width, pageCount: 1, fill: usedHeight / capacity(width) }
+    const qualityScore = candidates.reduce((sum, candidate) => sum + numberedLayoutScore(candidate), 0) / candidates.length
+    const option = { members, width, pageCount: 1, fill: usedHeight / capacity(width), qualityScore }
+    if (!selected || qualityScore > selected.qualityScore || qualityScore === selected.qualityScore && width < selected.width) selected = option
   }
-  return null
+  return selected ?? null
 }
 
-const empty = () => ({ cost: 0, pages: 0, density: 0, widthCost: 0, groups: [] })
+const empty = () => ({ cost: 0, pages: 0, density: 0, qualityCost: 0, groups: [] })
 function prepend(group, tail) {
   const density = pageDensityPenalty(group.fill)
   return { cost: packingPolicy.pageWeight * group.pageCount + density + tail.cost,
     pages: group.pageCount + tail.pages, density: density + tail.density,
-    widthCost: group.width * group.members.length + tail.widthCost, groups: [group, ...tail.groups] }
+    qualityCost: (group.qualityScore ?? 0) + tail.qualityCost,
+    groups: [group, ...tail.groups] }
 }
 function better(a, b) {
   if (!b) return true
-  for (const key of ['cost', 'pages', 'widthCost']) {
+  for (const key of ['cost', 'pages']) {
     if (Math.abs(a[key] - b[key]) > 1e-9) return a[key] < b[key]
   }
+  if (Math.abs(a.qualityCost - b.qualityCost) > 1e-9) return a.qualityCost > b.qualityCost
   // Deterministic ties: preserve earlier works and prefer smaller first groups.
   const x = a.groups.flatMap(group => group.members), y = b.groups.flatMap(group => group.members)
   for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i]

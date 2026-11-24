@@ -119,6 +119,8 @@ export function MarkdownBook({ documents }: MarkdownBookProps) {
 
     function updateActiveHeading() {
       frame = 0
+      // A queued observer from the previous document must not replace the new anchor.
+      if (new URLSearchParams(window.location.search).get('doc') !== activeDocument?.id) return
       const headingElements = [...(articleRef.current?.querySelectorAll<HTMLHeadingElement>('h2[id], h3[id]') ?? [])]
         .filter((heading) => headingIds.has(heading.id))
       const readingPosition = window.scrollY + window.innerHeight * 0.25

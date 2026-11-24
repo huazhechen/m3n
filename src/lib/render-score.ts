@@ -3,6 +3,7 @@ import type { NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
+import { numberedLayoutScore } from '../../tools/scorebook-width.mjs'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
 export type ScoreRenderInput = {
@@ -41,7 +42,7 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
     signal?.throwIfAborted()
     const quality = numberedLayoutQuality(scoreDocument, { ...options, width })
     if (quality.pageCount <= target) qualities.push({ width, ...quality,
-      score: (540 / width) / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack) })
+      score: numberedLayoutScore({ width, ...quality }) })
   }
   if (!qualities.length) return 640
   const minimumPages = Math.min(...qualities.map(candidate => candidate.pageCount))

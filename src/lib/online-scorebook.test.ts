@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { buildOnlineScorebook } from './online-scorebook'
 
 const mocks = vi.hoisted(() => ({
-  load: vi.fn(), prepare: vi.fn(), prepared: vi.fn(), solo: vi.fn(), shared: vi.fn(), choose: vi.fn(),
+  load: vi.fn(), prepare: vi.fn(), prepared: vi.fn(), solo: vi.fn(), shared: vi.fn(), choose: vi.fn(), quality: vi.fn(), inspect: vi.fn(),
   plan: { title: '测试谱集', contents: { rowsPerColumn: 28, rowHeight: 35 }, page: { width: 794, height: 1123 },
     sections: [{ id: 'basics', title: '第一章', reorderForSharing: false }],
     entries: [
@@ -12,12 +12,13 @@ const mocks = vi.hoisted(() => ({
     ] },
 }))
 vi.mock('../../config/scorebook/editorial-plan.json', () => ({ default: mocks.plan }))
-vi.mock('./render-score', () => ({ chooseNumberedScoreWidth: mocks.choose }))
+vi.mock('../../tools/lib/score-geometry.mjs', () => ({ inspectScorePages: mocks.inspect }))
 vi.mock('./samples', () => ({
   presetScores: [{ slug: 'second', sourcePath: 'second.m3n', preferredWidth: 680 }, { slug: 'first', sourcePath: 'first.m3n', preferredWidth: 680 }],
   loadPresetScore: mocks.load,
 }))
 vi.mock('@m3n/numbered-notation', () => ({
+  numberedLayoutQuality: mocks.quality,
   prepareNumberedNotationFonts: mocks.prepare,
   PreparedNumberedNotationScore: class {
     pageCount = 1
@@ -28,6 +29,7 @@ vi.mock('@m3n/numbered-notation', () => ({
       mocks.prepared(document, options)
     }
     continuousHeight() { return 200 }
+    renderContinuous() { return [markup] }
     renderPaged() { return mocks.solo(this.title, this.width) }
   },
   renderSharedPreparedNumberedNotationScores: mocks.shared,
@@ -40,6 +42,8 @@ beforeAll(() => Object.defineProperty(SVGElement.prototype, 'viewBox', { configu
 } }))
 afterAll(() => { if (viewBox) Object.defineProperty(SVGElement.prototype, 'viewBox', viewBox); else Reflect.deleteProperty(SVGElement.prototype, 'viewBox') })
 function layouts() {
+  mocks.inspect.mockReturnValue({ outside: [], overlaps: [] })
+  mocks.quality.mockReturnValue({ pageCount: 1, lineDensityVariation: .1, lastLineSlack: .1 })
   mocks.choose.mockResolvedValue(600)
   mocks.load.mockImplementation(async (slug: string) => `{title=${slug}}{4/4}\nN: 1 2 3 4 |||`)
   mocks.shared.mockReturnValue({ markup: [markup, markup], scoreGap: 200 })
@@ -51,12 +55,10 @@ describe('online scorebook with per-run layout reuse', () => {
   it('uses current automatic and shared widths, sharing complete scores with the same contents page', async () => {
     layouts()
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
-    expect(mocks.choose).toHaveBeenCalledTimes(2)
-    expect(mocks.choose).toHaveBeenCalledWith(expect.anything(), { paged: true, pageMargin: 0 }, expect.any(AbortSignal))
-    expect(mocks.prepared).toHaveBeenCalledTimes(70)
-    expect(new Set(mocks.prepared.mock.calls.map(call => call[1].width))).toEqual(new Set(Array.from({ length: 35 }, (_, index) => 475 + index * 5)))
+    expect(mocks.prepared).toHaveBeenCalledTimes(22)
+    expect(new Set(mocks.prepared.mock.calls.map(call => call[1].width))).toEqual(new Set(Array.from({ length: 11 }, (_, index) => 540 + index * 10)))
     expect(mocks.prepared.mock.calls[0][0]).toBe(mocks.prepared.mock.calls[1][0])
-    expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 480 }), expect.objectContaining({ title: 'second', width: 480 })], 32)
+    expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 540 }), expect.objectContaining({ title: 'second', width: 540 })], 32)
     expect(result.scoreCount).toBe(2)
     expect(result.sharedPages).toBe(1)
     expect(result.pages).toHaveLength(3)
@@ -65,7 +67,7 @@ describe('online scorebook with per-run layout reuse', () => {
     expect([...result.pages[2].querySelectorAll('[data-score-slug]')].map(svg => (svg as SVGSVGElement).dataset.scoreSlug)).toEqual(['first', 'second'])
     expect(result.pages[2].querySelector('a')?.getAttribute('href')).toBe('https://score.cheesefans.com/scores/first')
     const placed = result.pages[2].querySelectorAll(':scope > svg')
-    expect(Number(placed[1].getAttribute('y'))).toBeCloseTo((12 + (200 + 200) * 186 / 480) * 96 / 25.4)
+    expect(Number(placed[1].getAttribute('y'))).toBeCloseTo((12 + (200 + 200) * 186 / 540) * 96 / 25.4)
     expect(document.body.children).toHaveLength(0)
   })
 
@@ -75,8 +77,21 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(result.sharedPages).toBe(0)
     expect(result.pages).toHaveLength(4)
     expect(mocks.shared).not.toHaveBeenCalled()
-    expect(mocks.solo).toHaveBeenCalledWith('first', 600)
+    expect(mocks.solo).toHaveBeenCalledWith('first', 540)
     expect(result.pages[1].textContent).toBe('目录第一章<第一曲>3第二曲4')
+  })
+
+  it('uses the same quality winner for solo and shared pages, and excludes unsafe candidates', async () => {
+    layouts()
+    mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1, lineDensityVariation: width === 600 ? 0 : 1, lastLineSlack: 0 }))
+    await buildOnlineScorebook(new AbortController().signal, () => {})
+    expect(mocks.shared).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({ width: 600 })]), 32)
+    mocks.plan.entries[0].sharePage = false
+    mocks.solo.mockClear()
+    await buildOnlineScorebook(new AbortController().signal, () => {})
+    expect(mocks.solo).toHaveBeenLastCalledWith('second', 600)
+    mocks.inspect.mockImplementation(() => ({ outside: ['ink'], overlaps: [] }))
+    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('安全版面')
   })
 
   it('starts from fresh sources and layouts on every export', async () => {
@@ -84,7 +99,7 @@ describe('online scorebook with per-run layout reuse', () => {
     await buildOnlineScorebook(new AbortController().signal, () => {})
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.load).toHaveBeenCalledTimes(4)
-    expect(mocks.prepared).toHaveBeenCalledTimes(140)
+    expect(mocks.prepared).toHaveBeenCalledTimes(44)
     expect(mocks.shared).toHaveBeenCalledTimes(2)
     expect(result.pages).toHaveLength(3)
   })
@@ -101,7 +116,7 @@ describe('online scorebook with per-run layout reuse', () => {
   it('reports engine errors without returning an incomplete book', async () => {
     layouts()
     mocks.prepared.mockImplementation(() => { throw new Error('单个谱行高于页面') })
-    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：当前自适应宽度无法完成排版，请检查谱源。')
+    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：没有通过边界和碰撞检查的安全版面。')
     expect(mocks.shared).not.toHaveBeenCalled()
   })
 })

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('harmonica diagram highlights scale notes and scores their connections', async ({ page }) => {
   await page.goto('/tools/scales')
-  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶与难度' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶' })).toBeVisible()
   await expect(page.getByRole('combobox')).toHaveCount(0)
   const diagram = page.locator('.harmonica-diagram')
   await expect(diagram.locator('.harmonica-tile')).toHaveCount(48)
@@ -48,7 +48,7 @@ test('all twelve keys remain usable on a narrow screen', async ({ page }) => {
   await page.getByRole('link', { name: '乐谱库', exact: true }).click()
   await page.getByRole('link', { name: '练琴工具', exact: true }).click()
   await page.getByRole('link', { name: '音阶图', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶与难度' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '半音阶口琴·音阶' })).toBeVisible()
 })
 
 
@@ -104,21 +104,21 @@ test('overlapping same-hole connections use separate lanes above the note tiles'
 })
 
 
-test('C6 switch retunes blow notes, recomputes difficulty, and restores standard tuning', async ({ page }) => {
+test('C6 tuning retunes blow notes, recomputes difficulty, and restores standard tuning', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 })
   await page.goto('/tools/scales')
-  const toggle = page.getByRole('switch', { name: 'C6', exact: true })
-  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  const toggle = page.getByRole('button', { name: 'C6', exact: true })
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
   const keys = page.getByRole('group', { name: '选择大调' }).getByRole('button')
   const standardScores = await keys.allTextContents()
   const standardLines = await page.locator('.scale-connections').innerHTML()
   const blow = (hole: number, pressed: boolean) => page.locator('.harmonica-tile').filter({ has: page.locator('title', { hasText: `，${hole}孔吹·${pressed ? '按键' : '松键'}` }) })
   for (const hole of [4, 8, 12]) await expect(blow(hole, false).locator('text')).toHaveText('1')
   await toggle.click()
-  await expect(toggle).toHaveAttribute('aria-checked', 'true')
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
   for (const hole of [4, 8, 12]) {
     await expect(blow(hole, false).locator('text')).toHaveText('6')
-    await expect(blow(hole, true).locator('text')).toHaveText('♭7')
+    await expect(blow(hole, true).locator('text')).toHaveText(['♭', '7'])
   }
   expect(await keys.allTextContents()).not.toEqual(standardScores)
   expect(await page.locator('.scale-connections').innerHTML()).not.toEqual(standardLines)
@@ -128,13 +128,19 @@ test('C6 switch retunes blow notes, recomputes difficulty, and restores standard
     await expect(page.locator('.harmonica-tile')).toHaveCount(48)
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  const switchBounds = (await toggle.boundingBox())!
-  const titleBounds = (await page.getByRole('heading', { name: '半音阶口琴·音阶与难度' }).boundingBox())!
-  expect(switchBounds.x).toBeGreaterThan(titleBounds.x + titleBounds.width)
+  const tuningButtons = page.getByRole('group', { name: '选择调音方式' }).getByRole('button')
+  await expect(tuningButtons).toHaveCount(4)
+  for (const button of await tuningButtons.all()) {
+    const bounds = (await button.boundingBox())!
+    expect(bounds.x).toBeGreaterThanOrEqual(0)
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(320)
+  }
   await page.getByRole('button', { name: /^C大调，总分/ }).click()
-  await toggle.focus()
+  const standard = page.getByRole('button', { name: '标准', exact: true })
+  await standard.focus()
   await page.keyboard.press('Space')
-  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+  await expect(standard).toHaveAttribute('aria-pressed', 'true')
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
   expect(await keys.allTextContents()).toEqual(standardScores)
   expect(await page.locator('.scale-connections').innerHTML()).toEqual(standardLines)
 })
@@ -142,7 +148,7 @@ test('C6 switch retunes blow notes, recomputes difficulty, and restores standard
 
 test('F major displays upper and lower 3–4–5 alternatives in C6 tuning', async ({ page }) => {
   await page.goto('/tools/scales')
-  await page.getByRole('switch', { name: 'C6', exact: true }).click()
+  await page.getByRole('button', { name: 'C6', exact: true }).click()
   await page.getByRole('button', { name: /^F大调，总分/ }).click()
   const paths = page.locator('.scale-connections path')
   for (const [degrees, actions] of [

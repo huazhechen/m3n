@@ -13,6 +13,8 @@ export function createSvgInkMeasurer() {
       if (piece.closest('defs')) return []
       const style = getComputedStyle(piece)
       if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return []
+      const visiblePaint = paint => paint !== 'none' && paint !== 'transparent' && !/rgba\([^)]*,\s*0\s*\)/.test(paint)
+      if ((!visiblePaint(style.fill) || Number(style.fillOpacity) === 0) && (!visiblePaint(style.stroke) || Number(style.strokeOpacity) === 0)) return []
       let box
       if (piece.tagName === 'text') {
         context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`

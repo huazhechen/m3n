@@ -147,8 +147,9 @@ test('live download and transpose preserve the audio context and transport posit
     }
   })
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill(`{4/4}{60qpm}\nN: ${'1 2 3 4 | '.repeat(16)}||`)
-  const progress = page.getByRole('slider', { name: '播放位置' })
+  await page.getByLabel('M3N source').fill(`{title=播放切换验证}{4/4}{60qpm}\nN: ${'1 2 3 4 | '.repeat(16)}||`)
+  await expect(page.locator('.score-paper')).toContainText('播放切换验证')
+  const progress = page.locator('.playback-progress input[aria-hidden="true"]')
   const pause = page.getByRole('button', { name: '暂停', exact: true })
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(pause).toBeEnabled({ timeout: 30_000 })

@@ -5,13 +5,14 @@ import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
+import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 
 test('scorebook uses identical web pages, source equal-measures, credits and bass; A4 only scales the SVG', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-scorebook-'))
   let browser
   try {
     const entry = join(temp, 'entry.mjs')
-    writeFileSync(entry, `export * from ${JSON.stringify(join(root, 'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root, 'tools/scorebook-compact-layout.mjs'))}; export {renderScoreInto} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))}; export {describeAccessibleScore} from ${JSON.stringify(join(root, 'src/lib/score-accessibility.ts'))}; export {attachScoreReading} from ${JSON.stringify(join(root, 'src/lib/score-reading-dom.ts'))}; export {parseM3NDocument, scoreEventIds} from '@m3n/notation'; export {NumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))}; export {frameScoreImage} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-image-frame.ts'))}; export {renderScoreCanvas} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-export.ts'))};`)
+    writeFileSync(entry, `export {inspectScorePages} from ${JSON.stringify(join(root, 'tools/lib/score-geometry.mjs'))}; export * from ${JSON.stringify(join(root, 'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root, 'tools/scorebook-compact-layout.mjs'))}; export {renderScoreInto} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))}; export {describeAccessibleScore} from ${JSON.stringify(join(root, 'src/lib/score-accessibility.ts'))}; export {attachScoreReading} from ${JSON.stringify(join(root, 'src/lib/score-reading-dom.ts'))}; export {parseM3NDocument, scoreEventIds} from '@m3n/notation'; export {NumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))}; export {frameScoreImage} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-image-frame.ts'))}; export {renderScoreCanvas} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-export.ts'))};`)
     // The temporary entry resolves package imports through an absolute re-export.
     writeFileSync(entry, readFileSync(entry, 'utf8').replace("from '@m3n/notation'", `from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))}`))
     await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') }, build: {
@@ -25,6 +26,17 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
+    prepareBuiltinPdfFont()
+    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
+    const fontStability = await page.evaluate(async ({ source, shared }) => {
+      const before = await window.scorebook.measure(source, 570)
+      await window.scorebook.sharedA4Page(shared, 630, 32)
+      const after = await window.scorebook.measure(source, 570)
+      const exported = await window.scorebook.a4Pages(source, 570)
+      return { before: before.pageCount, after: after.pageCount, rowsBefore: before.rows, rowsAfter: after.rows, exported: exported.length }
+    }, { source: readFileSync(join(root, 'src/scores/bei_jia_er_hu_pan_01.m3n'), 'utf8'),
+      shared: ['qian_nv_you_hun_01.m3n', 'tie_xue_dan_xin_01.m3n'].map(file => readFileSync(join(root, 'src/scores', file), 'utf8')) })
+    assert.deepEqual(fontStability, { before: 1, after: 1, rowsBefore: 9, rowsAfter: 9, exported: 1 }, 'Shared rendering must preserve the measured per-score font selection')
     const source = '{title=统一排版}{composer=测试作者}{equal-measures=true}{2/4}\nN: ||: 1 2 |\nB: 1d 2d |\nL1: 甲乙\nL2: 戊己\n---V1\nN: 3 4 :||\nB: 3d 4d |\nL: 丙丁\n---V2\nN: (5 6) 7 |||\nB: 3d 4d |\nL: 庚辛壬'
     for (const width of [640, 800]) {
       const result = await page.evaluate(async ({ source, width }) => {
@@ -152,6 +164,31 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert(shared.links[1].y > shared.links[0].y, 'Shared titles must link at their own page position')
     const cover = await page.evaluate(() => window.scorebook.compactPage('<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123"><text x="40" y="100" data-scorebook-url="https://score.cheesefans.com/">访问网站</text></svg>'))
     assert.equal(cover.links[0].url, 'https://score.cheesefans.com/')
+    // Transparent reading hit areas must not become false ink. Visible strokes,
+    // vertical clipping and overlapping note / lyric text must still fail.
+    const geometry = await page.evaluate(() => {
+      const host = document.createElement('div')
+      document.body.append(host)
+      const inspect = content => {
+        host.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${content}</svg>`
+        return window.scorebook.inspectScorePages([...host.querySelectorAll('svg')])
+      }
+      const transparent = inspect('<rect x="-2" y="-2" width="104" height="104" fill="transparent"/>')
+      const horizontal = inspect('<rect x="-2" y="10" width="20" height="20" fill="black"/>')
+      const vertical = inspect('<g class="system"><rect x="10" y="-2" width="20" height="20" fill="black"/></g>')
+      const collision = inspect('<g class="system"><g class="note"><text x="20" y="40">1</text></g><text data-m3n-role="lyric" x="20" y="40">甲</text></g>')
+      host.remove()
+      return { transparent, horizontal, vertical, collision }
+    })
+    assert.deepEqual(geometry.transparent, { outside: [], overlaps: [] })
+    assert.equal(geometry.horizontal.outside.length, 1)
+    assert.equal(geometry.vertical.outside.length, 1)
+    assert.equal(geometry.collision.overlaps.length, 1)
+    const basics = readFileSync(join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
+    const basicsLayout = await page.evaluate(source => window.scorebook.measure(source, 590), basics)
+    assert.equal(basicsLayout.pageCount, 3)
+    assert.deepEqual(basicsLayout.outside, [])
+    assert.deepEqual(basicsLayout.overlaps, [])
     const longSource = '{title=多页测试}{4/4}\nN: ' + Array.from({ length: 100 }, () => '1 2 3 4 |{br}').join(' ')
     const long = await page.evaluate(async source => {
       const summary = await window.scorebook.measure(source, 640)

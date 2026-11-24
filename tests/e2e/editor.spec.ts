@@ -200,13 +200,14 @@ test('uses the current numbered layout and includes visible bass in PNG and PDF'
 test('playback highlights notes without forcing page or source scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill(`{4/4}{240qpm}\n${'N: 1 2 3 4 |\n'.repeat(48)}`)
+  await page.getByLabel('M3N source').fill(`{title=播放滚动验证}{4/4}{240qpm}\n${Array(48).fill('N: 1 2 3 4 |').join('\n---\n')}`)
+  await expect(page.locator('.score-paper')).toContainText('播放滚动验证')
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   const pause = page.getByRole('button', { name: '暂停', exact: true })
   await expect(pause).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.score-paper .is-playing').first()).toBeVisible()
-  const position = page.getByRole('slider', { name: '播放位置' })
+  const position = page.locator('.playback-progress input[aria-hidden="true"]')
   const before = Number(await position.inputValue())
   const initial = await page.evaluate(() => {
     window.scrollTo(0, 0)

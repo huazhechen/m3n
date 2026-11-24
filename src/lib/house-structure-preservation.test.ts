@@ -19,9 +19,10 @@ it.each(['ai_ru_chao_shui', 'bai_hua_lin', 'bei_jia_er_hu_pan', 'qian_si_xi', 't
   },
 )
 
-it('keeps the restored sections, visit order and key change in 枫', () => {
+it('keeps the fully expanded verses and final key change in 枫', () => {
   const source = read('feng')
-  expect(source).toContain('{order=A,A,B,A,C,B@Db}')
-  expect([...source.matchAll(/^===(.+)$/gm)].map(match => match[1])).toEqual(['A', 'B', 'C'])
+  expect(source).not.toMatch(/\{order=|^===|^---V|\|\|:|:\|\|/m)
+  expect(source).toContain('{key=Db}')
+  expect(source.match(/\{key=Db\}/g)).toHaveLength(1)
   expect(source).not.toMatch(/\{(?:tocoda|coda|segno|ds|dc|fine)\}|^Ns\[/m)
 })

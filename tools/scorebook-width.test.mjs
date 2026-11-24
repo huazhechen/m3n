@@ -3,31 +3,39 @@ import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap } from './scorebook-packing.mjs'
 
-test('the search includes both ends of the 480–640 range in 10px steps', () => {
-  assert.deepEqual(widthCandidates, Array.from({ length: 17 }, (_, index) => 480 + index * 10))
+test('the shared online and offline search uses 540–640px in 10px steps', () => {
+  assert.deepEqual(widthCandidates, Array.from({ length: 11 }, (_, index) => 540 + index * 10))
 })
-test('prefer fewer A4 pages, then larger music, excluding unsafe or failed renders', () => {
+test('prefer fewer A4 pages, then the shared quality score, excluding unsafe renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
-  const chosen = candidate(710, 1)
+  const chosen = candidate(700, 1, { qualityScore: .9 })
   assert.equal(chooseBestWidth([
-    candidate(640, 2), candidate(700, 1, { overlaps: ['lyric'] }), candidate(690, 1, { outside: ['note'] }),
-    { width: 650, error: 'render failed' }, candidate(800, 1), chosen,
+    candidate(640, 2), candidate(710, 1, { qualityScore: .8, overlaps: ['lyric'] }), candidate(690, 1, { outside: ['note'] }),
+    { width: 650, error: 'render failed' }, candidate(800, 1), candidate(700, 1, { qualityScore: .7 }), chosen,
   ]), chosen)
   assert.equal(chooseBestWidth([{ width: 640, error: 'render failed' }]), null)
 })
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
-  stable: true, stabilityCases: [-5, 0, 5].map(offset => ({ width: width + offset, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [] })), ...extra })
+  ...extra })
 const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 640)
   ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('640px determines sharing eligibility, then the narrowest stable common width is selected', () => {
+test('640px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
   assert.equal(sharedPreferredWidth, 540)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(380)), entry('B', make(380))]
-  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 550, pageCount: 1 }])
+  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 540, pageCount: 1 }])
   entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
+})
+
+test('a shared page prefers balanced quality over the narrowest feasible width', () => {
+  const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
+    { qualityScore: width === 600 ? 2 : .5 })) ))
+  assert.equal(packScorebook(entries)[0].width, 600)
+  entries[1].candidates.find(item => item.width === 600).outside.push('ink')
+  assert.notEqual(packScorebook(entries)[0].width, 600)
 })
 
 test('packing optimizes the complete sequence instead of greedily choosing the narrowest first page', () => {
@@ -48,65 +56,51 @@ test('section boundaries, explicit breaks, opt-outs and long works stay on separ
   assert.deepEqual(packScorebook([]), [])
 })
 
-test('width stability caches 575 between 570 and 580 and excludes a page-count transition', async () => {
+test('search measures exactly the formal candidates, including page-count transitions', async () => {
   const measured = []
   const { candidates, renderCache } = await probeWidthCandidates(async width => {
     measured.push(width)
-    return candidate(width, 100, width < 575 ? 2 : 1)
+    return candidate(width, 100, width < 570 ? 2 : 1)
   })
-  assert.ok(renderCache.uniqueWidths < 25, JSON.stringify(renderCache))
-  assert.equal(renderCache.requests - renderCache.hits, renderCache.uniqueWidths)
-  assert.equal(measured.filter(width => width === 575).length, 1)
-  assert.equal(candidates.find(c => c.width === 570), undefined)
-  assert.equal(chooseBestWidth(candidates).width, 580)
+  assert.deepEqual(measured, widthCandidates)
+  assert.equal(renderCache.uniqueWidths, 11)
+  assert.equal(chooseBestWidth(candidates).width, 570)
 })
 
-test('flat pagination stops after coarse sampling and local stability verification', async () => {
-  const measured = []
-  const result = await probeWidthCandidates(async width => {
-    measured.push(width)
-    return candidate(width, 100)
-  }, { requiredWidths: [640] })
-  assert.equal(chooseBestWidth(result.candidates).width, 480)
-  assert.ok(result.renderCache.uniqueWidths <= 9)
-  assert.ok(result.candidates.find(c => c.width === 640)?.stable)
-  assert.equal(new Set(measured).size, measured.length)
+test('scoring checks every formal width and chooses the best composite score', async () => {
+  const result = await probeWidthCandidates(async width => candidate(width, 100, 1,
+    { qualityScore: width === 590 ? 2 : .5 }))
+  assert.deepEqual(result.candidates.map(item => item.width), widthCandidates)
+  assert.equal(chooseBestWidth(result.candidates).width, 590)
+  assert.equal(result.renderCache.uniqueWidths, 11)
 })
 
-test('coarse interior samples detect nonmonotone pagination missed by endpoint bisection', async () => {
-  const result = await probeWidthCandidates(async width => candidate(width, 100, width >= 535 && width <= 565 ? 1 : 2))
-  assert.equal(chooseBestWidth(result.candidates).width, 540)
-  assert.ok(result.renderCache.uniqueWidths < 25)
+test('nonmonotone pagination is evaluated across the complete grid', async () => {
+  const result = await probeWidthCandidates(async width => candidate(width, 100, width === 570 ? 1 : 2))
+  assert.equal(chooseBestWidth(result.candidates).width, 570)
 })
 
-test('expensive SVG checks reject unsafe winners and search their neighbors', async () => {
+test('SVG checks reject unsafe candidates without probing additional widths', async () => {
   const verified = []
   const result = await probeWidthCandidates(async width => candidate(width, 100), {
     verify: async width => {
       verified.push(width)
-      return { outside: width < 555 ? ['ink'] : [], overlaps: [] }
+      return { outside: width < 560 ? ['ink'] : [], overlaps: [] }
     },
   })
   assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.equal(new Set(verified).size, verified.length)
-  assert.ok(result.renderCache.uniqueWidths < 25)
+  assert.deepEqual(verified, widthCandidates)
 })
 
-test('failed renders are recorded and never bypass stability verification', async () => {
+test('failed renders are recorded and excluded', async () => {
   const result = await probeWidthCandidates(async width => {
-    if (width < 555) throw new Error('render failed')
+    if (width < 560) throw new Error('render failed')
     return candidate(width, 100)
   })
   assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.ok(result.candidates.every(c => !c.stable || c.stabilityCases.every(p => !p.error)))
+  assert.equal(result.candidates.filter(c => c.error).length, 2)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
-})
-
-test('640px eligibility is followed by common-width stability checks', () => {
-  const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 440), { ...candidate(560, 440), stable: true,
-    stabilityCases: [candidate(555, 530), candidate(560, 440), candidate(565, 440)] }]))
-  assert.equal(packScorebook(entries).length, 1)
 })
 
 test('chapter works can share across distant positions while preserving chapter boundaries and anchors', () => {
@@ -132,14 +126,13 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
   assert(result.metrics.pageGroups.every(group => group.naturalFill >= .65 && group.naturalFill < .85))
 })
 
-test('inter-work whitespace is a hard capacity constraint at central and perturbation widths', () => {
+test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 32)
   const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(560, 455)]))
   // 455 + 455 + the old 22px gap would fit the 822px content box.
   assert.equal(packScorebook(entries).length, 2)
-  for (const work of entries) work.candidates[1] = { ...candidate(560, 450), stable: true,
-    stabilityCases: [candidate(555, 451), candidate(560, 450), candidate(565, 450)] }
-  assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 555px probe's 814px capacity.
+  for (const work of entries) work.candidates[1] = candidate(560, 450)
+  assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 560px capacity.
 })
 
 test('exact chapter set partitioning matches exhaustive permutation search', () => {

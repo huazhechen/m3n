@@ -91,6 +91,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   for (const width of [720, 390]) {
     await page.setViewportSize({ width, height: 844 })
     await expect(paper).not.toHaveAttribute('data-viewport-paged')
+    await expect(paper.locator('.score-page-sheet').nth(1)).toBeVisible()
     const bounds = await paper.boundingBox()
     const first = (await paper.locator('.score-page-sheet').nth(0).boundingBox())!
     const second = (await paper.locator('.score-page-sheet').nth(1).boundingBox())!
@@ -105,7 +106,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper).not.toHaveAttribute('data-viewport-paged')
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
   const selectedWidth = Number(await paper.locator('svg').first().getAttribute('width'))
-  expect(selectedWidth).toBeGreaterThanOrEqual(560)
+  expect(selectedWidth).toBeGreaterThanOrEqual(540)
   expect(selectedWidth).toBeLessThanOrEqual(640)
 })
 

@@ -16,9 +16,9 @@ test('continuous preview has the image frame and PNG preserves the same score fo
     if (paged) {
       await openScoreSettings(page)
       await page.getByRole('switch', { name: '分页', exact: true }).click()
-      // This one-line fixture settles at 560px after the initial 640px render.
-      await expect(page.getByRole('slider', { name: '乐谱宽度', exact: true })).toHaveValue('560')
-      await expect(page.locator('.score-paper .score-page-sheet svg').first()).toHaveAttribute('width', '560')
+      // This one-line fixture settles at 540px after the initial 640px render.
+      await expect(page.getByRole('slider', { name: '乐谱宽度', exact: true })).toHaveValue('540')
+      await expect(page.locator('.score-paper .score-page-sheet svg').first()).toHaveAttribute('width', '540')
       await page.keyboard.press('Escape')
     }
     await page.getByRole('button', { name: '打印', exact: true }).click()

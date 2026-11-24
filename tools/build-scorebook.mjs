@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
-import { chooseBestWidth, probeWidthCandidates, widthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
+import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth } from './scorebook-packing.mjs'
 
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
@@ -54,7 +54,7 @@ try {
     const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
       try { return await window.scorebook.measure(source, width) }
       catch (error) { return { width, error: error.message } }
-    }, { source, width }), { requiredWidths: widthCandidates })
+    }, { source, width }))
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
@@ -82,12 +82,12 @@ try {
     } else {
       const entry = entries[0]
       const pages = await page.evaluate(({ source, width }) => window.scorebook.a4Pages(source, width), { source: sources.get(entry.id), width: group.width })
-      assert.equal(pages.length, group.pageCount)
+      assert.equal(pages.length, group.pageCount, `${entry.title} at ${group.width}px: measured and rendered page counts must match`)
       for (const rendered of pages) music.push({ kind: 'music', id: entry.id, svg: pageSvg(rendered.markup) })
     }
     for (const entry of entries) {
       const candidate = entry.candidates.find(candidate => candidate.width === group.width)
-      Object.assign(entry, { width: entries.length > 1 ? sharedPreferredWidth : group.width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
+      Object.assign(entry, { width: chooseBestWidth(entry.candidates).width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
     }
   }
 } finally { await browser.close() }
@@ -132,7 +132,7 @@ writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
 const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile, orderOptimization,
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
-  widthSearch: { strategy: widthSearchStrategy, minimum: 480, maximum: 640, step: 10, priority: ['pageCount', 'width'], stabilityOffsets: [-5, 0, 5] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
+  widthSearch: { strategy: widthSearchStrategy, minimum: 540, maximum: 640, step: 10, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
   entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })

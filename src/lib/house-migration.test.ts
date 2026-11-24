@@ -66,7 +66,8 @@ it.each(cases)('preserves every performed note and lyric after house migration: 
   const path = baseline.file === 'world-gift-original.m3n' ? `./fixtures/${baseline.file}` : `../scores/${baseline.file}`
   const source = readFileSync(new URL(path, import.meta.url), 'utf8')
   expect(validateM3NDiagnostics(source)).toEqual([])
-  expect(source).toMatch(/---V/)
+  if (baseline.file === 'feng_01.m3n') expect(source).not.toMatch(/---V|\{order=/)
+  else expect(source).toMatch(/---V/)
   const document = parseM3NDocument(source)
   const performance = unfoldScorePerformance(document)
   const measures = performance.parts.get('score')!.melody

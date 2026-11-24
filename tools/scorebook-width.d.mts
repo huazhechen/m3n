@@ -6,12 +6,15 @@ export type WidthMeasurement = {
   outside: unknown[]
   overlaps: unknown[]
   naturalHeight?: number
-  stable?: boolean
-  stabilityCases?: WidthMeasurement[]
+  lineDensityVariation?: number
+  lastLineSlack?: number
+  qualityScore?: number
 }
 export const widthCandidates: number[]
+export const widthSearchStrategy: string
 export function chooseBestWidth(candidates: WidthMeasurement[]): WidthMeasurement | null
-export function probeWidthCandidates(measure: (width: number) => Promise<WidthMeasurement>): Promise<{
+export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 'lineDensityVariation' | 'lastLineSlack' | 'qualityScore'>): number
+export function probeWidthCandidates(measure: (width: number) => Promise<WidthMeasurement>, options?: { verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
   candidates: WidthMeasurement[]
-  renderCache: { requests: number; uniqueWidths: number; hits: number }
+  renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number }
 }>
