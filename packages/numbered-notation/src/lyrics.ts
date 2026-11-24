@@ -38,6 +38,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
           tie: (event.tie && slot === event.tieFromTupletIndex) || !!event.tupletTies?.includes(slot),
         }])
       : [{ event, slot: 0, tie: event.tie }])
+  const tiedContinuations = new Set(targetEvents.filter((_, index) => targetEvents[index - 1]?.tie))
   const result: LyricsByEvent = new Map()
   const passesByEvent = new Map<ScoreEvent, ReadonlySet<number>>()
   const positions = new Map<ScoreEvent, LyricPosition>()
@@ -109,7 +110,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       // must not consume any continuation events. Forced `+` lyrics are the
       // explicit exception and may target a continuation event directly.
       if (!syllable.forceTiedTarget) {
-        while (targets[targetIndex - 1]?.tie) targetIndex += 1
+        while (targets[targetIndex] && tiedContinuations.has(targets[targetIndex]!)) targetIndex += 1
       }
       const target = targets[targetIndex]
       targetIndex += 1
