@@ -71,6 +71,7 @@ export function MetronomePage() {
   const [error, setError] = useState('')
   const engine = useRef<PracticeMetronome | null>(null)
   const recordedAt = useRef<number | null>(null)
+  const recordedAudio = useRef(0)
   const daysRef = useRef(days)
   const settings = { bpm, accents }
   const settingsRef = useRef(settings)
@@ -78,7 +79,10 @@ export function MetronomePage() {
   const saveTime = () => {
     const now = Date.now()
     if (recordedAt.current !== null) {
-      const updated = addPracticeTime(daysRef.current, recordedAt.current, now)
+      const audio = engine.current?.elapsedSeconds ?? recordedAudio.current
+      const duration = Math.max(0, Math.min(now - recordedAt.current, (audio - recordedAudio.current) * 1000))
+      recordedAudio.current = audio
+      const updated = addPracticeTime(daysRef.current, now - duration, now)
       daysRef.current = updated
       setDays(updated)
       try { localStorage.setItem(PRACTICE_TIME_KEY, JSON.stringify(updated)) } catch { setError('浏览器未允许本地保存，练习时间暂存于本次页面。') }
@@ -99,12 +103,13 @@ export function MetronomePage() {
     setStarting(true)
     let current: PracticeMetronome | null = null
     try {
-      current = new PracticeMetronome(settingsRef.current, setActiveBeat)
+      current = new PracticeMetronome(settingsRef.current, setActiveBeat, stop)
       engine.current = current
       await current.start()
       if (engine.current !== current) { current.stop(); return }
       current.update(settingsRef.current)
       recordedAt.current = Date.now()
+      recordedAudio.current = current.elapsedSeconds
       setRunning(true)
       setStarting(false)
     } catch (cause) {
@@ -122,12 +127,15 @@ export function MetronomePage() {
       if (recordedAt.current !== null && !engine.current?.running) stop()
       else saveTime()
     }, 1000)
-    const onHidden = () => { if (document.hidden) stop() }
-    document.addEventListener('visibilitychange', onHidden)
+    const onVisibilityChange = () => {
+      if (recordedAt.current !== null && !engine.current?.running) stop()
+      else saveTime()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
     window.addEventListener('pagehide', stop)
     return () => {
       clearInterval(timer)
-      document.removeEventListener('visibilitychange', onHidden)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('pagehide', stop)
       saveTime()
       recordedAt.current = null

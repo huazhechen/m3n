@@ -2,14 +2,19 @@ import { expect, test } from '@playwright/test'
 
 test('metronome adjusts tempo, meter and accents during playback', async ({ page }) => {
   await page.addInitScript(() => {
-    const events: { frequency: number; time: number }[] = []
+    const events: { duration: number; loop: boolean; tones: number[][] }[] = []
     Object.assign(window, { metronomeEvents: events })
-    const original = AudioContext.prototype.createOscillator
-    AudioContext.prototype.createOscillator = function () {
-      const oscillator = original.call(this)
-      const start = oscillator.start.bind(oscillator)
-      oscillator.start = (when = 0) => { events.push({ frequency: oscillator.frequency.value, time: when }); start(when) }
-      return oscillator
+    const original = AudioContext.prototype.createBufferSource
+    AudioContext.prototype.createBufferSource = function () {
+      const source = original.call(this)
+      const start = source.start.bind(source)
+      source.start = (when = 0, offset = 0) => {
+        const buffer = source.buffer!
+        const data = buffer.getChannelData(0)
+        events.push({ duration: buffer.duration, loop: source.loop, tones: [0, .5, 1].map(time => Array.from(data.slice(Math.round(time * buffer.sampleRate), Math.round(time * buffer.sampleRate) + 100))) })
+        start(when, offset)
+      }
+      return source
     }
 
   })
@@ -26,18 +31,18 @@ test('metronome adjusts tempo, meter and accents during playback', async ({ page
   await expect(beats.nth(1)).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: '开始', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await expect.poll(() => page.evaluate(() => (window as unknown as { metronomeEvents: unknown[] }).metronomeEvents.length)).toBeGreaterThanOrEqual(4)
-  const sounds = await page.evaluate(() => (window as unknown as { metronomeEvents: { frequency: number; time: number }[] }).metronomeEvents)
-  expect(sounds.slice(0, 3).map(sound => sound.frequency)).toEqual([1500, 1500, 900])
-  expect(sounds[1]!.time - sounds[0]!.time).toBeCloseTo(.5, 3)
+  const sounds = await page.evaluate(() => (window as unknown as { metronomeEvents: { duration: number; loop: boolean; tones: number[][] }[] }).metronomeEvents)
+  expect(sounds).toHaveLength(1)
+  expect(sounds[0]!.loop).toBe(true)
+  expect(sounds[0]!.duration).toBeCloseTo(1.5, 3)
+  expect(sounds[0]!.tones[0]).toEqual(sounds[0]!.tones[1])
+  expect(sounds[0]!.tones[0]).not.toEqual(sounds[0]!.tones[2])
   await tempo.fill('240')
-  await expect.poll(async () => {
-    const sounds = await page.evaluate(() => (window as unknown as { metronomeEvents: { time: number }[] }).metronomeEvents)
-    return sounds.length > 5 ? Math.round((sounds.at(-1)!.time - sounds.at(-2)!.time) * 1000) : 0
-  }).toBe(250)
+  await expect.poll(() => page.evaluate(() => (window as unknown as { metronomeEvents: { duration: number }[] }).metronomeEvents.at(-1)!.duration)).toBeCloseTo(.75, 3)
   await page.getByRole('button', { name: '6 拍', exact: true }).click()
   await expect(beats).toHaveCount(6)
   await expect(beats.nth(3)).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByLabel('今日练习时长')).not.toHaveText('00:00:00')
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   await expect(page.locator('[data-active=true]')).toHaveCount(0)
   await expect(page.getByLabel('今日练习时长')).not.toHaveText('00:00:00')
@@ -68,7 +73,7 @@ test('mobile controls fit and leaving the page stops practice accounting', async
 })
 
 
-test('backgrounding pauses the metronome and local storage failures are reported', async ({ page }) => {
+test('backgrounding keeps the metronome running and local storage failures are reported', async ({ page }) => {
   await page.goto('/tools/metronome')
   await page.getByRole('button', { name: '开始', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
@@ -76,7 +81,9 @@ test('backgrounding pauses the metronome and local storage failures are reported
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     document.dispatchEvent(new Event('visibilitychange'))
   })
-  await expect(page.getByRole('button', { name: '开始', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await expect(page.getByLabel('今日练习时长')).not.toHaveText('00:00:00')
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
   const saved = await page.evaluate(() => localStorage.getItem('m3n:metronome-practice-v1'))
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: false })
@@ -179,4 +186,49 @@ test('tempo button hit areas fill both sides of the centered number on desktop a
     await expect(page.getByLabel('当前速度')).toHaveText('60')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   }
+})
+
+test('audible beats stay regular while the main thread cannot schedule callbacks', async ({ page }) => {
+  await page.addInitScript(() => {
+    const create = AudioContext.prototype.createBufferSource
+    AudioContext.prototype.createBufferSource = function () {
+      const source = create.call(this)
+      const capture = this.createMediaStreamDestination()
+      const recorder = new MediaRecorder(capture.stream)
+      const chunks: Blob[] = []
+      recorder.ondataavailable = event => chunks.push(event.data)
+      const recording = new Promise<Blob>(resolve => { recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType })) })
+      Object.assign(window, { stopRecording: () => { recorder.stop(); return recording } })
+      source.connect(capture)
+      recorder.start()
+      return source
+    }
+  })
+  await page.goto('/tools/metronome')
+  await page.getByRole('slider', { name: '速度', exact: true }).fill('120')
+  await page.getByRole('button', { name: '开始', exact: true }).click()
+  await page.waitForTimeout(300) // Allow the recorder's asynchronous startup to finish.
+  const onsets = await page.evaluate(async () => {
+    // A blocked main thread is stricter than background timer throttling.
+    const until = performance.now() + 2200
+    while (performance.now() < until) { /* No timer or animation callback can run. */ }
+    await new Promise(resolve => setTimeout(resolve, 100))
+    const recording = await (window as unknown as { stopRecording: () => Promise<Blob> }).stopRecording()
+    const decoder = new AudioContext()
+    const audio = await decoder.decodeAudioData(await recording.arrayBuffer())
+    const data = audio.getChannelData(0)
+    const onsets: number[] = []
+    let lastLoudFrame = -audio.sampleRate
+    for (let frame = 0; frame < data.length; frame++) {
+      if (Math.abs(data[frame]!) > .1) {
+        if (frame - lastLoudFrame > audio.sampleRate * .12) onsets.push(frame / audio.sampleRate)
+        lastLoudFrame = frame
+      }
+    }
+    await decoder.close()
+    return onsets
+  })
+  expect(onsets.length).toBeGreaterThanOrEqual(4)
+  for (let index = 1; index < onsets.length; index++) expect(Math.abs(onsets[index]! - onsets[index - 1]! - .5)).toBeLessThan(.025)
+  await page.getByRole('button', { name: '暂停', exact: true }).click()
 })

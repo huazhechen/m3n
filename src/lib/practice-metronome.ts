@@ -1,66 +1,92 @@
 export type MetronomeSettings = { bpm: number; accents: boolean[] }
-/** Schedule against the audio clock, independent of render and interval jitter. */
+type Loop = { source: AudioBufferSourceNode; time: number; beatDuration: number; firstBeat: number; beats: number }
+
+/** The audio thread loops a whole bar, even when background JS timers are throttled. */
 export class PracticeMetronome {
   private context: AudioContext
-  private timer: ReturnType<typeof setInterval> | undefined
   private animation = 0
-  private nextTime = 0
-  private beat = 0
+  private startedAt: number | null = null
   private stopped = false
-  private pending: { time: number; beat: number }[] = []
+  private loops: Loop[] = []
   private settings: MetronomeSettings
   private onBeat: (beat: number) => void
-  constructor(settings: MetronomeSettings, onBeat: (beat: number) => void) {
+  constructor(settings: MetronomeSettings, onBeat: (beat: number) => void, onInterrupted: () => void = () => {}) {
     this.settings = settings
     this.onBeat = onBeat
     this.context = new AudioContext()
+    this.context.onstatechange = () => {
+      if (this.startedAt !== null && !this.stopped && this.context.state !== 'running') onInterrupted()
+    }
   }
   async start() {
     await this.context.resume()
     if (this.stopped) return
     if (this.context.state !== 'running') throw new Error('音频未能启动，请再次点击开始。')
-    this.nextTime = this.context.currentTime + .03
-    this.schedule()
-    this.timer = setInterval(() => this.schedule(), 25)
+    this.startedAt = this.context.currentTime + .03
+    this.loops.push(this.createLoop(this.startedAt, 0))
     const animate = () => {
-      while (this.pending[0] && this.pending[0].time <= this.context.currentTime) this.onBeat(this.pending.shift()!.beat)
+      const loop = this.currentLoop()
+      if (loop && this.context.currentTime >= loop.time) {
+        const beat = Math.floor((this.context.currentTime - loop.time) / loop.beatDuration)
+        this.onBeat((loop.firstBeat + beat) % loop.beats)
+      }
       this.animation = requestAnimationFrame(animate)
     }
     this.animation = requestAnimationFrame(animate)
   }
   update(settings: MetronomeSettings) {
-    if (settings.accents.length !== this.settings.accents.length) this.beat = 0
+    if (this.stopped || (settings.bpm === this.settings.bpm && settings.accents.length === this.settings.accents.length && settings.accents.every((value, index) => value === this.settings.accents[index]))) return
+    const current = this.currentLoop()
     this.settings = settings
-  }
-  private schedule() {
-    if (this.nextTime < this.context.currentTime) this.nextTime = this.context.currentTime + .01
-    while (this.nextTime < this.context.currentTime + .08) {
-      const beat = this.beat % this.settings.accents.length
-      const accent = this.settings.accents[beat]
-      const oscillator = this.context.createOscillator()
-      const envelope = this.context.createGain()
-      oscillator.frequency.value = accent ? 1500 : 900
-      envelope.gain.setValueAtTime(0, this.nextTime)
-      envelope.gain.linearRampToValueAtTime(1, this.nextTime + .002)
-      envelope.gain.setValueAtTime(1, this.nextTime + .02)
-      envelope.gain.exponentialRampToValueAtTime(.001, this.nextTime + .08)
-      oscillator.connect(envelope)
-      envelope.connect(this.context.destination)
-      oscillator.start(this.nextTime)
-      oscillator.stop(this.nextTime + .085)
-      oscillator.onended = () => { oscillator.disconnect(); envelope.disconnect() }
-      this.pending.push({ time: this.nextTime, beat })
-      this.nextTime += 60 / this.settings.bpm
-      this.beat = (beat + 1) % this.settings.accents.length
+    if (!current) return
+    // Replace any queued change and switch on the next beat of the audible loop.
+    for (const loop of this.loops) {
+      if (loop !== current) { loop.source.stop(); loop.source.disconnect() }
     }
+    const steps = Math.max(0, Math.ceil((this.context.currentTime + .01 - current.time) / current.beatDuration))
+    const time = current.time + steps * current.beatDuration
+    const firstBeat = settings.accents.length === current.beats ? (current.firstBeat + steps) % current.beats : 0
+    const next = this.createLoop(time, firstBeat)
+    current.source.stop(time)
+    this.loops = [current, next]
   }
-  get running() { return this.context.state === 'running' }
+  private currentLoop() {
+    while (this.loops.length > 1 && this.loops[1]!.time <= this.context.currentTime) this.loops.shift()
+    return this.loops[0]
+  }
+  private createLoop(time: number, firstBeat: number): Loop {
+    const sampleRate = this.context.sampleRate
+    const beatFrames = Math.round(sampleRate * 60 / this.settings.bpm)
+    const beats = this.settings.accents.length
+    const buffer = this.context.createBuffer(1, beatFrames * beats, sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let beat = 0; beat < beats; beat++) {
+      const frequency = this.settings.accents[beat] ? 1500 : 900
+      for (let frame = 0; frame < Math.ceil(.085 * sampleRate); frame++) {
+        const seconds = frame / sampleRate
+        const gain = seconds < .002 ? seconds / .002 : seconds < .02 ? 1 : Math.pow(.001, (Math.min(seconds, .08) - .02) / .06)
+        data[beat * beatFrames + frame] = Math.sin(2 * Math.PI * frequency * seconds) * gain
+      }
+    }
+    const source = this.context.createBufferSource()
+    source.buffer = buffer
+    source.loop = true
+    source.connect(this.context.destination)
+    source.onended = () => source.disconnect()
+    const beatDuration = beatFrames / sampleRate
+    source.start(time, firstBeat * beatDuration)
+    return { source, time, beatDuration, firstBeat, beats }
+  }
+  /** Audio time stops advancing when the browser suspends the context. */
+  get elapsedSeconds() { return this.startedAt === null ? 0 : Math.max(0, this.context.currentTime - this.startedAt) }
+  get running() { return !this.stopped && this.context.state === 'running' }
   stop() {
     if (this.stopped) return
     this.stopped = true
-    clearInterval(this.timer)
     cancelAnimationFrame(this.animation)
-    this.pending = []
+    for (const loop of this.loops) { loop.source.stop(); loop.source.disconnect() }
+    this.loops = []
+    this.context.onstatechange = null
     void this.context.close().catch(() => {})
   }
 }
