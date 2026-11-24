@@ -132,6 +132,9 @@ describe('new reference scores', () => {
     const corrected = [...reference]
     corrected[9] = '3:.5 2:.5 2:.5 1:.25 7d:.25 6d:1.5 6d:.5'
     corrected[11] = '5:.5 4:.5 5:.5 2:.5 3:2'
+    // The repeat now starts at intro bar 5; each ending writes its final vocal bar.
+    corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 6:.5'
+    corrected[23] = corrected[22] + '~'
     const expected = [...corrected.slice(0, 8), starsReference.secondPassBar8, ...corrected.slice(8)]
     expect(bars.slice(12).map(tokens)).toEqual(expected.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
@@ -139,6 +142,24 @@ describe('new reference scores', () => {
     expect(bars.flatMap(bar => bar.events).every(event => event.postfixes.every(mark => !/^(ac|ap)\(/.test(mark)))).toBe(true)
     expectReferenceLyrics(stars, starsReference)
     expect(events(stars).reduce((sum, event) => sum + event.beats, 0)).toBe(380)
+  })
+
+  it('starts the first repeat a bar earlier and gives each ending its corrected vocal cadence', () => {
+    const document = parseM3NDocument(stars)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([5, 51])
+    expect(bars[35]!.ending).toBe('1')
+    expect(bars[35]!.right).toBe('rptend')
+    expect(bars[36]!.ending).toBe('2')
+    const cadence = (index: number) => bars[index]!.events.slice(-2).map(event => [event.pitches, event.beats, event.tie ?? false])
+    expect(cadence(35)).toEqual([[['5'], .5, false], [['6'], .5, false]])
+    expect(cadence(36)).toEqual([[['5'], .5, false], [['6'], .5, true]])
+    expect(bars[37]!.events.map(event => [event.pitches, event.beats])).toEqual([[['6'], 4]])
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    for (const index of [35, 36]) {
+      expect(bars[index]!.events.flatMap(event => (lyricsByEvent.get(event) ?? [])
+        .filter(lyric => lyric.kind === 'text').map(lyric => lyric.text)).join('')).toBe('一点光温暖孩子的心')
+    }
   })
 
   it('places Star Lighting lyrics on their original notes, including the shared ending entry and corrected verse', () => {
@@ -154,7 +175,7 @@ describe('new reference scores', () => {
     expect(words(48)).toEqual(['偷', '偷', '探', '出', '了', '头', '', '是'])
     const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) => [event.sourceStart, [index + 1, offset + 1]] as const)))
     expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)]))
-      .toEqual([[[17, 5], [17, 6]], [[20, 4], [20, 5]], [[36, 9], [36, 10]], [[57, 9], [58, 1]]])
+      .toEqual([[[17, 5], [17, 6]], [[20, 4], [20, 5]], [[57, 9], [58, 1]]])
   })
 
   it('writes Conan as forty full 4/4 measures and rejects either redundant barline', () => {

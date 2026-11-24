@@ -83,7 +83,7 @@
     "星星点灯照亮我的家门让迷失的孩子找到来时的路星星点灯照亮我的前程用一点光温暖孩子的心"
   ],
   "performedLyricsSha256": "9bc9984c9f935e589e617b2f616e434199856fa59914f38be0fa73894d8678e2",
-  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-18 full five-image audit: corrected repeated-note ties and lyric entries, corrected 头是 rhythm, removed all seven written grace groups at user request. 2026-11-24: shared original bars 19/21; user corrected original bar 24 rhythm to (32) (2(17d)) 6d. (6d) and bar 26 pitches to (54) (52) 3^.",
+  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-18 full five-image audit: corrected repeated-note ties and lyric entries, corrected 头是 rhythm, removed all seven written grace groups at user request. 2026-11-24: shared original bars 19/21; user corrected original bar 24 rhythm to (32) (2(17d)) 6d. (6d) and bar 26 pitches to (54) (52) 3^. 2026-11-24: moved the first repeat start/end one bar earlier; duplicated the final vocal bar into the endings, changed its last 7 to 6, removed its 5–7 slur and tied the second ending into the following sustained 6.",
   "playbackLyricRowIndexes": [
     0,
     2,
