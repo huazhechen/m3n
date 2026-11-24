@@ -20,3 +20,9 @@ npm run prepare:scores
 `config/score-artifacts.json` 记录源文件、排版依赖和所选字体的 SHA-256，以及简谱宽度和页数。修改谱源只更新对应乐谱；修改影响排版的代码、字体或引擎则更新全部乐谱。新增、删除乐谱也会触发生成。CI 执行 `npm run check:score-artifacts`，只校验、不修改文件；绕过本地钩子造成的过期结果会令 CI 失败。
 
 网页乐谱库提供整本简谱谱集导出，使用与页面相同的540～640px实时选宽和排版规则及三字体策略；打开弹窗一次完成PDF生成，准备好后点击直接下载。单首网页使用按内容选择的中文子集；编辑器输入超出内置子集时按需使用完整思源黑体。PNG 使用相同字形轮廓，PDF 嵌入实际使用的字体子集。本地 `npm run build:scorebook` 和 `npm run export:score-pdfs` 仍可使用，发布脚本按当前内容动态生成 `.tmp/scorebook-font/text.ttf` 总子集，不将总子集放入前端。
+
+## 共用网页字体体积试验
+
+`tools/fonts/NotoSansSC-catalog.woff2` 是覆盖曲库、独立作品和首页谱例的共用子集快照，使用与单曲子集相同的 TrueType 轮廓和保守谱源字符集。配套 JSON 记录输入摘要、字符数量和输出大小；字体许可证沿用 `public/licenses/noto-sans/LICENSE.txt`。
+
+使用上述 Python 环境运行 `.tmp/font-subset-env/bin/python tools/prepare-catalog-web-font.py` 可重新生成。该试验产物不接入页面加载、不自动随提交更新，也不发布到前端；谱源更新后需要手动重跑。2026-11-24 的107份谱源共覆盖1,767个字符（其中1,603个汉字），WOFF2为230,244字节。
