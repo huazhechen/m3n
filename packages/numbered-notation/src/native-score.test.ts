@@ -105,6 +105,24 @@ describe('native engraving acceptance', () => {
     expect(glyphs.map(glyph => glyph.pitches.map(pitch => pitch.degree).join(''))).toEqual(['1', '2', '3', '4', '5', '6'])
   })
 
+  it('keeps a tuplet bracket across all slots and a slur only across its marked slots', () => {
+    const document = parseM3NDocument('{4/4}\nN: ([3 {lg}4 5{/}:2]) 1^. |||')
+    const layout = layoutNativeScore(document, options)
+    const bracket = layout.relations.find(relation => relation.kind === 'tuplet')!
+    const slur = layout.relations.find(relation => relation.kind === 'slur')!
+    expect([bracket.first.slot, bracket.last.slot]).toEqual([0, 2])
+    expect([slur.first.slot, slur.last.slot]).toEqual([1, 2])
+    expect(slur.first.pitches[0]!.degree).toBe('4')
+    expect(layout.relations.filter(relation => relation.kind === 'tie')).toHaveLength(0)
+  })
+
+  it('keeps the numeral and tie when a fractional note sustains into a whole beat', () => {
+    const { root } = render('{4/4}\nN: (6 (4 2~)) 2 1^ |||\nL: 洁白枝花')
+    expect(root.querySelectorAll('path[data-m3n-relation="tie"]')).toHaveLength(1)
+    expect(root.querySelector('g.note[data-m3n-id="m3n-e-4"]')?.getAttribute('data-m3n-role')).not.toBe('sustain')
+    expect(numbers(root, 'm3n-e-4')).toBe('2')
+  })
+
   it('separates nested ties from slurs and ends the slur on the pitched head', () => {
     const document = parseM3NDocument('{4/4}\nN: {lg}2 1~ 1^{hold}{/} |||')
     const layout = layoutNativeScore(document, options)

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "8152441380cdb704cd36a65238c89319f82bc4dbf64d2bbc3f8d592f189a31d1",
+  "rendererSha256": "0d4c7b81595c0bbf6643ba659f7c07770adf549871216815652404896a521e47",
   "fontManifestSha256": "3f9c6678306ca253105544472143b395158cac55a592d59fb06a97af540435b1",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -180,7 +180,7 @@
       "fontSha256": "8da81a0ebf5a7e348c2a98342d787354372b560f3ab527986c12b6abf3b29320"
     },
     "src/scores/li_hua_you_kai_fang_01.m3n": {
-      "sourceSha256": "48b8642ec90268a3efc03829d6bba01bb4744d582fa3876137c0fe3d40934c12",
+      "sourceSha256": "311c85210f7b0523d52855dd072c743aa7354d8948c4519dbf0e4396e1a73fa3",
       "font": "NotoSansSC-00c2d17d01d6c982.ttf",
       "fontSha256": "173d144797aebafd8fabc5249a7df2ddd92f87d0491343b7c2f725fb12c73c1c"
     },

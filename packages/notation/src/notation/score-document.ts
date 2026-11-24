@@ -15,6 +15,8 @@ export type ScoreEvent = {
   tieFromTupletIndex?: number
   /** Outgoing ties between adjacent children within a tuplet. */
   tupletTies?: number[]
+  /** Inclusive zero-based endpoints of slurs contained in a tuplet. */
+  tupletSlurs?: Array<[number, number]>
   dynamic?: string
   chord?: string
   prefix?: 'sfz'

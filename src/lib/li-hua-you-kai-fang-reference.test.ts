@@ -7,7 +7,8 @@ const document = parseM3NDocument(source)
 // Independently transcribed from fixtures/li-hua-you-kai-fang-upload.jpg.
 // Pitch/duration in quarter notes; ~ continues into the following note.
 // The user removed the instrumental intro; retain the one-beat vocal pickup.
-// Both the first ending and final tonic complement that pickup with three beats.
+// The repeat begins at bar 2; its first ending includes the second verse pickup.
+// The final tonic complements the opening pickup with three beats.
 const bars = [
   '0/.5 5d/.25 5d/.25',
   '3/1.5 3/.25 2/.25 1/1.5 2/.25 3/.25',
@@ -20,12 +21,12 @@ const bars = [
   '2/.5 1/.5 1/2 3/t 4/t 5/t',
   '6/.5 6/.5 6/.5 4/.25 2/.25~ 2/1 4/.5 6/.5',
   '5/1 5/.5 3/.5 1/1.5 2/.25 3/.25',
-  '4/.75 4/.25~ 4/.5 3/.5 2/.5 2/.25 2/.25 2/.5 6/.25~ 6/.25',
+  '4/.75 4/.25~ 4/.5 3/.5 2/.5 2/.25 2/.25 2/.5 6/.25 6/.25',
   '5/3 3/t 4/t 5/t',
   '6/.5 6/.5 6/.5 4/.25 2/.25~ 2/1 4/.25 6/.75',
   '5/1 0/.25 5/.5 3/.25 1/1.5 2/.25 3/.25',
   '4/.75 4/.25~ 4/.5 3/.5 2/.75 1/.25 7d/.25 1/.25 2/.5',
-  '1/3',
+  '1/3 0/.5 5d/.25 5d/.25',
   '1/3 3/t 4/t 5/t',
   '1/3 0/.5 2/.25 3/.25',
   '4/.75 4/.25~ 4/.5 3/.5 2/.75 1/.25 7d/.25 1/.25 2/.5',
@@ -35,7 +36,7 @@ const bars = [
   return { pitch, beats: duration === 't' ? 1 / 3 : Number(duration!.replace('~', '')), tie: duration!.endsWith('~') }
 }))
 const range = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => first + index)
-const route = [...range(1, 17), ...range(1, 16), 18, ...range(10, 16), 19, 20, 21]
+const route = [...range(1, 17), ...range(2, 16), 18, ...range(10, 16), 19, 20, 21]
 
 it('recreates the G-major image pitches, rhythm and ties through both verses, D.S. and the final ending', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
