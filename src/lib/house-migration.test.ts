@@ -55,7 +55,7 @@ const cases = [
   },
   {
     "file": "xing_xing_dian_deng_01.m3n",
-    "music": "1dcddc9d8664918d0c5e6cbc0e2bf395e047ac5c043fbb5461fb36cda2326237",
+    "music": "678d034307daf94bc67e875d4d773be39e2b86e98a8c7003ef4bfe0308b420c1",
     "lyrics": "ac55cf0560933be23d9636fcd5db6ee220c2c6cca153878bf538cd8a70fb7fa9",
     "events": 727,
     "syllables": 444

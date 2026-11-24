@@ -137,8 +137,8 @@ describe('new reference scores', () => {
     corrected[11] = '5:.5 4:.5 3:.5 2:.5 3:2'
     corrected[13] = '3:.5 2:.5 1:.5 7d:.25 1:.25 6d:2'
     // The repeat now starts at intro bar 5; each ending writes its final vocal bar.
-    corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 6:.5'
-    corrected[23] = corrected[22] + '~'
+    corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 7:.5'
+    corrected[23] = corrected[22]
     const expected = [...corrected.slice(0, 8), starsReference.secondPassBar8, ...corrected.slice(8)]
     expect(bars.slice(12).map(tokens)).toEqual(expected.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
@@ -156,8 +156,8 @@ describe('new reference scores', () => {
     expect(bars[35]!.right).toBe('rptend')
     expect(bars[36]!.ending).toBe('2')
     const cadence = (index: number) => bars[index]!.events.slice(-2).map(event => [event.pitches, event.beats, event.tie ?? false])
-    expect(cadence(35)).toEqual([[['5'], .5, false], [['6'], .5, false]])
-    expect(cadence(36)).toEqual([[['5'], .5, false], [['6'], .5, true]])
+    expect(cadence(35)).toEqual([[['5'], .5, false], [['7'], .5, false]])
+    expect(cadence(36)).toEqual([[['5'], .5, false], [['7'], .5, false]])
     expect(bars[37]!.events.map(event => [event.pitches, event.beats])).toEqual([[['6'], 4]])
     const { lyricsByEvent } = deriveScoreInteraction(document)
     for (const index of [35, 36]) {
@@ -179,7 +179,7 @@ describe('new reference scores', () => {
     expect(words(48)).toEqual(['偷', '偷', '探', '出', '了', '头', '', '是'])
     const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) => [event.sourceStart, [index + 1, offset + 1]] as const)))
     expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)]))
-      .toEqual([[[17, 5], [17, 6]], [[18, 5], [18, 6]], [[19, 7], [19, 8]], [[20, 4], [20, 5]], [[22, 6], [22, 7]], [[23, 3], [23, 4]], [[27, 4], [27, 5]], [[57, 9], [58, 1]]])
+      .toEqual([[[17, 5], [17, 6]], [[18, 5], [18, 6]], [[19, 7], [19, 8]], [[20, 4], [20, 5]], [[22, 6], [22, 7]], [[23, 3], [23, 4]], [[27, 4], [27, 5]], [[37, 10], [38, 1]], [[57, 9], [58, 1]]])
   })
 
   it('writes Conan as forty full 4/4 measures and rejects either redundant barline', () => {
