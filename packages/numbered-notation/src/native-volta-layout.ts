@@ -3,7 +3,7 @@ import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeStyle } from './native-style.js'
 import { nativeNoteBody } from './native-note-body.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { n } from './native-symbols.js'
@@ -65,7 +65,7 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
       const pieces = nativeSvgPieces(raw, measurer)
       for (const bar of [first ? precedingBar : undefined, last ? followingBar : undefined]) {
         if (!bar) continue
-        const barTop = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
+        const barTop = nativeBarInk(bar.kind, bar.x, 0, measurer).top
         const hookBottom = Math.max(...pieces.filter(mark => mark.right - mark.left <= nativeStyle.music * .055 + .001).map(mark => mark.bottom))
         y = Math.min(y, barTop - 2 - hookBottom)
       }

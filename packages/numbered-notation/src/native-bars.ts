@@ -1,3 +1,6 @@
+import { bravuraGeometry } from './bravura.js'
+import { unionNativeInk, translateNativeInk, type NativeInk } from './native-ink.js'
+import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeMusicAxis } from './native-axis.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeEm as em } from './native-style.js'
@@ -27,4 +30,22 @@ export function nativeBarSvg(kind: string, x: number, y: number, measurer: TextM
   for (const bar of geometry.bars) svg += `<rect${attrs({ x: x - geometry.anchor + bar.x, y: top, width: bar.width, height: geometry.size, fill: '#000' })}/>`
   for (const dot of geometry.dots) for (const ratio of [0.38, 0.62]) svg += circle(x - geometry.anchor + dot, top + geometry.size * ratio, geometry.radius, measurer, true)
   return `<g${attrs({ 'data-m3n-role': 'bar', 'data-m3n-bar': kind })}>${svg}</g>`
+}
+
+/** Painted bar geometry with the same coordinate rounding as nativeBarSvg. */
+export function nativeBarPieces(kind: string, x: number, y: number, measurer: TextMeasurer): NativeInk[] {
+  const geometry = nativeBarMetrics(kind), top = y + nativeMusicAxis(measurer) - geometry.size / 2
+  const pieces = geometry.bars.map(bar => {
+    const left = n(x - geometry.anchor + bar.x), upper = n(top)
+    return {left, right:left+n(bar.width), top:upper, bottom:upper+n(geometry.size)}
+  })
+  if (geometry.dots.length) {
+    const ink = bravuraGeometry('repeatDot',geometry.radius*2,true,measurer,geometry.radius*2).ink
+    for (const dot of geometry.dots) for (const ratio of [0.38,0.62])
+      pieces.push(translateNativeInk(ink,n(x-geometry.anchor+dot),n(top+geometry.size*ratio-geometry.radius)))
+  }
+  return pieces
+}
+export function nativeBarInk(kind: string, x: number, y: number, measurer: TextMeasurer) {
+  return unionNativeInk(nativeBarPieces(kind,x,y,measurer))
 }

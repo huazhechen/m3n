@@ -4,7 +4,7 @@ import { nativeSvgPieces, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeLyricPieces } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
-import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
+import { nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 
 /** Final painted primitives in each lane's baseline coordinates. Keep separate
@@ -17,7 +17,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
     const add = (svg: string) => pieces.push(...nativeSvgPieces(svg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
     for (const [index, measure] of system.measures.entries()) {
       const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).map(glyph => ({ ...glyph, y: 0 }))
-      const beams = nativeBeamLayout(glyphs, measurer)
+      const beams = nativeBeamLayout(glyphs, measurer, false)
       for (const glyph of glyphs) {
         pieces.push(...painter.musicPieces(glyph, beams.claimed.get(glyph), coreOnly).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
         for (const control of coreOnly ? [] : glyph.controls) add(painter.control(control, control.x!, 0))
@@ -27,8 +27,8 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
           if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) pieces.push(...nativeLyricPieces(data, glyph.x, baseline, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
         }
       }
-      add(beams.svg)
-      if (!coreOnly) for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) add(nativeBarSvg(bar.kind, bar.x, 0, measurer))
+      pieces.push(...beams.pieces)
+      if (!coreOnly) for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) pieces.push(...nativeBarPieces(bar.kind, bar.x, 0, measurer))
     }
     if (includeRelations && !coreOnly) for (const relation of system.relations.filter(relation => relation.first.lane === lane.id)) add(system.relationLayout!.get(relation)!.svg)
     if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id) add(decoration.svg)

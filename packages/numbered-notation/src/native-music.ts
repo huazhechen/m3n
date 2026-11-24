@@ -2,7 +2,7 @@ import { nativeNoteBody } from './native-note-body.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
-import { nativeSvgInk, nativeSvgPieces, unionNativeInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import { nativeBodyPieces } from './native-music-ink.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n, line, circle } from './native-symbols.js'
@@ -14,18 +14,22 @@ import type { NativeGlyph } from './native-model.js'
 /** Claim complete continuous runs one level at a time. Call with one lane in
  * one measure/system; the beat predicate remains shared with spacing. Local
  * note footprints stay valid subsets of these runs for relation clearance. */
-export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextMeasurer) {
+export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextMeasurer, paint = true) {
   const claimed = new Map<NativeGlyph, Set<number>>()
   const counts = glyphs.slice(1).map((glyph, i) => nativeBeamCount(glyphs[i]!, glyph))
   const body = nativeNoteBody(measurer)
   let svg = ''
+  const pieces: NativeInk[] = []
   for (let level = 0; level < Math.max(0, ...counts); level++) {
     for (let i = 0; i < counts.length; i++) {
       if (counts[i]! <= level) continue
       const first = i
       while (i + 1 < counts.length && counts[i + 1]! > level) i++
       const a = glyphs[first]!, b = glyphs[i + 1]!
-      svg += line(a.x - body.width / 2, a.y + body.beamY(level), b.x + body.width / 2, a.y + body.beamY(level), body.beamStroke)
+      const left = a.x - body.width / 2, right = b.x + body.width / 2, y = a.y + body.beamY(level)
+      if (paint) svg += line(left, y, right, y, body.beamStroke)
+      const half = n(body.beamStroke)/2, x1 = n(left), x2 = n(right), baseline = n(y)
+      pieces.push({left:Math.min(x1,x2)-half,right:Math.max(x1,x2)+half,top:baseline-half,bottom:baseline+half})
       for (let member = first; member <= i + 1; member++) {
         const glyph = glyphs[member]!, levels = claimed.get(glyph) ?? new Set<number>()
         levels.add(level)
@@ -33,7 +37,7 @@ export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextM
       }
     }
   }
-  return { svg, claimed }
+  return { svg, claimed, pieces }
 }
 
 export class NativeMusicPainter extends NativeSymbols {

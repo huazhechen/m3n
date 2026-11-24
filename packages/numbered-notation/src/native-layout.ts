@@ -1,7 +1,7 @@
 import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
-import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
+import { nativeBarInk, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
 import { placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
 import { placeNativeVoltas } from './native-volta-layout.js'
@@ -290,7 +290,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       const members = glyphs.filter(glyph => glyph.lane === lane)
       const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([, row]) => row.annotation || row.texts.some(text => text.replaceAll('\u200B', '').trim())).map(([row]) => row)))].sort((a, b) => a - b)
       const bars = system.measures.flatMap((_, index) => nativeLaneBarPositions(system.measures, index, lane))
-        .map(bar => nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer))
+        .map(bar => nativeBarInk(bar.kind, bar.x, 0, measurer))
       const bodyBottom = Math.max(0, ...bars.map(ink => ink.bottom), ...members.map(glyph => glyph.bottom))
       const lyricBottom = Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom))
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
@@ -307,7 +307,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       ])
     for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {
-        const ink = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)
+        const ink = nativeBarInk(bar.kind, bar.x, 0, measurer)
         regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top, headingClearance: nativeStyle.music * (2 / 22) })
       }
     }

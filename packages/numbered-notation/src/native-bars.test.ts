@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeBarSvg, nativeMeasureBarPositions, nativeLaneBarPositions } from './native-bars.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeBarSvg, nativeBarPieces, nativeBarInk, nativeMeasureBarPositions, nativeLaneBarPositions } from './native-bars.js'
+import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeArcGeometry } from './native-arc.js'
 import { nativeArcSlice } from './native-curve.js'
@@ -107,4 +107,13 @@ describe('measured bar alignment', () => {
     expect(lastLane.top).toBeCloseTo(-ink.top, 4)
     expect(lastLane.bodyBottom).toBeCloseTo(ink.bottom, 4)
   })
+})
+
+it('direct bar pieces match painted coordinates, including fractional anchors and repeat dots', () => {
+  for (const kind of ['single','dbl','end','rptstart','rptend','rptboth'])
+    for (const x of [0,-12.123456789,479.189365789]) for (const y of [0,37.987654321]) {
+      const svg = nativeBarSvg(kind,x,y,measurer)
+      expect(nativeBarPieces(kind,x,y,measurer)).toEqual(nativeSvgPieces(svg,measurer))
+      expect(nativeBarInk(kind,x,y,measurer)).toEqual(nativeSvgInk(svg,measurer))
+    }
 })

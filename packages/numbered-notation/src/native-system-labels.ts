@@ -1,6 +1,6 @@
 import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
-import { nativeBarSvg, nativeMeasureBarPositions } from './native-bars.js'
+import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -32,7 +32,7 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
       ?? (next?.part === measure.part ? nativeMeasureBarPositions(system.measures, index + 1).find(bar => bar.kind === 'rptstart') : undefined)
     if (!bar) continue
     const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id)
-    let top = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
+    let top = nativeBarInk(bar.kind, bar.x, 0, measurer).top
     const place = (text: string, size: number, meta: Record<string, string>) => {
       const rightAligned = meta['data-m3n-role'] === 'measure-number'
       const anchor = rightAligned ? 'end' : 'middle'

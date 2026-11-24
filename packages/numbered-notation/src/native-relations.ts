@@ -1,7 +1,7 @@
 import { nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
-import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
+import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath, type NativeArc } from './native-arc.js'
 import { nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
@@ -87,7 +87,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       // Continuations also clear the actual painted bar ink.
       if (hairpin) {
         for (const [index] of system.measures.entries()) for (const bar of nativeLaneBarPositions(system.measures, index, relation.first.lane)) {
-          const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
+          const bounds = nativeBarInk(bar.kind, bar.x, 0, measurer)
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
@@ -96,7 +96,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     if (isArc) {
       const arc = initialArc!
       const bars = system.measures.flatMap((_, index) =>
-        nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeSvgPieces(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer)))
+        nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeBarPieces(bar.kind, bar.x, 0, measurer)))
       const pieces = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
         .filter(g => g.lane === relation.first.lane)
         .flatMap(g => [

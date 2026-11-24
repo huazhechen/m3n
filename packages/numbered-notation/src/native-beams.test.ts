@@ -1,3 +1,4 @@
+import { nativeSvgPieces } from './native-ink.js'
 // @vitest-environment jsdom
 import { parseM3NDocument } from '@m3n/notation';
 import { describe,expect,it } from 'vitest';
@@ -114,3 +115,11 @@ it.each([false, true])('keeps round line caps and valid XML through compound not
             expect(line.getAttribute('stroke-linecap')).toBe('round');
     }
 });
+
+it('direct reduction beams match painted ink and claims with fractional positions', () => {
+  const notes = glyphs('((1 2 3 4))').map((g,i)=>({...g,x:17.123456789+i*31.987654321,y:-4.123456789}))
+  const painted = nativeBeamLayout(notes,measurer), measured = nativeBeamLayout(notes,measurer,false)
+  expect(measured.svg).toBe('')
+  expect(measured.claimed).toEqual(painted.claimed)
+  expect(measured.pieces).toEqual(nativeSvgPieces(painted.svg,measurer))
+})

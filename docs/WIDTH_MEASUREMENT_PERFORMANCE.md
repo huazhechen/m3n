@@ -59,6 +59,10 @@
 
 环境：Intel Core i5-8400 @ 2.80GHz，6个可用CPU，Linux x64，Node v26.13.1，Chromium 157.0.8103.38。复测命令为 `node tools/build-scorebook.mjs --probe-only --force-measure --timing-report=路径`。三轮明细保存在 `.tmp/width480-production-baseline-{1,2,3}-{probes,timings}.json`，候选对照为 `.tmp/width480-production-baseline-1-{2,3}-comparison.json`，生产／审计对照为 `.tmp/width480-production-vs-audit-comparison.json`。CPU采样为 `.tmp/width480-production.cpuprofile`，采样脚本为 `.tmp/profile-width480-production.mjs`，摘要为 `.tmp/width480-production-profile-summary.json`。临时文件不提交Git；本文保留可持续对照的基线与结论。
 
+## 按优先级实施的四步优化
+
+第一步：小节线与符杠的布局测量直接计算与实绘相同的数值墨迹，避免SVG生成、XML解析和重复坐标格式化。反复圆点保留真实字体矩阵墨迹；六位小数语义不变。直接几何对照覆盖全部小节线类型、重复点、负坐标／小数位置与符杠认领；简谱907项测试通过。全量1,365个候选与基线完全一致，独立生产测量为59.260秒（基线67.047秒）。与测试重叠的测量已排除；采用测试结束后的独立测量。明细为 `.tmp/opt1-{probes,timings,comparison}.json`。
+
 ## 540～720px、20px步长的性能基线
 
 2026-11-24，105首简谱、每首10档，共1,050个候选。所有测量均完整执行排版内部的碰撞判断与避让，没有跨次结果复用；五线谱未纳入性能测量。

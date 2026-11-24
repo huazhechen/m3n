@@ -13,9 +13,9 @@ import { nativeStyle, nativeEm as em } from './native-style.js'
 export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, claimedBeams?: ReadonlySet<number>): NativeInk[] {
   const pieces: NativeInk[] = [], size = nativeStyle.music
   const line = (x1: number, y1: number, x2: number, y2: number, stroke: number) => {
-    const half = n(stroke) / 2
-    pieces.push({ left: Math.min(n(x1), n(x2)) - half, right: Math.max(n(x1), n(x2)) + half,
-      top: Math.min(n(y1), n(y2)) - half, bottom: Math.max(n(y1), n(y2)) + half })
+    const half = n(stroke) / 2, a = n(x1), b = n(x2), c = n(y1), d = y1 === y2 ? c : n(y2)
+    pieces.push({ left: Math.min(a,b) - half, right: Math.max(a,b) + half,
+      top: Math.min(c,d) - half, bottom: Math.max(c,d) + half })
   }
   const circle = (x: number, y: number, radius: number) => {
     pieces.push(nativeDotInk(x,y,radius,measurer))
@@ -29,12 +29,13 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   for (const [index, pitch] of glyph.pitches.entries()) {
     const x = glyph.x, y = glyph.y + (glyph.pitchOffsets?.[index] ?? 0)
     const metrics = measurer.measureText(pitch.degree, { fontSize: size, fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal', textAlign: 'center' })
-    const left = n(x - (metrics.centerOffset ?? 0)) - (metrics.advance ?? metrics.w) / 2
+    const qx = n(x), qy = n(y)
+    const left = (metrics.centerOffset ? n(x - metrics.centerOffset) : qx) - (metrics.advance ?? metrics.w) / 2
     pieces.push({ left: left + (metrics.inkLeft ?? 0), right: left + (metrics.inkRight ?? metrics.w),
-      top: n(y) - metrics.baseline, bottom: n(y) - metrics.baseline + (metrics.inkBottom ?? metrics.h) })
+      top: qy - metrics.baseline, bottom: qy - metrics.baseline + (metrics.inkBottom ?? metrics.h) })
     if (pitch.accidental) for (const symbol of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2, measurer).glyphs) {
       const ink = symbol.ink
-      pieces.push({ left: ink.left + n(x), right: ink.right + n(x), top: ink.top + n(y), bottom: ink.bottom + n(y) })
+      pieces.push({ left: ink.left + qx, right: ink.right + qx, top: ink.top + qy, bottom: ink.bottom + qy })
     }
     for (let dot = 0; dot < Math.abs(pitch.octave); dot++) circle(x, y + body.octaveY(pitch.octave > 0, dot, index === 0 ? beamCount : 0), size * .075)
   }
