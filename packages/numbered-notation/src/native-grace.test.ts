@@ -61,11 +61,22 @@ describe('measured native grace blocks', () => {
     const body = nativeNoteBody(normal,grace.size)
     const logicalLeft = -body.width / 2 - nativeAccidentalAdvance(accidental,grace.size)
     const [first, second] = grace.notes
-    const gap = nativeStyle.music * (6 / 22) * .5
-    expect(second!.x + logicalLeft - (first!.x + Math.max(body.width / 2,first!.ink.right))).toBeCloseTo(gap,3)
+    expect(second!.x + second!.ink.left - (first!.x + first!.ink.right)).toBeCloseTo(1,3)
     expect(-grace.left).toBeLessThanOrEqual(first!.x + logicalLeft + .0001)
     expect(grace.left - 6 - grace.sideGap).toBeCloseTo(grace.width,3)
     for (const note of grace.notes) expect(note.x + note.ink.left).toBeGreaterThanOrEqual(-grace.left - .0001)
+  })
+
+  it.each([normal, unusual])('keeps a 1px ink gap across mixed durations, accidentals and octaves', measurer => {
+    const grace = nativeGraceGeometry([
+      { degree: '2', accidental: '', octave: 2, writtenBeats: .5 },
+      { degree: '3', accidental: '♯', octave: -2, writtenBeats: .125 },
+      { degree: '4', accidental: '♭', octave: 0, writtenBeats: .25 },
+    ], 6, measurer)
+    for (const [index, note] of grace.notes.entries()) {
+      const previous = grace.notes[index - 1]
+      if (previous) expect(note.x + note.ink.left - previous.x - previous.ink.right).toBeCloseTo(1, 6)
+    }
   })
 
   it('retains subdivisions and joins the common levels of a mixed-depth group', () => {

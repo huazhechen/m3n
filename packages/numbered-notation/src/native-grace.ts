@@ -1,6 +1,6 @@
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
-import { nativeStyle } from './native-style.js'
+import { nativeEm, nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, circle, line, n } from './native-symbols.js'
 import { nativeSvgInk, unionNativeInk, translateNativeInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -41,10 +41,10 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   if (!notes.length) throw new Error('倚音块不能为空。')
   let end = 0
   for (const [index, note] of notes.entries()) {
-    const previous = notes[index - 1]
-    const gap = previous ? nativeStyle.music * (6 / 22) * 0.5 * (Math.sqrt(previous.beats) + Math.sqrt(note.beats)) : 0
-    note.x = end + gap - note.footprint.left
-    end = note.x + note.footprint.right
+    // Grace notes form a rigid ornament: durations only affect beams.
+    const gap = index ? nativeEm(1) : 0
+    note.x = end + gap - note.ink.left
+    end = note.x + note.ink.right
   }
   const block = unionNativeInk(notes.map(note => translateNativeInk(note.footprint, note.x, 0)))
   const sideGap = size * 0.2
