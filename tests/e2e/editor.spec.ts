@@ -151,7 +151,7 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   await expect(note).toBeVisible()
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
   await note.click()
-  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2') + 2)
+  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2'))
   await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-1"]').first().click()
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2'))
   await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -168,8 +168,12 @@ test('orders numbered annotations above music and maps their clicks back to the 
   await expect(annotations).toHaveCount(2)
   const section = annotations.filter({ hasText: '训练' })
   const instruction = annotations.filter({ hasText: '练习说明' })
-  const sectionBox = (await section.boundingBox())!, instructionBox = (await instruction.boundingBox())!
-  expect(sectionBox.y + sectionBox.height).toBeLessThan(instructionBox.y)
+  await expect(async () => {
+    const sectionBox = await section.boundingBox(), instructionBox = await instruction.boundingBox()
+    expect(sectionBox).not.toBeNull()
+    expect(instructionBox).not.toBeNull()
+    expect(sectionBox!.y + sectionBox!.height).toBeLessThan(instructionBox!.y)
+  }).toPass()
   await instruction.click()
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1{tr}'))
 })
@@ -222,3 +226,40 @@ test('playback highlights notes without forcing page or source scrolling', async
   await pause.click()
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
 })
+
+for (const mode of ['首调', '固定调', '五线谱'] as const) {
+  test(`clicks anywhere in a measure seek and edit at its start in ${mode}`, async ({ page }) => {
+    await page.goto('/editor')
+    const editor = page.getByLabel('M3N source')
+    const text = '{4/4}{60qpm}\nN: 1 2 3 4 | 0 5 6 7 | 1 2 3 4 |||\nL: 春天来了 花开满园 春天来了'
+    await editor.fill(text)
+    await selectNotationMode(page, mode)
+    await page.keyboard.press('Escape')
+    const paper = page.locator('.score-paper')
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    const measure = paper.locator('g.measure').nth(1)
+    const last = measure.locator('g.note, g.rest').last()
+    const clickLast = async () => {
+      await last.scrollIntoViewIfNeeded()
+      const bounds = (await last.boundingBox())!
+      await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+    }
+    await clickLast()
+    await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('0 5'))
+    const area = measure.locator(':scope > .measure-click-area')
+    const box = (await area.boundingBox())!
+    // The corner is blank score space, away from any note or lyric.
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height - 3)
+    await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('0 5'))
+    const metro = page.getByRole('switch', { name: '节拍器', exact: true })
+    if (await metro.isChecked()) await metro.click()
+    await page.getByRole('button', { name: '播放', exact: true }).click()
+    await expect(paper.locator('.is-playing').first()).toBeVisible()
+    await clickLast()
+    // The measure begins with a rest. Clicking its final note must land on it.
+    await expect(measure.locator('g.note, g.rest').first()).toHaveClass(/is-playing/)
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height - 3)
+    await expect(measure.locator('g.note, g.rest').first()).toHaveClass(/is-playing/)
+    await page.getByRole('button', { name: '暂停', exact: true }).click()
+  })
+}
