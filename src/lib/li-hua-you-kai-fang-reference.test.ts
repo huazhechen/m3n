@@ -6,13 +6,10 @@ const source = readFileSync(new URL('../scores/li_hua_you_kai_fang_01.m3n', impo
 const document = parseM3NDocument(source)
 // Independently transcribed from fixtures/li-hua-you-kai-fang-upload.jpg.
 // Pitch/duration in quarter notes; ~ continues into the following note.
-// The first three-beat rest completes the opening pickup for the player.
+// The user removed the instrumental intro; retain the one-beat vocal pickup.
+// Both the first ending and final tonic complement that pickup with three beats.
 const bars = [
-  '0/3 3/.5 4/.5',
-  '5/3 4/.5 3/.5',
-  '1/3 1/.5 2/.5',
-  '3b/3 2/.5 1/.5',
-  '2/3 0/.5 5d/.25 5d/.25',
+  '0/.5 5d/.25 5d/.25',
   '3/1.5 3/.25 2/.25 1/1.5 2/.25 3/.25',
   '2/.75 2/.25 6d/2 0/.5 5d/.25 5d/.25',
   '2/1.5 2/.25 1/.25 7d/1.5 1/.25 2/.25',
@@ -28,21 +25,23 @@ const bars = [
   '6/.5 6/.5 6/.5 4/.25 2/.25~ 2/1 4/.25 6/.75',
   '5/1 0/.25 5/.5 3/.25 1/1.5 2/.25 3/.25',
   '4/.75 4/.25~ 4/.5 3/.5 2/.75 1/.25 7d/.25 1/.25 2/.5',
-  '1/3 3/.5 4/.5',
+  '1/3',
   '1/3 3/t 4/t 5/t',
   '1/3 0/.5 2/.25 3/.25',
   '4/.75 4/.25~ 4/.5 3/.5 2/.75 1/.25 7d/.25 1/.25 2/.5',
-  '1/4',
+  '1/3',
 ].map(bar => bar.split(' ').map(token => {
   const [pitch, duration] = token.split('/')
   return { pitch, beats: duration === 't' ? 1 / 3 : Number(duration!.replace('~', '')), tie: duration!.endsWith('~') }
 }))
 const range = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => first + index)
-const route = [1, ...range(2, 21), ...range(2, 20), 22, ...range(14, 20), 23, 24, 25]
+const route = [...range(1, 17), ...range(1, 16), 18, ...range(10, 16), 19, 20, 21]
 
 it('recreates the G-major image pitches, rhythm and ties through both verses, D.S. and the final ending', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
+  expect(source).not.toContain('{inst}')
+  expect(compileScorePerformance(document).notes[0]).toMatchObject({ pitch: 62, start: 0.5, end: 0.75 })
   expect(document).toMatchObject({ title: '梨花又开放', key: 'G', meterCount: 4, meterUnit: 4, tempo: 72, composer: '因幡晃', lyricist: '丁小齐' })
   const unfolded = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(unfolded).toHaveLength(route.length)
@@ -52,8 +51,8 @@ it('recreates the G-major image pitches, rhythm and ties through both verses, D.
       : [{ pitch: event.pitches[0] ?? '0', beats: event.beats, tie: !!event.tie }])
     expect(actual, `visit ${index + 1}, printed bar ${route[index]}`).toEqual(bars[route[index]! - 1])
   }
-  expect(compileScorePerformance(document).beats).toBe(204)
-  expect(compileScorePerformance(document).notes.at(-1)).toMatchObject({ pitch: 67, start: 200, end: 204 })
+  expect(compileScorePerformance(document).beats).toBe(168)
+  expect(compileScorePerformance(document).notes.at(-1)).toMatchObject({ pitch: 67, start: 165, end: 168 })
 })
 
 it('sings both image verses, the returned chorus and the complete final word', () => {
