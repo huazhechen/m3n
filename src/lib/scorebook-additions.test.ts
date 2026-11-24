@@ -153,6 +153,19 @@ describe('new reference scores', () => {
       .toEqual([[[17, 5], [17, 6]], [[20, 4], [20, 5]], [[37, 9], [37, 10]], [[58, 9], [59, 1]]])
   })
 
+  it('writes Conan as forty full 4/4 measures and rejects either redundant barline', () => {
+    const bars = parseM3NDocument(conan).parts.get('score')!.melody.filter(bar => bar.events.length)
+    expect(bars).toHaveLength(40)
+    expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
+      .toEqual(Array(40).fill(4))
+    for (const fragment of ['3~{/} 3', '7~ 7']) {
+      const invalid = conan.replace(`${fragment}\n---`, `${fragment} |\n---`)
+      expect(invalid).not.toBe(conan)
+      expect(validateM3NDiagnostics(invalid).filter(diagnostic => diagnostic.code === 'M3N_METER_INCOMPLETE_MIDDLE'))
+        .toHaveLength(2)
+    }
+  })
+
   it('keeps all Conan pitches and ties with only the eight authorized half-beat corrections', () => {
     const reference = references[2]!
     const expected = reference.playbackEventIndexes.map(index => reference.events[index]!).filter(event => event.pitch !== null)

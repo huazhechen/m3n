@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "b86e5af9afb5c3991f853d53fb0587669417e4eca9f0f3ce286772c8c1b744e4",
+  "rendererSha256": "a15b5696c37720ac5d6cee10b014bfc81089070a66207a73a51be4d8b3006129",
   "fontManifestSha256": "3b6d3a82a31b2a8031f867c2c5829a67b5bb67413408b03786ec1184bf231b2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -20,7 +20,7 @@
       "fontSha256": "0732b31113630eb137a75211aae8cf24bbec13ba63a2cd38f48686202200f01f"
     },
     "src/scores/ai_ru_chao_shui_01.m3n": {
-      "sourceSha256": "fef738226c2d6332c73edb719cb799fb2fdfe6470b48ea54315f5e4735c39f1a",
+      "sourceSha256": "c12473a6f48699f2df5da2dbba00284fef1be063e0238db8e2c67a0668192c2c",
       "font": "NotoSansSC-57a96e51b41bf5d1.ttf",
       "fontSha256": "7057f4bb809c7980ebeff94982f6cd7295270fb0fe71044ac57ea3b994a09487"
     },
@@ -150,7 +150,7 @@
       "fontSha256": "13f20d61e5c9a517f5301a90a63153d2f587a54a671540b6405d965c2e36f6e5"
     },
     "src/scores/hou_lai_01.m3n": {
-      "sourceSha256": "edaa85da280b0748d8ea8eb7a5d9e091fd5abe78ed3c330c31563df23a40212c",
+      "sourceSha256": "285986dc9be4ca87121a9394fdaf9b8f43d573d990299be77253b0af1f6528e8",
       "font": "NotoSansSC-6dd5dee35bdbdf1b.ttf",
       "fontSha256": "505792cfc24800988669a8aff1c9f16d4e05868ce232589b88aeb3cd02166d0d"
     },
@@ -205,7 +205,7 @@
       "fontSha256": "2004f4c883efd4b37c24ea29038e663afd8b4c0d9097fefe7ae3452651bfa591"
     },
     "src/scores/man_man_xi_huan_ni_01.m3n": {
-      "sourceSha256": "f2c2c04550e0175368a8794a15f029b5325ef7578bdd483bd47ec5ea4bc27365",
+      "sourceSha256": "6cd2e6c8b9d1d02b9acb0a8c3b4b0197d9d4217e8762651cc69cf6c97de7e27c",
       "font": "NotoSansSC-4695774320f26939.ttf",
       "fontSha256": "e1be030f5d8f042c82b4c57c48de8a9154f39a70d91c620a0c29625d7e6ef06c"
     },
@@ -245,7 +245,7 @@
       "fontSha256": "04e3dcc08fd5735fba856b474648805108fbf2cb7e9d99f8aa841e6e93880149"
     },
     "src/scores/na_xie_nian_01.m3n": {
-      "sourceSha256": "1b77d5c72f8d72963f65a91148051f35066d9cc4456e432236cfd94a29b6f937",
+      "sourceSha256": "df9fbdb297a42b6217978748e525d726de6d2918aa56458086c8fa62317970ae",
       "font": "NotoSansSC-35b61eecfc34b8b0.ttf",
       "fontSha256": "b698632d2a5f34f617f6354926cf1e7bc7d2825991d98c4aed3c0f040618dc67"
     },
@@ -290,7 +290,7 @@
       "fontSha256": "e2608af4577b1d4ec462174678f640e209899bb09601e20b3834f1b1323e8b20"
     },
     "src/scores/ru_guo_you_ni_zai_01.m3n": {
-      "sourceSha256": "3a59e4c429ddd60d8dd8c03c431d4270c8a61a869f0525a15ad7a7151233f73d",
+      "sourceSha256": "82c9ffb736ec5225efe124ac4f9d9aa37b3714f4648822949ad8068347b87251",
       "font": "NotoSansSC-76f9366ae7e1a3b0.ttf",
       "fontSha256": "d064826f672be1ef971275f3873620d42edbb5540a203255e5997baf2b5ed74c"
     },

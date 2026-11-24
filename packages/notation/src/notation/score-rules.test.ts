@@ -8,6 +8,20 @@ describe('score document rules', () => {
     expect(validateScoreDocument(parseM3NDocument(source), { source })).toEqual([])
   })
 
+  it.each([' | ', ' |\n---\nN: '])('rejects adjacent short measures separated by a barline (%s)', boundary => {
+    const source = `{4/4}\nN: 1 2 3 4 | 1 2${boundary}3 4 | 1 2 3 4 |||`
+    const diagnostics = validateScoreDocument(parseM3NDocument(source), { source })
+    expect(diagnostics.filter(diagnostic => diagnostic.code === 'M3N_METER_INCOMPLETE_MIDDLE')
+      .map(diagnostic => diagnostic.messageArgs?.measure)).toEqual([2, 3])
+  })
+
+  it('does not let an unrelated navigation mark exempt adjacent short measures', () => {
+    const source = '{4/4}\nN: {segno}1 2 3 4 | 1 2 | 3 4 | 1 2 3 4 {ds} |||'
+    expect(validateScoreDocument(parseM3NDocument(source), { source })
+      .filter(diagnostic => diagnostic.code === 'M3N_METER_INCOMPLETE_MIDDLE')
+      .map(diagnostic => diagnostic.messageArgs?.measure)).toEqual([2, 3])
+  })
+
   it.each(['', '||: '])('pairs a repeat pickup with each complementary alternate ending (start: %s)', start => {
     const source = [
       '{4/4}',

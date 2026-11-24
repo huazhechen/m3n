@@ -29,18 +29,18 @@ describe('Hou Lai with a repeated bridge and D.S. chorus', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document.order).toBeUndefined()
     expect(document.sections ?? []).toEqual([])
-    expect(printed).toHaveLength(62)
+    expect(printed).toHaveLength(61)
     expect(printed.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([42])
-    expect(printed.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([55])
-    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[54, '1'], [55, '1'], [56, '2'], [57, '3']])
+    expect(printed.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([54])
+    expect(printed.flatMap((bar, index) => bar.ending ? [[index + 1, bar.ending]] : [])).toEqual([[53, '1'], [54, '1'], [55, '2'], [56, '3']])
     expect(bars(41, 42).map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual([4, 4])
-    expect(bars(54, 57).map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual([4, 4, 4, 4])
+    expect(bars(53, 56).map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual([4, 4, 4, 4])
   })
 
   it('repeats the bridge, takes ending two, then returns to the chorus and takes ending three', () => {
     // One-based printed bar route, independently specified for the updated arrangement.
-    const expected = [...bars(1, 55), ...bars(42, 53), ...bars(56, 56), ...bars(47, 53), ...bars(57, 62)]
-    expect(performed).toHaveLength(81)
+    const expected = [...bars(1, 54), ...bars(42, 52), ...bars(55, 55), ...bars(46, 52), ...bars(56, 61)]
+    expect(performed).toHaveLength(79)
     expect(events(performed)).toEqual(events(expected))
     expect(compileScorePerformance(document).beats).toBe(312)
   })

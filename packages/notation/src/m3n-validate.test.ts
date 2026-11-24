@@ -9,7 +9,7 @@ const messages = (source: string) => validateM3N(source).join('\n')
 
 describe('validateM3N', () => {
   it('accepts complementary pickup fragments across phrase boundaries', () => {
-    const source = '{2/4}\nN: 1 |\n---\nN: 2 | 3 4 |||'
+    const source = '{2/4}\nN: 1\n---\nN: 2 | 3 4 |||'
 
     expect(validateM3NDiagnostics(source)).toEqual([])
   })

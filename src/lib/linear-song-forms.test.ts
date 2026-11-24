@@ -51,6 +51,15 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
 
   it('preserves each visited phrase count, every bar duration and every time signature', () => {
     const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
+    // The historical A/B boundary splits one logical bar into two 2-beat
+    // fragments. Split it only for comparison with that historical baseline.
+    if (reference.id === 'man_man_xi_huan_ni') {
+      expect(bars).toHaveLength(36)
+      const joined = bars[21]!
+      expect(joined.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+      bars.splice(21, 1, { ...joined, events: joined.events.slice(0, 1) },
+        { ...joined, events: joined.events.slice(1) })
+    }
     const boundaries = ranges[reference.id]!
     expect(bars).toHaveLength(boundaries.at(-1)![1])
     const segments: Array<{ name: string; visit: number; barBeats: number[]; barMeters: number[][] }> = []

@@ -67,21 +67,24 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
   }))
   const equal = (left: number, right: number) => Math.abs(left - right) <= EPSILON
   const complementary = new Set<number>()
+  const pickupBoundary = (left: ScoreMeasure, right: ScoreMeasure) =>
+    left.right === 'rptend' || right.left === 'rptstart'
+    || Boolean(left.ending && !right.ending)
+    || [...(right.navigation ?? []), ...(right.events[0]?.navigation ?? [])]
+      .some(value => value === 'segno' || value === 'coda')
   const passesByMeasure = measurePlaybackPasses(measures)
-  const sharePlaybackPass = (left: ScoreMeasure, right: ScoreMeasure) => {
-    const rightPasses = passesByMeasure.get(right)
-    return [...(passesByMeasure.get(left) ?? [])].some((pass) => rightPasses?.has(pass))
-  }
+  // Ordinary phrase continuations have already been joined by the parser.
+  // Only structural pickup boundaries can complement distinct adjacent bars.
   for (let index = 0; index < values.length - 1; index += 1) {
-    const left = values[index]
-    const right = values[index + 1]
-    if (!left || !right || left.actual >= left.expected || right.actual >= right.expected) continue
-    if (sharePlaybackPass(left.measure, right.measure)
+    const left = values[index]!, right = values[index + 1]!
+    if (!pickupBoundary(left.measure, right.measure)
+      || left.actual >= left.expected || right.actual >= right.expected) continue
+    const rightPasses = passesByMeasure.get(right.measure)
+    if ([...(passesByMeasure.get(left.measure) ?? [])].some(pass => rightPasses?.has(pass))
       && equal(left.expected, right.expected)
       && equal(left.actual + right.actual, left.expected)) {
       complementary.add(index)
       complementary.add(index + 1)
-      index += 1
     }
   }
   // A navigation return may join a short ending to a pickup elsewhere in the
@@ -95,6 +98,11 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
       if (value.actual >= value.expected) continue
       const matches = [sequence[position - 1], sequence[position + 1]].some(neighbor => {
         const other = neighbor === undefined ? undefined : values[neighbor]
+        if (other && Math.abs(index - other.index) === 1) {
+          const left = index < other.index ? value : other
+          const right = index < other.index ? other : value
+          if (!pickupBoundary(left.measure, right.measure)) return false
+        }
         return other && other.actual < other.expected && equal(value.expected, other.expected)
           && equal(value.actual + other.actual, value.expected)
       })
