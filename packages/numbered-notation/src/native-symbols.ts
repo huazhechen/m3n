@@ -16,9 +16,19 @@ import { nativeTempoGeometry, type NativeTempoGeometry } from './native-tempo.js
 import { nativeDynamicGlyph } from './native-dynamics.js'
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js'
 
-export const xml = (value: string | number) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
+const xmlEntities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }
+export function xml(value: string | number): string {
+  const text = String(value)
+  return /[&<>"']/.test(text) ? text.replace(/[&<>"']/g, character => xmlEntities[character]!) : text
+}
 export { nativeSvgNumber as n } from './native-svg-number.js'
-export function attrs(values: Record<string, string | number | undefined>) { return Object.entries(values).filter(([, value]) => value !== undefined).map(([name, value]) => ` ${name}="${xml(typeof value === 'number' ? n(value) : value!)}"`).join('') }
+export function attrs(values: Record<string, string | number | undefined>) {
+  let result = ''
+  for (const [name, value] of Object.entries(values)) {
+    if (value !== undefined) result += ` ${name}="${typeof value === 'number' ? n(value) : xml(value)}"`
+  }
+  return result
+}
 export const line = (x1: number, y1: number, x2: number, y2: number, width = nativeStyle.stroke) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
 export const circle = (x: number, y: number, radius = em(1.6)) => `<circle${attrs({ cx: x, cy: y, r: radius, fill: '#000' })}/>`
 export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${n(nativeStyle.symbolStroke)}" stroke-linejoin="round"${extra}/>`
