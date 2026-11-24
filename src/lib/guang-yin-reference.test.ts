@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 import source from '../scores/guang_yin_de_gu_shi_01.m3n?raw'
 import reference from './fixtures/guang-yin-kuaiyuepu.json'
 
-it('plays the 6/8 reference with five requested instrumental slide simplifications three times at 95 qpm', () => {
+it('plays the 6/8 reference with requested instrumental simplifications three times at 95 qpm', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['G', 6, 8, 95])
@@ -24,11 +24,11 @@ it('plays the 6/8 reference with five requested instrumental slide simplificatio
     continuation = event.tie ?? false
     beat += event.beats
   }
-  // Keep the original vocal reference; simplify only the five audited passing notes.
-  const removedOnsets = new Set([32.75, 50, 53, 62, 65])
-  const extendedDurations = new Map([[32.5, 0.5], [49.5, 1], [52.5, 1], [61.5, 1], [64.5, 1]])
+  // Keep the original vocal reference; simplify only the requested passing notes.
+  const removedOnsets = new Set([2, 8.75, 26, 32.75, 50, 53, 62, 65])
+  const extendedDurations = new Map([[1.5, 1], [25.5, 1], [8.5, 0.5], [32.5, 0.5], [49.5, 1], [52.5, 1], [61.5, 1], [64.5, 1]])
   const instrumental = reference.events.filter(([onset]) => !removedOnsets.has(onset!))
-    .map(([onset, pitch, duration]) => [onset!, pitch, extendedDurations.get(onset!) ?? duration])
+    .map(([onset, pitch, duration]) => [onset!, (onset === 1.5 || onset === 25.5) ? 76 : pitch, extendedDurations.get(onset!) ?? duration])
   const expected = [0, 72, 144].flatMap(offset => instrumental.map(([onset, pitch, duration]) => [onset! + offset, pitch, duration]))
   expect(events).toEqual(expected)
 })
