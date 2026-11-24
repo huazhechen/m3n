@@ -7,6 +7,7 @@ import { ResourceLoadingDialog } from './ResourceLoadingDialog'
 import { cancelToneLoad, loadSampledTone, subscribeToneLoadProgress, type ToneLoadProgress } from '@m3n/score-renderer/tones'
 import { usePlaybackTone } from '../hooks/usePlaybackTone'
 import { usePagedReaderLayout } from '../hooks/usePagedReaderLayout'
+import { attachScoreZoom } from '../lib/score-zoom'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ScoreSourceRange, ScoreDocument } from '@m3n/notation'
 import {
@@ -168,6 +169,10 @@ export function ScoreRenderer({
   onPaperBlur,
 }: ScoreRendererProps) {
   const paperRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const paper = paperRef.current
+    if (paper) return attachScoreZoom(paper)
+  }, [scoreId])
   const renderGenerationRef = useRef(0)
   const scoreRef = useRef<PlaybackScore | null>(null)
   const playerRef = useRef<SpessaPlayer | null>(null)

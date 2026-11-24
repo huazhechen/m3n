@@ -796,6 +796,8 @@ textarea::selection {
 }
 
 .score-paper {
+  --score-zoom: 1;
+  touch-action: pan-x pan-y;
   overflow: auto;
   min-height: unset;
   border-radius: 6px;
@@ -843,9 +845,14 @@ textarea::selection {
   height: auto;
 }
 
+.score-paper[data-render-mode="continuous"] > svg {
+  width: calc(100% * var(--score-zoom));
+  max-width: none;
+}
+
 .score-paper[data-render-mode="paged"] .score-page-sheet {
   position: relative;
-  width: 100%;
+  width: calc(100% * var(--score-zoom));
   aspect-ratio: 210 / 297;
   box-sizing: border-box;
   overflow: hidden;
@@ -885,9 +892,14 @@ textarea::selection {
   }
 
   .score-reader .score-paper[data-viewport-paged="true"] .score-page-sheet {
-    flex: 0 0 var(--reader-page-width);
-    width: var(--reader-page-width);
+    flex: 0 0 calc(var(--reader-page-width) * var(--score-zoom));
+    width: calc(var(--reader-page-width) * var(--score-zoom));
     margin: 0;
+  }
+
+  .score-reader .score-paper[data-viewport-paged="true"][data-zoomed="true"] {
+    justify-content: safe center;
+    overflow: auto;
   }
 }
 
