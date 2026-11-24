@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto'
 import type { Plugin } from 'vite'
 import { scoreMetadataFromSource } from '@m3n/notation'
 import { sortScoresByTitle } from '../src/lib/score-order.ts'
+import { scoreFontPreloads, type FontPreload } from './score-font-preloads.ts'
 
 const execFileAsync = promisify(execFile)
 
@@ -37,7 +38,7 @@ export function scoreCatalogPlugin(): Plugin {
   let planPath: string
   let production = false
   let base: string
-  let catalog: unknown
+  let catalog: { scores: Array<{ fontPreloads: FontPreload[] }> } | undefined
   const assets = new Map<string, string | Buffer>()
   return {
     name: 'm3n-score-catalog',
@@ -69,7 +70,8 @@ export function scoreCatalogPlugin(): Plugin {
         const modifiedAt = modifiedTimes.get(`src/scores/${file.replaceAll('\\', '/')}`) ?? (await stat(filePath)).mtimeMs
         const source = await readFile(filePath, 'utf8')
         const sourceUrl = production ? asset('score.m3n', source) : ''
-        return { sourceUrl, modifiedAt, ...scoreMetadataFromSource(slug, source), category: categories.get(file.split(/[\\/]/).at(-1)!), sourcePath: file.replaceAll('\\', '/') }
+        const fontPreloads = await scoreFontPreloads(source, (name, source) => this.emitFile({ type: 'asset', name, source }), path => this.addWatchFile(path), production)
+        return { sourceUrl, fontPreloads, modifiedAt, ...scoreMetadataFromSource(slug, source), category: categories.get(file.split(/[\\/]/).at(-1)!), sourcePath: file.replaceAll('\\', '/') }
       }))
       if (new Set(scores.map(score => score.slug)).size !== scores.length) throw new Error('内置曲库包含重复的乐谱 ID。')
       if (!production) return `
@@ -96,7 +98,8 @@ export function scoreCatalogPlugin(): Plugin {
     },
     generateBundle() {
       if (!production || !catalog) return
-      this.emitFile({ type: 'asset', fileName: 'score-catalog.json', source: JSON.stringify(catalog) })
+      const scores = catalog.scores.map(score => ({ ...score, fontPreloads: score.fontPreloads.map(font => ({ ...font, url: base + this.getFileName(font.url) })) }))
+      this.emitFile({ type: 'asset', fileName: 'score-catalog.json', source: JSON.stringify({ scores }) })
       for (const [fileName, source] of assets) this.emitFile({ type: 'asset', fileName, source })
     },
     handleHotUpdate(context) {

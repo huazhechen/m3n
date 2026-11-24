@@ -1,6 +1,39 @@
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
+for (const { collection, slug } of [{ collection: 'scores', slug: 'huan_le_song_01' }, { collection: 'works', slug: 'snail-mushroom-waves' }]) {
+test(`${collection} fonts download before the source finishes and are reused by rendering`, async ({ page, request }) => {
+  const catalog = await (await request.get(collection === 'scores' ? '/score-catalog.json' : '/works-catalog.json')).json()
+  const score = (collection === 'scores' ? catalog.scores : catalog).find((score: { slug: string }) => score.slug === slug)
+  const fontUrls = score.fontPreloads.map((font: { url: string }) => font.url)
+  const fontRequests: string[] = []
+  page.on('request', request => {
+    if (fontUrls.includes(new URL(request.url()).pathname)) fontRequests.push(new URL(request.url()).pathname)
+  })
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  await page.route(`**/${score.sourceUrl}`, async route => {
+    await gate
+    await route.continue()
+  })
+  // Keep the source blocked: no source parsing or rendering can initiate these fonts.
+  await page.goto(`/${collection}/${slug}`, { waitUntil: 'domcontentloaded' })
+  try {
+    await expect.poll(() => new Set(fontRequests).size).toBe(score.fontPreloads.length)
+    await expect(page.locator('.score-paper svg')).toHaveCount(0)
+  } finally { release() }
+  await expect(page.locator('.score-paper svg').first()).toBeVisible()
+  for (const url of fontUrls) expect(fontRequests.filter(request => request === url)).toHaveLength(1)
+  const downloadedCjk = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => /NotoSansSC-.*\.woff2$/.test(url)))
+  expect(downloadedCjk).toHaveLength(1)
+  // Reopening the score within the same document must reuse the preload links.
+  await page.getByRole('link', { name: collection === 'scores' ? '乐谱库' : '独立作品', exact: true }).click()
+  await page.locator(`a[href="/${collection}/${score.slug}"]`).click()
+  await expect(page.locator('.score-paper svg').first()).toBeVisible()
+  for (const url of fontUrls) expect(fontRequests.filter(request => request === url)).toHaveLength(1)
+})
+}
+
 test('numbered display ignores old staff preference and loads only the selected score without external resources', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation','0'))

@@ -81,7 +81,15 @@ test('score edits, additions, book metadata and font updates preserve every Java
       const files = await readdir(join(root, 'dist/assets/v2'))
       const js = Object.fromEntries(await Promise.all(files.filter(file => file.endsWith('.js')).map(async file => [file, await readFile(join(root, 'dist/assets/v2', file), 'utf8')])))
       const catalog = JSON.parse(await readFile(join(root, 'dist/score-catalog.json'), 'utf8'))
-      for (const score of catalog.scores) assert.ok((await readFile(join(root, 'dist', score.sourceUrl), 'utf8')).includes('|||'))
+      for (const score of catalog.scores) {
+        assert.ok((await readFile(join(root, 'dist', score.sourceUrl), 'utf8')).includes('|||'))
+        assert.equal(score.fontPreloads.length, 3)
+        assert.deepEqual(score.fontPreloads.map(font => font.as), ['font', 'fetch', 'font'])
+        for (const { url } of score.fontPreloads) {
+          assert.match(url, /^\/score\/assets\/v2\/.*\.woff2$/)
+          assert.equal((await readFile(join(root, 'dist', url.slice('/score/'.length)))).subarray(0, 4).toString(), 'wOF2')
+        }
+      }
       return { js, catalog }
     }
     const before = await compile()

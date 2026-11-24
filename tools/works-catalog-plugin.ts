@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import { scoreMetadataFromSource } from '@m3n/notation'
 import { sortScoresByTitle } from '../src/lib/score-order.ts'
+import { scoreFontPreloads, type FontPreload } from './score-font-preloads.ts'
 
 /** Unlisted works have their own catalog; public library and book never consume it. */
 export function worksCatalogPlugin(): Plugin {
@@ -12,6 +13,7 @@ export function worksCatalogPlugin(): Plugin {
   let directory: string
   let production: boolean
   let base: string
+  let catalog: Array<{ fontPreloads: FontPreload[] }> | undefined
   return {
     name: 'm3n-works-catalog',
     configResolved(config) {
@@ -33,7 +35,8 @@ export function worksCatalogPlugin(): Plugin {
         const hash = createHash('sha256').update(source).digest('hex').slice(0, 16)
         const sourceUrl = `assets/v2/${hash}-work.m3n`
         if (production) this.emitFile({ type: 'asset', fileName: sourceUrl, source })
-        return { ...scoreMetadataFromSource(slug, source), sourceUrl, sourcePath: file, modifiedAt: (await stat(path)).mtimeMs }
+        const fontPreloads = await scoreFontPreloads(source, (name, source) => this.emitFile({ type: 'asset', name, source }), path => this.addWatchFile(path), production)
+        return { ...scoreMetadataFromSource(slug, source), sourceUrl, fontPreloads, sourcePath: file, modifiedAt: (await stat(path)).mtimeMs }
       })))
       if (!production) return `
         const works = ${JSON.stringify(works)};
@@ -41,7 +44,7 @@ export function worksCatalogPlugin(): Plugin {
         const sources = import.meta.glob('/src/works/*.m3n', { query: '?raw', import: 'default' });
         export const loadWorkSource = work => sources['/src/works/' + work.sourcePath]();
       `
-      this.emitFile({ type: 'asset', fileName: 'works-catalog.json', source: JSON.stringify(works) })
+      catalog = works
       return `
         let pending;
         export function getWorks() {
@@ -57,6 +60,11 @@ export function worksCatalogPlugin(): Plugin {
           return response.text();
         }
       `
+    },
+    generateBundle() {
+      if (!production || !catalog) return
+      const works = catalog.map(work => ({ ...work, fontPreloads: work.fontPreloads.map(font => ({ ...font, url: base + this.getFileName(font.url) })) }))
+      this.emitFile({ type: 'asset', fileName: 'works-catalog.json', source: JSON.stringify(works) })
     },
     handleHotUpdate(context) {
       if (!context.file.startsWith(directory) || !context.file.endsWith('.m3n')) return
