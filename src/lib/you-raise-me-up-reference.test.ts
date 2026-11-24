@@ -38,7 +38,6 @@ const reference = [
   '0:1 0:1 0:.5 5d:.5 1:.5 2:.5',
   '3:1.5 4:.5 3:.5 2:.5 1:.5 7d:.5',
   '1:4',
-  '1:2 0:1 0:1',
 ]
 function events(bar: string, key: 'Eb' | 'E' | 'F') {
   return bar.split(' ').map(token => {
@@ -49,7 +48,7 @@ function events(bar: string, key: 'Eb' | 'E' | 'F') {
   })
 }
 
-it('uses the requested common verse melody, image notes, Eb/E/F keys and final tie', () => {
+it('uses the requested common verse melody, image notes, Eb/E/F keys and final whole note', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document).toMatchObject({ title: 'You Raise Me Up', composer: 'Rolf Lovland', lyricist: 'Brendan Graham', key: 'Eb', meterCount: 4, meterUnit: 4, tempo: 60 })
@@ -69,7 +68,7 @@ it('uses the requested common verse melody, image notes, Eb/E/F keys and final t
     const [name, octave, alteration] = pitches.get(event)?.[0]?.split(':') ?? []
     return [name ? 12 * (Number(octave) + 1) + scale[name]! + (alteration === 's' ? 1 : alteration === 'f' ? -1 : 0) : null, event.beats]
   }))).toEqual(written)
-  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([[28, 0]])
+  expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([])
   expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [interval.start, interval.endStart]))
     .toEqual([[bars[12]!.events[3]!.sourceStart, bars[12]!.events[4]!.sourceStart]])
   expect(source).toContain('{text=rit.}')
@@ -83,18 +82,16 @@ it('plays both verses, the E-major chorus, the F-major return and the coda exact
   let time = 0
   for (const [pitch, duration] of [...firstPass, ...secondPass, ...coda]) {
     if (pitch !== null) {
-      // Only the last two notes in the image are tied: four plus two beats.
-      if (time === 184) expected.at(-1)![1] = time + duration
-      else expected.push([time, time + duration, pitch])
+      expected.push([time, time + duration, pitch])
     }
     time += duration
   }
   const performance = compileScorePerformance(parseM3NDocument(source))
-  expect(time).toBe(188)
+  expect(time).toBe(184)
   expect(performance.beats).toBe(time)
   expect(performance.notes).toHaveLength(220)
   expect(performance.notes.map(note => [note.start, note.end, note.pitch])).toEqual(expected)
-  expect(expected.at(-1)).toEqual([180, 186, 65])
+  expect(expected.at(-1)).toEqual([180, 184, 65])
 })
 
 it('keeps both English verses and the correct chorus syllables without forced tied-target lyrics', () => {
