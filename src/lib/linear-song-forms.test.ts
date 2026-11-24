@@ -50,7 +50,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
   })
 
   it('preserves each visited phrase count, every bar duration and every time signature', () => {
-    const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
+    const bars = parseM3NDocument(fingerprintSource).parts.get('score')!.melody.filter(bar => bar.events.length)
     // The historical A/B boundary splits one logical bar into two 2-beat
     // fragments. Split it only for comparison with that historical baseline.
     if (reference.id === 'man_man_xi_huan_ni') {
@@ -87,7 +87,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
 })
 
 
-it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all navigation', () => {
+it('preserves Xin Bu Liao Qing performance and lyrics after moving repeat pickups into endings', () => {
   const source = readFileSync(new URL('../scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
   const before = parseM3NDocument(xinBeforeCleanup), after = parseM3NDocument(source)
   const original = compileScorePerformance(before), actual = compileScorePerformance(after)
@@ -111,4 +111,16 @@ it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all
   expect(lyrics(after)).toEqual(lyrics(before).map(([start, end, text]) => [
     start, extendedEnds.get(start as number) ?? end, text,
   ]))
+})
+
+it('returns Xin Bu Liao Qing to full bars through three endings', () => {
+  const source = readFileSync(new URL('../scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
+  expect(validateM3NDiagnostics(source)).toEqual([])
+  const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(bars[0]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(1)
+  expect(bars[1]!.left).toBe('rptstart')
+  expect(bars.findIndex(bar => bar.navigation?.includes('segno'))).toBe(17)
+  expect(bars.slice(-3).map(bar => bar.ending)).toEqual(['1', '2', '3'])
+  expect(bars.slice(1, -1).every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
+  expect(bars.at(-1)!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(3)
 })
