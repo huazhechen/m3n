@@ -82,8 +82,8 @@
     "多年以后一场大雨惊醒沉睡的我突然之间都市的霓虹都不再闪烁天边有颗模糊的星光偷偷探出了头是你的眼神依旧在远方为我在等候",
     "星星点灯照亮我的家门让迷失的孩子找到来时的路星星点灯照亮我的前程用一点光温暖孩子的心"
   ],
-  "performedLyricsSha256": "4952963072692acbc6765ea8b2a7cdd8b8b57dd672137fc485f11e144e040628",
-  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-18 full five-image audit: corrected repeated-note ties and lyric entries, corrected 头是 rhythm, removed all seven written grace groups at user request.",
+  "performedLyricsSha256": "9bc9984c9f935e589e617b2f616e434199856fa59914f38be0fa73894d8678e2",
+  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-18 full five-image audit: corrected repeated-note ties and lyric entries, corrected 头是 rhythm, removed all seven written grace groups at user request. 2026-11-24: shared original bars 19/21; user corrected original bar 24 rhythm to (32) (2(17d)) 6d. (6d) and bar 26 pitches to (54) (52) 3^.",
   "playbackLyricRowIndexes": [
     0,
     2,

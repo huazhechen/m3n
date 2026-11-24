@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 
 // Performance fingerprints captured before migrating the written choices to houses.
-// 星星点灯 includes the five-page tie/lyric audit, grace-note removal and approved 105 qpm tempo.
+// 星星点灯 includes the five-page audit, 105 qpm tempo and user corrections to original bars 24/26.
 // 童话镇 now has a dedicated uploaded-image/2/4 reference test.
 // 爱如潮水 and 枫 include the requested instrumental slide cleanups.
 // 爱如潮水 also includes the restored 3→2 endings in bars 21 and 30,
@@ -55,9 +55,9 @@ const cases = [
   },
   {
     "file": "xing_xing_dian_deng_01.m3n",
-    "music": "c5329cbdb87f73d25100283843ed8ac7334b7789a36548ed61be7b4aa4f33112",
-    "lyrics": "4952963072692acbc6765ea8b2a7cdd8b8b57dd672137fc485f11e144e040628",
-    "events": 719,
+    "music": "458c34fa77242622dfb40f90e19573751c5f6e5ddd8cdb37178a93fac44a3349",
+    "lyrics": "9bc9984c9f935e589e617b2f616e434199856fa59914f38be0fa73894d8678e2",
+    "events": 717,
     "syllables": 444
   }
 ]
