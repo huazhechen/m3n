@@ -158,7 +158,7 @@ describe('new reference scores', () => {
     expect(bars).toHaveLength(40)
     expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
       .toEqual(Array(40).fill(4))
-    for (const fragment of ['3~{/} 3', '7~ 7']) {
+    for (const fragment of ['3~{/} 3', '7~ 7^']) {
       const invalid = conan.replace(`${fragment}\n---`, `${fragment} |\n---`)
       expect(invalid).not.toBe(conan)
       expect(validateM3NDiagnostics(invalid).filter(diagnostic => diagnostic.code === 'M3N_METER_INCOMPLETE_MIDDLE'))
@@ -166,13 +166,23 @@ describe('new reference scores', () => {
     }
   })
 
-  it('keeps all Conan pitches and ties with only the eight authorized half-beat corrections', () => {
+  it('holds the 7 for three beats in Conan bar 25 and matches the opening eighth-note pickup', () => {
+    const bars = parseM3NDocument(conan).parts.get('score')!.melody
+    const signature = (event: typeof bars[number]['events'][number]) =>
+      [event.pitches, event.beats, event.tie, event.postfixes]
+    expect(bars[24]!.events.slice(0, 2).map(signature))
+      .toEqual([[['7'], 1, true, []], [['7'], 2, false, []]])
+    expect(bars[24]!.events.slice(2).map(signature))
+      .toEqual(bars[0]!.events.slice(3).map(signature))
+  })
+
+  it('keeps all Conan pitches and ties with the authorized rhythm corrections', () => {
     const reference = references[2]!
     const expected = reference.playbackEventIndexes.map(index => reference.events[index]!).filter(event => event.pitch !== null)
     const actual = events(conan)
     const pitched = actual.filter(event => event.pitch !== null)
     expect(pitched.map(({ pitch, tie }) => ({ pitch, tie }))).toEqual(expected.map(({ pitch, tie }) => ({ pitch, tie })))
-    expect(pitched.flatMap((event, index) => event.beats !== expected[index]!.beats ? [[index, event.beats - expected[index]!.beats]] : [])).toEqual([163,165,169,171,175,182,190,191].map(index => [index, -.5]))
+    expect(pitched.flatMap((event, index) => event.beats !== expected[index]!.beats ? [[index, event.beats - expected[index]!.beats]] : [])).toEqual([[120, 1], [121, -.5], [122, -.5], ...[163,165,169,171,175,182,190,191].map(index => [index, -.5])])
     expect(actual.reduce((sum, event) => sum + event.beats, 0)).toBe(160)
     expect(parseM3NDocument(conan).title).toBe('如果有你在')
   })

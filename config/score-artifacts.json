@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "a15b5696c37720ac5d6cee10b014bfc81089070a66207a73a51be4d8b3006129",
+  "rendererSha256": "37203278c1f42a005d2f6d8950859aed247420761a64ab41f850bc53db8b6f4b",
   "fontManifestSha256": "3b6d3a82a31b2a8031f867c2c5829a67b5bb67413408b03786ec1184bf231b2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -290,7 +290,7 @@
       "fontSha256": "e2608af4577b1d4ec462174678f640e209899bb09601e20b3834f1b1323e8b20"
     },
     "src/scores/ru_guo_you_ni_zai_01.m3n": {
-      "sourceSha256": "82c9ffb736ec5225efe124ac4f9d9aa37b3714f4648822949ad8068347b87251",
+      "sourceSha256": "f231b357a30b31d2260fb584e453efdca8cec88ba5b6e53481fa42e6521638f4",
       "font": "NotoSansSC-76f9366ae7e1a3b0.ttf",
       "fontSha256": "d064826f672be1ef971275f3873620d42edbb5540a203255e5997baf2b5ed74c"
     },
