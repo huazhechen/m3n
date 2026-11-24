@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
-import { NativeNumberedNotationScore, PreparedNumberedNotationScore, renderSharedNumberedNotationScores, renderSharedPreparedNumberedNotationScores } from './native-score.js'
+import { NativeNumberedNotationScore, numberedLayoutQuality, PreparedNumberedNotationScore, renderSharedNumberedNotationScores, renderSharedPreparedNumberedNotationScores } from './native-score.js'
 import { layoutNativeScore } from './native-layout.js'
 
 describe('prepared export layouts', () => {
@@ -11,15 +11,22 @@ describe('prepared export layouts', () => {
   ])('matches fresh paged and continuous renders across repeated mode changes', source => {
     const document = parseM3NDocument(source)
     const options = { width: 640, pageMargin: 0 }
-    const prepared = new PreparedNumberedNotationScore(document, options)
+    const timings: Record<string, number> = {}
+    const prepared = new PreparedNumberedNotationScore(document, options, timings)
     const fresh = (paged: boolean, coreGap?: number) => NativeNumberedNotationScore.create(document).render({ ...options, paged, coreGap })
     const paged = fresh(true)
+    const quality = numberedLayoutQuality(document, { ...options, paged: true })
+    expect(prepared.quality).toEqual(quality)
+    expect(timings.layoutTrials).toBeGreaterThan(0)
+    expect(timings.projectionMs).toBeGreaterThanOrEqual(0)
     expect(prepared.pageCount).toBe(paged.length)
     expect(prepared.continuousHeight()).toBe(Math.ceil(layoutNativeScore(document, { ...options, paged: false }).pages[0]!.height))
     expect(prepared.renderPaged()).toEqual(paged)
     expect(prepared.renderContinuous()).toEqual(fresh(false))
     expect(prepared.renderContinuous(32)).toEqual(fresh(false, 32))
+    expect(prepared.renderPaged(32)).toEqual(fresh(true, 32))
     expect(prepared.renderPaged()).toEqual(paged)
+    expect(prepared.quality).toEqual(quality)
   })
 
   it('fits the same shared pages and preserves standalone renders after sharing', () => {

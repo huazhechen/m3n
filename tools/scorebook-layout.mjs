@@ -1,8 +1,10 @@
 import { parseM3NDocument } from '@m3n/notation'
 import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
+import { attachScoreReading } from '../src/lib/score-reading-dom'
 import { renderScoreInto } from '../src/lib/render-score'
-import { numberedLayoutQuality } from '@m3n/numbered-notation'
+import { describeAccessibleScore } from '../src/lib/score-accessibility'
+import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { numberedLayoutScore } from './scorebook-width.mjs'
 import { inspectScorePages } from './lib/score-geometry.mjs'
 
@@ -21,25 +23,64 @@ export async function render(source, width, paged = true, coreGap, host = docume
   return [...host.querySelectorAll(':scope > svg')]
 }
 
+// Keep only the current song: candidate widths share parsing and font preparation.
+let measurementSource, measurementDocument, measurementDescription
+async function prepareMeasurement(source) {
+  if (source !== measurementSource) {
+    const document = parseM3NDocument(source)
+    await prepareNumberedNotationFonts(document)
+    measurementSource = source
+    measurementDocument = document
+    measurementDescription = describeAccessibleScore(document, { forDisplay: true })
+  }
+  return measurementDocument
+}
+
 export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
-  const pages = await render(source, width, paged, coreGap, host)
-  const scoreDocument = parseM3NDocument(source)
-  const quality = numberedLayoutQuality(scoreDocument, { width, paged: true, pageMargin: 0 })
-  const naturalHeight = !paged && pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
-  const { outside, overlaps } = inspectScorePages(pages)
+  const started = performance.now(), timings = {}
+  let stage = started
+  const scoreDocument = await prepareMeasurement(source)
+  timings.parseFontsMs = performance.now() - stage; stage = performance.now()
+  const score = new PreparedNumberedNotationScore(scoreDocument, { width, pageMargin: 0 }, timings)
+  timings.layoutMs = performance.now() - stage; stage = performance.now()
+  const quality = score.quality
+  timings.qualityMs = performance.now() - stage; stage = performance.now()
+  const markup = (paged ? score.renderPaged(coreGap) : score.renderContinuous(coreGap)).join('')
+  timings.svgRenderMs = performance.now() - stage; stage = performance.now()
+  host.innerHTML = markup
+  attachScoreReading(host, measurementDescription)
+  const pages = [...host.querySelectorAll(':scope > svg')]
+  timings.svgMountMs = performance.now() - stage
+  // Keep the aggregate render stage for comparisons with the old renderer.
+  timings.pagedRenderMs = timings.parseFontsMs + timings.layoutMs + timings.svgRenderMs + timings.svgMountMs
+  const { outside, overlaps } = inspectScorePages(pages, timings)
   const rows = pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0)
-  const result = { width, pageCount: pages.length, rows, outside, overlaps,
+  const result = { width, timings, pageCount: pages.length, rows, outside, overlaps,
     lineDensityVariation: quality.lineDensityVariation, lastLineSlack: quality.lastLineSlack,
     qualityScore: numberedLayoutScore({ width, ...quality }) }
-  if (!paged) return { ...result, naturalHeight }
-  if (pages.length === 1 && !outside.length && !overlaps.length) {
+  if (!paged) result.naturalHeight = pages.length === 1 ? pages[0].viewBox.baseVal.height : undefined
+  if (paged && pages.length === 1 && !outside.length && !overlaps.length) {
+    stage = performance.now()
     const markup = pages[0].outerHTML
-    const continuous = await measure(source, width, false, undefined, host)
+    const continuousTimings = {}
+    const continuousStarted = performance.now()
+    const continuousMarkup = score.renderContinuous().join('')
+    continuousTimings.svgRenderMs = performance.now() - continuousStarted
+    const mountStarted = performance.now()
+    host.innerHTML = continuousMarkup
+    attachScoreReading(host, measurementDescription)
+    const continuousPages = [...host.querySelectorAll(':scope > svg')]
+    continuousTimings.svgMountMs = performance.now() - mountStarted
+    const continuous = inspectScorePages(continuousPages, continuousTimings)
+    continuousTimings.totalMs = performance.now() - continuousStarted
     result.outside.push(...continuous.outside)
     result.overlaps.push(...continuous.overlaps)
-    if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuous.naturalHeight
+    if (!continuous.outside.length && !continuous.overlaps.length) result.naturalHeight = continuousPages[0].viewBox.baseVal.height
     host.innerHTML = markup
+    timings.continuousMs = performance.now() - stage
+    timings.continuous = continuousTimings
   }
+  timings.totalMs = performance.now() - started
   return result
 }
 

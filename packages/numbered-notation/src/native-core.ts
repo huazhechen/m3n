@@ -3,7 +3,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeRibbonRange } from './native-curve.js'
-import { nativeLyricSvg } from './native-lyrics.js'
+import { nativeLyricPieces } from './native-lyrics.js'
 
 type Extent = { top: number; bottom: number }
 export type NativeCoreProfile = NativeInk & { range?: (left: number, right: number) => Extent | undefined }
@@ -61,7 +61,7 @@ export function nativeSystemCore(system: NativeSystem, measurer: TextMeasurer): 
     for (const column of columns) for (const glyph of column.glyphs) for (const [row, baseline] of glyph.lyricBaselines ?? []) {
       const data = glyph.lyrics.get(row)
       if (!data || !(data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) continue
-      const ink = nativeSvgInk(nativeLyricSvg(glyph, row, baseline, system.index, measurer), measurer)
+      const ink = unionNativeInk(nativeLyricPieces(data, glyph.x, baseline, measurer))
       core.top = Math.min(core.top, ink.top); core.bottom = Math.max(core.bottom, ink.bottom)
     }
     cores.push({ top: core.top + lane.y, bottom: core.bottom + lane.y })

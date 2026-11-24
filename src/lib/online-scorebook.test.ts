@@ -24,8 +24,10 @@ vi.mock('@m3n/numbered-notation', () => ({
     pageCount = 1
     title: string
     width: number
+    quality: { pageCount: number; lineDensityVariation: number; lastLineSlack: number }
     constructor(document: { title: string }, options: { width: number }) {
       this.title = document.title; this.width = options.width
+      this.quality = mocks.quality(document, options)
       mocks.prepared(document, options)
     }
     continuousHeight() { return 200 }
@@ -60,6 +62,10 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(mocks.prepared.mock.calls[0][0]).toBe(mocks.prepared.mock.calls[1][0])
     expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 540 }), expect.objectContaining({ title: 'second', width: 540 })], 32)
     expect(result.scoreCount).toBe(2)
+    expect(result.measurementTimings.scores).toHaveLength(2)
+    expect(result.measurementTimings.scores.every(score => score.candidates.length === 11)).toBe(true)
+    expect(result.measurementTimings.stages.measurementMs).toBeGreaterThan(0)
+    expect(result.measurementTimings.totalMs).toBeGreaterThanOrEqual(result.measurementTimings.stages.measurementMs)
     expect(result.sharedPages).toBe(1)
     expect(result.pages).toHaveLength(3)
     expect(result.pages[1].textContent).toBe('目录第一章<第一曲>3第二曲3')

@@ -13,8 +13,9 @@ export class DefaultTextMeasurer implements TextMeasurer {
 }
 
 export class CanvasTextMeasurer implements TextMeasurer {
-  constructor(private readonly context: CanvasRenderingContext2D) {}
+  constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>) {}
   measureText(text: string, style: TextStyle): TextMetrics {
+    if (this.timings) this.timings.textMeasureCalls = (this.timings.textMeasureCalls ?? 0) + 1
     this.context.textAlign = 'left'; this.context.textBaseline = 'alphabetic'
     const family = style.fontFamily ?? SCORE_TEXT_FONT
     const weight = style.fontWeight ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : 400)

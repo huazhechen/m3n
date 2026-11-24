@@ -22,7 +22,10 @@ export class NativeNumberedNotationScore {
 
 /** Compact layout metrics for choosing among equally short page-width candidates. */
 export function numberedLayoutQuality(document: ScoreDocument, options: NativeRenderOptions) {
-  const layout = layoutNativeScore(document, { ...options, paged: true })
+  return nativeLayoutQuality(layoutNativeScore(document, { ...options, paged: true }))
+}
+
+function nativeLayoutQuality(layout: ReturnType<typeof layoutNativeScore>) {
   const width = layout.options.width
   const available = Math.max(1, width - layout.margin * 2)
   const densities = layout.systems.map(system => system.measures.reduce((sum, measure) => sum + measure.minimum, 0) / available)
@@ -41,19 +44,21 @@ export type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 export class PreparedNumberedNotationScore {
   private readonly layout
   readonly pageCount: number
+  readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
-  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>) {
-    this.layout = layoutNativeScore(document, { ...options, paged: true })
+  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>) {
+    this.layout = layoutNativeScore(document, { ...options, paged: true }, timings)
     this.pageCount = this.layout.pages.length
+    this.quality = nativeLayoutQuality(this.layout)
     this.width = this.layout.options.width
     this.minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
   }
   continuousHeight(coreGap = this.minimumCoreGap) {
     return Math.ceil(nativeContinuousPagination(this.layout, coreGap).heights[0] ?? 0)
   }
-  renderPaged() {
-    if (!this.layout.options.paged || this.layout.options.coreGap !== undefined) repaginateNativeLayout(this.layout, true)
+  renderPaged(coreGap?: number) {
+    if (!this.layout.options.paged || this.layout.options.coreGap !== coreGap) repaginateNativeLayout(this.layout, true, coreGap)
     return renderNativePages(this.layout)
   }
   renderContinuous(coreGap = this.minimumCoreGap) {

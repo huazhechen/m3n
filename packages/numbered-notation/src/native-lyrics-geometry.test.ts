@@ -2,9 +2,9 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeLyricInk, nativeLyricSvg } from './native-lyrics.js'
+import { nativeLyricInk, nativeLyricSvg, nativeLyricPieces } from './native-lyrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { NativeSymbols, line } from './native-symbols.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { NativeNumberedNotationScore } from './native-score.js'
@@ -13,6 +13,20 @@ import { nativeSystemCore } from './native-core.js'
 const options = { width: 800, paged: false }
 const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||\nL: 春天在哪里 | 就在这里呀')
 describe('native lyric and music lower envelopes', () => {
+  it.each([
+    { texts: ['春'], passes: undefined },
+    { texts: ['“gyp！”'], passes: undefined, underlined: true, annotation: '1.2.' },
+    { texts: [''], passes: undefined, annotation: '3.' },
+    { texts: ['\u200B'], passes: undefined },
+  ])('computes the exact painted lyric primitives without generating semantic SVG', data => {
+    const layout = layoutNativeScore(document, options), measurer = new DefaultTextMeasurer()
+    const glyph = layout.projection.glyphs[0]!
+    glyph.x = 12.34567891; glyph.lyrics.set(0, data)
+    const baseline = -3.12345678
+    expect(nativeLyricPieces(data, glyph.x, baseline, measurer))
+      .toEqual(nativeSvgPieces(nativeLyricSvg(glyph, 0, baseline, 2, measurer), measurer))
+  })
+
   it('places lyrics after the musical body without adding barline height', () => {
     const score = layoutNativeScore(document, options), first = score.systems[0]!.lanes[0]!
     const measurer = new DefaultTextMeasurer()

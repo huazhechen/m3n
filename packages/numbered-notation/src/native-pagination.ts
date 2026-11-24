@@ -1,3 +1,4 @@
+import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
 export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; ink?: readonly NativeInk[] }
 export type NativeBlockPosition = { page: number; top: number }
@@ -51,7 +52,7 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
 }) {
   const normalized = blocks.map((block, index) => {
     const axis = block.baseline ?? 0
-    const ink = (block.ink ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis }))
+    const ink = (block.ink ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })).sort((a, b) => a.left - b.left)
     const top = Math.min(0, ...ink.map(piece => piece.top)), lower = Math.max(0, ...ink.map(piece => piece.bottom))
     if (lower - top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     const core = block.core ? { top: block.core.top - axis, bottom: block.core.bottom - axis } : { top, bottom: lower }
@@ -66,11 +67,7 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
     if (!row) { row = new Map(); collisions.set(prior.index, row) }
     const cached = row.get(item.index)
     if (cached !== undefined) return cached
-    let distance = -Infinity
-    for (const upper of prior.ink) for (const next of item.ink) {
-      if (Math.min(upper.right, next.right) > Math.max(upper.left, next.left))
-        distance = Math.max(distance, upper.bottom - next.top)
-    }
+    const distance = sortedNativeInkSeparation(prior.ink, item.ink)
     row.set(item.index, distance)
     return distance
   }

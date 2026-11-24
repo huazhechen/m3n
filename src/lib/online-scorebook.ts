@@ -1,7 +1,7 @@
 import plan from '../../config/scorebook/editorial-plan.json'
 import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
 import { parseM3NDocument } from '@m3n/notation'
-import { numberedLayoutQuality, PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
+import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import type { WidthMeasurement } from '../../tools/scorebook-width.mjs'
@@ -11,7 +11,11 @@ import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tool
 
 export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
-export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number }
+export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
+  measurementTimings: { totalMs: number; stages: Record<string, number>; scores: {
+    file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: Record<string, number> }[]
+  }[] }
+}
 type BookEntry = PackingEntry & { file: string; prepared: Map<number, PreparedNumberedNotationScore>; slug: string; musicStart: number; pageCount: number }
 const svgNS = 'http://www.w3.org/2000/svg'
 const website = 'https://score.cheesefans.com/'
@@ -92,17 +96,21 @@ function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
   })
 }
 
-function inspectScoreMarkup(markup: string[]) {
+function inspectScoreMarkup(markup: string[], timings: Record<string, number> = {}) {
+  const started = performance.now()
   const host = document.createElement('div')
   host.style.cssText = 'position:absolute;left:-100000px;top:0'
   host.innerHTML = markup.join('')
   document.body.append(host)
-  try { return inspectScorePages([...host.querySelectorAll<SVGSVGElement>(':scope > svg')]) }
+  timings.svgMountMs = (timings.svgMountMs ?? 0) + performance.now() - started
+  try { return inspectScorePages([...host.querySelectorAll<SVGSVGElement>(':scope > svg')], timings) }
   finally { host.remove() }
 }
 
 /** Reuse measured layouts within one export; every invocation starts from the current sources. */
 export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void): Promise<OnlineScorebook> {
+  const started = performance.now()
+  const measurementTimings: OnlineScorebook['measurementTimings'] = { totalMs: 0, stages: {}, scores: [] }
   const files = new Map(presetScores.map(score => [score.sourcePath, score]))
   if (files.size !== plan.entries.length || plan.entries.some(entry => !files.has(entry.file))) {
     throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
@@ -117,28 +125,40 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
       progress()
       try {
+        const scoreStarted = performance.now()
         const source = await loadPresetScore(files.get(entry.file)!.slug)
         signal.throwIfAborted()
         if (!source) throw new Error('乐谱正文缺失，请刷新页面重试。')
         const document = parseM3NDocument(source)
         await prepareNumberedNotationFonts(document)
+        const scoreTiming = { file: entry.file, parseFontsMs: performance.now() - scoreStarted, wallMs: 0,
+          candidates: [] as { width: number; timings: Record<string, number> }[] }
+        measurementTimings.scores.push(scoreTiming)
         const candidates: WidthMeasurement[] = []
         const prepared = new Map<number, PreparedNumberedNotationScore>()
         const widths = widthCandidates
         for (const [widthIndex, width] of widths.entries()) {
           await pause()
+          const widthStarted = performance.now(), timings: Record<string, number> = {}
           let result: WidthMeasurement
           try {
-            const score = new PreparedNumberedNotationScore(document, { width, pageMargin: 0 })
+            const score = new PreparedNumberedNotationScore(document, { width, pageMargin: 0 }, timings)
+            timings.layoutMs = performance.now() - widthStarted
             signal.throwIfAborted()
             prepared.set(width, score)
-            const geometry = inspectScoreMarkup(score.renderPaged())
+            const renderStarted = performance.now()
+            const markup = score.renderPaged()
+            timings.svgRenderMs = performance.now() - renderStarted
+            const geometry = inspectScoreMarkup(markup, timings)
             if (score.pageCount === 1) {
-              const continuous = inspectScoreMarkup(score.renderContinuous())
+              const continuousStarted = performance.now()
+              const markup = score.renderContinuous()
+              timings.svgRenderMs += performance.now() - continuousStarted
+              const continuous = inspectScoreMarkup(markup, timings)
               geometry.outside.push(...continuous.outside)
               geometry.overlaps.push(...continuous.overlaps)
             }
-            const quality = numberedLayoutQuality(document, { width, paged: true, pageMargin: 0 })
+            const quality = score.quality
             result = { width, pageCount: score.pageCount, rows: 0, ...geometry,
               naturalHeight: score.pageCount === 1 ? score.continuousHeight() : undefined,
               lineDensityVariation: quality.lineDensityVariation, lastLineSlack: quality.lastLineSlack,
@@ -146,9 +166,12 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           }
           catch (error) { result = { width, error: error instanceof Error ? error.message : String(error), pageCount: 0, rows: 0, outside: [], overlaps: [] } }
           signal.throwIfAborted()
+          timings.totalMs = performance.now() - widthStarted
+          scoreTiming.candidates.push({ width, timings: { ...timings } })
           candidates.push(result)
           progress((widthIndex + 1) / widths.length)
         }
+        scoreTiming.wallMs = performance.now() - scoreStarted
         const solo = chooseBestWidth(candidates.filter(candidate => widthCandidates.includes(candidate.width)))
         if (!solo) throw new Error('没有通过边界和碰撞检查的安全版面。')
         entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates: candidates.filter(candidate => widthCandidates.includes(candidate.width)), musicStart: 0, pageCount: 0 })
@@ -157,9 +180,13 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
       }
     }
+    measurementTimings.stages.measurementMs = performance.now() - started
+    const packingStarted = performance.now()
     onProgress({ completed: 0, total: entries.length, title: '正在安排章节与合页…', phase: 'packing' })
     await pause()
     const packed = optimizeScorebook(entries, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    measurementTimings.stages.packingMs = performance.now() - packingStarted
+    const renderingStarted = performance.now()
     let sharedPages = 0
     for (const group of packed.groups) {
       const members = packed.entries.slice(group.start, group.end)
@@ -192,7 +219,10 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
     }
     signal.throwIfAborted()
-    return { pages: [...frontPages(packed.entries), ...music], scoreCount: entries.length, sharedPages }
+    const pages = [...frontPages(packed.entries), ...music]
+    measurementTimings.stages.renderingMs = performance.now() - renderingStarted
+    measurementTimings.totalMs = performance.now() - started
+    return { pages, scoreCount: entries.length, sharedPages, measurementTimings }
   } finally { entries.length = 0 }
 }
 

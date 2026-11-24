@@ -2,7 +2,7 @@ import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeSvgPieces, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
-import { nativeLyricSvg } from './native-lyrics.js'
+import { nativeLyricPieces } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeBarSvg, nativeLaneBarPositions } from './native-bars.js'
 import { nativeStyle } from './native-style.js'
@@ -24,7 +24,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
         for (const annotation of coreOnly ? [] : glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
         for (const [row, baseline] of glyph.lyricBaselines ?? []) {
           const data = glyph.lyrics.get(row)
-          if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) add(nativeLyricSvg(glyph, row, baseline, system.index, measurer))
+          if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) pieces.push(...nativeLyricPieces(data, glyph.x, baseline, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
         }
       }
       add(beams.svg)

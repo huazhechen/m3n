@@ -2,13 +2,18 @@ import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
+import { availableParallelism, cpus } from 'node:os'
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy } from './scorebook-width.mjs'
+import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth } from './scorebook-packing.mjs'
 
+const runStarted = performance.now(), stages = {}
+let phaseStarted = runStarted
+const endPhase = name => { const now = performance.now(); stages[name] = now - phaseStarted; phaseStarted = now }
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(root, 'config/scorebook/editorial-plan.json'))
 const probeOnly = process.argv.includes('--probe-only')
@@ -24,11 +29,15 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
   outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
   lib: { entry: join(root, 'tools/scorebook-layout.mjs'), name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' },
 } })
+endPhase('bundleMs')
 prepareBuiltinPdfFont()
+endPhase('pdfFontMs')
 const font = readFileSync(join(root, '.tmp/scorebook-font/text.ttf'))
 const rendererSha256 = createHash('sha256').update(readFileSync(join(temp, 'bundle/bundle.js'))).update(font).digest('hex')
 // Reorder or regroup a validated edition without repeating identical width probes.
 const reuseFile = process.argv.find(arg => arg.startsWith('--reuse-widths='))?.slice(15)
+const forceMeasure = process.argv.includes('--force-measure')
+assert(!(reuseFile && forceMeasure), 'Choose either --reuse-widths or --force-measure')
 const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) : undefined
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
@@ -38,6 +47,7 @@ const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${pro
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization
 let optimizedPacking
+const timingFile = resolve(process.argv.find(arg => arg.startsWith('--timing-report='))?.slice(16) ?? join(temp, 'measurement-timings.json'))
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })
   await page.route('**/*', route => route.request().url().endsWith('/bundle.js')
@@ -47,7 +57,9 @@ try {
   await page.setContent('<style>body{margin:0}#scratch{position:absolute;left:-20000px;top:0}</style><div id="scratch"></div>')
   await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
+  endPhase('browserSetupMs')
   for (const [index, entry] of plan.entries.entries()) {
+    const scoreStarted = performance.now()
     const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
     sources.set(entry.id, source)
     const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source) && item.renderCache?.strategy === widthSearchStrategy)
@@ -57,10 +69,13 @@ try {
     }, { source, width }))
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
-    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache })
-    writeFileSync(join(temp, 'width-probes.json'), JSON.stringify({ rendererSha256, entries: records }))
+    records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache, measurement: { wallMs: performance.now() - scoreStarted, reused: Boolean(cached) } })
+    writeFileSync(join(temp, 'width-probes.json.tmp'), JSON.stringify({ rendererSha256, entries: records }))
+    renameSync(join(temp, 'width-probes.json.tmp'), join(temp, 'width-probes.json'))
     console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages${cached ? ' (reused)' : ''}`)
   }
+  endPhase('widthMeasurementsMs')
+  saveTimings('measured')
   if (!probeOnly) {
     const before = [...records]
     const baseline = optimizeScorebook(before)
@@ -70,6 +85,7 @@ try {
       moved: records.flatMap((entry, index) => before[index] === entry ? [] : [{ file: entry.file, title: entry.title, from: before.indexOf(entry) + 1, to: index + 1 }]) }
     console.log(`Chapter packing: ${orderOptimization.pagesBefore} -> ${orderOptimization.pagesAfter} music pages`)
   }
+  if (!probeOnly) endPhase('packingMs')
   if (!probeOnly) for (const group of optimizedPacking.groups) {
     const entries = records.slice(group.start, group.end), start = music.length
     if (entries.length > 1) {
@@ -90,8 +106,24 @@ try {
       Object.assign(entry, { width: chooseBestWidth(entry.candidates).width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
     }
   }
+  if (!probeOnly) { endPhase('pageRenderingMs'); saveTimings('rendered') }
 } finally { await browser.close() }
-if (probeOnly) { console.log(`Width probes complete: ${records.length} scores`); process.exit(0) }
+endPhase('browserCloseMs')
+function saveTimings(status = 'complete') {
+  const report = { status, rendererSha256, strategy: widthSearchStrategy, scoreCount: records.length,
+    measuredScores: records.filter(entry => !entry.measurement.reused).length,
+    reusedScores: records.filter(entry => entry.measurement.reused).length,
+    totalMs: performance.now() - runStarted, stages,
+    mode: reuseFile ? 'explicit-reuse' : 'full-measurement',
+    environment: { node: process.version, chromium: browser.version(), platform: process.platform, arch: process.arch,
+      cpu: cpus()[0]?.model, parallelism: availableParallelism() },
+    fontSha256: hash(font),
+    ...summarizeMeasurements(records) }
+  mkdirSync(resolve(timingFile, '..'), { recursive: true })
+  writeFileSync(timingFile, JSON.stringify(report, null, 2) + '\n')
+  console.log(`Measurement timings: ${timingFile} (${(report.totalMs / 1000).toFixed(2)}s total, ${(stages.widthMeasurementsMs / 1000).toFixed(2)}s widths)`)
+}
+if (probeOnly) { saveTimings(); console.log(`Width probes complete: ${records.length} scores`); process.exit(0) }
 
 // Book furniture does not alter the engraved score pages.
 const tocRows = plan.sections.flatMap(section => [{ section }, ...records.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
@@ -140,9 +172,13 @@ writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2
 writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><title>谱集预览</title><style>body{background:#ddd}figure{display:inline-block;width:380px;margin:10px;vertical-align:top}img{width:100%}</style>'
   + pages.map((page, index) => `<figure><figcaption>第${index + 1}页 · ${page.kind}</figcaption><img loading="lazy" src="pages/${String(index + 1).padStart(3, '0')}.svg"></figure>`).join(''))
 // Packaging only embeds glyphs at their resolved positions; it never re-engraves.
+endPhase('bookFilesMs')
 execFileSync(process.execPath, [join(root, 'tools/compact-scorebook-pdf.mjs'), `--plan=${planFile}`], { stdio: 'inherit' })
+endPhase('pdfPackagingMs')
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 const csv = [['曲目', '最佳宽度px', '谱集版宽px', '页码'], ...records.map(entry => [entry.title, entry.width, entry.bookWidth, entry.pages.join('/')])]
   .map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(',')).join('\n')
 writeFileSync(join(output, '排序与缩放记录.csv'), csv + '\n')
+endPhase('finalizeMs')
+saveTimings()
 console.log(JSON.stringify({ entries: records.length, pages: pages.length, pdf: join(output, plan.outputPdf) }))

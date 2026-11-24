@@ -154,20 +154,20 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
   return lines
 }
 
-export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
+export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
   validate(supplied)
   // Explicit spacing remains a fixed engraving override. Automatic spacing is
   // selected against the same virtual A4 pages in continuous and paged views;
   // custom vertical gaps must not change the horizontal line breaks.
-  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied)
+  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied, timings)
   const minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
   let baseline: NativeLayout
   try {
-    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 })
+    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 }, timings)
   } catch (error) {
     // Continuous engraving still supports a single row taller than A4.
     if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
-      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGapEm: 0.4 })
+      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGapEm: 0.4 }, timings)
     }
     throw error
   }
@@ -176,7 +176,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     let candidate: NativeLayout
     try {
       candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer })
+        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer }, timings)
     } catch (error) {
       // Wider spacing can make a decorated row too tall for one A4 page.
       // Other layout failures remain visible instead of becoming fallbacks.
@@ -185,11 +185,21 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     if (candidate.pages.length <= baseline.pages.length) { selected = candidate; break }
   }
+  const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
+  if (timings) timings.repaginationMs = (timings.repaginationMs ?? 0) + performance.now() - repaginationStarted
   return selected
 }
 
-function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions): NativeLayout {
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
+  let stageStarted = timings ? performance.now() : 0
+  const record = (name: string) => {
+    if (!timings) return
+    const now = performance.now()
+    timings[name] = (timings[name] ?? 0) + now - stageStarted
+    stageStarted = now
+  }
+  if (timings) timings.layoutTrials = (timings.layoutTrials ?? 0) + 1
   validate(supplied)
   if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
@@ -204,14 +214,16 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   let measurer = options.textMeasurer
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = window.document.createElement('canvas').getContext('2d')
-    if (context) measurer = new CanvasTextMeasurer(context)
+    if (context) measurer = new CanvasTextMeasurer(context, timings)
   }
   measurer ??= new DefaultTextMeasurer()
   const projection = projectNativeScore(document, { ...options, textMeasurer: measurer, displayLyrics: expanded?.lyrics, expandedDisplay: Boolean(expanded) })
   const relations = relationsFor(document, projection), available = options.width - 2 * margin
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options)
   const headerHeight = header.height
+  record('projectionMs')
   measureNativeHorizontal(projection.measures, options)
+  record('horizontalMeasureMs')
   // A closing cross-row arc needs a full horizontal turn before its first
   // note. Reserve that space while choosing rows, rather than flattening it.
   const arcLeading = (measures: NativeMeasure[]) => {
@@ -223,6 +235,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       .map(relation => nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
   }
   const lines = breakMeasures(projection.measures, available, options, arcLeading)
+  record('lineBreakMs')
   const systems: NativeSystem[] = lines.map((measures, index) => ({ index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   // Named sections are labels within a projected part; expanded performances
   // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
@@ -255,6 +268,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
+  record('horizontalPlacementMs')
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions: NativeRegion[] = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -343,10 +357,14 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       .map(([lane, pieces]) => [lane, Math.max(0, ...pieces.map(piece => -piece.top))])) : undefined
     placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true, coreTops)
   }
+  record('decorationsLyricsMs')
   const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
     const height = placeNativeLanes(system)
+    let geometryStarted = timings ? performance.now() : 0
     const pieces = nativeLanePieces(system, measurer)
+    if (timings) { timings.laneInkMs = (timings.laneInkMs ?? 0) + performance.now() - geometryStarted; geometryStarted = performance.now() }
     const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
+    if (timings) timings.coreInkMs = (timings.coreInkMs ?? 0) + performance.now() - geometryStarted
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
     return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
@@ -354,9 +372,12 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
   const gap = options.coreGap ?? (document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
+  const pageFitStarted = timings ? performance.now() : 0
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
     margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true })
   positionNativeLayout(layout, pagination)
+  if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
+  record('verticalPaginationMs')
   return layout
 }
 

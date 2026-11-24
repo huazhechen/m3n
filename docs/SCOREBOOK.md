@@ -62,7 +62,13 @@ node tools/refresh-score-pdfs.mjs
 
 乐谱库由 `npm run build:scorebook` 搜索谱集内部版宽；独立作品执行 `node tools/refresh-numbered-works.mjs` 可生成离线版面报告。两者均不修改谱源。报告保存在 `.tmp/numbered-work-widths/report.json`。
 
-运行 `npm run build:scorebook`。`node tools/build-scorebook.mjs --probe-only` 仅完成全库宽度试排，在临时目录保存 `width-probes.json`，不输出PDF、不修改谱源。调整目录和分类后，可用 `--reuse-widths=报告路径` 复用试排；先核验渲染器与字体摘要，再逐曲核验源文件摘要，变化的谱源自动重新试排。无需开发服务器：Vite只构建离线浏览器包，Playwright通过本地路由提供资源，不访问外网。构建先保存原生页面，再共用导出字体子集打包矢量PDF；打包只保持已排字形的基线，不重新排谱。PDF使用真实A4尺寸，检查页数、嵌入字体、无栅格图片及导出越界。
+运行 `npm run build:scorebook`。`node tools/build-scorebook.mjs --probe-only` 仅完成全库宽度试排，在临时目录保存 `width-probes.json`，不输出PDF、不修改谱源。默认每次全量重测，不自动读取旧候选；`--force-measure` 明确要求全量重测。原有 `--reuse-widths=报告路径` 仅供手动复用已验证的试排结果以调整目录或打包，先核验渲染器与字体摘要，再逐曲核验源文件摘要；不能与强制重测同时使用。性能对照不使用复用结果。无需开发服务器：Vite只构建离线浏览器包，Playwright通过本地路由提供资源，不访问外网。构建先保存原生页面，再共用导出字体子集打包矢量PDF；打包只保持已排字形的基线，不重新排谱。PDF使用真实A4尺寸，检查页数、嵌入字体、无栅格图片及导出越界。
+
+本地每次执行同时写出 `measurement-timings.json`，可用 `--timing-report=路径` 保存独立快照。测量结束和页面实绘结束时立即保存检查点，PDF打包失败也保留已完成阶段的计时。报告包含逐曲墙钟时间合计 `scoreWallMs`、总耗时、浏览器包构建、PDF字体准备、浏览器初始化、全库宽度测量、章节合页搜索、页面实绘和PDF打包，以及逐曲／逐候选的解析与字体准备、横向布局、SVG生成、DOM挂载、墨迹边界和碰撞检测。布局内部继续记录自动间距试排次数，以及投影／谱头、水平尺寸测量、分行、水平放置、装饰／歌词和纵向分页耗时；这些是 `layoutMs` 的子项。纵向排布进一步拆出谱行墨迹 `laneInkMs`、核心区墨迹 `coreInkMs` 和页面拟合 `pageFitMs`，并统计实际文字测量次数 `textMeasureCalls`。连续版检测单独嵌套在 `continuous` 中；`continuousMs`、`pagedRenderMs`、`totalMs` 是包含子项的合计，不能与其子项相加。报告还记录理论比较对数 `possiblePairs`、空间筛选后的实际比较对数 `testedPairs`和最慢的10首曲目。手动复用的旧候选计时不计入本轮工作量汇总。
+
+每个候选只建立一次 `PreparedNumberedNotationScore`，评分直接读取已有布局，分页／连续版共用横向布局；同曲的候选复用解析文档和字体准备。碰撞检查先按横坐标筛选，再以原来的0.5px相交阈值逐对核验，诊断顺序保持不变。纵向谱行碰撞改用横坐标扫描和两个堆计算所需分离量，保留原来的严格水平相交条件；歌词布局直接按绘制时的文字／线条几何和六位小数坐标计算墨迹，省去生成交互属性和解析SVG的往返，最终SVG绘制保持原样。所有11档候选仍进行真实SVG边界和碰撞检测。在线导出同样复用布局和空间筛选，返回值的 `measurementTimings` 提供总量、测量／合页／实绘阶段及逐曲逐候选计时，不显示在产品界面。
+
+对照测量时，前后两次均使用 `--probe-only --force-measure`，分别保存宽度候选和计时报告。`node tools/compare-scorebook-measurements.mjs --before=优化前候选.json --after=优化后候选.json --before-timings=优化前计时.json --after-timings=优化后计时.json --output=对照.json` 会核对全部候选的页数、行数、边界、碰撞、连续高度和评分完全一致，拒绝将缓存命中混入全量重测对照，并以逐曲墙钟时间之和生成提速比例及阶段汇总，排除曲间诊断写盘时间。实测记录见 [宽度测量性能](WIDTH_MEASUREMENT_PERFORMANCE.md)。
 
 `npm run test:scorebook` 检查共同宽度合页、顺序与篇章边界、容量和宽度选择规则、网页与谱集SVG一致、A4只缩放外层、署名／低音／替代声部保留及长曲原生分页。真实浏览器用例对照在线与本地导出的独立页及合页选择结果。`.tmp/scorebook-v63-web/index.html` 和 `pages/` 提供本地逐页预览。
 
