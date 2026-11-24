@@ -7,8 +7,9 @@ const stages = {
     planStaffLines: ['linePlanning'], engraveStaffSystems: ['engraving'], paginateStaff: ['pagination'] },
   'line-layout.js': { createVexMeasure: ['vexMeasureForPlanning'] },
   'staff-system.js': { createVexMeasure: ['vexMeasureForDrawing'], drawVexMeasure: ['vexDrawing'], createStaffContext: ['systemDrawPass'],
-    arrangeStaffSystem: ['systemArrangement'], readXml: ['systemCaptureParse'] },
-  'vexflow-engine.js': { readXml: ['vexCaptureParse'] },
+    arrangeStaffSystem: ['systemArrangement'], captureStaffDrawing: ['systemDrawingCapture'] },
+  'vexflow-engine.js': { captureStaffDrawing: ['vexDrawingCapture'] },
+  'staff-svg-context.js': { readXml: ['compatibilityXmlParse'] },
 }
 
 export function staffBenchmarkInstrumentation() {

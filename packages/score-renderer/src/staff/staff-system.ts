@@ -4,8 +4,9 @@ import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure } from './vexflow-engine.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
+import { captureStaffDrawing } from './staff-svg-context.js'
 import { arrangeStaffSystem } from './system-layout.js'
-import { element, nodes, readXml, hasClass, SvgGeometry, type XmlNode, type MeasureText } from './layout-svg.js'
+import { element, nodes, hasClass, SvgGeometry, type XmlNode, type MeasureText } from './layout-svg.js'
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1) {
   const scale = STAFF_SCALE, rawWidth = width / scale
@@ -40,8 +41,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
     for (let pass = 0; pass < 8; pass++) {
       const context = createStaffContext()
       const capture = (draw: () => void) => {
-        const g = context.openGroup(); draw(); context.closeGroup()
-        const output = nodes(readXml(g.outerHTML))
+        const output = captureStaffDrawing(context, draw)
         const normalize = (n: XmlNode) => {
           if (n.attributes.id?.startsWith('vf-')) delete n.attributes.id
           if (n.attributes.class) n.attributes.class = n.attributes.class.replace(/vf-/g, '')

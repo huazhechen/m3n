@@ -22,6 +22,7 @@ ScoreDocument → projectStaffDocument → VexFlow局部测量及绘制
 
 - `staff-document.ts`：纯领域显示投影、绝对音高、歌词和身份，以及共有事件边界处的小节分片。
 - `vexflow-engine.ts`：VexFlow对象、谱号调拍号成本、音符／和弦／倚音／符杠／连音组、时间列测量与SVG绘制。
+- `staff-svg-context.ts`：沿用VexFlow SVGContext的绘图规则，直接收集内部XML节点，避免候选刻绘中的SVG DOM序列化／解析往返；最终页面SVG及文字定位保持原有流程。
 - `line-layout.ts`：读取真实音乐占宽与文字墨迹，调用共享动态规划，分配小节宽度。
 - `staff-system.ts`：系统组织、大谱表、歌词、反复房子、跨行关系和附属记号。
 - `system-layout.ts`：文字、关系、实际笔画碰撞、核心净空和分页。

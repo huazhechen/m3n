@@ -4,9 +4,10 @@ import { chooseNumberedScoreWidth, chooseStaffScoreWidth, renderScoreInto, type 
 
 const { numberedQuality } = vi.hoisted(() => ({ numberedQuality: vi.fn() }))
 const { prepareFonts, createScore } = vi.hoisted(() => ({ prepareFonts: vi.fn(), createScore: vi.fn() }))
-const { staffPageCount, staffLayoutInfo } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn() }))
+const { staffPageCount, staffLayoutInfo, prepareStaffTask, staffTaskUses } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn(), prepareStaffTask: vi.fn(async () => ({})), staffTaskUses: vi.fn() }))
 vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
+  prepareStaffMeasurementTask: prepareStaffTask,
   prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
 }))
 vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {} }))
@@ -75,7 +76,8 @@ describe('font and layout progress', () => {
   })
 })
 vi.mock('../../tools/lib/staff-width-measurement.mjs', () => ({
-  measureStaffWidth: async (_document: ScoreDocument, width: number) => {
+  measureStaffWidth: async (_document: ScoreDocument, width: number, _settings: unknown, _signal: unknown, { task }: { task?: unknown } = {}) => {
+    staffTaskUses(task)
     const info = staffLayoutInfo(width)
     const densities = info.lines.map((line: { minimum: number }) => line.minimum / info.availableWidth)
     const mean = densities.reduce((a: number, b: number) => a + b, 0) / densities.length
@@ -141,6 +143,7 @@ describe('numbered automatic width margins', () => {
 })
 
 describe('staff automatic width range', () => {
+  afterEach(() => { prepareStaffTask.mockClear(); staffTaskUses.mockClear() })
   it.each([510, 590, 640])('selects within 480–720px when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
@@ -150,7 +153,25 @@ describe('staff automatic width range', () => {
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
     expect(selected).toBe(Math.max(480, Math.ceil(requiredWidth / 20) * 20))
+    expect(prepareStaffTask).toHaveBeenCalledOnce()
+    const task = await prepareStaffTask.mock.results[0]!.value
+    expect(staffTaskUses).toHaveBeenCalledTimes(13)
+    expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 480 && width <= 720)).toBe(true)
+  })
+
+  it('creates a fresh measurement task for every selection', async () => {
+    staffPageCount.mockReturnValue(1)
+    staffLayoutInfo.mockImplementation(width => ({ pageCount: 1, availableWidth: width,
+      lines: [{ minimum: width * 0.6, target: width }] }))
+    const document = {} as ScoreDocument
+    await chooseStaffScoreWidth(document, { paged: true })
+    await chooseStaffScoreWidth(document, { paged: true })
+    expect(prepareStaffTask).toHaveBeenCalledTimes(2)
+    const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
+    expect(first).not.toBe(second)
+    expect(staffTaskUses.mock.calls.slice(0, 13).every(([task]) => task === first)).toBe(true)
+    expect(staffTaskUses.mock.calls.slice(13).every(([task]) => task === second)).toBe(true)
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {

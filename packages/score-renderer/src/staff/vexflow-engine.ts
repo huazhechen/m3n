@@ -4,7 +4,9 @@ import {
   type Note, type Tickable,
 } from 'vexflow/bravura'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
-import { element, readXml, nodes, type MeasureText, type XmlNode } from './layout-svg.js'
+import { element, nodes, type MeasureText, type XmlNode } from './layout-svg.js'
+
+import { StaffSvgContext, captureStaffDrawing } from './staff-svg-context.js'
 
 export const STAFF_SCALE = 0.7
 Flow.setMusicFont('Bravura')
@@ -203,10 +205,7 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   }
   const node = element('g', { id: model.measure.id, class: 'measure' })
   const capture = (draw: () => void): XmlNode[] => {
-    const group = context.openGroup()
-    draw()
-    context.closeGroup()
-    const output = nodes(readXml(group.outerHTML))
+    const output = captureStaffDrawing(context, draw)
     const normalize = (n: XmlNode) => {
       if (n.attributes.id?.startsWith('vf-')) delete n.attributes.id
       if (n.attributes.class) n.attributes.class = n.attributes.class.replace(/vf-/g, '')
@@ -271,5 +270,5 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   return node
 }
 export function createStaffContext() {
-  return new SVGContext(document.createElement('div'))
+  return new StaffSvgContext()
 }
