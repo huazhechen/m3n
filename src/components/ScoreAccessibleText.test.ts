@@ -1,10 +1,27 @@
-import { createElement } from 'react'
+// @vitest-environment jsdom
+import { act, createElement } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { ScoreAccessibleText } from './ScoreAccessibleText'
 
 describe('accessible reading structure', () => {
+  it('reveals the reader when the native disclosure is opened and hides it when closed', () => {
+    const host = document.createElement('div')
+    const root: Root = createRoot(host)
+    act(() => root.render(createElement(ScoreAccessibleText, {
+      score: parseM3NDocument('{2/4}\nN: 1 |||'), notationMode: 'movable', transpose: 0, tempoScale: 1,
+    })))
+    const section = host.querySelector<HTMLElement>('.score-accessible-text')!
+    const details = host.querySelector<HTMLDetailsElement>('.score-accessible-text > details')!
+    act(() => { details.open = true; details.dispatchEvent(new Event('toggle')) })
+    expect(section.classList.contains('is-open')).toBe(true)
+    act(() => { details.open = false; details.dispatchEvent(new Event('toggle')) })
+    expect(section.classList.contains('is-open')).toBe(false)
+    act(() => root.unmount())
+  })
+
   it('offers expandable reading and escaped text without live announcements or per-note tab stops', () => {
     const html = renderToStaticMarkup(createElement(ScoreAccessibleText, {
       score: parseM3NDocument('{title=曲谱 <示例>}{2/4}\nN: 1 2 |||\nL: 春天'),

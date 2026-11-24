@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
 import { describeAccessibleScore } from '../lib/score-accessibility'
 import type { NotationMode } from '../lib/renderer-settings'
@@ -7,6 +7,7 @@ const overviewSize = 8
 const measureName = (label: string) => label.split('，')[0]!
 
 export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale }: { score: ScoreDocument; notationMode: NotationMode; transpose: number; tempoScale: number }) {
+  const [expanded, setExpanded] = useState(false)
   const text = useMemo(() => {
     try {
       return describeAccessibleScore(score, { notationMode, transpose, tempoScale, forDisplay: true })
@@ -19,8 +20,8 @@ export function ScoreAccessibleText({ score, notationMode, transpose, tempoScale
     const measures = text.measures.slice(index * overviewSize, (index + 1) * overviewSize)
     return { measures, range: `${measureName(measures[0]!.label)}至${measureName(measures.at(-1)!.label)}` }
   })
-  return <section className="score-accessible-text" aria-label={text.title}>
-    <details key={text.title}>
+  return <section className={`score-accessible-text${expanded ? ' is-open' : ''}`} aria-label={text.title}>
+    <details key={text.title} onToggle={event => setExpanded(event.currentTarget.open)}>
       <summary>无障碍读谱</summary>
       <p>{text.summary}</p>
       <details className="score-accessible-overview">

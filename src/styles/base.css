@@ -82,7 +82,7 @@ main.editor-page {
 
 /* Keep the default score layout intact. The entry remains in the accessibility
    tree; keyboard focus or explicitly opening it reveals real reading geometry. */
-.score-accessible-text:not(:focus-within):not(:has(> details[open])) {
+.score-accessible-text:not(:focus-within):not(.is-open) {
   position: absolute;
   width: 1px;
   height: 1px;
