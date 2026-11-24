@@ -20,7 +20,7 @@ for (const entry of record.entries) assert.equal(createHash('sha256').update(rea
 const pages = read(pagesFile)
 assert.equal(pages.length, record.pageCount)
 const folder = join(temp, 'compact'); mkdirSync(folder, {recursive:true})
-await build({configFile:false,logLevel:'error',build:{outDir:join(folder,'bundle'),emptyOutDir:true,minify:false,
+await build({configFile:false,logLevel:'error',define:{'import.meta.url':JSON.stringify('http://scorebook.local/bundle.js')},build:{outDir:join(folder,'bundle'),emptyOutDir:true,minify:false,
   lib:{entry:join(root,'tools/scorebook-compact-layout.mjs'),name:'compactScorebook',formats:['iife'],fileName:()=>'bundle.js'}}})
 const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || ['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync),headless:true})
 const filename = plan.outputPdf, staged = join(folder, filename)
