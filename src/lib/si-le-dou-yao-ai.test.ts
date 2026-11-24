@@ -11,7 +11,7 @@ describe('Si Le Dou Yao Ai screenshot transcription', () => {
   it('preserves the pitches and the updated 4/4 ending without long houses', () => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(document.key).toBe('C')
-    expect(printed).toHaveLength(38)
+    expect(printed).toHaveLength(45)
     expect(printed[0]!.events.map(event => [event.kind, event.pitches, event.beats])).toEqual([
       ['rest', [], 0.5], ['note', ['3'], 0.5],
     ])
@@ -20,18 +20,19 @@ describe('Si Le Dou Yao Ai screenshot transcription', () => {
     ])
     expect(printed[15]!.events.at(-1)!.pitches).toEqual(['5#d'])
     expect(printed.every(bar => !bar.ending)).toBe(true)
-    expect(source).toContain('{tocoda}')
-    expect(source).toContain('{coda}')
+    expect(source).not.toMatch(/\{(?:segno|ds|tocoda|coda)\}/)
+    expect(source.match(/\|\|:/g)).toHaveLength(1)
+    expect(source.match(/:\|\|/g)).toHaveLength(1)
     expect(printed.flatMap(bar => bar.events).every(event => event.meterCount === 4 && event.meterUnit === 4)).toBe(true)
     expect(printed.at(-1)!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(3)
   })
 
-  it('plays two full repetitions, then D.S. and To Coda into the final verse exactly once', () => {
+  it('plays two ordinary repetitions, then the written final chorus and verse once', () => {
     const barById = new Map(printed.flatMap((bar, index) => bar.events.map(event => [ids.get(event)!, index + 1])))
     const route = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
       .map(bar => barById.get(bar.events[0]!.playbackId!.replace(/-rend\d+$/, '')))
     const range = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => first + index)
-    expect(route).toEqual([...range(1, 25), ...range(2, 25), ...range(2, 8), ...range(26, 38)])
+    expect(route).toEqual([...range(1, 25), ...range(2, 25), ...range(26, 45)])
     expect(compileScorePerformance(document).beats).toBe(272)
   })
 
