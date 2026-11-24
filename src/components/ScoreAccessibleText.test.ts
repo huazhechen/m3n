@@ -7,18 +7,18 @@ import { parseM3NDocument } from '@m3n/notation'
 import { ScoreAccessibleText } from './ScoreAccessibleText'
 
 describe('accessible reading structure', () => {
-  it('reveals the reader when the native disclosure is opened and hides it when closed', () => {
+  it('opens and closes from the visible native disclosure control', () => {
     const host = document.createElement('div')
     const root: Root = createRoot(host)
     act(() => root.render(createElement(ScoreAccessibleText, {
       score: parseM3NDocument('{2/4}\nN: 1 |||'), notationMode: 'movable', transpose: 0, tempoScale: 1,
     })))
-    const section = host.querySelector<HTMLElement>('.score-accessible-text')!
     const details = host.querySelector<HTMLDetailsElement>('.score-accessible-text > details')!
-    act(() => { details.open = true; details.dispatchEvent(new Event('toggle')) })
-    expect(section.classList.contains('is-open')).toBe(true)
-    act(() => { details.open = false; details.dispatchEvent(new Event('toggle')) })
-    expect(section.classList.contains('is-open')).toBe(false)
+    const summary = details.querySelector('summary')!
+    act(() => summary.click())
+    expect(details.open).toBe(true)
+    act(() => summary.click())
+    expect(details.open).toBe(false)
     act(() => root.unmount())
   })
 
