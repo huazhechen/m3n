@@ -5,9 +5,9 @@ import { numberedLayoutScore } from '../scorebook-width.mjs'
 
 /** Staff-specific geometry adapter; width enumeration, safety filtering and
  * ranking belong to the same policy used for numbered notation. */
-export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false } = {}) {
+export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false, task } = {}) {
   const started = performance.now(), timings = {}
-  const render = await prepareStaffScore(score, { ...settings, width }, signal)
+  const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   const info = render.layoutInfo()
   const densities = info.lines.map(line => line.minimum / info.availableWidth)
   const mean = densities.reduce((sum, density) => sum + density, 0) / Math.max(1, densities.length)

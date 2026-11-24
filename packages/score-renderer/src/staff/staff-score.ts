@@ -1,13 +1,14 @@
-import { prepareNumberedNotationFonts, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
-import { findAll, hasClass, element, translate, moveInk, xml, textMeasurer, type XmlNode } from './layout-svg.js'
+import { findAll, hasClass, element, translate, moveInk, xml, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
 import { paginateStaff, type StaffSystem, type StaffPage } from './system-layout.js'
 import { staffHeader } from './staff-header.js'
 import { a4SourcePageHeight } from '../score-export.js'
 import { needsStaffExpansion } from './display-score.js'
 import { resolveStaffText } from './svg-text.js'
-import { projectStaffDocument } from './staff-document.js'
+import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
+export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 import { engraveStaffSystems } from './staff-system.js'
 
 const ns = 'http://www.w3.org/2000/svg'
@@ -18,8 +19,9 @@ export type StaffSettings = {
 /** The optional module embeds its music outlines; there is no engine download. */
 export async function prepareStaffResources() {}
 
-export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal) {
-  await prepareNumberedNotationFonts(score)
+export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal, task?: StaffMeasurementTask) {
+  const measurements = task ?? await prepareStaffMeasurementTask(score, settings, signal)
+  measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
   const minimumGap = (score.minimumCoreGapEm ?? 1.2) * 22
@@ -30,10 +32,9 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       throw new Error('五线谱版宽、页边距或行距无效。')
   }
   validate(width)
-  const projected = projectStaffDocument(score, settings.transpose, settings.includeBass)
+  const projected = measurements.document
   const tempoScale = settings.tempoScale ?? 1
-  projected.measures = projected.measures.map(m => ({ ...m, tempo: m.tempo * tempoScale }))
-  const measure = textMeasurer()
+  const measure = measurements.measure
   type Layout = {
     systems: StaffSystem[]; pages: StaffPage[]; furniture: XmlNode[]
     header: ReturnType<typeof staffHeader>; lines: StaffLine[]; spacing: number; paginationError?: Error
@@ -52,7 +53,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
     const attempt = (spacing: number): Layout => {
       signal?.throwIfAborted()
-      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing)
+      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale)
       for (const system of systems) {
         translate(system.node, gutter / STAFF_SCALE, 0)

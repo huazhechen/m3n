@@ -54,12 +54,13 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
 }
 
 export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
-  await loadStaffResources()
+  const { prepareStaffMeasurementTask } = await loadStaffResources()
+  const task = await prepareStaffMeasurementTask(scoreDocument, settings, signal)
   const { measureStaffWidth } = await import('../../tools/lib/staff-width-measurement.mjs')
   const { best } = await selectBestWidth(async width => {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return measureStaffWidth(scoreDocument, width, settings, signal)
+    return measureStaffWidth(scoreDocument, width, settings, signal, { task })
   }, { signal })
   return best.width
 }

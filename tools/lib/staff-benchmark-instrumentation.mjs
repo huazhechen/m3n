@@ -2,8 +2,9 @@ import ts from 'typescript'
 
 // Diagnostic bundle only: production engraving sources and exports stay unchanged.
 const stages = {
-  'staff-score.js': { prepareNumberedNotationFonts: ['fontPreparation', true], projectStaffDocument: ['projection'], staffHeader: ['header'],
-    planStaffLines: ['linePlanning'], engraveStaffSystems: ['engraving'], paginateStaff: ['pagination'], textMeasurer: ['textMeasurerFactory', false, true] },
+  'staff-measurement-task.js': { prepareNumberedNotationFonts: ['fontPreparation', true], projectStaffDocument: ['projection'], textMeasurer: ['textMeasurerFactory', false, true] },
+  'staff-score.js': { staffHeader: ['header'],
+    planStaffLines: ['linePlanning'], engraveStaffSystems: ['engraving'], paginateStaff: ['pagination'] },
   'line-layout.js': { createVexMeasure: ['vexMeasureForPlanning'] },
   'staff-system.js': { createVexMeasure: ['vexMeasureForDrawing'], drawVexMeasure: ['vexDrawing'], createStaffContext: ['systemDrawPass'],
     arrangeStaffSystem: ['systemArrangement'], readXml: ['systemCaptureParse'] },

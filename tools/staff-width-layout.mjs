@@ -1,5 +1,5 @@
 import { analyzeM3N } from '@m3n/notation'
-import { prepareStaffResources, prepareStaffScore } from '@m3n/score-renderer/staff'
+import { prepareStaffResources, prepareStaffScore, prepareStaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureStaffWidth } from './lib/staff-width-measurement.mjs'
 import { probeWidthCandidates } from './scorebook-width.mjs'
 
@@ -15,7 +15,8 @@ function readScore(source) {
 
 export async function search(source, { auditLayout = false } = {}) {
   const score = readScore(source)
-  return probeWidthCandidates(width => measureStaffWidth(score, width, {}, undefined, { auditLayout }))
+  const task = await prepareStaffMeasurementTask(score)
+  return probeWidthCandidates(width => measureStaffWidth(score, width, {}, undefined, { auditLayout, task }))
 }
 
 export async function measure(source, width, verify = false, settings = {}) {
