@@ -132,12 +132,13 @@ function addMeasureHighlight(measure: SVGGElement, className: string) {
     && Number.isFinite(numberedSystemBottom) && numberedSystemBottom > numberedSystemTop
   const numberedMeasureStart = Number(measure.dataset.m3nMeasureStart)
   const numberedMeasureEnd = Number(measure.dataset.m3nMeasureEnd)
+  // Use the exact engraved boundaries without padding into adjacent measures.
   // Native numbered bounds remain valid when a measure continues on another system.
   const left = Number.isFinite(numberedMeasureStart)
-    ? numberedMeasureStart - 5
+    ? numberedMeasureStart
     : measureBounds.x
   const right = Number.isFinite(numberedMeasureEnd)
-    ? numberedMeasureEnd + 5
+    ? numberedMeasureEnd
     : measureBounds.x + measureBounds.width
   const band = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   band.classList.add(className)

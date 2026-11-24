@@ -40,7 +40,7 @@ for (const width of [390, 1280]) {
       }
     })
 
-    test(`playback measure highlight covers the space after the previous bar at ${width}px in ${mode} mode`, async ({ page }, info) => {
+    test(`playback measure highlight aligns exactly with barlines at ${width}px in ${mode} mode`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 900 })
       await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
       await page.goto('/editor')
@@ -58,12 +58,14 @@ for (const width of [390, 1280]) {
         const bars = [...previous.querySelectorAll<SVGRectElement>('rect')]
           .filter(rect => rect.width.baseVal.value < 10 && rect.height.baseVal.value > 20)
         const barRight = Math.max(...bars.map(rect => rect.x.baseVal.value + rect.width.baseVal.value))
+        const closingBars = [...element.querySelectorAll<SVGRectElement>('[data-m3n-role="bar"] rect')]
+        const closingRight = Math.max(...closingBars.map(rect => rect.x.baseVal.value + rect.width.baseVal.value))
         const note = element.querySelector<SVGGraphicsElement>('g.note')!.getBBox()
-        return { bandLeft: band.x, bandRight: band.x + band.width, barRight, noteLeft: note.x, noteRight: note.x + note.width }
+        return { bandLeft: band.x, bandRight: band.x + band.width, barRight, closingRight, noteLeft: note.x, noteRight: note.x + note.width }
       })
       expect(bounds.barRight).toBeGreaterThan(0)
-      expect(bounds.bandLeft).toBeLessThanOrEqual(bounds.barRight)
-      expect(bounds.bandLeft).toBeGreaterThanOrEqual(bounds.barRight - 6)
+      expect(bounds.bandLeft).toBeCloseTo(bounds.barRight, 4)
+      expect(bounds.bandRight).toBeCloseTo(bounds.closingRight, 4)
       expect(bounds.bandRight).toBeGreaterThanOrEqual(bounds.noteRight)
       await page.screenshot({ path: info.outputPath('measure-highlight.png') })
       await page.getByRole('button', { name: '暂停', exact: true }).click()
@@ -87,6 +89,6 @@ test('a measure after a section break starts at its own opening repeat during pl
     const bars = [...opening.querySelectorAll<SVGRectElement>('rect')].filter(rect => rect.height.baseVal.value > 20)
     return { bandLeft: band.x, barLeft: Math.min(...bars.map(rect => rect.x.baseVal.value)) }
   })
-  expect(bounds.bandLeft).toBeCloseTo(bounds.barLeft - 5, 2)
+  expect(bounds.bandLeft).toBeCloseTo(bounds.barLeft, 4)
   await page.getByRole('button', { name: '暂停', exact: true }).click()
 })
