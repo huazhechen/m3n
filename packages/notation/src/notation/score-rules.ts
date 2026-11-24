@@ -104,10 +104,11 @@ function validateMeasureDurations(document: ScoreDocument, measures: readonly Sc
     }
     for (const [index, matches] of occurrences) if (matches.every(Boolean)) complementary.add(index)
   }
-  let repeatStartIndex: number | undefined
+  // An unpaired repeat end returns to the beginning of the score.
+  let repeatStartIndex = 0
   for (const value of values) {
     if (value.measure.left === 'rptstart') repeatStartIndex = value.index
-    if (value.measure.right !== 'rptend' || repeatStartIndex === undefined) continue
+    if (value.measure.right !== 'rptend') continue
     const pickup = values[repeatStartIndex]
     if (!pickup || pickup.actual >= pickup.expected || value.actual >= value.expected) continue
     if (equal(pickup.expected, value.expected) && equal(pickup.actual + value.actual, pickup.expected)) {

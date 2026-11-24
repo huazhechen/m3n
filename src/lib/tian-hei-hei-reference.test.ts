@@ -31,7 +31,7 @@ describe('Tian Hei Hei, compact EasyPiano vocal edition', () => {
     expect(written[11]).toMatchObject({ events: [{ pitches: [], beats: 4 }] })
     expect(written[11]!.interlude).toBeUndefined()
     expect(written.filter(bar => bar.interlude)).toHaveLength(1)
-    expect(written.filter(bar => bar.left === 'rptstart')).toHaveLength(2)
+    expect(written.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
     expect(written.filter(bar => bar.right === 'rptend')).toHaveLength(2)
     expect(document.order).toBeUndefined()
     expect(source).toContain('L1: 小时候吵闹')
@@ -71,7 +71,7 @@ describe('Tian Hei Hei, compact EasyPiano vocal edition', () => {
       expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
     }
     expect(document.parts.get('score')!.melody.some(bar => bar.ending)).toBe(false)
-    const repeatStarts = bars.filter(bar => bar.left === 'rptstart')
+    const repeatStarts = bars.filter((bar, index) => index === 0 || bar.left === 'rptstart')
     expect(repeatStarts.map(bar => bar.events.map(event => event.pitches.join(',') || '0')))
       .toEqual([['0', '0', '0', '3', '4'], ['0', '0', '0', '5', '2e', '1e']])
     expect(source).toContain('L1: 我的\nL2: 离开')

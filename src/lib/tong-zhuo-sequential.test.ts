@@ -36,7 +36,7 @@ it('repeats the complete 24-bar verse and chorus, then writes the final verse an
   expect(document.sections ?? []).toHaveLength(0)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   expect(bars).toHaveLength(48)
-  expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([0, 40])
+  expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([40])
   expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index] : [])).toEqual([23, 47])
   expect(bars.every(bar => !bar.ending && !bar.navigation?.length && bar.events.every(event => !event.navigation.length))).toBe(true)
   expect(compileScorePerformance(document).beats).toBe(240)

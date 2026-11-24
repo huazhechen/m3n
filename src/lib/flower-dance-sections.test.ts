@@ -11,7 +11,7 @@ it('reuses Flower Dance through D.S. and Coda without named sections', () => {
   for (const mark of ['segno', 'ds', 'tocoda', 'coda']) expect(source).toContain(`{${mark}}`)
   expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(75)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(2)
+  expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
   expect(bars.filter(bar => bar.ending?.length)).toHaveLength(0)
 })
 
