@@ -131,7 +131,7 @@ describe('new reference scores', () => {
     // User corrections use the original written bar numbers, before sharing bars 19/21.
     const corrected = [...reference]
     corrected[9] = '3:.5 2:.5 2:.5 1:.25 7d:.25 6d:1.5 6d:.5'
-    corrected[11] = '5:.5 4:.5 5:.5 2:.5 3:2'
+    corrected[11] = '5:.5 4:.5 4:.5 2:.5 3:2'
     // The repeat now starts at intro bar 5; each ending writes its final vocal bar.
     corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 6:.5'
     corrected[23] = corrected[22] + '~'
