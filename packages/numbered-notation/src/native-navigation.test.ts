@@ -44,6 +44,23 @@ describe('measured navigation geometry', () => {
             expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(22 * minimumNoteGapEm / 2 * 1.5, 8);
         }
     });
+    it.each([false, true])('keeps Segno attached to the preceding bar under justification (equalMeasures=%s)', equalMeasures => {
+        for (const opening of [false, true]) for (const minimumNoteGapEm of [.4, .6]) {
+            const source = opening ? '{2/4}\nN: ||: {segno}1 2 | 3 4 |||' : '{2/4}\nN: 1 2 | {segno}3 4 |||';
+            const projection = projectNativeScore(parseM3NDocument(source), {textMeasurer:measurer});
+            const options = {minimumNoteGapEm, equalMeasures};
+            const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth;
+            for (const width of [minimum, minimum + 400]) {
+                placeNativeHorizontal(projection.measures, options, 0, width);
+                const note = projection.glyphs.find(glyph => glyph.controls.some(control => control.kind === 'segno'))!;
+                const control = note.controls.find(control => control.kind === 'segno')!;
+                const bar = nativeBarMetrics(opening ? 'rptstart' : 'single');
+                const anchor = opening ? projection.measures[0]!.openingBarX! : projection.measures[0]!.barX!;
+                expect(control.x! - (anchor + bar.width - bar.anchor)).toBeCloseTo(22 * minimumNoteGapEm, 8);
+                expect(note.x - note.musicLeft! - control.x! - control.width).toBeGreaterThanOrEqual(22 * minimumNoteGapEm - 1e-6);
+            }
+        }
+    });
     it.each(['fine','tocoda'] as const)('centers %s on the measured music axis and contains its overhangs', name => {
         const mark = measureNativeNavigation(name, measurer), ink = nativeSvgInk(mark.svg, measurer);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(-8, 4);

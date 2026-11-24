@@ -165,6 +165,16 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       }))
     }
   }
+  // A Segno immediately after a bar stays attached to that boundary instead
+  // of absorbing justification surplus. Retain both symbols' minimum margins.
+  for (const [index, item] of items.entries()) {
+    const next = items[index + 1]
+    if (!item.boundary || !next?.controls?.some(control => control.kind === 'segno')) continue
+    item.fixedAfter = Math.max(...lanes.map(lane => {
+      const left = item.cells.find(cell => cell.lane === lane), right = next.cells.find(cell => cell.lane === lane)
+      return (left?.right ?? 0) + (right?.left ?? 0)
+    }))
+  }
   // Inline section frames keep a rigid clearance to the next visible symbol.
   // Collapse this edge for both minimum-width measurement and justification.
   for (const [index, item] of items.entries()) {
