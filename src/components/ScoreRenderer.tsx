@@ -507,7 +507,7 @@ export function ScoreRenderer({
     return () => { cancelled = true }
   }, [playbackTone, toneRetry])
 
-  const togglePlayback = async () => {
+  const togglePlayback = async (startPlaybackId?: string) => {
     if (playerRef.current && !playerRef.current.paused) {
       stopPlaybackRef.current()
       return
@@ -535,6 +535,10 @@ export function ScoreRenderer({
       if (!isCurrent()) return
       readyToneRef.current = tone
       setToneLoading(false)
+      if (startPlaybackId && player.duration > 0) {
+        const milliseconds = scoreRef.current?.timeForElement(startPlaybackId) ?? -1
+        if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
+      }
       scorePlaybackCoordinator.claim(playbackLeaseRef.current)
       setIsPlaying(true)
       await player.play()
@@ -718,6 +722,8 @@ export function ScoreRenderer({
             // Leave the note-on pending: MIDI's accumulated clock can round
             // just below the score timestamp and otherwise consume the first note.
             if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
+          } else if (!onNoteClick && !isPlayRequest && !isSourceUpdating && !isRendering) {
+            void togglePlayback(playbackId)
           }
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}

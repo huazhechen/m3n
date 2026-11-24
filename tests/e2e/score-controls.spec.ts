@@ -293,6 +293,33 @@ test('clicking notes during playback seeks forward and backward and keeps playin
 })
 
 
+for (const mode of ['首调', '五线谱'] as const) {
+test(`reader measure clicks start playback before first play and after pause in ${mode}`, async ({ page }) => {
+  await page.goto('/editor')
+  await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: 1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e |||')
+  await page.getByRole('button', { name: '保存', exact: true }).click()
+  await expect(page).toHaveURL(/\/scores\/local-/)
+  await selectNotationMode(page, mode)
+  await page.keyboard.press('Escape')
+  const paper = page.locator('.score-paper')
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  const measures = paper.locator('g.measure').filter({ has: page.locator('g.note') })
+  const pause = page.getByRole('button', { name: '暂停', exact: true })
+  // Click a later note: playback must begin with the first note of its measure.
+  await measures.nth(1).locator('g.note').nth(2).click({ force: true })
+  await expect(pause).toBeVisible()
+  await expect(measures.nth(1).locator('.startup-beat-highlight')).toHaveCount(1)
+  await expect(measures.nth(1).locator('g.note').first()).toHaveClass(/is-playing/)
+  await expect(measures.first().locator('g.note.is-playing')).toHaveCount(0)
+  await pause.click()
+  await measures.first().locator('g.note').nth(1).click({ force: true })
+  await expect(pause).toBeVisible()
+  await expect(measures.first().locator('.startup-beat-highlight')).toHaveCount(1)
+  await expect(measures.first().locator('g.note').first()).toHaveClass(/is-playing/)
+  await pause.click()
+})
+}
+
 test('fixed C spelling and measure numbers toggle independently and persist', async ({ page }) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{key=D}{4/4}\nN: 1 2 3 4 |||')
