@@ -30,7 +30,7 @@ export type NativeGlyph = {
   arpeggioLayout?: ReturnType<typeof nativeArpeggioGeometry>; markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number
   tieTop?: number; musicInk?: NativeInk[]
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; interlude?: boolean; paragraph: string
-  instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number
+  instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number; parenthesisGap?: number
 }
 export type NativeColumn = {
   time: number; glyphs: NativeGlyph[]; left: number; right: number; x: number
@@ -44,7 +44,7 @@ export type NativeMeasure = {
   navigation?: NativeNavigation[]
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }
-export type NativeModelOptions = { includeBass?: boolean; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean }
+export type NativeModelOptions = { includeBass?: boolean; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean; minimumNoteGapEm?: number }
 
 export function numberedPitch(token: string, shift = 0): NativePitch {
   const match = /^([0-7])([#b=]*)([ed]*)/.exec(token)
@@ -218,8 +218,10 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           if (glyph.instrumental) {
             const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
             const left = options.textMeasurer.measureText('(', style), right = options.textMeasurer.measureText(')', style)
-            glyph.parenthesisLeft = left.w - Math.min(0, left.inkLeft ?? 0) + nativeStyle.music * 0.05
-            glyph.parenthesisRight = Math.max(right.w, right.inkRight ?? right.w) + nativeStyle.music * 0.05
+            // Each side contributes the same half-gap as a quarter note.
+            glyph.parenthesisGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4)
+            glyph.parenthesisLeft = left.w - Math.min(0, left.inkLeft ?? 0) + glyph.parenthesisGap
+            glyph.parenthesisRight = Math.max(right.w, right.inkRight ?? right.w) + glyph.parenthesisGap
           }
           result.glyphs.push(glyph); time += beats
         }
