@@ -14,13 +14,14 @@ it('writes the third chorus in sequence and preserves the complete performance d
   ]
   expect(playbackMeasureIndexes(bars).map(index => index + 1)).toEqual(baseline)
   expect(compileScorePerformance(document).beats).toBe(268)
+  expect([bars[31]!.events[0]!.pitches, bars[32]!.events[0]!.pitches]).toEqual([['1'], ['1']])
   const lastNote = compileScorePerformance(document).notes.filter(note => note.channel === 0).at(-1)!
   expect(lastNote.end).toBe(268)
 })
 
-it('writes the full third chorus lyrics while retaining the silent second visit', () => {
+it('reuses the complete chorus lyrics on every visit', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
-  expect(source).not.toMatch(/\{(?:segno|ds)\}|^L3:/m)
+  expect(source).not.toMatch(/\{(?:segno|ds)\}/)
   const document = parseM3NDocument(source)
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)]
@@ -31,23 +32,22 @@ it('writes the full third chorus lyrics while retaining the silent second visit'
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => lyric.text)).join('')
   expect(text(64, 92)).toBe('伤心的理由一千个伤心的理由最后我的爱情在故事里慢慢陈旧一千个伤心的理由一千个伤心的理由最后在别人的故事里我')
-  expect(text(176, 204)).toBe('')
+  expect(text(176, 204)).toBe(text(64, 92))
   expect(text(212, 240)).toBe(text(64, 92))
 })
 
 
-it('merges only 心、陈、遗 passing notes across every repeat and preserves all lyric onsets', () => {
+it('preserves passing-note cleanup and lyric onsets while lowering the coda tonic', () => {
   const before = parseM3NDocument(beforeCleanup), after = parseM3NDocument(source)
   const original = compileScorePerformance(before), actual = compileScorePerformance(after)
-  // Three written sites: 心 is played four times, 陈 three times (including the
-  // lyric-silent chorus visit), and this first-ending 遗 once.
+  // 心 is played four times, 陈 three times, and this first-ending 遗 once.
   const extendedEnds = new Map([
     [12.5, 13], [44.5, 45], [124.5, 125], [156.5, 157],
     [77.5, 78], [189.5, 190], [225.5, 226], [95, 96],
   ])
   const removedStarts = new Set([12.75, 44.75, 124.75, 156.75, 77.75, 189.75, 225.75, 95.75])
   const expected = original.notes.filter(note => !removedStarts.has(note.start))
-    .map(note => [note.start, extendedEnds.get(note.start) ?? note.end, note.pitch, note.channel])
+    .map(note => [note.start, extendedEnds.get(note.start) ?? note.end, note.start === 240 ? note.pitch - 12 : note.pitch, note.channel])
   expect(actual.notes.map(note => [note.start, note.end, note.pitch, note.channel])).toEqual(expected)
   expect(original.notes.length - actual.notes.length).toBe(8)
   expect(actual.beats).toBe(original.beats)
@@ -62,7 +62,10 @@ it('merges only 心、陈、遗 passing notes across every repeat and preserves 
   }
   const previousLyrics = lyrics(before)
   const expectedLyrics = [
-    ...previousLyrics.filter(([start]) => Number(start) < 212),
+    ...previousLyrics.filter(([start]) => Number(start) < 176),
+    ...previousLyrics.filter(([start]) => Number(start) >= 64 && Number(start) < 92)
+      .map(([start, text]) => [Number(start) + 112, text]),
+    ...previousLyrics.filter(([start]) => Number(start) >= 204 && Number(start) < 212),
     ...previousLyrics.filter(([start]) => Number(start) >= 64 && Number(start) < 92)
       .map(([start, text]) => [Number(start) + 148, text]),
     ...previousLyrics.filter(([start]) => Number(start) >= 240),

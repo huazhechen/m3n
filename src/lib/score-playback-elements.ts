@@ -17,7 +17,8 @@ export function queryPlaybackElements(paper: HTMLElement | null, xmlId: string, 
     })
     if (matching.some((element) => element.getAttribute('data-m3n-passes') !== null)) return matching
     const visibleRows = [...new Set(grouped
-      .filter((element) => (element.textContent ?? '').replaceAll('\u200B', '').trim() !== '')
+      .filter((element) => element.hasAttribute('data-m3n-rendition')
+        && (element.textContent ?? '').replaceAll('\u200B', '').trim() !== '')
       .map((element) => Number(element.getAttribute('data-m3n-rendition')))
       .filter(Number.isInteger))]
       .sort((left, right) => left - right)
