@@ -106,8 +106,14 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     formatter.joinVoices([voice])
     voices.push(voice)
     const groups = measure.meterUnit >= 8 && measure.meterCount % 3 === 0
-      ? [new Fraction(3, measure.meterUnit)] : measure.meterCount === 4 && measure.meterUnit === 4 ? [new Fraction(2, 4)] : [new Fraction(1, measure.meterUnit)]
+      ? [new Fraction(3, measure.meterUnit)] : [new Fraction(1, measure.meterUnit)]
     beams.push(...Beam.generateBeams(laneEntries.flatMap(e => e.notes), { groups }))
+    // Rest stems are placeholders, so a leading rest must not choose the
+    // tuplet's side. Use the pitched notes after beaming has set their stems.
+    for (const entry of laneEntries) {
+      const pitched = entry.notes.find(note => !note.isRest())
+      if (entry.tuplet && pitched) entry.tuplet.setTupletLocation(pitched.getStemDirection())
+    }
   }
   const start = Math.max(...staves.map(s => s.getNoteStartX()))
   staves.forEach(s => s.setNoteStartX(start))
