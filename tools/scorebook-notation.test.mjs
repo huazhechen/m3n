@@ -222,6 +222,21 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(annie.production.pageCount, annie.paged.pageCount)
     assert.equal(annie.production.rows, annie.paged.rows)
     assert.equal(annie.exported, annie.paged.pageCount)
+    const valsentino = await page.evaluate(async source => {
+      const api = window.scorebook
+      const production = await api.measure(source, 480)
+      const paged = await api.auditWidth(source, 480)
+      const continuous = await api.auditWidth(source, 480, false)
+      const exported = await api.a4Pages(source, 480)
+      return { production, paged, continuous, exported: exported.length }
+    }, readFileSync(join(root, 'src/scores/valsentino_01.m3n'), 'utf8'))
+    for (const layout of [valsentino.paged, valsentino.continuous]) {
+      assert.deepEqual(layout.outside, [], 'Valsentino at 480px must reserve the closing bar restored before a repeat opening')
+      assert.deepEqual(layout.overlaps, [])
+    }
+    assert.equal(valsentino.production.pageCount, valsentino.paged.pageCount)
+    assert.equal(valsentino.production.rows, valsentino.paged.rows)
+    assert.equal(valsentino.exported, valsentino.paged.pageCount)
     const symbolSource = '{title=Symbols}{key=Db}{4/4}{order=A,B}\n===A\nN: ||: '
       + ['ppp','pp','p','mp','mf','f','ff','fff','sfz'].map((dynamic,index) =>
         `{${dynamic}}${index === 0 ? '{segno}' : index === 1 ? '{coda}' : ''}1e${index === 0 ? '{fermata}{tr}{prall}{str}{tip}{hold}{breath}' : ''} (2e) [1d3e5ee:h]${index === 0 ? '{arp}{ac(2d3e)}' : ''} 4. ${index === 8 ? ':||' : '|'}`).join(' ')

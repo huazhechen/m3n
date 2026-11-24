@@ -17,7 +17,7 @@ import { nativeHeaderGeometry } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
-import { measureNativeHorizontal, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeMeasureBars, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
@@ -138,10 +138,17 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     // A wrapped instrumental passage restarts its parentheses at each row.
     // The whole-passage minimum chain omits those interior parentheses. Only
     // rebuild candidates close enough to capacity for that extra ink to matter.
-    const parentheses = group.map(measure => ({
-      left: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisLeft ?? 0))),
-      right: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisRight ?? 0))),
-    }))
+    // A bar merged into the next repeat opening also reappears at a row end;
+    // changed boundary bars require the actual row constraint chain.
+    const boundaries = group.map((measure, index) => {
+      const joined = nativeMeasureBars(group, index), isolated = nativeMeasureBars([measure], 0)
+      return {
+        changedOpening: joined.opening !== isolated.opening,
+        changedClosing: joined.closing !== isolated.closing,
+        left: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisLeft ?? 0))),
+        right: Math.max(0, ...measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.parenthesisRight ?? 0))),
+      }
+    })
     for (let index = group.length - 1; index >= 0; index--) {
       let minimum = 0, widestMinimum = 0
       const available = Math.max(1, width * ratio - leading([group[index]!]))
@@ -151,8 +158,8 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         widestMinimum = Math.max(widestMinimum, measure.minimum)
         const equal = options.equalMeasures
         let minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        const boundaryPadding = parentheses[index]!.left + parentheses[stop]!.right
-        if (boundaryPadding > 0 && minWidth + boundaryPadding > available)
+        const boundaryPadding = boundaries[index]!.left + boundaries[stop]!.right
+        if (boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing || boundaryPadding > 0 && minWidth + boundaryPadding > available)
           minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
         if (minWidth > available && count > 1) break
         candidates[index]!.push({ end: stop + 1, density: minWidth / available })

@@ -3,8 +3,8 @@ import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
 
-test('the shared online and offline search uses 540–720px in 20px steps', () => {
-  assert.deepEqual(widthCandidates, Array.from({ length: 10 }, (_, index) => 540 + index * 20))
+test('the shared online and offline search uses 480–720px in 20px steps', () => {
+  assert.deepEqual(widthCandidates, Array.from({ length: 13 }, (_, index) => 480 + index * 20))
 })
 test('prefer fewer A4 pages, then the shared quality score, excluding unsafe renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
@@ -22,17 +22,17 @@ const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', ca
   ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
 test('640px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
-  assert.equal(sharedPreferredWidth, 540)
+  assert.equal(sharedPreferredWidth, 480)
   const make = height => widthCandidates.map(width => candidate(width, height))
-  const entries = [entry('A', make(380)), entry('B', make(380))]
-  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 540, pageCount: 1 }])
+  const entries = [entry('A', make(320)), entry('B', make(320))]
+  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 480, pageCount: 1 }])
   entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
 })
 
 test('shared widths stop at 640px while solo selection can still choose 720px', () => {
   assert.equal(sharedWidthMaximum, 640)
-  assert.deepEqual(sharedWidthCandidates, [540, 560, 580, 600, 620, 640])
+  assert.deepEqual(sharedWidthCandidates, [480, 500, 520, 540, 560, 580, 600, 620, 640])
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
     { qualityScore: width === 720 ? 10 : width === 620 ? 2 : 1 }))))
   assert.equal(chooseBestWidth(entries[0].candidates).width, 720)
@@ -81,7 +81,7 @@ test('search measures exactly the formal candidates, including page-count transi
     return candidate(width, 100, width < 570 ? 2 : 1)
   })
   assert.deepEqual(measured, widthCandidates)
-  assert.equal(renderCache.uniqueWidths, 10)
+  assert.equal(renderCache.uniqueWidths, 13)
   assert.equal(chooseBestWidth(candidates).width, 580)
 })
 
@@ -90,7 +90,7 @@ test('scoring checks every formal width and chooses the best composite score', a
     { qualityScore: width === 600 ? 2 : .5 }))
   assert.deepEqual(result.candidates.map(item => item.width), widthCandidates)
   assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.equal(result.renderCache.uniqueWidths, 10)
+  assert.equal(result.renderCache.uniqueWidths, 13)
 })
 
 test('nonmonotone pagination is evaluated across the complete grid', async () => {
@@ -116,7 +116,7 @@ test('failed renders are recorded and excluded', async () => {
     return candidate(width, 100)
   })
   assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.equal(result.candidates.filter(c => c.error).length, 1)
+  assert.equal(result.candidates.filter(c => c.error).length, 4)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
@@ -193,6 +193,6 @@ test('common selection propagates cancellation and rejects every unsafe candidat
   await assert.rejects(selectBestWidth(async width => {
     widths.push(width); controller.abort(); return candidate(width, 100)
   }, { signal: controller.signal }), { name: 'AbortError' })
-  assert.deepEqual(widths, [540])
+  assert.deepEqual(widths, [480])
   await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /排版候选/)
 })

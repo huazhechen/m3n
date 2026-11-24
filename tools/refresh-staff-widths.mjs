@@ -60,7 +60,7 @@ async function refresh() {
         if (verification.pageCount === best.pageCount && !verification.outside.length && !verification.overlaps.length) break
         Object.assign(best, verification, { error: 'Full SVG verification failed at the candidate width' })
       }
-      assert(best, `${file}: no safe width in 540–720px`)
+      assert(best, `${file}: no safe width in 480–720px`)
       entries[index] = { file, sourceSha256: hash(source), width: best.width, pageCount: best.pageCount, candidates, renderCache, measurement, verification }
       saveReport()
       console.log(`${index + 1}/${inputs.length} ${file}: ${best.width}px, ${best.pageCount} pages`)

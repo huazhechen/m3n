@@ -1,7 +1,7 @@
 /** Width is the only engraving variable; all candidates use the web defaults. */
-export const widthMinimum = 540, widthMaximum = 720, widthStep = 20
+export const widthMinimum = 480, widthMaximum = 720, widthStep = 20
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = 'exhaustive-quality-540-720-step20-v7'
+export const widthSearchStrategy = 'exhaustive-quality-480-720-step20-v8'
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.qualityScore !== undefined) return candidate.qualityScore

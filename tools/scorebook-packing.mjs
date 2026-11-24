@@ -1,8 +1,8 @@
-import { chooseBestWidth, numberedLayoutScore, widthCandidates } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum } from './scorebook-width.mjs'
 
 // Keep at least 32 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = 32
-export const sharedPreferredWidth = 540
+export const sharedPreferredWidth = widthMinimum
 export const sharedWidthMaximum = 640
 export const sharedWidthCandidates = widthCandidates.filter(width => width <= sharedWidthMaximum)
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
