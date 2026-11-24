@@ -54,7 +54,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const attempt = (spacing: number): Layout => {
       signal?.throwIfAborted()
       const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
-      const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale)
+      const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale, measurements.preparation)
       for (const system of systems) {
         translate(system.node, gutter / STAFF_SCALE, 0)
         system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))

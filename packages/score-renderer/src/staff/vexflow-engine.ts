@@ -17,6 +17,39 @@ export function staffDuration(beats: number) {
   if (!value) throw new Error(`五线谱无法表示时值：${beats}`)
   return value
 }
+const articulations: Record<string, string> = { str: 'a>', tip: 'a.', brk: 'av', hold: 'a-', fermata: 'a@a', breath: 'a,' }
+function prepareStaffNote(item: StaffEvent, clef: string) {
+  const { dur, dots } = staffDuration(item.beats), rest = item.event.kind === 'rest'
+  const modifiers = item.event.postfixes.flatMap(value => articulations[value]
+    ? [{ kind: 'articulation', code: articulations[value]! }]
+    : value === 'tr' || value === 'prall' ? [{ kind: 'ornament', code: value === 'tr' ? 'tr' : 'mordent' }] : [])
+  return {
+    keys: rest ? [clef === 'bass' ? 'd/3' : 'b/4'] : item.pitches.map(p => p.key),
+    duration: `${dur}${rest ? 'r' : ''}`, dots, rest, modifiers,
+    arpeggio: item.event.postfixes.includes('arp'),
+    graces: (item.graces ?? []).map(grace => ({ ...grace, duration: String(grace.duration), keys: grace.pitches.map(p => [p.key]) })),
+  }
+}
+/** Immutable descriptors live only within one prepared measurement task. */
+export function createStaffVexPreparation() {
+  const notes = new WeakMap<StaffEvent, Map<string, ReturnType<typeof prepareStaffNote>>>()
+  const beamGroups = new Map<string, number[]>()
+  return {
+    note(item: StaffEvent, clef: string) {
+      let byClef = notes.get(item)
+      if (!byClef) { byClef = new Map(); notes.set(item, byClef) }
+      let saved = byClef.get(clef)
+      if (!saved) { saved = prepareStaffNote(item, clef); byClef.set(clef, saved) }
+      return saved
+    },
+    groups(meter: string) {
+      let saved = beamGroups.get(meter)
+      if (!saved) { saved = Beam.getDefaultBeamGroups(meter).map(group => group.value() * 4); beamGroups.set(meter, saved) }
+      return saved
+    },
+  }
+}
+export type StaffVexPreparation = ReturnType<typeof createStaffVexPreparation>
 // VexFlow 4's Stroke draws a legacy glyph absent from its Bravura-only
 // bundle. Keep its modifier measurement, but draw the directionless wave here.
 class StaffArpeggio extends Stroke {
@@ -37,7 +70,22 @@ class StaffArpeggio extends Stroke {
 export type VexEntry = { item: StaffEvent; notes: StaveNote[]; tuplet?: Tuplet }
 export type VexMeasure = ReturnType<typeof createVexMeasure>
 const barTypes: Record<string, number> = { single: 1, dbl: 2, end: 3, rptstart: 4, rptend: 5, rptboth: 6, invis: 7 }
-export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY = 140) {
+export type StaffMeasureMetrics = {
+  start: number; multiRestWidth: number; endInset: number
+  columns: ReadonlyArray<{ left: number; after: number }>
+}
+/** Preserve the original addition order, including the trailing column gap. */
+export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number): number {
+  let right = 0
+  for (const column of metrics.columns) {
+    const x = right + column.left
+    right = x + column.after + (spacing * 22 / STAFF_SCALE)
+  }
+  return Math.max(40, metrics.start + right + 8,
+    metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
+}
+export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY = 140,
+  preparation: StaffVexPreparation = createStaffVexPreparation()) {
   const staves = [new Stave(0, 0, 1000), ...(hasBass ? [new Stave(0, bassY, 1000)] : [])]
   for (const [lane, stave] of staves.entries()) {
     stave.setBegBarType(measure.source.left ? barTypes[measure.source.left] ?? 1 : 7)
@@ -72,25 +120,23 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
       }
     }
     const noteFor = (item: StaffEvent) => {
-      const { dur, dots } = staffDuration(item.beats)
-      const rest = item.event.kind === 'rest'
-      const note = new StaveNote({ keys: rest ? [lane ? 'd/3' : 'b/4'] : item.pitches.map(p => p.key), duration: `${dur}${rest ? 'r' : ''}`, dots, clef, auto_stem: true })
+      const descriptor = preparation.note(item, clef), { dots, rest } = descriptor
+      const note = new StaveNote({ keys: [...descriptor.keys], duration: descriptor.duration, dots, clef, auto_stem: true })
       for (let i = 0; i < dots; i++) Dot.buildAndAttach([note], { all: true })
-      const articulations: Record<string, string> = { str: 'a>', tip: 'a.', brk: 'av', hold: 'a-', fermata: 'a@a', breath: 'a,' }
-      for (const value of item.event.postfixes) {
-        if (articulations[value]) note.addModifier(new Articulation(articulations[value]).setPosition(Modifier.Position.ABOVE))
-        if (value === 'tr' || value === 'prall') note.addModifier(new Ornament(value === 'tr' ? 'tr' : 'mordent'))
+      for (const modifier of descriptor.modifiers) {
+        if (modifier.kind === 'articulation') note.addModifier(new Articulation(modifier.code).setPosition(Modifier.Position.ABOVE))
+        else note.addModifier(new Ornament(modifier.code))
       }
-      for (const grace of item.graces ?? []) {
-        const notes = grace.pitches.map(p => {
-          const note = new GraceNote({ keys: [p.key], duration: String(grace.duration), clef, slash: grace.slash })
+      for (const grace of descriptor.graces) {
+        const notes = grace.pitches.map((p, index) => {
+          const note = new GraceNote({ keys: [...grace.keys[index]!], duration: grace.duration, clef, slash: grace.slash })
           applyPitchAccidentals(note, [p])
           return note
         })
         if (notes.length) note.addModifier(new GraceNoteGroup(notes, true).beamNotes())
       }
       if (!rest) applyPitchAccidentals(note, item.pitches)
-      if (item.event.postfixes.includes('arp')) note.addModifier(new StaffArpeggio())
+      if (descriptor.arpeggio) note.addModifier(new StaffArpeggio())
       note.setStave(staves[lane]!)
       return note
     }
@@ -127,7 +173,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     voices.push(voice)
     // Group by performed meter positions, keeping each tuplet an independent
     // rhythm unit. Key changes break beams; fragments retain the original grid.
-    const groups = Beam.getDefaultBeamGroups(`${measure.meterCount}/${measure.meterUnit}`).map(group => group.value() * 4)
+    const groups = preparation.groups(`${measure.meterCount}/${measure.meterUnit}`)
     const period = groups.reduce((sum, beats) => sum + beats, 0)
     let pending: StaveNote[] = [], bucket = '', key = measure.key
     const flush = () => {
@@ -172,6 +218,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     textWidths.set(note, Math.max(0, ...widths))
   }
   let right = 0
+  const columnInk: Array<{ left: number; after: number }> = []
   const columns = contexts.map(context => {
     const tickables = context.getTickables()
     const metrics = tickables.map(t => t.getMetrics())
@@ -179,6 +226,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     const left = Math.max(lyricWidth / 2, ...metrics.map(m => m.modLeftPx + m.leftDisplacedHeadPx), 0)
     const after = Math.max(lyricWidth / 2, ...metrics.map(m => m.notePx + m.modRightPx + m.rightDisplacedHeadPx), 0)
     const x = right + left
+    columnInk.push({ left, after })
     right = x + after + (spacing * 22 / STAFF_SCALE)
     return { context, x, after, weight: Math.sqrt(Math.max(0.125, context.getMinTicks()?.value() ?? 4096) / 4096) }
   })
@@ -190,7 +238,8 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
   const endInset = Math.max(0, ...staves.flatMap(stave => stave.getModifiers(StaveModifierPosition.END)
     .map(modifier => -(modifier.getLayoutMetrics()?.xMin ?? 0))))
   const minimum = Math.max(40, start + right + 8, start + multiRestWidth + (multiRestWidth ? endInset : 0))
-  return { staves, entries, controls, voices, beams, tuplets, columns, minimum, start, endInset, measure, bassY }
+  const metrics: StaffMeasureMetrics = { start, multiRestWidth, endInset, columns: columnInk }
+  return { staves, entries, controls, voices, beams, tuplets, columns, minimum, metrics, start, endInset, measure, bassY }
 }
 
 /** VexFlow is confined to local music geometry; page policy stays in M3N. */

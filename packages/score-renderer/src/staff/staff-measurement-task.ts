@@ -3,6 +3,7 @@ import type { ScoreDocument } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
 import { textMeasurer } from './layout-svg.js'
+import { createStaffVexPreparation } from './vexflow-engine.js'
 
 type ProjectionSettings = { transpose?: number; includeBass?: boolean; tempoScale?: number }
 /** Created after font preparation for one immutable score and one selection task. */
@@ -13,8 +14,9 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const document = projectStaffDocument(score, settings.transpose, settings.includeBass)
   document.measures = document.measures.map(m => ({ ...m, tempo: m.tempo * tempoScale }))
   const measure = textMeasurer()
+  const preparation = createStaffVexPreparation()
   return {
-    document, measure, minimum: createStaffMeasureMinimum(document.hasBass, measure),
+    document, measure, preparation, minimum: createStaffMeasureMinimum(document.hasBass, measure, preparation),
     assertCompatible(candidate: ScoreDocument, next: ProjectionSettings) {
       if (candidate !== score || (next.transpose ?? 0) !== transpose || (next.includeBass ?? true) !== includeBass || (next.tempoScale ?? 1) !== tempoScale)
         throw new Error('五线谱测量任务不能跨乐谱或排版设置复用。')

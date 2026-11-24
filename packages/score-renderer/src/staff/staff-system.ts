@@ -1,14 +1,15 @@
 import { Glyph, StaveConnector, StaveTie, type StaveNote } from 'vexflow/bravura'
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
-import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure } from './vexflow-engine.js'
+import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure, type StaffVexPreparation } from './vexflow-engine.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { captureStaffDrawing } from './staff-svg-context.js'
 import { arrangeStaffSystem } from './system-layout.js'
 import { element, nodes, hasClass, SvgGeometry, type XmlNode, type MeasureText } from './layout-svg.js'
 
-export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1) {
+export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
+  preparation?: StaffVexPreparation) {
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
@@ -73,7 +74,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const total = line.target - inset
       let x = 0
       for (const [index, member] of line.measures.entries()) {
-        const model = createVexMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY)
+        const model = createVexMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
         const target = document.score.equalMeasures ? total / line.measures.length : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
         const measureNode = drawVexMeasure(model, target, x, context)
         models.push(model)

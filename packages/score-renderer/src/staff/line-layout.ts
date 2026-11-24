@@ -1,5 +1,5 @@
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
-import { createVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
+import { createVexMeasure, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffVexPreparation } from './vexflow-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 export { STAFF_SCALE }
@@ -7,15 +7,14 @@ export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: nu
 export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; target: number; weight: number }
 export type StaffMeasureMinimum = (measure: StaffMeasure, first: boolean, spacing: number) => number
 /** Only immutable minima are shared; VexFlow's mutable drawing objects are discarded. */
-export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText): StaffMeasureMinimum {
-  const minima = new WeakMap<StaffMeasure, Map<number, Array<number | undefined>>>()
+export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation?: StaffVexPreparation): StaffMeasureMinimum {
+  const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
   return (measure, first, spacing) => {
-    let bySpacing = minima.get(measure)
-    if (!bySpacing) { bySpacing = new Map(); minima.set(measure, bySpacing) }
-    let pair = bySpacing.get(spacing)
-    if (!pair) { pair = []; bySpacing.set(spacing, pair) }
+    let pair = metrics.get(measure)
+    if (!pair) { pair = []; metrics.set(measure, pair) }
     const index = first ? 1 : 0
-    return pair[index] ?? (pair[index] = createVexMeasure(measure, first, hasBass, measureText, spacing).minimum)
+    const fixed = pair[index] ?? (pair[index] = createVexMeasure(measure, first, hasBass, measureText, spacing, undefined, preparation).metrics)
+    return staffMinimumAtSpacing(fixed, spacing)
   }
 }
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,

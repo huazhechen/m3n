@@ -21,7 +21,8 @@ const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
 ]
-const isDecoration = (node: XmlNode) => decorations.some((c) => hasClass(node, c))
+const decorationClass = new RegExp(`(?:^|\\s)(?:${decorations.join('|')})(?:\\s|$)`)
+const isDecoration = (node: XmlNode) => Boolean(node.attributes.class && decorationClass.test(node.attributes.class))
 /** Keep ancestor transforms when measuring only selected attachments. */
 function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode {
   if (keep(node)) return node

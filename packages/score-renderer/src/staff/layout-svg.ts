@@ -3,17 +3,16 @@ import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
-export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string> }
+export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
 export type Ink = { left: number; right: number; top: number; bottom: number }
 export const nodes = (node: XmlNode) => node.children.filter((child): child is XmlNode => typeof child !== 'string')
 export function hasClass(node: XmlNode, name: string): boolean {
   const value = node.attributes.class ?? ''
   if (value === name) return true
-  if (!name) return value.split(/\s+/).includes(name)
-  for (let at = value.indexOf(name); at >= 0; at = value.indexOf(name, at + 1))
-    if ((at === 0 || /\s/.test(value[at - 1]!)) &&
-      (at + name.length === value.length || /\s/.test(value[at + name.length]!))) return true
-  return false
+  if (!value) return false
+  let saved = node.classTokens
+  if (!saved || saved.raw !== value) node.classTokens = saved = { raw: value, names: new Set(value.split(/\s+/)) }
+  return saved.names.has(name)
 }
 export function findAll(node: XmlNode, match: (node: XmlNode) => boolean): XmlNode[] {
   const result: XmlNode[] = []
@@ -105,7 +104,6 @@ export function textMeasurer(): MeasureText {
   }
 }
 type Matrix = [number, number, number, number, number, number]
-const pathBounds = new Map<string, Ink>()
 const identity: Matrix = [1, 0, 0, 1, 0, 0]
 const multiply = (a: Matrix, b: Matrix): Matrix => [
   a[0] * b[0] + a[2] * b[1],
@@ -149,14 +147,17 @@ function transform(b: Ink, m: Matrix): Ink {
     top: Math.min(y1, y2, y3, y4), bottom: Math.max(y1, y2, y3, y4) }
 }
 export class SvgGeometry {
-  readonly definitions: Map<string, XmlNode>
-  private readonly transforms = new Map<string, Matrix>()
-  constructor(
-    root: XmlNode,
-    readonly measure: MeasureText,
-  ) {
-    this.definitions = new Map(findAll(root, (n) => Boolean(n.attributes.id)).map((n) => [n.attributes.id!, n]))
+  private glyphDefinitions?: Map<string, XmlNode>
+  get definitions(): Map<string, XmlNode> {
+    return this.glyphDefinitions ??= new Map(findAll(this.root, n => Boolean(n.attributes.id)).map(n => [n.attributes.id!, n]))
   }
+  private readonly transforms = new Map<string, Matrix>()
+  private readonly pathBounds = new Map<string, Ink>()
+  private readonly paths = new WeakMap<XmlNode, { d: string; half: number; boxes: readonly Ink[] }>()
+  constructor(
+    private readonly root: XmlNode,
+    readonly measure: MeasureText,
+  ) {}
   /** Exclude matching child subtrees without cloning the mutable SVG tree. */
   without(node: XmlNode, omit: (node: XmlNode) => boolean): Ink[] {
     return this.pieces(node, identity, undefined, omit)
@@ -167,40 +168,55 @@ export class SvgGeometry {
     inherited: { size: number; bold: boolean; italic: boolean } = { size: 16 / 0.7, bold: false, italic: false },
     omit?: (node: XmlNode) => boolean,
   ): Ink[] {
+    const result: Ink[] = []
+    this.collect(node, parent, inherited, omit, result)
+    return result
+  }
+  private collect(node: XmlNode, parent: Matrix, inherited: { size: number; bold: boolean; italic: boolean },
+    omit: ((node: XmlNode) => boolean) | undefined, result: Ink[]): void {
     const a = node.attributes,
       num = (key: string, fallback = 0) => parseFloat(a[key] ?? String(fallback))
     const raw = a.transform ?? ''
     let local = this.transforms.get(raw)
     if (!local) { local = matrix(raw); this.transforms.set(raw, local) }
     const m = multiply(parent, local)
-    const style = {
+    if (['defs', 'style', 'desc'].includes(node.tagName)) return
+    // Paths dominate music drawing; they do not consume inherited font styles.
+    const shape = ['path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)
+    const style = shape ? inherited : {
       size: a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size,
-      bold:
-        a['font-weight'] === 'bold' ||
-        a['font-weight'] === '700' ||
-        inherited.bold ||
-        ['reh', 'tempo', 'ending'].some((c) => hasClass(node, c)),
+      bold: a['font-weight'] === 'bold' || a['font-weight'] === '700' || inherited.bold ||
+        hasClass(node, 'reh') || hasClass(node, 'tempo') || hasClass(node, 'ending'),
       italic: a['font-style'] === 'italic' || inherited.italic || hasClass(node, 'dynam'),
     }
-    let boxes: Ink[] = []
-    if (['defs', 'style', 'desc'].includes(node.tagName)) return []
     if (node.tagName === 'use') {
       const ref = this.definitions.get((a['xlink:href'] ?? a.href ?? '').replace(/^#/, ''))
       if (!ref) throw new Error('五线谱字形引用缺失。')
-      return this.pieces(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style)
+      this.collect(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style, undefined, result)
+      return
     }
+    const half = a.stroke === 'none' ? 0 : num('stroke-width') / 2
+    let boxes: readonly Ink[] = []
     if (node.tagName === 'path') {
-      // Separate strokes leave the empty interior of brackets and hairpins free.
-      for (const d of ((a.d ?? '').startsWith('M') ? (a.d ?? '').match(/M[^M]*/g) : [a.d ?? '']) ?? []) {
-        let bounds = pathBounds.get(d)
-        if (!bounds) {
-          const [left, top, right, bottom] = svgPathBbox(d)
-          bounds = { left, right, top, bottom }
-          if (pathBounds.size > 20000) pathBounds.clear()
-          pathBounds.set(d, bounds)
-        }
-        boxes.push(bounds)
+      const d = a.d ?? ''
+      let saved = this.paths.get(node)
+      if (!saved || saved.d !== d || saved.half !== half) {
+        let raw: readonly Ink[] | undefined = node.pathInk?.d === d ? node.pathInk.boxes : undefined
+        if (!raw) raw = ((d.startsWith('M') ? d.match(/M[^M]*/g) : [d]) ?? []).map(part => {
+          let bounds = this.pathBounds.get(part)
+          if (!bounds) {
+            const [left, top, right, bottom] = svgPathBbox(part)
+            bounds = { left, right, top, bottom }
+            this.pathBounds.set(part, bounds)
+          }
+          return bounds
+        })
+        const inflated = raw.map(b => ({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }))
+        saved = { d, half, boxes: inflated }
+        this.paths.set(node, saved)
       }
+      for (const box of saved.boxes) result.push(transform(box, m))
+      return
     } else if (node.tagName === 'text') {
       const size = Math.max(
         style.size,
@@ -209,7 +225,7 @@ export class SvgGeometry {
       const content = textContent(node)
         .replace(/[\t\r\n]/g, '')
         .trim()
-      if (!content.replace(/[\u200B\u2800]/g, '')) return []
+      if (!content.replace(/[\u200B\u2800]/g, '')) return
       const metrics = this.measure(content, size, style.bold, style.italic),
         anchor = a['text-anchor'] ?? 'start'
       const x = num('x') - (anchor === 'middle' ? metrics.width / 2 : anchor === 'end' ? metrics.width : 0),
@@ -245,16 +261,13 @@ export class SvgGeometry {
         ]
       }
     } else {
-      const result: Ink[] = []
       for (const child of node.children)
-        if (typeof child !== 'string' && !omit?.(child)) result.push(...this.pieces(child, m, style, omit))
-      return result
+        if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result)
+      return
     }
-    const half = a.stroke === 'none' ? 0 : num('stroke-width') / 2
-    return boxes.map((b) =>
-      transform({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }, m),
-    )
+    for (const b of boxes) result.push(transform({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }, m))
   }
+
   ink(node: XmlNode): Ink {
     return union(this.pieces(node))
   }
