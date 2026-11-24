@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { element, hasClass, SvgGeometry, textMeasurer, translate } from './layout-svg.js'
+import { element, hasClass, SvgGeometry, textMeasurer, translate, xml } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
   it('matches whole class tokens across SVG whitespace', () => {
@@ -47,4 +47,39 @@ describe('staff geometry traversal', () => {
     const previous = geometry.pieces(path); previous[0]!.left = -1000
     expect(geometry.ink(path).left).toBe(18)
   })
+  it('compiles stable music blocks while keeping filtered queries and moving attachments live', () => {
+    const music = element('g', {}, [element('rect', { class: 'staff-line', width: '10', height: '1' }), element('rect', { class: 'note', y: '3', width: '5', height: '5' })])
+    const verse = element('g', { class: 'verse' }, [element('rect', { width: '100', height: '10' })])
+    const root = element('g', {}, [music, verse]), geometry = new SvgGeometry(root, textMeasurer())
+    const expected = geometry.pieces(root)
+    geometry.compileStatic(root, node => hasClass(node, 'verse'))
+    expect(geometry.pieces(root)).toEqual(expected)
+    expect(geometry.without(root, node => hasClass(node, 'staff-line'))).toHaveLength(2)
+    translate(verse, 0, 20)
+    expect(geometry.ink(verse).bottom).toBe(30)
+    translate(music, 7, 0)
+    expect(geometry.ink(music).left).toBe(7)
+  })
+
+  it('partitions complete and spacing ink together without changing transparent music blocks', () => {
+    const verse = element('g', { class: 'verse', transform: 'translate(0 30)' }, [element('text', { x: '1', y: '2' }, ['歌词'])])
+    const ending = element('g', { class: 'ending', transform: 'translate(3 -20)' }, [element('rect', { width: '20', height: '1' })])
+    const staff = element('g', { class: 'staff', transform: 'translate(5 9)' }, [
+      element('path', { class: 'staff-line', d: 'M0 0L100 0' }),
+      ...[1, 2, 3].map(i => element('g', { class: 'note' }, [element('rect', { x: String(i * 10), width: '5', height: '8' })])),
+      verse, ending,
+    ])
+    const root = element('g', { transform: 'scale(0.7)' }, [staff]), geometry = new SvgGeometry(root, textMeasurer())
+    const expected = xml(root)
+    geometry.compileStatic(root, node => hasClass(node, 'verse') || hasClass(node, 'ending'))
+    expect(xml(root)).toBe(expected)
+    for (const classes of [['ending'], ['note'], ['verse', 'ending']]) {
+      const partition = geometry.partitionWithoutClasses(root, classes)
+      expect(partition.all).toEqual(geometry.pieces(root))
+      expect(partition.without).toEqual(geometry.without(root, node => classes.some(name => hasClass(node, name))))
+    }
+    translate(ending, 10, 10)
+    expect(geometry.partitionWithoutClasses(root, ['ending']).without).toEqual(geometry.withoutClasses(root, ['ending']))
+  })
+
 })

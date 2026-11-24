@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, sortedInkSeparation } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry,
@@ -24,9 +24,10 @@ const decorations = [
 const decorationClass = new RegExp(`(?:^|\\s)(?:${decorations.join('|')})(?:\\s|$)`)
 const isDecoration = (node: XmlNode) => Boolean(node.attributes.class && decorationClass.test(node.attributes.class))
 /** Keep ancestor transforms when measuring only selected attachments. */
-function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode {
+function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode | undefined {
   if (keep(node)) return node
-  return { ...node, tagName: 'g', children: nodes(node).map(child => selected(child, keep)) }
+  const children = nodes(node).flatMap(child => selected(child, keep) ?? [])
+  return children.length ? { ...node, numericInk: undefined, renderNodes: undefined, tagName: 'g', children } : undefined
 }
 /** Operate on independent attachments. Musical geometry is never stretched.
  * Empty verse containers remain available for interaction but reserve no ink. */
@@ -36,12 +37,27 @@ export function arrangeStaffSystem(
   width: number,
   sectionHeadings: Set<string>,
 ): StaffSystem {
+  const classes = new Map<string, XmlNode[]>()
+  const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending'])
+  const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending)(?:\s|$)/
+  const index = (child: XmlNode) => {
+    const raw = child.attributes.class
+    if (raw && interesting.test(raw)) for (const name of raw.split(/\s+/)) if (wanted.has(name)) {
+      let members = classes.get(name)
+      if (!members) { members = []; classes.set(name, members) }
+      members.push(child)
+    }
+    for (const member of child.children) if (typeof member !== 'string') index(member)
+  }
+  index(node)
+  const byClass = (name: string) => classes.get(name) ?? []
+  geometry.compileStatic(node, n => isDecoration(n) || hasClass(n, 'verse'), [...decorations, 'verse'])
   const scale = STAFF_SCALE,
     gap = 6 / scale
-  for (const label of findAll(node, (n) => hasClass(n, 'reh')))
+  for (const label of byClass('reh'))
     for (const text of findAll(label, (n) => n.tagName === 'text' || n.tagName === 'tspan'))
       text.attributes['font-size'] = String(16 / scale)
-  for (const attachment of findAll(node, (n) => ['reh', 'dir', 'harm'].some((c) => hasClass(n, c)))) {
+  for (const attachment of [...new Set(['reh', 'dir', 'harm'].flatMap(byClass))]) {
     const ink = geometry.ink(attachment)
     if (ink.right - ink.left <= (width - 12) / scale) continue
     const text = findAll(attachment, (n) => n.tagName === 'text')[0]
@@ -75,9 +91,9 @@ export function arrangeStaffSystem(
   }
   // Rhythm labels belong between music and lyrics. Position them before
   // packing verses, so a later collision pass cannot push a numeral below text.
-  const tuplets = new Set(findAll(node, n => hasClass(n, 'm3n-tuplet-label')))
+  const tuplets = new Set(byClass('m3n-tuplet-label'))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
-  const rhythmObstacles = geometry.without(node, n => isDecoration(n) || hasClass(n, 'verse'))
+  const rhythmObstacles = geometry.withoutClasses(node, [...decorations, 'verse'])
   for (const label of tuplets) {
     const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
     let dy = 0
@@ -90,7 +106,7 @@ export function arrangeStaffSystem(
     if (dy) translate(label, 0, dy)
     rhythmObstacles.push(...geometry.pieces(label))
   }
-  const verses = findAll(node, (n) => hasClass(n, 'verse'))
+  const verses = byClass('verse')
   for (const verse of verses) if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) verse.children = []
   // Pack actual lyric ink for each staff independently, with no phantom row
   // for trailing placeholders. The engine's music and bass staves stay intact.
@@ -124,7 +140,7 @@ export function arrangeStaffSystem(
         rows.set(row, [...(rows.get(row) ?? []), verse])
       }
     if (!rows.size) continue
-    const body = union(staffs.flatMap((staff) => geometry.without(staff, (n) => hasClass(n, 'verse'))))
+    const body = union(staffs.flatMap((staff) => geometry.withoutClasses(staff, ['verse'])))
     let bottom = body.bottom
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
@@ -181,7 +197,7 @@ export function arrangeStaffSystem(
     if (row) row.push(item)
     else endingRows.push([item])
   }
-  const endingObstacles = geometry.without(node, isMovableDecoration)
+  const endingObstacles = geometry.withoutClasses(node, decorations.filter(name => name !== 'm3n-tuplet-label'))
   for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
@@ -204,7 +220,7 @@ export function arrangeStaffSystem(
     }
   }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
-  const music = geometry.without(node, isMovableDecoration)
+  const music = endingObstacles
   const obstacles = [...music]
   const hairpinPieces = new Set<Ink>()
   // Keep brackets and curves inside expression
@@ -273,7 +289,7 @@ export function arrangeStaffSystem(
     obstacles.push(...placed)
     if (isHairpin(attachment)) placed.forEach((piece) => hairpinPieces.add(piece))
   }
-  const inline = findAll(node, (n) => hasClass(n, 'reh')).filter(
+  const inline = byClass('reh').filter(
     () => !sectionHeadings.has(measures[0]?.attributes.id ?? ''),
   )
   if (inline.length) {
@@ -296,21 +312,30 @@ export function arrangeStaffSystem(
     detach(node)
     node.children = [element('g', { transform: `translate(${inset} 0)` }, node.children), label]
   }
-  const pieces = geometry
-    .pieces(node)
-    .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
+  const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum'])
+  const pieces: Ink[] = [], spacingPieces: Ink[] = []
+  let spacingIndex = 0
+  for (const p of partition.all) {
+    const scaled = { left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }
+    pieces.push(scaled)
+    if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
+  }
   // The stave itself is the stable core. Notes, lyrics and controls only
   // enlarge a particular row gap when their actual ink requires clearance.
-  const core = union(findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
+  const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
-  const spacingPieces = geometry.without(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum'))
-    .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
-  const edgePieces = ['ending'].flatMap(kind =>
-    geometry.pieces(selected(node, child => hasClass(child, kind)))
+  const edgePieces = (byClass('ending').length ? ['ending'] : []).flatMap(kind =>
+    (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
       .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: 2 })))
-  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(findAll(node, (n) => hasClass(n, 'reh')).length), staffSpacing }
+  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(byClass('reh').length), staffSpacing }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
+const orderedInk = new WeakMap<StaffSystem, Ink[]>()
+function sortedSpacing(system: StaffSystem): Ink[] {
+  let sorted = orderedInk.get(system)
+  if (!sorted) { sorted = system.spacingPieces.slice().sort((a, b) => a.left - b.left); orderedInk.set(system, sorted) }
+  return sorted
+}
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
   let following = distances.get(previous)
   if (!following) {
@@ -319,9 +344,14 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   }
   let collision = following.get(next)
   if (collision === undefined) {
-    collision = -Infinity
-    for (const a of previous.spacingPieces)
-      for (const b of next.spacingPieces) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
+    const upper = sortedSpacing(previous), lower = sortedSpacing(next)
+    collision = sortedInkSeparation(upper, lower)
+    // The sweep skips degenerate intervals. Check only those remaining
+    // pairs with the staff solver's original strict point-overlap semantics.
+    for (const a of upper) if (a.right <= a.left)
+      for (const b of lower) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
+    for (const b of lower) if (b.right <= b.left)
+      for (const a of upper) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
     following.set(next, collision)
   }
   let edgeCollision = -Infinity

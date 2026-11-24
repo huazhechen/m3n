@@ -61,10 +61,11 @@ export function ScoreControls(props: ScoreControlsProps) {
     ? CIRCLE_OF_FIFTHS.find(([, minor]) => keyPitchClass(minor) === selectedKey)![1]
     : TRANSPOSE_KEYS[selectedKey]
   const playLabel = props.isPlaying ? '暂停' : '播放'
+  const playLoading = props.isLoading && !props.isPlaying
   const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : `audio-controls floating-controls${props.contained ? ' contained-controls' : ''}`} role="group" aria-label="乐谱控制">
     <div className="control-transport">
-        <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={props.isLoading ? '加载中' : playLabel} aria-busy={props.isLoading || undefined} aria-disabled={props.isLoading || undefined} onClick={() => { if (!props.isLoading) props.onTogglePlayback() }}>
-          <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{props.isLoading ? '加载中' : playLabel}</span>
+        <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={playLoading ? '加载中' : playLabel} aria-busy={playLoading || undefined} aria-disabled={playLoading || undefined} onClick={() => { if (!playLoading) props.onTogglePlayback() }}>
+          <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{playLoading ? '加载中' : playLabel}</span>
         </button>
         <PlaybackProgressControl progress={props.progress} isPlaying={props.isPlaying}
           onSeekStart={props.onSeekStart} onSeek={props.onSeek} onSeekCommit={props.onSeekCommit} />

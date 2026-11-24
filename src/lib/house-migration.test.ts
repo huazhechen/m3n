@@ -11,6 +11,8 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, reso
 // 爱如潮水 also includes the restored 3→2 endings in bars 21 and 30,
 // independently covered by love-like-tide-navigation.test.ts.
 // 枫 also shares the first three ending bars using the later visits' rhythm.
+// 白桦林 now uses the requested second-pass melody on both passes, without
+// houses; its updated performance is covered by coda-score-migration.test.ts.
 const cases = [
   {
     "file": "bei_jia_er_hu_pan_01.m3n",
@@ -18,13 +20,6 @@ const cases = [
     "lyrics": "f5fbdc915e40553a53dc35c82f10ac1af45e393f2f5b7373ff1d216ee0fb52c5",
     "events": 271,
     "syllables": 186
-  },
-  {
-    "file": "bai_hua_lin_01.m3n",
-    "music": "1d1c34b8e733816de2b3b2b2502d3ebce4b2665ac93ba5808a0a16b021333945",
-    "lyrics": "117edd1d6608e4b88365f3bc9c89c19529b6bbd32767687e8c0a19291f28c201",
-    "events": 314,
-    "syllables": 313
   },
   {
     "file": "feng_01.m3n",

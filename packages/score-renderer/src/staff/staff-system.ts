@@ -1,24 +1,18 @@
 import { Glyph, StaveConnector, StaveTie, type StaveNote } from 'vexflow/bravura'
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
-import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure, type StaffVexPreparation } from './vexflow-engine.js'
+import { createStaffContext, createStaffDrawingScope, createStaffDrawingMeasure as createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure, type StaffVexPreparation } from './vexflow-engine.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { captureStaffDrawing } from './staff-svg-context.js'
+import { staffLyricDrawing } from './staff-lyric-drawing.js'
 import { arrangeStaffSystem } from './system-layout.js'
-import { element, nodes, hasClass, SvgGeometry, type XmlNode, type MeasureText } from './layout-svg.js'
+import { element, nodes, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
-export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation?: StaffVexPreparation) {
-  const scale = STAFF_SCALE, rawWidth = width / scale
-  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
-  const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
-    const rows = numberedHeadingLines(value, rawWidth - 12 / scale, 16 / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? 700 : 400)
-    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * 20 / scale, 16, cls, bold ? { 'font-weight': 'bold' } : {}))[0]!))
-  }
+// Projection identity and this map both belong to one measurement task.
+const relationPlans = new WeakMap<StaffVexPreparation, WeakMap<StaffDocument, ReturnType<typeof prepareSystemRelations>>>()
+function prepareSystemRelations(document: StaffDocument) {
   const allEvents = document.measures.flatMap(m => [m.melody, m.bass].flat())
-  const lineOf = new Map<string, number>()
-  lines.forEach((line, i) => line.measures.forEach(m => [m.measure.melody, m.measure.bass].flat().forEach(e => { lineOf.set(e.id, i); e.children?.forEach(child => lineOf.set(child.id, i)) })))
   const intervals = document.score.intervals.flatMap(interval => {
     const start = allEvents.find(e => e.event.sourceStart === interval.start && document.measures.some(m => (interval.staff === 'bass' ? m.bass : m.melody).includes(e)))
     const end = allEvents.find(e => e.event.sourceStart === interval.endStart && document.measures.some(m => (interval.staff === 'bass' ? m.bass : m.melody).includes(e)))
@@ -41,17 +35,57 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       previous = e
     }
   }
+  const endpoints = new Set<string>()
+  const intervalEndpoints = new Set<string>()
+  for (const { start, end } of [...intervals, ...ties]) { endpoints.add(start.id); endpoints.add(end.id) }
+  for (const { start, end } of intervals) { intervalEndpoints.add(start.id); intervalEndpoints.add(end.id) }
+  return { intervals, ties, endpoints, intervalEndpoints }
+}
+
+function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number], slot?: number): Record<string, string> {
+  const attrs: Record<string, string> = { id: `${child.id}-v${lyric.verseIndex}`, class: `verse${lyric.passes && lyric.passes.size > 1 ? ` m3n-passes-${[...lyric.passes].join('-')}` : ''}` }
+  attrs['data-m3n-id'] = child.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
+  if (slot !== undefined) attrs['data-m3n-tuplet-slot'] = String(slot)
+  attrs['data-m3n-rendition'] = String(lyric.verseIndex)
+  const performedPass = /-rend(\d+)/.exec(child.id)?.[1]
+  if (performedPass) attrs['data-m3n-passes'] = performedPass
+  else if (lyric.passes) attrs['data-m3n-passes'] = [...lyric.passes].join('-')
+  return attrs
+}
+
+export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
+  preparation?: StaffVexPreparation) {
+  const scale = STAFF_SCALE, rawWidth = width / scale
+  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
+  const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
+    const rows = numberedHeadingLines(value, rawWidth - 12 / scale, 16 / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? 700 : 400)
+    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * 20 / scale, 16, cls, bold ? { 'font-weight': 'bold' } : {}))[0]!))
+  }
+  let plans = preparation && relationPlans.get(preparation)
+  if (preparation && !plans) { plans = new WeakMap(); relationPlans.set(preparation, plans) }
+  let relations = plans?.get(document)
+  if (!relations) { relations = prepareSystemRelations(document); plans?.set(document, relations) }
+  const { intervals, ties, endpoints, intervalEndpoints } = relations
+  const lineOf = new Map<string, number>()
+  lines.forEach((line, i) => line.measures.forEach(m => {
+    for (const lane of [m.measure.melody, m.measure.bass]) for (const e of lane) {
+      if (intervalEndpoints.has(e.id)) lineOf.set(e.id, i)
+      for (const child of e.children ?? []) if (intervalEndpoints.has(child.id)) lineOf.set(child.id, i)
+    }
+  }))
   return lines.map((line, lineIndex) => {
     let bassY = 130
     for (let pass = 0; pass < 8; pass++) {
-      const context = createStaffContext()
+      const scope = createStaffDrawingScope()
+      try {
+      const context = createStaffContext(preparation)
       const capture = (draw: () => void) => {
         const output = captureStaffDrawing(context, draw)
         const normalize = (n: XmlNode) => {
           if (n.attributes.id?.startsWith('vf-')) delete n.attributes.id
           if (n.attributes.class) n.attributes.class = n.attributes.class.replace(/vf-/g, '')
           if (n.tagName === 'path' && n.attributes.fill === 'none' && !n.attributes.stroke) { n.attributes.stroke = '#000'; n.attributes['stroke-width'] ??= '1' }
-          n.children.filter((c): c is XmlNode => typeof c !== 'string').forEach(normalize)
+          for (const child of n.children) if (typeof child !== 'string') normalize(child)
         }
         output.forEach(normalize)
         return output
@@ -78,41 +112,40 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const total = line.target - inset
       let x = 0
       for (const [index, member] of line.measures.entries()) {
-        const model = createVexMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
+        const model = createVexMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation, scope)
         const target = document.score.equalMeasures ? total / line.measures.length : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
-        const measureNode = drawVexMeasure(model, target, x, context)
+        const measureNode = drawVexMeasure(model, target, x, context, preparation)
         models.push(model)
         node.children.push(measureNode)
         for (const [lane, entries] of model.entries.entries()) {
           const staff = nodes(measureNode).filter(n => hasClass(n, 'staff'))[lane]!
           for (const entry of entries) {
             const item = entry.item
-            anchors.set(item.id, { first: entry.notes[0]!, last: entry.notes.at(-1)!, item, measure: measureNode, staff })
+            if (endpoints.has(item.id)) anchors.set(item.id, { first: entry.notes[0]!, last: entry.notes.at(-1)!, item, measure: measureNode, staff })
             entry.notes.forEach((note, i) => {
               const child = item.children?.[i] ?? item
-              const cx = (note.getNoteHeadBeginX() + note.getNoteHeadEndX()) / 2
-              if (item.children) anchors.set(child.id, { first: note, last: note, item: child, measure: measureNode, staff })
-              for (const lyric of child.lyrics) {
-                const attrs: Record<string, string> = { id: `${child.id}-v${lyric.verseIndex}`, class: `verse${lyric.passes && lyric.passes.size > 1 ? ` m3n-passes-${[...lyric.passes].join('-')}` : ''}` }
-                attrs['data-m3n-id'] = child.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
-                if (item.children) attrs['data-m3n-tuplet-slot'] = String(i)
-                attrs['data-m3n-rendition'] = String(lyric.verseIndex)
-                const performedPass = /-rend(\d+)/.exec(child.id)?.[1]
-                if (performedPass) attrs['data-m3n-passes'] = performedPass
-                else if (lyric.passes) attrs['data-m3n-passes'] = [...lyric.passes].join('-')
+              if (item.children && endpoints.has(child.id)) anchors.set(child.id, { first: note, last: note, item: child, measure: measureNode, staff })
+              if (!child.lyrics.length) return
+              let lyricAttributes = preparation?.lyricAttributes.get(child)
+              if (preparation && !lyricAttributes) {
+                lyricAttributes = child.lyrics.map(lyric => verseAttributes(child, lyric, item.children ? i : undefined))
+                preparation.lyricAttributes.set(child, lyricAttributes)
+              }
+              let cx: number | undefined
+              for (const [lyricIndex, lyric] of child.lyrics.entries()) {
+                const attrs = lyricAttributes ? { ...lyricAttributes[lyricIndex]! } : verseAttributes(child, lyric, item.children ? i : undefined)
                 if (lyric.kind === 'placeholder') { staff.children.push(element('g', attrs)); continue }
+                cx ??= (note.getNoteHeadBeginX() + note.getNoteHeadEndX()) / 2
                 const value = lyric.kind === 'extender' ? '_' : lyric.text.replaceAll('~', ' ')
-                const syl = text(value, cx, model.staves[lane]!.getBottomLineY() + 30, 16, 'syl', { 'text-anchor': 'middle' })
-                if (lyric.underlined && lyric.kind === 'text') {
-                  const w = measureText(value, 16 / scale).width
-                  syl.children.push(element('path', { d: `M${cx - w / 2} ${model.staves[lane]!.getBottomLineY() + 34} h${w}`, stroke: '#000', 'stroke-width': String(1 / scale), fill: 'none' }))
-                }
+                const syl = staffLyricDrawing(value, cx, model.staves[lane]!.getBottomLineY() + 30, Boolean(lyric.underlined && lyric.kind === 'text'), measureText, preparation?.lyricTexts)
                 staff.children.push(element('g', attrs, [syl]))
               }
             })
+            const event = item.event
+            if (!(item.chord || event.text || event.sectionLabel || event.dynamic || event.prefix || event.navigation.length ||
+              event.postfixes.some(value => /^f[1-5]$/.test(value)))) continue
             const cx = entry.notes[0]!.getNoteHeadBeginX()
             const top = Math.min(...entry.notes.flatMap(n => n.getYs())) - 40
-            const event = item.event
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, 14, 'harm'))
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, 6 / scale, top, 'reh', true))
@@ -177,6 +210,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const indices = Array.from({ length: Number.isFinite(count) ? count : 1 }, (_, i) => i)
         ;(first?.staff ?? last!.staff).children.push(element('g', { class: 'tie' }, capture(() => new StaveTie({ first_note: a, last_note: b, first_indices: indices, last_indices: indices }).setContext(context).draw())))
       }
+      const slurMusic: Array<Ink[] | undefined> = []
       for (const { interval, start, end } of intervals) {
         const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
         if (lineIndex < from || lineIndex > to) continue
@@ -187,7 +221,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const yTop = models[0]!.staves[lane]?.getYForLine(0) ?? 40
         const low = models[0]!.staves[lane]?.getYForLine(4) ?? 80
         if (interval.kind === 'lg') {
-          const music = new SvgGeometry(node, measureText).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
+          const music = slurMusic[lane] ??= new SvgGeometry(node, measureText).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
@@ -217,6 +251,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const system = arrangeStaffSystem(node, geometry, width, headings)
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + 5; continue }
       return system
+      } finally { scope.close() }
     }
     throw new Error('五线谱歌词与低音谱表的净空无法稳定。')
   })

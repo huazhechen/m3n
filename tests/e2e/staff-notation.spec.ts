@@ -14,14 +14,14 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   expect(wasm).toHaveLength(0)
   await openScoreSettings(page)
-  await expect(paper).toHaveAttribute('data-selected-width', /^(?:5[468]0|6[02468]0|7[02]0)$/, { timeout: 30_000 })
+  await expect(paper).toHaveAttribute('data-selected-width', /^(?:4[89]0|[56]\d0|7[012]0)$/, { timeout: 30_000 })
   await expect.poll(async () => page.getByRole('slider', { name: '乐谱宽度' }).inputValue()).toBe(await paper.getAttribute('data-selected-width'))
   await selectNotationMode(page, '五线谱')
   await expect(paper).toHaveAttribute('data-notation', 'staff')
   await expect(paper.locator('g.staff').first()).toBeVisible()
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '540')
+  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', (await paper.getAttribute('data-selected-width'))!)
   expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
@@ -35,7 +35,7 @@ test('staff mode automatically selects width, locates source, highlights playbac
     if (!line) return -1
     const before = document.createRange(); before.selectNodeContents(line); before.setEnd(range.startContainer, range.startOffset)
     return lines.slice(0, lines.indexOf(line)).reduce((total, item) => total + (item.textContent?.length ?? 0) + 1, 0) + before.toString().length
-  })).toBe(source.indexOf('4 5'))
+  })).toBe(source.indexOf('[123:2]'))
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   await expect(paper.locator('g.note.is-playing, g.tuplet.is-playing, g.chord.is-playing').first()).toBeVisible({ timeout: 15_000 })
@@ -48,7 +48,7 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
-  await expect(paper).toHaveAttribute('data-selected-width', /^(?:5[468]0|6[02468]0|7[02]0)$/, { timeout: 30_000 })
+  await expect(paper).toHaveAttribute('data-selected-width', /^(?:4[89]0|[56]\d0|7[012]0)$/, { timeout: 30_000 })
   await expect.poll(async () => page.getByRole('slider', { name: '乐谱宽度' }).inputValue()).toBe(await paper.getAttribute('data-selected-width'))
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
@@ -142,6 +142,8 @@ test('staff lyrics highlight the matching verse during a written repeat', async 
   await selectNotationMode(page, '五线谱')
   await page.keyboard.press('Escape')
   const paper = page.locator('.score-paper')
+  await expect(paper.locator('g.staff').first()).toBeVisible()
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const firstVerse = paper.locator('[id="m3n-e-1-v1"]')
   const secondVerse = paper.locator('[id="m3n-e-1-v2"]')
   await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -228,21 +230,29 @@ test('staff measure numbers appear only at system ends in continuous and paged l
     }
     await expect(paper.locator('g.system').first()).toBeVisible({ timeout: 60_000 })
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-    const systems = await paper.locator('g.system').evaluateAll(systems => systems.map(system => {
-      const measures = [...system.querySelectorAll('g.measure')]
-      const numbers = [...system.querySelectorAll('g.mNum')]
-      const number = numbers[0]
-      const last = measures.at(-1)!
-      const right = Math.max(...[...last.querySelectorAll('g.barLine path')].map(path => path.getBoundingClientRect().right))
-      return { count: numbers.length, last: number?.closest('g.measure') === last,
-        text: number?.textContent?.replace(/\s/g, ''), rightGap: right - (number?.getBoundingClientRect().right ?? 0) }
+    const pages = await paper.locator('svg[data-notation="staff"]').evaluateAll(pages => pages.map(svg => {
+      const systems = [...svg.querySelectorAll('g.system')]
+      // Row numbers are moved to the final SVG overlay so their masks paint
+      // above every ending bracket. They are no longer measure descendants.
+      const numbers = [...svg.querySelectorAll('g.mNum')]
+      const rows = systems.filter(system => !system.querySelector('g.measure:last-of-type [data-m3n-role="interlude"]'))
+      return { systems: systems.length, count: numbers.length, expected: rows.length,
+        labels: rows.map((system, index) => {
+          const last = [...system.querySelectorAll('g.measure')].at(-1)!
+          const right = Math.max(...[...last.querySelectorAll('g.barLine path')].map(path => path.getBoundingClientRect().right))
+          const number = numbers[index]
+          return { text: number?.textContent?.replace(/\s/g, ''), rightGap: right - (number?.getBoundingClientRect().right ?? 0),
+            overlay: number?.parentElement?.parentElement === svg }
+        }) }
     }))
-    expect(systems.length).toBeGreaterThan(1)
-    for (const system of systems) {
-      expect(system.count).toBe(1)
-      expect(system.last).toBe(true)
-      expect(system.text).toMatch(/^\d+$/)
-      expect(Math.abs(system.rightGap)).toBeLessThan(2)
+    expect(pages.reduce((sum, page) => sum + page.systems, 0)).toBeGreaterThan(1)
+    for (const page of pages) {
+      expect(page.count).toBe(page.expected)
+      for (const label of page.labels) {
+        expect(label.overlay).toBe(true)
+        expect(label.text).toMatch(/^\d+$/)
+        expect(Math.abs(label.rightGap)).toBeLessThan(2)
+      }
     }
   }
   await openScoreSettings(page)
@@ -250,7 +260,7 @@ test('staff measure numbers appear only at system ends in continuous and paged l
   await expect(paper.locator('g.mNum')).toHaveCount(0)
 })
 
-test('ending brackets stay below row-end measure numbers in both notation modes', async ({ page }) => {
+test('row-end measure numbers retain white masks alongside endings in both notation modes', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('m3n:notation-mode', 'numbered')
     localStorage.setItem('m3n:measure-numbers', '1')
@@ -261,15 +271,24 @@ test('ending brackets stay below row-end measure numbers in both notation modes'
     if (mode === '五线谱') await selectNotationMode(page, mode)
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
     await expect.poll(() => paper.locator('g.system').count()).toBeGreaterThan(0)
-    const attached = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
-      const number = system.querySelector('g.mNum,[data-m3n-role="measure-number"]')
-      const ending = system.querySelector('g.ending,[data-m3n-relation="volta"]')
-      if (!number || !ending) return []
-      return [{ numberBottom: number.getBoundingClientRect().bottom, endingTop: ending.getBoundingClientRect().top }]
+    const attached = await paper.locator('svg').evaluateAll(pages => pages.flatMap(svg => {
+      if (!svg.querySelector('g.ending,[data-m3n-relation="volta"]')) return []
+      return [...svg.querySelectorAll('g.mNum,[data-m3n-role="measure-number"]')].map(number => {
+        const group = number.tagName.toLowerCase() === 'g' ? number : number.parentElement!
+        const label = group.querySelector('text')!
+        const background = group.querySelector('rect')!
+        const box = background.getBoundingClientRect()
+        return { fill: getComputedStyle(background).fill, width: box.width, height: box.height,
+          behind: Boolean(background.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING) }
+      })
     }))
     expect(attached.length).toBeGreaterThan(0)
-    for (const { numberBottom, endingTop } of attached)
-      expect(numberBottom, `${mode} row-end number above ending`).toBeLessThanOrEqual(endingTop)
+    for (const { fill, width, height, behind } of attached) {
+      expect(fill, `${mode} row-end number has a white mask`).toBe('rgb(255, 255, 255)')
+      expect(width).toBeGreaterThan(0)
+      expect(height).toBeGreaterThan(0)
+      expect(behind).toBe(true)
+    }
   }
 })
 

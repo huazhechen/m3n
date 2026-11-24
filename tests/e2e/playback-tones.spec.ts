@@ -245,8 +245,6 @@ for (const label of ['合成', '钢琴', '吉他', '口琴', '小提琴', '长�
     console.log(`${label} output`, JSON.stringify(audit))
     expect(audit.limiters).toBe(1)
     expect(audit.peak).toBeLessThanOrEqual(0.941)
-    const pause = page.getByRole('button', { name: '暂停', exact: true })
-    if (await pause.isVisible()) await pause.click()
   })
 }
 

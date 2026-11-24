@@ -25,8 +25,8 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
   await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: 0 1 2 3 |||')
   await selectNotationMode(page, mode)
   await page.keyboard.press('Escape')
-  await expect(page.locator('.score-paper g.note')).toHaveCount(4)
-  const first = page.locator('.score-paper g.note').first()
+  await expect(page.locator('.score-paper g.note, .score-paper g.rest')).toHaveCount(4)
+  const first = page.locator('.score-paper g.note, .score-paper g.rest').first()
   const measure = page.locator('.score-paper g.measure').filter({ has: page.locator('g.note') }).first()
   const metro = page.getByRole('switch', { name: '节拍器', exact: true })
   if (await metro.isChecked()) await metro.click()
@@ -42,11 +42,12 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
   await page.getByRole('button', { name: '播放', exact: true }).click()
   for (const [beat, color] of [[1, 'rgb(239, 83, 80)'], [2, 'rgb(253, 216, 53)'], [3, 'rgb(102, 187, 106)']] as const) {
     await expect(measure.locator(':scope > rect.startup-beat-highlight')).toHaveAttribute('data-beat', String(beat))
+    await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 300 })
     await expect(measure.locator(':scope > rect.startup-beat-highlight')).toHaveCSS('fill', color)
     const geometry = await measure.evaluate(measure => {
       const background = measure.querySelector<SVGRectElement>(':scope > rect.startup-beat-highlight')!
       const rect = background.getBoundingClientRect()
-      const notes = [...measure.querySelectorAll<SVGGElement>('g.note')].map(note => note.getBoundingClientRect())
+      const notes = [...measure.querySelectorAll<SVGGElement>('g.note, g.rest')].map(note => note.getBoundingClientRect())
       return { width: rect.width, height: rect.height,
         containsNotes: notes.every(note => rect.left <= note.left + 1 && rect.right >= note.right - 1
           && rect.top <= note.top + 1 && rect.bottom >= note.bottom - 1),
@@ -73,8 +74,8 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
   await page.getByRole('button', { name: '暂停', exact: true }).click()
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.locator('.startup-beat-highlight')).toHaveCount(1)
-  await page.getByRole('button', { name: '暂停', exact: true }).click()
-  await expect(page.locator('.startup-beat-highlight')).toHaveCount(0)
+  await page.getByRole('button', { name: '暂停', exact: true }).click({ timeout: 300 })
+  await expect(page.locator('.startup-beat-highlight')).toHaveCount(0, { timeout: 300 })
   await page.waitForTimeout(1700)
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
   await expect(page.locator('.score-paper .is-playing')).toHaveCount(0)
@@ -82,8 +83,8 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.locator('.startup-beat-highlight')).toHaveCount(1)
-  await page.getByRole('button', { name: '暂停', exact: true }).click()
-  await expect(page.locator('.startup-beat-highlight')).toHaveCount(0)
+  await page.getByRole('button', { name: '暂停', exact: true }).click({ timeout: 300 })
+  await expect(page.locator('.startup-beat-highlight')).toHaveCount(0, { timeout: 300 })
   await page.waitForTimeout(3200)
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
   await expect(page.locator('.score-paper .is-playing')).toHaveCount(0)

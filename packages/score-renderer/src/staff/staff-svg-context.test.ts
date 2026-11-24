@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SVGContext } from 'vexflow/bravura'
 import { analyzeM3N } from '@m3n/notation'
-import { createStaffContext, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
+import { createStaffContext, createStaffVexPreparation, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
 import { projectStaffDocument } from './staff-document.js'
 import { element, readXml, SvgGeometry, xml, type XmlNode } from './layout-svg.js'
 import { captureStaffDrawing, StaffSvgContext } from './staff-svg-context.js'
@@ -23,6 +23,7 @@ describe('direct VexFlow SVG collection', () => {
   ])('matches native SVGContext output: %s', source => {
     const native = draw(source, new SVGContext(document.createElement('div')))
     expect(draw(source, createStaffContext())).toBe(native)
+    expect(draw(source, createStaffContext(createStaffVexPreparation()))).toBe(native)
   })
   it('collects ordinary music without allocating SVG DOM elements', () => {
     const create = vi.spyOn(document, 'createElementNS')

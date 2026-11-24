@@ -49,6 +49,9 @@ export async function probeWidthCandidates(measure, { verify, signal } = {}) {
 export async function selectBestWidth(measure, options) {
   const result = await probeWidthCandidates(measure, options)
   const best = chooseBestWidth(result.candidates)
-  if (!best) throw new Error('没有可用的排版候选。')
+  if (!best) {
+    const errors = [...new Set(result.candidates.map(candidate => candidate.error).filter(Boolean))]
+    throw new Error(`没有可用的排版候选。${errors.length ? ` ${errors.join('；')}` : ''}`)
+  }
   return { ...result, best }
 }

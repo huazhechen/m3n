@@ -56,7 +56,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         const { candidates } = await api.probeWidthCandidates(width => api.measure(source, width))
         entries.push({ ...plan.entries[index], candidates })
         const audited = await api.probeWidthCandidates(width => api.auditWidth(source, width))
-        auditedEntries.push(audited.candidates.map(({ timings, ...candidate }) => candidate))
+        auditedEntries.push(audited.candidates.map(({ timings: _timings, ...candidate }) => candidate))
       }
       const sharedLocal = (await api.optimizeScorebookWithRefinement(entries, new Set(), (entry, width) => api.measure(sources[Number(entry.id)], width))).groups
       const online = await api.buildOnlineScorebook(new AbortController().signal, () => {})
@@ -76,7 +76,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
           candidates: local.candidates.map(candidate => candidate.width) })
       }
-      return { cacheLifecycle, productionCandidates: entries.map(entry => entry.candidates.map(({ timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
+      return { cacheLifecycle, productionCandidates: entries.map(entry => entry.candidates.map(({ timings: _timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
     assert.deepEqual(comparison.productionCandidates, comparison.auditedEntries)
     assert(comparison.cacheLifecycle.first > 0)

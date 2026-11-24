@@ -86,6 +86,15 @@ test('touch pinch scales only the score and leaves single-finger scrolling avail
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(scrollBefore)
   const reset = page.getByRole('button', { name: '恢复原始大小' })
   await expect(reset).toBeInViewport()
+  // A tap during mobile momentum scrolling stops the scroll and is consumed
+  // by the browser. Wait for the gesture to finish before testing the button.
+  let lastScroll = -1, stablePolls = 0
+  await expect.poll(async () => {
+    const current = await page.evaluate(() => scrollY)
+    stablePolls = current === lastScroll ? stablePolls + 1 : 0
+    lastScroll = current
+    return stablePolls
+  }, { intervals: [100] }).toBeGreaterThanOrEqual(3)
   await reset.tap()
   await expect(reset).toHaveCount(0)
   await expect.poll(async () => Math.abs((await svg.boundingBox())!.width - before!.width)).toBeLessThan(1)

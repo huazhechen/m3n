@@ -9,8 +9,13 @@ it.each(['ai_ru_chao_shui', 'bai_hua_lin', 'bei_jia_er_hu_pan', 'qian_si_xi', 't
     expect(source).not.toMatch(/\{order=|^===|^Ns\[/m)
     expect(source).toMatch(/\|\|:/)
     expect(source).toMatch(/:\|\|/)
-    expect(source).toMatch(/^---V1$/m)
-    expect(source).toMatch(/^---V2$/m)
+    if (name === 'bai_hua_lin') {
+      // Both passes now use the second ending melody and ordinary repeats.
+      expect(source).not.toMatch(/^---V/m)
+    } else {
+      expect(source).toMatch(/^---V1$/m)
+      expect(source).toMatch(/^---V2$/m)
+    }
     if (name === 'qian_si_xi') {
       expect(source).toContain('{segno}')
       expect(source).toContain('{ds}')

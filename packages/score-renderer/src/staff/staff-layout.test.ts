@@ -6,7 +6,7 @@ import { analyzeM3N, scoreEventIds } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { readXml, findAll, nodes, hasClass, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
-import { arrangeStaffSystem, systemDistance } from './system-layout.js'
+import { arrangeStaffSystem, systemDistance, type StaffSystem } from './system-layout.js'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
@@ -66,6 +66,26 @@ describe('staff layout contract', () => {
     const base = systemDistance(plain, plain, 26.4)
     expect(systemDistance(lyrics, plain, 26.4)).toBeGreaterThan(base)
     expect(systemDistance(outside, plain, 26.4)).toBeCloseTo(base)
+  })
+  it('preserves strict point and touching-edge overlap in the row sweep', () => {
+    const system = (spacingPieces: StaffSystem['pieces']): StaffSystem => ({
+      node: element('g'), pieces: spacingPieces, spacingPieces, edgePieces: [],
+      ink: { left: 0, right: 100, top: 0, bottom: 100 },
+      core: { left: 0, right: 100, top: 100, bottom: -100 }, section: false, staffSpacing: 0,
+    })
+    let seed = 17
+    const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+    for (let trial = 0; trial < 100; trial++) {
+      const pieces = () => Array.from({ length: 12 }, (_, i) => {
+        const left = Math.floor(random() * 10), width = i % 3 ? Math.floor(random() * 7) : 0
+        return { left, right: left + width, top: Math.floor(random() * 20), bottom: Math.floor(random() * 20) + 30 }
+      })
+      const upper = system(pieces()), lower = system(pieces())
+      let collision = -Infinity
+      for (const a of upper.spacingPieces) for (const b of lower.spacingPieces)
+        if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
+      expect(systemDistance(upper, lower, 12)).toBe(Math.max(-188, collision + 6))
+    }
   })
   it('leaves a short final named section open instead of stretching it across the page', async () => {
     const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e | 1 2 3 4 | 5 6 7 1e ||\n===Coda\nN: 1^^ |||', 600)

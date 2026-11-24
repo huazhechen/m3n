@@ -18,7 +18,7 @@ test('plain text measures support native folding without exposing the score grap
   await expect(overview.locator('section').first().locator('p')).toHaveCount(1)
   await expect(overview).not.toContainText('歌词“难”')
   await overview.locator('summary').click()
-  await expect(measures.first().locator('summary')).toHaveText('第1小节，反复开始')
+  await expect(measures.first().locator('summary')).toHaveText('第1小节')
   await expect(measures.nth(15).locator('summary')).toHaveText('第16小节，转调至降D大调')
   const twentieth=measures.nth(19)
   await twentieth.locator('summary').click()

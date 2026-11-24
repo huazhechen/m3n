@@ -37,7 +37,7 @@ try {
     toolHash: createHash('sha256').update(readFileSync(import.meta.filename)).digest('hex') }, null, 2))
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, `export {auditNativeInkCollisions} from ${JSON.stringify(collisionModule)};\nexport {parseM3NDocument} from ${JSON.stringify(join(snapshotRoot, 'packages/notation/src/index.ts'))};\nexport {prepareNumberedNotationFonts} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/index.ts'))};\nexport {NativeNumberedNotationScore} from ${JSON.stringify(join(snapshotRoot, 'packages/numbered-notation/src/native-score.ts'))};`)
-  await build({ configFile: false, logLevel: 'error', resolve: { alias: [
+  await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://native-ink.local/bundle.js') }, resolve: { alias: [
     { find: '@m3n/notation', replacement: join(snapshotRoot, 'packages/notation/src/index.ts') },
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
@@ -45,14 +45,20 @@ try {
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
   browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
   const page = await browser.newPage()
-  await page.setContent('<main></main>')
-  await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })
+  page.on('pageerror', error => console.error('Native ink audit browser error:', error))
+  await page.route('http://native-ink.local/**', route => new URL(route.request().url()).pathname === '/bundle.js'
+    ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
+    : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><main></main>' }))
+  await page.goto('http://native-ink.local/')
+  await page.addScriptTag({ url: 'http://native-ink.local/bundle.js' })
   await page.evaluate(async () => { await audit.prepareNumberedNotationFonts(); await document.fonts.ready })
   for (const [file, source] of Object.entries(sources).filter(([f]) => !filter || f.includes(filter))) {
     for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
-      const result = await page.evaluate(({ source, width, paged, collisionAudit, renderOptions }) => {
+      const result = await page.evaluate(async ({ source, width, paged, collisionAudit, renderOptions }) => {
         try {
-          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(audit.parseM3NDocument(source)).render({ ...renderOptions, width, paged, measureNumbers: true }).join('')
+          const documentScore = audit.parseM3NDocument(source)
+          await audit.prepareNumberedNotationFonts(documentScore)
+          document.querySelector('main').innerHTML = audit.NativeNumberedNotationScore.create(documentScore).render({ ...renderOptions, width, paged, measureNumbers: true }).join('')
           const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), violations = [], collisions = [], clipping = []
           let primitives = 0, systems = 0, collisionCandidates = 0, collisionLabels = 0
           for (const system of document.querySelectorAll('g.system')) {

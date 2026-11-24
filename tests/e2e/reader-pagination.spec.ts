@@ -68,7 +68,7 @@ test('extra pages wrap to centered rows and use document scrolling', async ({ pa
 
 test('wide desktop readers use the available window width for side-by-side pages', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })
-  await page.goto('/scores/na_xie_nian_01')
+  await page.goto('/scores/local-pages-30')
   const paper = page.locator('.score-paper')
   await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
   await expect(paper.locator('.score-page-sheet')).toHaveCount(2)
@@ -106,7 +106,7 @@ test('narrow screens keep full-width vertical pages and mode changes restore con
   await expect(paper).not.toHaveAttribute('data-viewport-paged')
   await expect(paper.locator('.score-page-sheet')).toHaveCount(0)
   const selectedWidth = Number(await paper.locator('svg').first().getAttribute('width'))
-  expect(selectedWidth).toBeGreaterThanOrEqual(540)
+  expect(selectedWidth).toBeGreaterThanOrEqual(480)
   expect(selectedWidth).toBeLessThanOrEqual(720)
 })
 

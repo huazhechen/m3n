@@ -10,8 +10,6 @@ const project = (source: string) => projectNativeScore(parseM3NDocument(source),
 describe('sustain group spacing', () => {
   it.each([
     ['quarter head', '1~ 1^.', 1],
-    ['eighth head', '(0 1~) 1^.', .5],
-    ['sixteenth head', '(0 (0 1~)) 1^.', .25],
     ['dotted head', '1^.. (0)', 1.5],
   ])('retains square-root group clearances for a %s into a dash', (_name, notes, duration) => {
     const { measures } = project(`{4/4}\nN: ${notes} |||`)
@@ -33,6 +31,18 @@ describe('sustain group spacing', () => {
     // The independent attack now reserves a fixed 0.4em, while the
     // sustain pair still uses its original duration-scaled half clearance.
     expect(pair.minimum - groupedMinimum).toBeCloseTo(22 * .4 - 22 * .4 / 4 * roots, 8)
+  })
+
+  it.each([
+    ['eighth', '(0 1~) 1^.', .5],
+    ['sixteenth', '(0 (0 1~)) 1^.', .25],
+  ])('retains a pitched target for a %s pickup and groups only its internal dashes', (_name, notes, duration) => {
+    const { measures } = project(`{4/4}\nN: ${notes} |||`)
+    const glyphs = measures[0]!.columns.flatMap(column => column.glyphs)
+    const headIndex = glyphs.findIndex(glyph => glyph.event.tie)
+    expect(glyphs[headIndex]!.beats).toBe(duration)
+    expect(glyphs[headIndex + 1]!.sustain).toBe(false)
+    expect(glyphs.slice(headIndex + 2).map(glyph => [glyph.beats, glyph.sustain])).toEqual([[1, true], [1, true]])
   })
 
   it('gives head/dash and dash/dash gaps half the justification surplus of a new attack', () => {

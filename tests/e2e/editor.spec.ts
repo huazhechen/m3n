@@ -46,7 +46,7 @@ test('exposes playback without an export action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
 })
 
-test('renders tied full beats as sustain dashes and maps a dash back to its own source event', async ({ page }) => {
+test('renders tied full beats as sustain dashes and maps a dash click to its measure start', async ({ page }) => {
   const source = '{title=Sustain Test}{4/4}\nN: 6~ 6~ 6~ 6 |||\nL: 白'
   await page.goto('/editor')
   const editor = page.getByLabel('M3N source')
@@ -65,7 +65,7 @@ test('renders tied full beats as sustain dashes and maps a dash back to its own 
     return { x: box.x + box.width / 2, y: box.y }
   })
   await page.mouse.click(point.x, point.y)
-  await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('6~', source.indexOf('6~') + 1))
+  await expect.poll(() => selectionStart(editor)).toBe(source.indexOf('6~'))
 })
 
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {

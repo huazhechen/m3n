@@ -54,7 +54,7 @@ it('highlights the repeated verse and chorus lyrics after the second Reasons rep
   for (const [start, lyric] of [[112.75, '爱'], [144.75, '爱'], [176, '伤'], [212, '伤']] as const) {
     expect(highlighted(elements.find(element => element.start === start)!)).toBe(lyric)
   }
-})
+}, 15_000) // Full-song JSDOM rendering and repeat queries can exceed 5s under the complete suite.
 
 
 it('cycles only lyric rows when an unnumbered note contains visible music text', () => {

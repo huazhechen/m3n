@@ -6,6 +6,11 @@ import { packScorebook, optimizeScorebook, optimizeScorebookWithRefinement, reor
 test('the shared online and offline search uses 480–720px in 20px steps', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 13 }, (_, index) => 480 + index * 20))
 })
+
+test('a failed search preserves the engraving error for the reader', async () => {
+  await assert.rejects(selectBestWidth(async () => { throw new Error('单个五线谱谱行超过页面高度。') }),
+    /没有可用的排版候选。 单个五线谱谱行超过页面高度。/)
+})
 test('prefer fewer A4 pages, then the shared quality score, excluding unsafe renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
   const chosen = candidate(700, 1, { qualityScore: .9 })

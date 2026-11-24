@@ -8,7 +8,6 @@ import { chooseBestWidth, widthCandidates, widthSearchStrategy, widthStep } from
 
 const root = resolve(import.meta.dirname, '..')
 const directory = join(root, 'src'), output = join(root, '.tmp/staff-widths')
-const probeOnly = process.argv.includes('--probe-only')
 assert(process.argv.slice(2).every(arg => ['--probe-only', '--fresh'].includes(arg)), 'Only --probe-only and --fresh are supported')
 mkdirSync(output, { recursive: true })
 // Keep the hosted dist/ untouched; Playwright serves these files in memory, with no dev server.

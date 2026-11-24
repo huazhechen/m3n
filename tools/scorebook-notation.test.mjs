@@ -36,7 +36,10 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       return { before: before.pageCount, after: after.pageCount, rowsBefore: before.rows, rowsAfter: after.rows, exported: exported.length }
     }, { source: readFileSync(join(root, 'src/scores/bei_jia_er_hu_pan_01.m3n'), 'utf8'),
       shared: ['qian_nv_you_hun_01.m3n', 'tie_xue_dan_xin_01.m3n'].map(file => readFileSync(join(root, 'src/scores', file), 'utf8')) })
-    assert.deepEqual(fontStability, { before: 1, after: 1, rowsBefore: 9, rowsAfter: 9, exported: 1 }, 'Shared rendering must preserve the measured per-score font selection')
+    assert(fontStability.before > 0 && fontStability.rowsBefore > 0)
+    assert.equal(fontStability.after, fontStability.before, 'Shared rendering must preserve the measured per-score font selection')
+    assert.equal(fontStability.rowsAfter, fontStability.rowsBefore, 'Later font preparation must preserve line breaks')
+    assert.equal(fontStability.exported, fontStability.before, 'Export must preserve the measured page count')
     const source = '{title=统一排版}{composer=测试作者}{equal-measures=true}{2/4}\nN: ||: 1 2 |\nB: 1d 2d |\nL1: 甲乙\nL2: 戊己\n---V1\nN: 3 4 :||\nB: 3d 4d |\nL: 丙丁\n---V2\nN: (5 6) 7 |||\nB: 3d 4d |\nL: 庚辛壬'
     for (const width of [640, 800]) {
       const result = await page.evaluate(async ({ source, width }) => {

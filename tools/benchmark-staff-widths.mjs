@@ -13,7 +13,7 @@ const root=resolve(import.meta.dirname,'..')
 const argument=name=>process.argv.find(value=>value.startsWith(`--${name}=`))?.slice(name.length+3)
 const instrument=process.argv.includes('--instrument'),profile=process.argv.includes('--profile')
 assert(!(instrument&&profile),'Keep CPU sampling separate from diagnostic instrumentation')
-const allowed=/^--(?:instrument|profile|output=.+|limit=\d+|score=.+|scope=(?:all|scores))$/
+const allowed=/^--(?:instrument|profile|output=.+|limit=\d+|score=.+|scope=(?:all|scores)|bundle=.+)$/
 assert(process.argv.slice(2).every(arg=>allowed.test(arg)),'Unknown benchmark argument')
 const output=resolve(argument('output')??'.tmp/staff-baseline/report.json'),temp=join(dirname(output),'bundle-'+(instrument?'instrumented':'production'))
 mkdirSync(dirname(output),{recursive:true})
@@ -24,16 +24,22 @@ const inputs=scopes.flatMap(scope=>readdirSync(join(root,'src',scope)).filter(fi
  return {file,source,sourceSha256:hash(source)}
 })).filter(input=>!argument('score')||argument('score').split(',').some(part=>input.file.includes(part))).slice(0,argument('limit')?Number(argument('limit')):Infinity)
 assert(inputs.length,'No scores selected')
+const packageStarted=performance.now()
+// The benchmark imports workspace package exports from dist, not their TS
+// sources. Rebuild before bundling so timings always describe current code.
+if(!argument('bundle'))execFileSync('npm',['run','build:packages'],{cwd:root,stdio:'inherit'})
+const packageBuildMs=performance.now()-packageStarted
 const started=performance.now()
-await build({configFile:false,logLevel:'error',base:'/',plugins:instrument?[staffBenchmarkInstrumentation()]:[],
+if(!argument('bundle'))await build({configFile:false,logLevel:'error',base:'/',plugins:instrument?[staffBenchmarkInstrumentation()]:[],
  define:{'import.meta.url':JSON.stringify('http://staff-benchmark.local/bundle.js')},build:{outDir:temp,emptyOutDir:true,minify:false,
  lib:{entry:join(root,'tools/staff-width-layout.mjs'),name:'staffWidths',formats:['iife'],fileName:()=>'bundle.js'}}})
+const bundlePath=argument('bundle')?resolve(argument('bundle')):join(temp,'bundle.js')
 const bundleMs=performance.now()-started
 const report={revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
  sourceSnapshotSha256:hash(JSON.stringify(inputs.map(({file,sourceSha256})=>({file,sourceSha256})))),
- rendererSha256:hash(readFileSync(join(temp,'bundle.js'))),mode:instrument?'instrumented':profile?'cpu-profile':'production',
+ rendererSha256:hash(readFileSync(bundlePath)),mode:instrument?'instrumented':profile?'cpu-profile':'production',
  strategy:widthSearchStrategy,widths:widthCandidates,auditLayout:false,freshBrowserPerScore:true,
- environment:{node:process.version,cpu:cpus()[0]?.model},bundleMs,entries:[]}
+ environment:{node:process.version,cpu:cpus()[0]?.model},packageBuildMs,bundleMs,entries:[]}
 const save=()=>{
  report.scoreWallMs=report.entries.reduce((n,e)=>n+e.measurement.wallMs,0)
  report.browserSearchMs=report.entries.reduce((n,e)=>n+e.measurement.browserSearchMs,0)
@@ -51,6 +57,7 @@ for(const [index,input]of inputs.entries()){
   await page.route('http://staff-benchmark.local/**',route=>{
    const pathname=new URL(route.request().url()).pathname
    if(pathname==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html><html style="font-synthesis:none;text-rendering:optimizeLegibility"><body></body></html>'})
+   if(pathname==='/bundle.js')return route.fulfill({path:bundlePath,contentType:'application/javascript; charset=utf-8'})
    const path=resolve(temp,'.'+pathname)
    if(!path.startsWith(temp+'/')||!existsSync(path))return route.abort()
    return route.fulfill({path,contentType:'application/javascript; charset=utf-8'})

@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
 import { createStaffMeasureMinimum } from './line-layout.js'
-import { projectStaffDocument } from './staff-document.js'
+import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { textMeasurer, xml } from './layout-svg.js'
 import { createStaffContext, createStaffVexPreparation, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
 
@@ -42,4 +42,17 @@ describe('fixed staff measure preparation', () => {
     expect(second.entries[0]![0]!.notes[0]!.keys[0]).toBe('c/4')
     expect(preparation.note(event, 'treble').keys[0]).toBe('c/4')
   })
+  it('shares only identical fragment boundaries within one task', () => {
+    const item = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 5 6 7 1e |||').score).measures[0]!
+    const first = createStaffMeasureMinimum(false, textMeasurer(), createStaffVexPreparation())
+    const a = first.split!(item, 3.1), b = first.split!(item, 3.9), c = first.split!(item, 4.1)
+    expect(a).toEqual(splitStaffMeasure(item, 3.1))
+    expect(b).toBe(a)
+    expect(c).not.toBe(a)
+    const next = createStaffMeasureMinimum(false, textMeasurer(), createStaffVexPreparation()).split!(item, 3.1)
+    expect(next).toEqual(a)
+    expect(next).not.toBe(a)
+    expect(item.fragment).not.toBe(true)
+  })
+
 })

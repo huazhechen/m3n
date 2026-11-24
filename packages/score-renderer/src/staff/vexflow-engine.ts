@@ -1,12 +1,19 @@
 import {
   Accidental, Articulation, Beam, Dot, Flow, Formatter, Fraction, GraceNote, GraceNoteGroup,
   KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveModifierPosition, StaveNote, Stroke, SVGContext, Tuplet, Voice,
-  type Note, type Tickable,
+  type Note, type Tickable, type TickContext,
 } from 'vexflow/bravura'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, nodes, type MeasureText, type XmlNode } from './layout-svg.js'
 
-import { StaffSvgContext, captureStaffDrawing } from './staff-svg-context.js'
+import type { StaffLyricText } from './staff-lyric-drawing.js'
+import { prepareStaffNoteDrawing, type StaffNoteDrawing } from './staff-note-drawing.js'
+import { prepareStaffNoteMetrics } from './staff-note-metrics.js'
+import { drawStaffStave } from './staff-stave-drawing.js'
+import { drawStaffBeam } from './staff-beam-drawing.js'
+import { prepareStaffBeam } from './staff-beam-layout.js'
+import { staffModelState } from './staff-model-state.js'
+import { StaffSvgContext, captureStaffDrawing, type StaffGlyphTemplates } from './staff-svg-context.js'
 
 export const STAFF_SCALE = 0.7
 Flow.setMusicFont('Bravura')
@@ -35,6 +42,11 @@ export function createStaffVexPreparation() {
   const notes = new WeakMap<StaffEvent, Map<string, ReturnType<typeof prepareStaffNote>>>()
   const beamGroups = new Map<string, number[]>()
   return {
+    lyricAttributes: new WeakMap<StaffEvent, Array<Record<string, string>>>(),
+    lyricTexts: new Map<string, StaffLyricText>(),
+    noteDrawings: new WeakMap<StaveNote, StaffNoteDrawing | null>(),
+    drawingModels: new WeakMap<StaffMeasure, Array<{ model: VexMeasure; reset: () => VexMeasure; active: boolean } | undefined>>(),
+    glyphs: new WeakMap() as StaffGlyphTemplates,
     note(item: StaffEvent, clef: string) {
       let byClef = notes.get(item)
       if (!byClef) { byClef = new Map(); notes.set(item, byClef) }
@@ -68,7 +80,7 @@ class StaffArpeggio extends Stroke {
   }
 }
 export type VexEntry = { item: StaffEvent; notes: StaveNote[]; tuplet?: Tuplet }
-export type VexMeasure = ReturnType<typeof createVexMeasure>
+export type VexMeasure = { staves: Stave[]; entries: VexEntry[][]; controls: Note[][]; voices: Voice[]; beams: Beam[]; tuplets: Tuplet[]; columns: Array<{ context: TickContext; x: number; after: number; weight: number }>; minimum: number; metrics: StaffMeasureMetrics; start: number; endInset: number; measure: StaffMeasure; bassY: number }
 const barTypes: Record<string, number> = { single: 1, dbl: 2, end: 3, rptstart: 4, rptend: 5, rptboth: 6, invis: 7 }
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
@@ -85,7 +97,7 @@ export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: num
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
 }
 export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY = 140,
-  preparation: StaffVexPreparation = createStaffVexPreparation()) {
+  preparation: StaffVexPreparation = createStaffVexPreparation()): VexMeasure {
   const staves = [new Stave(0, 0, 1000), ...(hasBass ? [new Stave(0, bassY, 1000)] : [])]
   for (const [lane, stave] of staves.entries()) {
     stave.setBegBarType(measure.source.left ? barTypes[measure.source.left] ?? 1 : 7)
@@ -242,8 +254,62 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
   return { staves, entries, controls, voices, beams, tuplets, columns, minimum, metrics, start, endInset, measure, bassY }
 }
 
+export function createStaffDrawingScope() {
+  const releases: Array<() => void> = []
+  return { add(release: () => void) { releases.push(release) }, close() { releases.forEach(release => release()); releases.length = 0 } }
+}
+export function createStaffDrawingMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText,
+  spacing: number, bassY: number, preparation: StaffVexPreparation | undefined, scope: ReturnType<typeof createStaffDrawingScope>): VexMeasure {
+  if (!preparation) return createVexMeasure(measure, first, hasBass, measureText, spacing, bassY)
+  let pair = preparation.drawingModels.get(measure)
+  if (!pair) { pair = []; preparation.drawingModels.set(measure, pair) }
+  let entry = pair[first ? 1 : 0]
+  if (!entry) {
+    const model = createVexMeasure(measure, first, hasBass, measureText, spacing, bassY, preparation)
+    model.beams.forEach(prepareStaffBeam)
+    for (const lane of model.entries) for (const item of lane) item.notes.forEach(prepareStaffNoteMetrics)
+    entry = { model, reset: staffModelState(model, preparation.noteDrawings), active: false }
+    pair[first ? 1 : 0] = entry
+  } else {
+    if (entry.active) throw new Error('五线谱绘制模型不能同时借给两个谱行。')
+    entry.model = entry.reset()
+  }
+  entry.active = true
+  const leased = entry
+  scope.add(() => { leased.active = false })
+  const model = entry.model
+  let right = 0
+  for (let i = 0; i < model.columns.length; i++) {
+    const fixed = model.metrics.columns[i]!, column = model.columns[i]!
+    column.x = right + fixed.left
+    right = column.x + fixed.after + (spacing * 22 / STAFF_SCALE)
+  }
+  model.minimum = staffMinimumAtSpacing(model.metrics, spacing)
+  for (const [lane, stave] of model.staves.entries()) {
+    const y = lane ? bassY : 0, moved = stave.getY() !== y
+    if (moved) stave.setY(y)
+    for (const item of model.entries[lane]!) for (const note of item.notes) {
+      if (moved) note.setStave(stave)
+      note.setRendered(false)
+    }
+  }
+  model.bassY = bassY
+  return model
+}
+
+function normalizeVexDrawing(n: XmlNode): void {
+      if (n.attributes.id?.startsWith('vf-')) delete n.attributes.id
+      if (n.attributes.class) n.attributes.class = n.attributes.class.replace(/vf-/g, '')
+      if (n.tagName === 'path' && n.attributes.fill === 'none' && !n.attributes.stroke) {
+        n.attributes.stroke = '#000'
+        n.attributes['stroke-width'] ??= '1'
+      }
+      if (n.attributes['font-size']?.endsWith('pt')) n.attributes['font-size'] = String(parseFloat(n.attributes['font-size']) * 4 / 3)
+      for (const child of n.children) if (typeof child !== 'string') normalizeVexDrawing(child)
+    }
+
 /** VexFlow is confined to local music geometry; page policy stays in M3N. */
-export function drawVexMeasure(model: VexMeasure, width: number, x: number, context: SVGContext) {
+export function drawVexMeasure(model: VexMeasure, width: number, x: number, context: SVGContext, preparation?: StaffVexPreparation) {
   model.staves.forEach(stave => { stave.setX(x).setWidth(width); stave.setNoteStartX(x + model.start) })
   const extra = Math.max(0, width - model.minimum)
   const totalWeight = model.columns.reduce((n, c) => n + c.weight, 0)
@@ -255,25 +321,15 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   const node = element('g', { id: model.measure.id, class: 'measure' })
   const capture = (draw: () => void): XmlNode[] => {
     const output = captureStaffDrawing(context, draw)
-    const normalize = (n: XmlNode) => {
-      if (n.attributes.id?.startsWith('vf-')) delete n.attributes.id
-      if (n.attributes.class) n.attributes.class = n.attributes.class.replace(/vf-/g, '')
-      if (n.tagName === 'path' && n.attributes.fill === 'none' && !n.attributes.stroke) {
-        n.attributes.stroke = '#000'
-        n.attributes['stroke-width'] ??= '1'
-      }
-      if (n.attributes['font-size']?.endsWith('pt')) n.attributes['font-size'] = String(parseFloat(n.attributes['font-size']) * 4 / 3)
-      n.children.filter((c): c is XmlNode => typeof c !== 'string').forEach(normalize)
-    }
-    output.forEach(normalize)
+    output.forEach(normalizeVexDrawing)
     return output
   }
   for (const [lane, stave] of model.staves.entries()) {
     const staff = element('g', { class: 'staff', 'data-staff': lane ? 'bass' : 'melody' })
     // Retain direct staff paths for geometry audits and interaction consumers.
-    const raw = capture(() => stave.setContext(context).draw())
+    const raw = preparation ? drawStaffStave(stave, context, preparation, normalizeVexDrawing) : capture(() => stave.setContext(context).draw())
     stave.setNoteStartX(x + model.start)
-    const flatten = (nodes: XmlNode[]): XmlNode[] => nodes.flatMap(n => n.tagName === 'g' && !n.attributes.transform ? flatten(n.children.filter((c): c is XmlNode => typeof c !== 'string')) : [n])
+    const flatten = (nodes: XmlNode[]): XmlNode[] => nodes.flatMap(n => n.tagName === 'g' && !n.attributes.transform && !n.renderNodes ? flatten(n.children.filter((c): c is XmlNode => typeof c !== 'string')) : [n])
     const staveDrawing = flatten(raw)
     // VexFlow emits the five stave rules before the clef and signatures.
     for (const rule of staveDrawing.slice(0, 5)) rule.attributes.class = 'staff-line'
@@ -289,13 +345,40 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
       }
       const event = element('g', attrs)
       entry.notes.forEach((note, i) => {
-        const music = capture(() => note.setContext(context).draw())
+        let music: XmlNode[]
+        let normalized = false
+        if (preparation && !note.getModifiers().some(modifier => modifier instanceof GraceNoteGroup)) {
+          let template = preparation.noteDrawings.get(note)
+          if (template === undefined) {
+            const tick = note.getTickContext(), tickX = tick.getX(), startX = stave.getNoteStartX(), staveY = stave.getY()
+            const recording = new StaffSvgContext(preparation.glyphs, true)
+            try {
+              stave.setY(0).setNoteStartX(0)
+              tick.setX(-Flow.getMusicFontStack()[0]!.lookupMetric('stave.padding'))
+              note.setStave(stave)
+              const drawing = captureStaffDrawing(recording, () => note.setContext(recording).draw())
+              drawing.forEach(normalizeVexDrawing)
+              const normalizeNote = (node: XmlNode) => {
+                node.attributes.class = (node.attributes.class ?? '').replace(/vf-/g, '')
+                if (node.attributes.id) delete node.attributes.id
+                for (const child of node.children) if (typeof child !== 'string') normalizeNote(child)
+              }
+              drawing.forEach(normalizeNote)
+              template = prepareStaffNoteDrawing(drawing) ?? null
+              preparation.noteDrawings.set(note, template)
+            } finally { stave.setY(staveY).setNoteStartX(startX); tick.setX(tickX); note.setStave(stave) }
+          }
+          normalized = Boolean(template)
+          music = template ? template.place(note.getAbsoluteX(), stave.getY(), !item.children) : capture(() => note.setContext(context).draw())
+          const stem = note.getStem()
+          if (stem) { const stemX = note.getStemX(); stem.setNoteHeadXBounds(stemX, stemX) }
+        } else music = capture(() => note.setContext(context).draw())
         const normalize = (n: XmlNode) => {
           n.attributes.class = (n.attributes.class ?? '').replace(/vf-/g, '')
           if (n.attributes.id) delete n.attributes.id
-          n.children.filter((c): c is XmlNode => typeof c !== 'string').forEach(normalize)
+          for (const child of n.children) if (typeof child !== 'string') normalize(child)
         }
-        music.forEach(normalize)
+        if (!normalized) music.forEach(normalize)
         if (item.children) event.children.push(element('g', { id: item.children[i]!.id, class: item.children[i]!.event.kind }, music))
         else event.children.push(...music.flatMap(n => n.tagName === 'g' && n.attributes.class === 'stavenote' ? n.children : [n]))
       })
@@ -305,7 +388,7 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   }
   for (const beam of model.beams) {
     const lane = model.entries.findIndex(entries => entries.some(e => e.notes.includes(beam.notes[0]! as StaveNote)))
-    nodes(node).filter(n => n.attributes.class === 'staff')[Math.max(0, lane)]!.children.push(element('g', { class: 'beam' }, capture(() => beam.setContext(context).draw())))
+    nodes(node).filter(n => n.attributes.class === 'staff')[Math.max(0, lane)]!.children.push(element('g', { class: 'beam' }, preparation ? drawStaffBeam(beam) : capture(() => beam.setContext(context).draw())))
   }
   for (const tuplet of model.tuplets) {
     const markup = capture(() => tuplet.setContext(context).draw())
@@ -318,6 +401,6 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   }
   return node
 }
-export function createStaffContext() {
-  return new StaffSvgContext()
+export function createStaffContext(preparation?: StaffVexPreparation) {
+  return new StaffSvgContext(preparation?.glyphs)
 }

@@ -62,7 +62,7 @@ export function assertFullyStaged(files, cwd = root) {
 
 export async function prepareScoreArtifacts({ check = false, staged = false } = {}) {
   if (staged) assertFullyStaged([...sourceFiles(), ...rendererInputs()])
-  const { previous, fingerprint, stale, deleted } = staleScores()
+  const { previous, stale, deleted } = staleScores()
   if (check) {
     assert(!stale.length && !deleted.length, `乐谱生成结果过期，请运行 npm run prepare:scores：\n${[...stale, ...deleted].join('\n')}`)
     console.log('Font subsets match every score; width selection runs in the browser.')

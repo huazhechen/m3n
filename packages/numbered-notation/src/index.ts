@@ -10,3 +10,5 @@ export * from './font-family.js'
 export { scoreFontText, scoreCjkFont, scoreFontForCharacter, loadScoreFont } from './fonts.js'
 export type { ScoreFontResource } from './fonts.js'
 export { NumberedTextMeasurementCache } from './native-measure.js'
+
+export { sortedNativeInkSeparation as sortedInkSeparation } from './native-ink-separation.js'

@@ -6,7 +6,7 @@ import { layoutNativeScore } from './native-layout.js'
 
 it.each([
   ['long notes', '{4/4}\nN: 6^~ 6^ |||', 3],
-  ['a pickup into a full beat', '{4/4}\nN: (5 6~) 6^ 7 |||', 2],
+  ['a long note after a fractional pickup, retaining its incoming tie', '{4/4}\nN: (5 6~) 6^ 7 |||', 1],
   ['chords', '{4/4}\nN: [135:h]^~ [135:h]^ |||', 3],
   ['bass', '{2/4}\nN: 1 2 |||\nB: 6d~ 6d |||', 1],
   ['an inherited accidental', '{2/4}\nN: 4#~ 4 |||', 1],
