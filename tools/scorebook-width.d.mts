@@ -20,4 +20,4 @@ export function probeWidthCandidates(measure: (width: number) => Promise<WidthMe
   renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number }
 }>
 
-export function selectBestWidth(measure: (width: number) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number } }>
+export function selectBestWidth(measure: (width: number) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number } }>

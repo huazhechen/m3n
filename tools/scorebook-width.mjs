@@ -1,7 +1,7 @@
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = 480, widthMaximum = 720, widthStep = 20
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = 'exhaustive-quality-480-720-step20-v8'
+export const widthSearchStrategy = 'coarse20-refine10-quality-480-720-v9'
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.qualityScore !== undefined) return candidate.qualityScore
@@ -17,11 +17,11 @@ export function chooseBestWidth(candidates) {
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
-/** Measure each actual candidate once; no neighboring-width probes. */
+/** Search the 20px grid, then compare its winner with the two adjacent 10px slots. */
 export async function probeWidthCandidates(measure, { verify, signal } = {}) {
   const candidates = []
   let verifiedWidths = 0
-  for (const width of widthCandidates) {
+  const probe = async width => {
     signal?.throwIfAborted()
     let result
     try {
@@ -34,11 +34,18 @@ export async function probeWidthCandidates(measure, { verify, signal } = {}) {
     signal?.throwIfAborted()
     candidates.push(result)
   }
-  return { candidates, renderCache: { strategy: widthSearchStrategy, requests: widthCandidates.length,
-    uniqueWidths: widthCandidates.length, hits: 0, verifiedWidths } }
+  for (const width of widthCandidates) await probe(width)
+  const coarseBest = chooseBestWidth(candidates)
+  if (coarseBest) {
+    for (const width of [coarseBest.width - widthStep / 2, coarseBest.width + widthStep / 2]) {
+      if (width >= widthMinimum && width <= widthMaximum) await probe(width)
+    }
+  }
+  return { candidates, renderCache: { strategy: widthSearchStrategy, requests: candidates.length,
+    uniqueWidths: candidates.length, hits: 0, verifiedWidths } }
 }
 
-/** Run the common exhaustive search and reject a score with no safe candidate. */
+/** Run the common coarse-to-fine search and reject a score with no safe candidate. */
 export async function selectBestWidth(measure, options) {
   const result = await probeWidthCandidates(measure, options)
   const best = chooseBestWidth(result.candidates)

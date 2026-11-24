@@ -167,9 +167,10 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           } finally {
             timings.totalMs ??= performance.now() - widthStarted
             scoreTiming.candidates.push({ width, timings })
-            progress(++completedWidths / widthCandidates.length)
+            progress(++completedWidths / (widthCandidates.length + 2))
           }
         }, { signal })
+        progress(1)
         scoreTiming.wallMs = parseFontsMs + performance.now() - scoreStarted
         entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
