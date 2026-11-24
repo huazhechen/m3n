@@ -139,6 +139,11 @@ describe('new reference scores', () => {
     // The repeat now starts at intro bar 5; each ending writes its final vocal bar.
     corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 7:.5'
     corrected[23] = corrected[22]
+    corrected[30] = '6:.5 6:.5 5:.25 6:.25 5:.25 4:.25 3:2'
+    corrected[31] = '2:.75 2:.25 2:.5 2:.5 2:.5 2:.25 2:.25 2:.5 1:.25 2:.25'
+    corrected[32] = '3:.5 3:.5 5:.25 3:.25 2:.5 3:2'
+    corrected[34] = '6:.5 6:.5 5:.25 6:.25 5:.25 4:.25 3:1~ 3:.75 1:.25'
+    corrected[36] = '6:.5 6:.5 7:.25 6:.25 5:.5 6:2'
     const expected = [...corrected.slice(0, 8), starsReference.secondPassBar8, ...corrected.slice(8)]
     expect(bars.slice(12).map(tokens)).toEqual(expected.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
@@ -166,6 +171,23 @@ describe('new reference scores', () => {
     }
   })
 
+  it('matches the final chorus to the earlier second-pass chorus, including every tie and slur', () => {
+    const document = parseM3NDocument(stars)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    const earlier = [29, 30, 31, 32, 33, 34, 36, 37].map(index => bars[index]!)
+    const final = bars.slice(50)
+    const notes = (section: typeof bars) => section.map(bar => bar.events.map(event =>
+      [event.pitches, event.beats, event.tie ?? false, event.postfixes]))
+    expect(notes(final)).toEqual(notes(earlier))
+    const slurs = (section: typeof bars) => {
+      const positions = new Map(section.flatMap((bar, index) => bar.events.map((event, offset) =>
+        [event.sourceStart, [index, offset]] as const)))
+      return document.intervals.filter(interval => interval.kind === 'lg' && positions.has(interval.start!))
+        .map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)])
+    }
+    expect(slurs(final)).toEqual(slurs(earlier))
+  })
+
   it('places Star Lighting lyrics on their original notes, including the shared ending entry and corrected verse', () => {
     const document = parseM3NDocument(stars)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
@@ -176,10 +198,10 @@ describe('new reference scores', () => {
     for (const number of [30, 34, 51, 55]) expect(words(number)).toEqual(['星', '星', '点', '灯', '', '照', '亮'])
     for (const number of [31, 52]) expect(words(number)).toEqual(['我', '的', '家', '门', '', '让'])
     for (const number of [33, 54]) expect(words(number)).toEqual(['来', '时', '的', '路', ''])
-    expect(words(48)).toEqual(['偷', '偷', '探', '出', '了', '头', '', '是'])
+    expect(words(48)).toEqual(['偷', '偷', '探', '', '出', '了', '头', '', '是'])
     const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) => [event.sourceStart, [index + 1, offset + 1]] as const)))
     expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)]))
-      .toEqual([[[17, 5], [17, 6]], [[18, 5], [18, 6]], [[19, 7], [19, 8]], [[20, 4], [20, 5]], [[22, 6], [22, 7]], [[23, 3], [23, 4]], [[27, 4], [27, 5]], [[37, 10], [38, 1]], [[57, 9], [58, 1]]])
+      .toEqual([[[17, 5], [17, 6]], [[18, 5], [18, 6]], [[19, 7], [19, 8]], [[20, 4], [20, 5]], [[22, 6], [22, 7]], [[23, 3], [23, 4]], [[27, 4], [27, 5]], [[37, 10], [38, 1]], [[44, 3], [44, 4]], [[45, 9], [45, 10]], [[46, 3], [46, 4]], [[48, 3], [48, 4]], [[50, 3], [50, 4]], [[57, 10], [58, 1]]])
   })
 
   it('writes Conan as forty full 4/4 measures and rejects either redundant barline', () => {
