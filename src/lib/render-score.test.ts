@@ -1,20 +1,79 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ScoreDocument } from '@m3n/notation'
-import { chooseNumberedScoreWidth, chooseStaffScoreWidth } from './render-score'
+import { chooseNumberedScoreWidth, chooseStaffScoreWidth, renderScoreInto, type RenderPhase } from './render-score'
 
 const { numberedQuality } = vi.hoisted(() => ({ numberedQuality: vi.fn() }))
+const { prepareFonts, createScore } = vi.hoisted(() => ({ prepareFonts: vi.fn(), createScore: vi.fn() }))
 const { staffPageCount, staffLayoutInfo } = vi.hoisted(() => ({ staffPageCount: vi.fn(), staffLayoutInfo: vi.fn() }))
 vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
   prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
 }))
-vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: vi.fn(), NumberedTextMeasurementCache: class {} }))
+vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {} }))
 vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
   measureNumberedWidth: (document: ScoreDocument, width: number, { settings }: { settings: Record<string, unknown> }) => {
     const quality = numberedQuality(document, { ...settings, width, paged: true, pageMargin: settings.pageMargin ?? 0 })
     return { candidate: { width, ...quality, rows: 1, outside: [], overlaps: [] } }
   },
 }))
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>(done => { resolve = done })
+  return { promise, resolve }
+}
+
+describe('font and layout progress', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    prepareFonts.mockReset()
+    createScore.mockReset()
+  })
+
+  it('finishes fonts and gives the layout message a paint before starting synchronous work', async () => {
+    const fonts = deferred()
+    const layout = deferred()
+    prepareFonts.mockReturnValue(fonts.promise)
+    let paint: FrameRequestCallback | undefined
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { paint = callback; return 1 })
+    const phases: RenderPhase[] = []
+    const stop = new Error('stop before DOM rendering')
+    createScore.mockImplementation(() => { throw stop })
+    const result = renderScoreInto({} as HTMLElement, {
+      scoreDocument: {} as ScoreDocument, paged: false,
+      onPhase: phase => { phases.push(phase); if (phase === 'layout') layout.resolve() },
+    })
+    const rejected = expect(result).rejects.toBe(stop)
+    await vi.waitFor(() => expect(phases.at(-1)).toBe('loading-fonts'))
+    expect(createScore).not.toHaveBeenCalled()
+    fonts.resolve()
+    await layout.promise
+    expect(phases).toEqual(['loading-library', 'loading-fonts', 'layout'])
+    expect(createScore).not.toHaveBeenCalled()
+    paint!(0)
+    // requestAnimationFrame runs before paint; calculation must also wait for the next task.
+    expect(createScore).not.toHaveBeenCalled()
+    await rejected
+    expect(createScore).toHaveBeenCalledOnce()
+  })
+
+  it('does not lay out a previous song when navigation aborts during the paint wait', async () => {
+    const layout = deferred()
+    const controller = new AbortController()
+    let paint: FrameRequestCallback | undefined
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { paint = callback; return 1 })
+    const result = renderScoreInto({} as HTMLElement, {
+      scoreDocument: {} as ScoreDocument, paged: false, signal: controller.signal,
+      onPhase: phase => { if (phase === 'layout') layout.resolve() },
+    })
+    const rejected = expect(result).rejects.toMatchObject({ name: 'AbortError' })
+    await layout.promise
+    controller.abort()
+    paint!(0)
+    await rejected
+    expect(createScore).not.toHaveBeenCalled()
+  })
+})
 vi.mock('../../tools/lib/staff-width-measurement.mjs', () => ({
   measureStaffWidth: async (_document: ScoreDocument, width: number) => {
     const info = staffLayoutInfo(width)

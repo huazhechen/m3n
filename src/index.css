@@ -846,7 +846,7 @@ textarea::selection {
 
 
 .score-paper[data-render-phase="loading-fonts"]:empty::before {
-  content: "正在准备简谱字体";
+  content: "正在准备字体";
 }
 
 

@@ -32,6 +32,12 @@ const yieldToBrowser = () => new Promise<void>(resolve => {
   else setTimeout(resolve, 0)
 })
 
+// A phase update needs a paint before synchronous layout can occupy the main thread.
+const yieldToPaint = () => new Promise<void>(resolve => {
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setTimeout(resolve, 0))
+  else setTimeout(resolve, 0)
+})
+
 type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>
 
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
@@ -129,6 +135,8 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   check(); input.onPhase?.('loading-fonts')
   await prepareNumberedNotationFonts(input.scoreDocument)
   check(); input.onPhase?.('layout')
+  await yieldToPaint()
+  check()
   // Paper margins and image framing belong to the outer container.
   const width = input.autoWidth ? widthMaximum : input.width ?? DEFAULT_PREFERRED_WIDTH
   const score = NumberedNotationScore.create(input.scoreDocument)
