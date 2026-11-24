@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "37203278c1f42a005d2f6d8950859aed247420761a64ab41f850bc53db8b6f4b",
+  "rendererSha256": "127b49bad8583330666b6bf9c9c41f8fbd0f3b07d703cd0e1ed35ff612ed8b9b",
   "fontManifestSha256": "3b6d3a82a31b2a8031f867c2c5829a67b5bb67413408b03786ec1184bf231b2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -190,7 +190,7 @@
       "fontSha256": "2b2560f72e36725576877b46ff038af0caf9254d08cc62c373ac6f86c2620670"
     },
     "src/scores/liang_zhu_01.m3n": {
-      "sourceSha256": "28abc471eb20e0d1db5a2a33de78be1bb50447f3bb95729240c75ec0c99db894",
+      "sourceSha256": "fe556833608e1ecadd766fcd18d1ee279df7055d1c94343815f322fa3c082b6c",
       "font": "NotoSansSC-8fdd403cb5d2b9f1.ttf",
       "fontSha256": "090cf0e0c1abd0237a03f7481e9d11784936e56864496d2b8a962cf1f07aec44"
     },
