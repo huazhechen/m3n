@@ -74,7 +74,19 @@ export function nativeArcSlice(commands: readonly NativeArcCommand[], x: number,
  * another, so resolve the finite set of candidate clearances to a fixed point. */
 export function nativeArcInkLift(commands: readonly NativeArcCommand[], left: number, right: number, pieces: readonly NativeInk[], initial = 0): number {
   const middle = (left + right) / 2
+  // A Bezier stays inside the convex hull of its control points. Obstacles
+  // wholly below that hull cannot meet this ribbon, even after further lifts.
+  // Keep a rounding allowance; this is only a conservative broad phase.
+  let bottomBound = -Infinity, magnitude = Math.abs(initial)
+  for (const command of commands) {
+    if (command.op === 'Z') continue
+    const ys = command.op === 'C' ? [command.y, command.cy1, command.cy2]
+      : command.op === 'Q' ? [command.y, command.cy] : [command.y]
+    for (const y of ys) { bottomBound = Math.max(bottomBound, y); magnitude = Math.max(magnitude, Math.abs(y)) }
+  }
+  const below = bottomBound - initial + magnitude * Number.EPSILON * 32
   const obstacles = pieces.flatMap(piece => {
+    if (piece.top + 1e-7 >= below) return []
     const a = Math.max(left, piece.left), b = Math.min(right, piece.right)
     if (b - a < 1e-8) return []
     const edges = [a, b, ...(middle > a && middle < b ? [middle] : [])].flatMap(x => {

@@ -8,7 +8,7 @@ vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffResources: vi.fn(),
   prepareStaffScore: async () => ({ pageCount: staffPageCount, layoutInfo: staffLayoutInfo }),
 }))
-vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: vi.fn() }))
+vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: vi.fn(), NumberedTextMeasurementCache: class {} }))
 vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
   measureNumberedWidth: (document: ScoreDocument, width: number, { settings }: { settings: Record<string, unknown> }) => {
     const quality = numberedQuality(document, { ...settings, width, paged: true, pageMargin: settings.pageMargin ?? 0 })
@@ -36,6 +36,7 @@ describe('numbered automatic width margins', () => {
     expect(selected).toBe(margin === 32 ? 620 : 600)
     expect(numberedQuality.mock.calls.every(([, options]) => options.pageMargin === (margin ?? 0))).toBe(true)
     expect(numberedQuality.mock.calls.every(([, options]) => options.paged === true)).toBe(true)
+    expect(new Set(numberedQuality.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
   })
 
   it('keeps the automatic width at least 540px when narrower layouts fit', async () => {

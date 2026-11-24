@@ -1,5 +1,5 @@
 import { parseM3NDocument } from '@m3n/notation'
-import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores } from '@m3n/numbered-notation'
+import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { attachScoreReading } from '../src/lib/score-reading-dom'
 import { renderScoreInto } from '../src/lib/render-score'
@@ -8,6 +8,8 @@ import { inspectScorePages } from './lib/score-geometry.mjs'
 import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
 
 export async function prepare(fontBase64) {
+  textMeasurementCache = new NumberedTextMeasurementCache()
+  measurementSource = measurementDocument = measurementDescription = undefined
   // Publishing supplies a freshly generated subset for the actual book text.
   if (fontBase64) {
     const font = new FontFace('Noto Sans SC', `url(data:font/ttf;base64,${fontBase64})`)
@@ -21,15 +23,18 @@ export async function prepare(fontBase64) {
  * overlapping CJK subsets must not change canvas metrics between songs. */
 export async function prepareSources(sources) {
   for (const source of sources) await prepareNumberedNotationFonts(parseM3NDocument(source))
+  textMeasurementCache = new NumberedTextMeasurementCache()
+  measurementSource = measurementDocument = measurementDescription = undefined
 }
 
 export async function render(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
-  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged, coreGap })
+  await renderScoreInto(host, { scoreDocument: parseM3NDocument(source), width, paged, coreGap, textMeasurementCache })
   return [...host.querySelectorAll(':scope > svg')]
 }
 
 // Keep only the current song: candidate widths share parsing and font preparation.
 let measurementSource, measurementDocument, measurementDescription
+let textMeasurementCache
 async function prepareMeasurement(source) {
   if (source !== measurementSource) {
     const document = parseM3NDocument(source)
@@ -45,7 +50,8 @@ export async function measure(source, width, paged = true, coreGap, host = docum
   const started = performance.now()
   const scoreDocument = await prepareMeasurement(source)
   const parseFontsMs = performance.now() - started
-  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap },
+  textMeasurementCache ??= new NumberedTextMeasurementCache()
+  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap, textMeasurementCache },
     afterMount: host => attachScoreReading(host, measurementDescription) })
   candidate.timings.parseFontsMs = parseFontsMs
   candidate.timings.totalMs += parseFontsMs
@@ -61,7 +67,7 @@ export async function sharedA4Page(sources, width, gap = 22, host = document.que
   const pxPerMm = 96 / 25.4, scale = 186 / width
   const documents = sources.map(source => parseM3NDocument(source))
   for (const document of documents) await prepareNumberedNotationFonts(document)
-  const fitted = renderSharedNumberedNotationScores(documents, { width, pageMargin: 0 }, gap)
+  const fitted = renderSharedNumberedNotationScores(documents, { width, pageMargin: 0, textMeasurementCache }, gap)
   host.innerHTML = fitted.markup.join('')
   const pages = [...host.querySelectorAll(':scope > svg')]
   const safety = auditLayout ? inspectScorePages(pages) : { outside: [], overlaps: [] }

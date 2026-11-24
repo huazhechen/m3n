@@ -18,7 +18,7 @@ import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
-import { CanvasTextMeasurer, DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
+import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
@@ -29,6 +29,7 @@ import { nativeSystemCore } from './native-core.js'
 export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
+  textMeasurementCache?: NumberedTextMeasurementCache
   pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
@@ -156,6 +157,9 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
   validate(supplied)
+  const cache = supplied.textMeasurementCache ?? new NumberedTextMeasurementCache()
+  if (cache.synchronizeFonts() && timings) timings.textMeasureCacheResets = (timings.textMeasureCacheResets ?? 0) + 1
+  supplied = { ...supplied, textMeasurementCache: cache }
   // Explicit spacing remains a fixed engraving override. Automatic spacing is
   // selected against the same virtual A4 pages in continuous and paged views;
   // custom vertical gaps must not change the horizontal line breaks.
@@ -217,7 +221,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   let measurer = options.textMeasurer
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = window.document.createElement('canvas').getContext('2d')
-    if (context) measurer = new CanvasTextMeasurer(context, timings)
+    if (context) measurer = new CanvasTextMeasurer(context, timings, options.textMeasurementCache)
   }
   measurer ??= new DefaultTextMeasurer()
   const projectionStarted = timings ? performance.now() : 0

@@ -4,6 +4,7 @@ import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
 import { selectBestWidth, widthMaximum } from '../../tools/scorebook-width.mjs'
+import type { NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
 export type ScoreRenderInput = {
@@ -19,6 +20,7 @@ export type ScoreRenderInput = {
   tempoScale?: number
   measureNumbers?: boolean
   includeBass?: boolean
+  textMeasurementCache?: NumberedTextMeasurementCache
   sheetClass?: string
   signal?: AbortSignal
   onPhase?: (phase: RenderPhase) => void
@@ -33,13 +35,14 @@ const yieldToBrowser = () => new Promise<void>(resolve => {
 type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase' | 'onWidthSelected'>
 
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
-  const { prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+  const { prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
   const { measureNumberedWidth } = await import('../../tools/lib/numbered-width-measurement.mjs')
   await prepareNumberedNotationFonts(scoreDocument)
+  const taskSettings = { ...settings, textMeasurementCache: settings.textMeasurementCache ?? new NumberedTextMeasurementCache() }
   const { best } = await selectBestWidth(async width => {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return measureNumberedWidth(scoreDocument, width, { settings, signal }).candidate
+    return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal }).candidate
   }, { signal })
   return best.width
 }
@@ -122,20 +125,21 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     if (input.autoWidth) selectWidthInBackground(target, input, chooseStaffScoreWidth)
     return { message: '', width, widthPending: Boolean(input.autoWidth) }
   }
-  const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
+  const { NumberedNotationScore, prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
   await prepareNumberedNotationFonts(input.scoreDocument)
   check(); input.onPhase?.('layout')
   // Paper margins and image framing belong to the outer container.
   const width = input.autoWidth ? widthMaximum : input.width ?? DEFAULT_PREFERRED_WIDTH
   const score = NumberedNotationScore.create(input.scoreDocument)
-  const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap }).join('')
+  const textMeasurementCache = input.textMeasurementCache ?? new NumberedTextMeasurementCache()
+  const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap, textMeasurementCache }).join('')
   check()
   const restoreReading = preserveScoreReading(target, input.scoreDocument)
   target.innerHTML = markup
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
   restoreReading()
-  if (input.autoWidth) selectWidthInBackground(target, input, chooseNumberedScoreWidth)
+  if (input.autoWidth) selectWidthInBackground(target, { ...input, textMeasurementCache }, chooseNumberedScoreWidth)
   return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width, widthPending: Boolean(input.autoWidth) }
 }

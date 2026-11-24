@@ -67,28 +67,32 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
   let svg = painter.relation(relation, system, initialArc), ink = nativeSvgInk(svg, measurer)
   let placedArc: NativeArc | undefined
   if (relation.kind !== 'inst') {
-    const obstacles = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
-      .filter(g => g.lane === relation.first.lane && g.x + (g.inkRight ?? g.musicRight ?? g.right) >= ink.left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= ink.right)
-      .map(g => ({ left: g.x - (g.inkLeft ?? g.musicLeft ?? g.left), right: g.x + (g.inkRight ?? g.musicRight ?? g.right), top: -(g.musicTop ?? g.top) }))
-    const controls = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
-      .flatMap(g => g.controls.flatMap(placedNativeControlInk))
-      .filter(b => b.right > ink.left && b.left < ink.right)
     const preceding = [...(system.relationLayout ?? [])].filter(([r, placed]) => r.kind !== 'inst' && r.first.lane === relation.first.lane && placed.ink.right > ink.left && placed.ink.left < ink.right)
-    const previous = preceding.map(([, placed]) => placed.ink)
     const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane)
       .flatMap(label => nativeSvgPieces(label.svg, measurer))
       .filter(label => label.right > ink.left && label.left < ink.right)
-    const blockers = relation.kind === 'tuplet' ? [...previous, ...labels] : [...obstacles, ...controls, ...previous, ...labels]
-    const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
-    // Continuations reach the system boundary and therefore also cover bars.
-    // Use their actual painted ink, not a nominal staff height.
-    if (hairpin) {
-      for (const [index] of system.measures.entries()) for (const bar of nativeLaneBarPositions(system.measures, index, relation.first.lane)) {
-        const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
-        if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
+    let dy = 0
+    if (!isArc) {
+      const blockers: { top: number }[] = [...preceding.map(([, placed]) => placed.ink), ...labels]
+      if (relation.kind !== 'tuplet') {
+        const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
+        const obstacles = glyphs
+          .filter(g => g.x + (g.inkRight ?? g.musicRight ?? g.right) >= ink.left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= ink.right)
+          .map(g => ({ top: -(g.musicTop ?? g.top) }))
+        const controls = glyphs.flatMap(g => g.controls.flatMap(placedNativeControlInk))
+          .filter(b => b.right > ink.left && b.left < ink.right)
+        blockers.push(...obstacles, ...controls)
       }
+      const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
+      // Continuations also clear the actual painted bar ink.
+      if (hairpin) {
+        for (const [index] of system.measures.entries()) for (const bar of nativeLaneBarPositions(system.measures, index, relation.first.lane)) {
+          const bounds = nativeSvgInk(nativeBarSvg(bar.kind,bar.x,0,measurer),measurer)
+          if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
+        }
+      }
+      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
     }
-    let dy = isArc ? 0 : Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
     if (isArc) {
       const arc = initialArc!
       const bars = system.measures.flatMap((_, index) =>

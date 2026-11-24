@@ -45,6 +45,12 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     const comparison = await page.evaluate(async ({ sources, plan }) => {
       const api = window.scorebook
       await api.prepareSources(sources)
+      const first = await api.measure(sources[0], 540)
+      const repeated = await api.measure(sources[0], 540)
+      await api.prepareSources(sources)
+      const fresh = await api.measure(sources[0], 540)
+      const cacheLifecycle = { first: first.timings.textMeasureCalls ?? 0, repeated: repeated.timings.textMeasureCalls ?? 0,
+        fresh: fresh.timings.textMeasureCalls ?? 0, hits: repeated.timings.textMeasureCacheHits ?? 0 }
       const entries = [], auditedEntries = []
       for (const [index, source] of sources.entries()) {
         const { candidates } = await api.probeWidthCandidates(width => api.measure(source, width))
@@ -70,9 +76,13 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
           candidates: local.candidates.map(candidate => candidate.width) })
       }
-      return { productionCandidates: entries.map(entry => entry.candidates.map(({ timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
+      return { cacheLifecycle, productionCandidates: entries.map(entry => entry.candidates.map(({ timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
     assert.deepEqual(comparison.productionCandidates, comparison.auditedEntries)
+    assert(comparison.cacheLifecycle.first > 0)
+    assert.equal(comparison.cacheLifecycle.repeated, 0)
+    assert.equal(comparison.cacheLifecycle.fresh, comparison.cacheLifecycle.first)
+    assert(comparison.cacheLifecycle.hits > 0)
     assert.equal(comparison.sharedPages, 1)
     assert.deepEqual(comparison.sharedOnline, comparison.sharedLocal.map(group => Array(group.end - group.start).fill(group.width)))
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
