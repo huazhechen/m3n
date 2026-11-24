@@ -7,8 +7,8 @@ import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 export function nativeBarMetrics(kind: string | undefined) {
   const size = nativeStyle.music * 1.25, thin = size * 0.065, thick = thin * 2.6, gap = thin * 1.8, radius = thin * 0.8
   const leftDots = kind === 'rptend' || kind === 'rptboth', rightDots = kind === 'rptstart' || kind === 'rptboth'
-  const widths = kind === 'dbl' ? [thin, thin] : kind === 'end' || leftDots ? [thin, thick] : rightDots ? [thick, thin] : [thin]
-  const prefix = leftDots ? radius * 3 + gap : 0
+  const widths = kind === 'rptboth' ? [thin, thick, thin] : kind === 'dbl' ? [thin, thin] : kind === 'end' || leftDots ? [thin, thick] : rightDots ? [thick, thin] : [thin]
+  const prefix = leftDots ? radius * (kind === 'rptboth' ? 2 : 3) + gap : 0
   const bars = widths.map((width, index) => ({ x: prefix + widths.slice(0, index).reduce((sum, value) => sum + value + gap, 0), width }))
   let width = bars.at(-1)!.x + bars.at(-1)!.width
   const dots = leftDots ? [radius] : []

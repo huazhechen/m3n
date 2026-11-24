@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { nativeBarMetrics } from './native-horizontal.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeBarSvg, nativeBarPieces, nativeBarInk, nativeMeasureBarPositions, nativeLaneBarPositions } from './native-bars.js'
@@ -107,4 +109,36 @@ it('direct bar pieces match painted coordinates, including fractional anchors an
       expect(nativeBarPieces(kind,x,y,measurer)).toEqual(nativeSvgPieces(svg,measurer))
       expect(nativeBarInk(kind,x,y,measurer)).toEqual(nativeSvgInk(svg,measurer))
     }
+})
+
+// A closing repeat followed by an opening repeat shares its central thick bar.
+it('draws a combined repeat with thin bars on both sides of the thick bar', () => {
+  const geometry = nativeBarMetrics('rptboth')
+  expect(geometry.bars).toHaveLength(3)
+  const [left, middle, right] = geometry.bars
+  expect(left!.width).toBe(right!.width)
+  expect(middle!.width).toBeGreaterThan(left!.width)
+  expect(geometry.dots).toHaveLength(2)
+  expect(geometry.dots[0]! + geometry.radius).toBeLessThan(left!.x)
+  expect(geometry.dots[1]! - geometry.radius).toBeGreaterThan(right!.x + right!.width)
+  const center = middle!.x + middle!.width / 2
+  expect(center - geometry.dots[0]!).toBeCloseTo(geometry.dots[1]! - center, 8)
+  const bars = [...nativeBarSvg('rptboth', 0, 0, measurer).matchAll(/<rect[^>]* width="([^"]+)"/g)]
+  expect(bars).toHaveLength(3)
+  bars.forEach((bar, index) => expect(Number(bar[1])).toBeCloseTo(geometry.bars[index]!.width, 4))
+})
+
+it.each([480, 720])('merges the two adjacent Turkish March repeats at %ipx', width => {
+  const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
+  const score = layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4 })
+  const merged = score.systems.flatMap(system => system.measures.flatMap((measure, index) =>
+    nativeMeasureBarPositions(system.measures, index).filter(bar => bar.kind === 'rptboth').map(() => measure.index + 1)))
+  expect(merged).toEqual([9, 44])
+})
+
+it('splits adjacent repeats into closing and opening marks across a forced line break', () => {
+  const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 :|| {br} ||: 5 6 7 1e :||'), { width: 720, paged: false, textMeasurer: measurer })
+  expect(score.systems).toHaveLength(2)
+  const positions = score.systems.map(system => nativeMeasureBarPositions(system.measures, 0).map(bar => bar.kind))
+  expect(positions).toEqual([['rptstart', 'rptend'], ['rptstart', 'rptend']])
 })
