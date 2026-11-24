@@ -48,8 +48,8 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
       }
       const y = (rightAligned ? barInk.top - 2 : top - nativeStyle.music * 0.12) - ink.bottom
       if (rightAligned) {
-        lane.top = Math.max(lane.top, -(y + ink.top))
-        raw = `<rect x="${n(ink.left)}" y="${n(ink.top)}" width="${n(ink.right - ink.left)}" height="${n(ink.bottom - ink.top)}" fill="#fff"/>${raw}`
+        lane.top = Math.max(lane.top, -(y + ink.top - 2))
+        raw = `<rect x="${n(ink.left - 2)}" y="${n(ink.top - 2)}" width="${n(ink.right - ink.left + 2)}" height="${n(ink.bottom - ink.top + 4)}" fill="#fff"/>${raw}`
       } else {
         top = y + ink.top
         lane.top = Math.max(lane.top, -top)
