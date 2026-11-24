@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "ecde8831f301b5ef08861137e7befc0d30238ceeb9ea7f8ab8fa5a6eba1b0d0a",
+  "rendererSha256": "a79ae5f6431f688acbbffeb22d22f46d2716a626ef0a74d41c78ada4dad1ace4",
   "fontManifestSha256": "3b6d3a82a31b2a8031f867c2c5829a67b5bb67413408b03786ec1184bf231b2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -170,7 +170,7 @@
       "fontSha256": "7f3647830fd663a0ddbf5b9530c5746829064b51444e24d3f71db13ff45652fc"
     },
     "src/scores/katyusha_01.m3n": {
-      "sourceSha256": "329f1b7bb8c1ddb03f857210aa55f1eae3fdec96f25782f17dacb8f38267a6b0",
+      "sourceSha256": "dc7db813a61f6ee350f5294e59c5c232f7e18b73e59d38c3f0dc184c386a424c",
       "font": "NotoSansSC-ae2e7ddae9ea2cc1.ttf",
       "fontSha256": "d319c9179f578324c1e950f754c18812ca50efaa05c5c8cd27c41055d007154b"
     },
