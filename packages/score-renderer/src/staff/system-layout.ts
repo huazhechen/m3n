@@ -22,14 +22,6 @@ const decorations = [
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
 ]
 const isDecoration = (node: XmlNode) => decorations.some((c) => hasClass(node, c))
-function filtered(node: XmlNode, omit: (node: XmlNode) => boolean): XmlNode {
-  return {
-    ...node,
-    children: node.children
-      .filter((child) => typeof child === 'string' || !omit(child))
-      .map((child) => (typeof child === 'string' ? child : filtered(child, omit))),
-  }
-}
 /** Keep ancestor transforms when measuring only selected attachments. */
 function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode {
   if (keep(node)) return node
@@ -84,7 +76,7 @@ export function arrangeStaffSystem(
   // packing verses, so a later collision pass cannot push a numeral below text.
   const tuplets = new Set(findAll(node, n => hasClass(n, 'm3n-tuplet-label')))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
-  const rhythmObstacles = geometry.pieces(filtered(node, n => isDecoration(n) || hasClass(n, 'verse')))
+  const rhythmObstacles = geometry.without(node, n => isDecoration(n) || hasClass(n, 'verse'))
   for (const label of tuplets) {
     const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
     let dy = 0
@@ -131,7 +123,7 @@ export function arrangeStaffSystem(
         rows.set(row, [...(rows.get(row) ?? []), verse])
       }
     if (!rows.size) continue
-    const body = union(staffs.flatMap((staff) => geometry.pieces(filtered(staff, (n) => hasClass(n, 'verse')))))
+    const body = union(staffs.flatMap((staff) => geometry.without(staff, (n) => hasClass(n, 'verse'))))
     let bottom = body.bottom
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
@@ -188,7 +180,7 @@ export function arrangeStaffSystem(
     if (row) row.push(item)
     else endingRows.push([item])
   }
-  const endingObstacles = geometry.pieces(filtered(node, isMovableDecoration))
+  const endingObstacles = geometry.without(node, isMovableDecoration)
   for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
@@ -211,7 +203,7 @@ export function arrangeStaffSystem(
     }
   }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
-  const music = geometry.pieces(filtered(node, isMovableDecoration))
+  const music = geometry.without(node, isMovableDecoration)
   const obstacles = [...music]
   const hairpinPieces = new Set<Ink>()
   // Keep brackets and curves inside expression
@@ -310,7 +302,7 @@ export function arrangeStaffSystem(
   // enlarge a particular row gap when their actual ink requires clearance.
   const core = union(findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
-  const spacingPieces = geometry.pieces(filtered(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum')))
+  const spacingPieces = geometry.without(node, child => hasClass(child, 'ending') || hasClass(child, 'mNum'))
     .map((p) => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }))
   const edgePieces = ['ending'].flatMap(kind =>
     geometry.pieces(selected(node, child => hasClass(child, kind)))

@@ -16,12 +16,12 @@ for(const report of baselines){
  assert.equal(report.mode,'production')
  assert.equal(report.auditLayout,false)
  assert.equal(report.sourceSnapshotSha256,baselines[0].sourceSnapshotSha256)
- assert.equal(report.rendererSha256,baselines[0].rendererSha256)
+ if(!process.argv.includes('--compare-implementations'))assert.equal(report.rendererSha256,baselines[0].rendererSha256)
  assert.deepEqual(semantic(report),reference,'Every candidate must remain identical between runs')
 }
 const median=values=>{const sorted=[...values].sort((a,b)=>a-b),m=Math.floor(sorted.length/2);return sorted.length%2?sorted[m]:(sorted[m-1]+sorted[m])/2}
 const layoutMs=report=>report.entries.flatMap(e=>e.candidates).reduce((n,c)=>n+(c.timings?.layoutMs??0),0)
-const summary={revision:baselines[0].revision,sourceSnapshotSha256:baselines[0].sourceSnapshotSha256,
+const summary={comparisonAcrossImplementations:process.argv.includes('--compare-implementations'),revision:baselines[0].revision,sourceSnapshotSha256:baselines[0].sourceSnapshotSha256,
  candidateResultsSha256:createHash('sha256').update(JSON.stringify(reference)).digest('hex'),scores:reference.length,
  libraryScores:reference.filter(e=>e.file.startsWith('scores/')).length,works:reference.filter(e=>e.file.startsWith('works/')).length,
  candidates:baselines[0].candidateCount,failedCandidates:baselines[0].failedCandidates,
