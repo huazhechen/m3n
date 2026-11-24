@@ -9,10 +9,10 @@
     4
   ],
   "tempo": 60,
-  "organization": "前两套主歌普通反复→副歌→第三套主歌及尾句，顺读不设段名，不使用原谱五重房子和D.S.",
+  "organization": "前两遍主歌后接副歌，第26小节D.S.回到第2小节唱第三段，第三房子接尾句；三遍共用首拍延音及歌词对位。",
   "writtenBars": [
     "0:1 0:.5 3:.5",
-    "6:.5 6:.5 6:.5 7:.25 1e:.25",
+    "6:.5 6:.25 6:.25 6:.5 7:.25 1e:.25",
     "7:.25 6:.25 5:.5 5:.5 6:.25 7:.25",
     "6:.5 3:.5 3:.75 2:.25",
     "3:2",
@@ -37,21 +37,6 @@
     "2e:1 5:1",
     "1e:.5 6:.25 7:.25 1e:.5 2e:.25 1e:.25",
     "7:1 7:.75 3:.25",
-    "6:.5 6:.25 6:.25 6:.5 7:.25 1e:.25",
-    "7:.25 6:.25 5:.5 5:.5 6:.25 7:.25",
-    "6:.5 3:.5 3:.75 2:.25",
-    "3:2",
-    "5:.5 5:.5 5:.25 3:.25 2:.25 3:.25",
-    "5:.5 6:.25 7:.25 1e:.5 7:.25 6:.25",
-    "7:.5 5:.25 5:.25 5:.25 6:.25 7:.5",
-    "6:2",
-    "7:.5 7:.5 1e:.5 1e:.5",
-    "2e:.5 2e:.25 2e:.25 3e:.5 2e:.25 3e:.25",
-    "5e:.5 5e:.25 3e:.25 3e:.75 2e:.25",
-    "1e:2",
-    "3e:.5 1e:.5 2e:.5 7:.5",
-    "1e:.25 2e:.25 1e:.25 7:.25 6:.5 1e:.5",
-    "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
     "7:.5 5:.5 5:.25 6:.25 7:.5",
     "6:2",
@@ -71,8 +56,8 @@
     "流浪的足迹在荒漠里写下永久的回忆飘去飘来的笔迹是深藏的记取了你的心语前尘后世轮回中谁在声音里徘徊痴情笑我凡俗的人世终难解的关怀",
     "空独眠的日子春雨不眠隔夜的你曾空无眠的日子"
   ],
-  "performedLyricsSha256": "f368ff876e68571b8606a1cc6957c338f5407ecdae81a8de24aefe873db6b667",
-  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-17 rechecked bars 26–27 against the original image: 人 begins on the first 7; added the cross-bar high-1 tie and repeated-7 tie. Full-image audit also corrects bars 15, 41, 47 to four equal sixteenths and a two-note slur. User-authorized simplification: remove the high 1 at bar 27, extend the first 7 backward by .25 beats, and end the preceding slur at bar 26. User extends the initial pickup to .5 beats and shortens the final rest to 1.5 beats; total performance remains 126 beats. User moves the final 1.5-beat rest before the first note; all written measures are now full 2/4 bars, and sung events start 1.5 beats later. Shared bar before the two endings is written once with two lyric verses; performance timing and lyric fingerprint are unchanged. User correction (2026-11-24): bar 19 replaces the final high 1 with slurred high 2–1 sixteenths on 一; bar 25 begins high 1–6–7 with unchanged rhythm.",
+  "performedLyricsSha256": "4304e94fd6c52d3bcf60989a76e9050eb1ad1f937827162de3376030e39fa4b1",
+  "performedLyricsProvenance": "Captured from 49f5552^ before lyric-clause splitting; SHA-256 of [quarter-beat start, quarter-beat end, lyric text] tuples in playback order. 2026-11-17 rechecked bars 26–27 against the original image: 人 begins on the first 7; added the cross-bar high-1 tie and repeated-7 tie. Full-image audit also corrects bars 15, 41, 47 to four equal sixteenths and a two-note slur. User-authorized simplification: remove the high 1 at bar 27, extend the first 7 backward by .25 beats, and end the preceding slur at bar 26. User extends the initial pickup to .5 beats and shortens the final rest to 1.5 beats; total performance remains 126 beats. User moves the final 1.5-beat rest before the first note; all written measures are now full 2/4 bars, and sung events start 1.5 beats later. Shared bar before the two endings is written once with two lyric verses; performance timing and lyric fingerprint are unchanged. User correction (2026-11-24): bar 19 replaces the final high 1 with slurred high 2–1 sixteenths on 一; bar 25 begins high 1–6–7 with unchanged rhythm. User simplification (2026-11-24): share bars 2–16 for all three verses, split the second 6 into tied sixteenths in every pass, explicitly align 的 to the tied target on the third pass; D.S. at bar 26 returns to bar 2 and selects ending 3 before the tail.",
   "playbackLyricRowIndexes": [
     0,
     1,
@@ -84,6 +69,10 @@
     7
   ],
   "ties": [
+    {
+      "bar": 2,
+      "event": 2
+    },
     {
       "bar": 26,
       "event": 1
@@ -143,40 +132,10 @@
     {
       "start": [
         31,
-        3
+        1
       ],
       "end": [
         31,
-        4
-      ]
-    },
-    {
-      "start": [
-        37,
-        2
-      ],
-      "end": [
-        37,
-        3
-      ]
-    },
-    {
-      "start": [
-        40,
-        1
-      ],
-      "end": [
-        40,
-        2
-      ]
-    },
-    {
-      "start": [
-        46,
-        1
-      ],
-      "end": [
-        46,
         2
       ]
     }

@@ -78,20 +78,26 @@ describe('new reference scores', () => {
     expect(parseM3NDocument(source).parts.get('score')!.bass.flatMap(bar => bar.events)).toEqual([])
   })
 
-  it('uses the C-major 2/4 Dream Chaser reference without instrumental passages or navigation', () => {
+  it('shares three Dream Chaser verses and returns from the chorus to bar 2', () => {
     const document = parseM3NDocument(dream)
     expect(document).toMatchObject({ key: dreamReference.key, meterCount: 2, meterUnit: 4, tempo: 60 })
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-    expect(bars).toHaveLength(48)
+    expect(bars).toHaveLength(33)
     expect(bars.map(bar => bar.events.map(event => `${event.pitches[0] ?? '0'}:${event.beats}`)))
       .toEqual(dreamReference.writtenBars.map(row => row.split(' ').map(token => token.replace(/:\./, ':0.'))))
     expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)))
-      .toEqual(Array(48).fill(2))
+      .toEqual(Array(33).fill(2))
     expect(bars.flatMap(bar => bar.events).some(event => event.sectionLabel)).toBe(false)
     expect(document.order).toBeUndefined()
-    expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', '2'])
+    expect(bars.filter(bar => bar.ending).map(bar => bar.ending)).toEqual(['1', ...Array(9).fill('2'), '3'])
     expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
-    expect(bars.flatMap(bar => bar.events).some(event => event.navigation.length)).toBe(false)
+    expect(bars[1]!.navigation).toContain('segno')
+    expect(bars[25]!.navigation).toContain('ds')
+    const { lyricsByEvent } = deriveScoreInteraction(document)
+    const target = bars[1]!.events[2]!
+    expect(lyricsByEvent.get(target)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ text: '的', forceTiedTarget: true }),
+    ]))
     expect(dream).not.toMatch(/前奏|间奏/)
     expectReferenceLyrics(dream, dreamReference)
     expect(events(dream).reduce((sum, event) => sum + event.beats, 0)).toBe(dreamReference.performedBeats)

@@ -1,8 +1,8 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "52f1be4f3ffa16ad08f90ad8391d3964ab001248b7f698a94d57975e72113876",
-  "fontManifestSha256": "0214416336592e408a04eab9ca3c85c79d8e59c26c81b538ea84d905d60516b0",
+  "rendererSha256": "598a0821490e3848aec8bf8330fc9d13e6a4ff7dd08a5605ef8303ea55490365",
+  "fontManifestSha256": "51726854fea494561357a51d9f86da49256658afd49b35ce16b06f6fa6cbf03b",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -510,9 +510,9 @@
       "fontSha256": "ee23757a9d9f0b2642023bd25f88e8e1d69ca0aa6b592def5a5fd972b814d537"
     },
     "src/scores/zhui_meng_ren_01.m3n": {
-      "sourceSha256": "bf50582b79a00a77e2f52173f53641f2479d2ef2414b04fd347213c662431a75",
-      "font": "NotoSansSC-e9547b87b298031d.ttf",
-      "fontSha256": "9d9a650177498cb944c0bdf4d942b0308fa7d08e27c179350bc3466430265ca8"
+      "sourceSha256": "da744c790d2b814655e0cd93a552609a46c990ddcd39cca06565a3ba261aeda1",
+      "font": "NotoSansSC-924b4d5ad6d6ff8c.ttf",
+      "fontSha256": "2962b0f6327d07ea3849fba0f36d732358f5a4480f7cd3e71fa08bb6eb04c90d"
     },
     "src/scores/zui_chang_de_dian_ying_01.m3n": {
       "sourceSha256": "5ca7e1275e3ec3ee87f6ac2410d7dad2e6bf88280b9a0abdde337ee806b30b52",
