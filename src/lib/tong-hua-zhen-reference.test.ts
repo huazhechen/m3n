@@ -16,15 +16,15 @@ it('matches the c33d transcription through 都走到 in the original first-pass 
   const simplified = imageMelody.replace('((2. (1) 2. (1)))', '((2 1 2 1))')
     .replace('(3 5 3 2)', '(3 5 3) {lg}((2 1)){/}')
     .replace('(1 1 1 6d)', '(1 1 2 6d)')
+    .replace('((6 5 6 5)) (4 (6 5~)) | 5 (0 (3 3))', '((6 5 6 5)) (4 (6 5~)) | (5 3) (0 (3 3))')
   const reference = tokens(parseM3NDocument(simplified).parts.get('score')!.melody)
   expect(tokens(performed).slice(0, reference.length)).toEqual(reference)
 })
 
 it('adds full-bar return houses while retaining the existing local houses', () => {
-  expect(source.match(/^---V[12]$/gm)).toEqual(['---V1', '---V2', '---V1', '---V2', '---V1', '---V2', '---V1', '---V2'])
+  expect(source.match(/^---V[12]$/gm)).toEqual(['---V1', '---V2', '---V1', '---V2', '---V1', '---V2'])
   const houses = source.split(/^---V[12]\n/gm).slice(1).map(part => part.split(/^---/m)[0]!)
   expect(houses.map(house => house.match(/^L: (.*)$/m)?.[1])).toEqual([
-    '帽有件抑制自己 | 变成', '鱼把阳光抹成眼 | 影投进',
     '在爱里曲', '前方的山口汇',
     '刻听说', '刻又陌',
     '% | 呜{%2} | {%2}', '%',
@@ -74,8 +74,20 @@ it('simplifies bar 17 to bar 15 rhythm while keeping its pitches and outgoing ti
   expect(written[15]!.events.at(-1)!.tie).toBe(true)
 })
 
+it('shares the former second-house melody and leaves its extra 3 without first-pass lyrics', () => {
+  const bar = written[30]!
+  expect(bar.events.map(event => [event.pitches, event.beats])).toEqual([
+    [['5'], .5], [['3'], .5], [[], .5], [['3'], .25], [['3'], .25],
+  ])
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const verse = (pass: number) => bar.events.map(event => (lyricsByEvent.get(event) ?? [])
+    .filter(lyric => lyric.kind === 'text' && lyric.passes?.has(pass)).map(lyric => lyric.text))
+  expect(verse(1)).toEqual([[], [], [], ['变'], ['成']])
+  expect(verse(2)).toEqual([[], ['影'], [], ['投'], ['进']])
+})
+
 it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
-  const bar = written[36]!
+  const bar = written[34]!
   expect(bar.events.map(event => [event.pitches, event.beats])).toEqual([
     [['3'], .5], [['5'], .5], [['3'], .5], [['2'], .25], [['1'], .25],
   ])
@@ -87,7 +99,7 @@ it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
 })
 
 it('uses 2 for the third eighth note in bar 43', () => {
-  expect(written[41]!.events.map(event => [event.pitches, event.beats])).toEqual([
+  expect(written[39]!.events.map(event => [event.pitches, event.beats])).toEqual([
     [['1'], .5], [['1'], .5], [['2'], .5], [['6d'], .5],
   ])
 })
@@ -118,7 +130,7 @@ it('keeps both lyric verses aligned, including the shared rhythms and corrected 
   expect(returnHouse.ending).toBe('1')
   expect(returnHouse.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
   expect(written.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 2)).toBe(true)
-  expect(tokens(performed)).toHaveLength(502)
+  expect(tokens(performed)).toHaveLength(503)
   expect(performed.reduce((sum, bar) => sum + bar.events.reduce((sum, event) => sum + event.beats, 0), 0)).toBe(210)
 })
 
@@ -140,9 +152,9 @@ it('uses the requested ending pitches and lyric alignment within the original sh
   expect([final.pitches, final.beats]).toEqual([['3'], 2])
 })
 
-it('preserves the complete performed melody and every lyric timing after moving repeat boundaries', () => {
+it('preserves the updated performed melody and every lyric timing', () => {
   const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
-  expect(hash(tokens(performed))).toBe('042394b7a2954e7ad7513c8b027a3ee783746ae2e1c23bfc8e0167c7fbf71821')
+  expect(hash(tokens(performed))).toBe('06deeb983f9f50cdbd8173114bae86130f60da7c854cf7d4ac378a3745a4bfc6')
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
   const lyrics = compileScorePerformance(document).elements.filter(event => event.voice === 'score:melody')
