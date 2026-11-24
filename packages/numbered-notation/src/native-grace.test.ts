@@ -136,7 +136,7 @@ describe('measured native grace blocks', () => {
       const root = new DOMParser().parseFromString(`<svg>${grace.svg}</svg>`,'image/svg+xml')
       const note = root.querySelector('[data-m3n-role="grace-note"]')!
       const digit = nativeSvgInk(note.querySelector('text')!.outerHTML,unusual)
-      const dots = [...note.querySelectorAll('circle')].map(dot => nativeSvgInk(dot.outerHTML,unusual))
+      const dots = [...note.querySelectorAll('[data-m3n-role="music-dot"]')].map(dot => nativeSvgInk(dot.outerHTML,unusual))
       const lastBeam = nativeSvgInk([...note.querySelectorAll('line')].at(-1)!.outerHTML,unusual)
       expect(dots).toHaveLength(2)
       expect(octave > 0 ? digit.top - dots[0]!.bottom : dots[0]!.top - Math.max(digit.bottom,lastBeam.bottom)).toBeCloseTo(grace.size * 0.08,3)

@@ -1,52 +1,48 @@
-# 简谱音乐符号的绘制与字符替换清单
+# 简谱音乐符号的字符绘制
 
-2026-11-24，核对 `packages/numbered-notation/src/native-*.ts` 的实际绘制入口，以及随项目分发的 Bravura 字体和 `public/licenses/bravura/glyph-sources.tar.gz` 中的码位元数据。以下区分字体字形轮廓与引擎自行组合的几何；并非所有SVG路径都是自行设计的音乐符号。五线谱由VexFlow负责，本次未改变其绘制策略。
+2026-11-24，按项目实际分发的 Bravura、Barlow Semi Condensed、思源黑体核对固定符号。简谱中已有对应字形的固定音乐符号全部使用字符；不再生成或解析这些符号的字体轮廓路径。五线谱继续由 VexFlow 负责。
 
-## 本轮：升降号直接使用音乐字体字符
+## 使用Bravura的固定音乐字符
 
-音符、和音、倚音、调号和谱头音域中的升号、降号、还原号，统一输出 `font-family="Bravura"` 的SMuFL文字：
+| 用途 | 字形／码位 |
+| --- | --- |
+| 升、降、还原 | accidentalSharp E262、accidentalFlat E260、accidentalNatural E261 |
+| 力度 p、pp、ppp、f、ff、fff、mp、mf、sfz | dynamicPiano E520、dynamicPP E52B、dynamicPPP E52A、dynamicForte E522、dynamicFF E52F、dynamicFFF E530、dynamicMP E52C、dynamicMF E52D、dynamicSforzato E539 |
+| 延长记号 | fermataAbove E4C0 |
+| 重音、换气 | articAccentAbove E4A0、breathMarkComma E4CE |
+| 颤音、短波音 | ornamentTrill E566、ornamentShortTrill E56C |
+| 保持音、简谱跳音／特短断奏 | articTenutoAbove E4A4、articStaccatissimoAboveSmall F47B |
+| Segno、Coda圆十字 | segno E047、coda E048 |
+| 琶音波浪段 | wiggleArpeggiatoUp EAA9 |
+| 双声部括号钩头 | bracketTop E003、bracketBottom E004 |
+| 八度点、时值附点 | augmentationDot E1E7 |
+| 反复圆点 | repeatDot E044 |
 
-| 符号 | 字形 | 码位 |
-| --- | --- | --- |
-| ♭ | accidentalFlat | U+E260 |
-| ♮ | accidentalNatural | U+E261 |
-| ♯ | accidentalSharp | U+E262 |
+升降号覆盖主音符、和音、倚音、调号与谱头音域；双升／双降保留原来的两个升号／两个降号组合。跳音保持小倒三角，F47B是Bravura专用字形，不能依赖替代字体。括号由字体钩头与随声部高度伸缩的竖线组合；琶音按和音的实际高度重复、旋转字符。圆点按既有直径定位，不改变音乐轴和八度层级。
 
-双升／双降保持原来的两个升号／两个降号组合。字号按字体设计墨迹高度换算，位置、间距和避让使用当前任务中的实际文字度量；直接几何与最终SVG共用相同的六位小数位置。无Canvas环境使用随字体核对的设计度量，自定义测量器继续有效。装饰性的音乐字符不进入无障碍读谱文字；音乐语义仍来自谱源。
+除升降号已有的字号度量外，其余固定字形统一在1000px字号下测量真实墨迹，再用SVG矩阵缩放至目标墨迹高度，避免小字号的像素取整放大圆点、保持音等记号的预留边界。字形的居中、基线和负边距都来自实际测量；圆点与括号钩头需要指定宽度时按两轴缩放。矩阵保留12位小数，避免大字号乘以六位小数比例造成误差；最终平移位置仍保留六位小数。直接几何与SVG解析共用矩阵变换，琶音的90度旋转也进入避让。
 
-网页安装原有 `Bravura.woff2`。PNG轮廓化和矢量PDF使用由同一WOFF2无损解包、并将glyf字形边界填充到偶数字节的 `Bravura.ttf`，两者的字形轮廓逐项核对。当前fontkit直接裁剪该WOFF2时会产生空轮廓，且短loca表的子集写入还要求偶数字节边界；因此不能将“源字体包含字符”视为PDF嵌入成功。回归同时检查码位、设计墨迹及裁剪后的真实轮廓。TTF由 `tools/prepare-score-fonts.py` 生成，按项目字体策略共享，不引入新的字体。
+任务内按完整文字样式复用度量，并按字形、目标墨迹高度／宽度及居中方式复用不可变的固定字形几何和SVG片段；字体集合变化时一并清除。新任务重新测量，没有跨任务字形度量或排版结果缓存。无Canvas环境使用从同一字体生成的设计度量；注入的测量器继续有效。音乐装饰字符设置 `aria-hidden`，读谱语义仍来自谱源。
 
-## 可以继续改为直接字符的固定字形
+## 普通文字字符
 
-下列码位均已在当前分发的Bravura中确认存在。目前仍沿用字体轮廓路径，本轮只清点，没有扩大替换范围。
+数字音级、歌词、指法、连音组数字、BPM、Fine／D.C.／D.S.／To Coda和器乐括号继续使用文字。演奏顺序箭头直接使用思源黑体的 U+2192；该字符明确加入单曲中文子集、预加载与覆盖检查，不依赖系统替代字体。它与其他文字一样，在PNG中使用原字体轮廓，在PDF中嵌入实际子集。
 
-| 当前用途 | 字形／码位 | 实现入口 | 替换时需要保留 |
-| --- | --- | --- | --- |
-| 力度 p、pp、ppp、f、ff、fff、mp、mf、sfz | dynamicPiano E520、dynamicPP E52B、dynamicPPP E52A、dynamicForte E522、dynamicFF E52F、dynamicFFF E530、dynamicMP E52C、dynamicMF E52D、dynamicSforzato E539 | `native-dynamics.ts` | 各力度现有墨迹高度、居中及层级避让 |
-| 延长记号 | fermataAbove E4C0 | `native-fermata.ts` | 中心位置及与连线的间距 |
-| 重音、换气 | articAccentAbove E4A0、breathMarkComma E4CE | `native-articulations.ts` | 实际墨迹与局部奏法堆叠 |
-| 颤音、短波音 | ornamentTrill E566、ornamentShortTrill E56C | `native-ornaments.ts` | 两者不同的字号比例 |
-| 保持音、简谱跳音／特短断奏 | articTenutoAbove E4A4、articStaccatissimoAboveSmall F47B | `native-symbols.ts` 的 `rawMark` | 跳音／特短断奏仍使用小倒三角；F47B为Bravura专用字形，不能依赖其他音乐字体替代 |
-| Segno、Coda圆十字 | segno E047、coda E048 | `native-navigation-glyphs.ts`、`native-symbols.ts` | 音乐轴对齐、Coda文字与导航占位 |
+## 保留的布局几何
 
-这些替换可共用本轮的字体准备、任务内度量复用及PDF字体策略。每组仍须单独验证墨迹、避让、PNG和PDF，不能只按字符推进宽度替换现有轮廓。
+当前分发的Bravura仅含878个码位，**不含**标准小节线 E030～E033。因此普通、双线、终止与反复小节线仍用矩形组合，反复圆点已改为字符；不能根据完整SMuFL标准推断随包字体已有这些字形。
 
-## 可局部使用字体，但需要额外几何处理
+以下图形的形状由端点、覆盖范围或布局框决定，继续由引擎计算：
 
-| 当前用途 | 可用字形 | 判断 |
-| --- | --- | --- |
-| 琶音波浪线 | wiggleArpeggiatoUp U+EAA9 | 现在已重复、旋转字体轮廓以覆盖和音高度。可以用旋转字符拼接，但仍需按高度决定数量和拼接间距；内部墨迹测量目前只接受平移，直接替换还需支持旋转后的几何。 |
-| 双声部连接括号 | bracketTop U+E003、bracketBottom U+E004、brace U+E000 | 可用固定钩头加伸缩直线组合；整个括号高度由两个声部的实际墨迹决定，不能直接放一个固定字号字符。 |
-| 八度点、附点 | augmentationDot U+E1E7 | 技术上可用字形，但当前圆图元十分简单；替换会增加字体度量和定位工作，没有已证实的性能收益。 |
-| 小节线、反复线 | 字体提供对应音乐记号 | 当前由少量矩形与圆组成，位置和高度直接匹配简谱音乐轴；暂无理由仅为替换字符而改变笔画和反复点间距。 |
+- 连音线、延音线：跨度、曲率、收尖、跨行续接和避让随谱面变化。
+- 渐强／渐弱线、反复房子、连音组括线、减时线、连接符杠、延音横线和多小节休止横线。
+- 倚音块末端的尾钩，以及声部连接括号中间的竖线、声部连接规则线。
+- 拍号分隔线、段落框、注释框和其他布局边框。
 
-## 保留按实际跨度绘制的图形
+## 字体生成及导出
 
-- 连音线、延音线：曲率、厚度、收尖、跨行续接及避让均由端点和实际跨度决定，使用 `native-arc.ts` 的曲线。
-- 渐强／渐弱线、反复房子、连音组括线：需要随覆盖范围延伸和跨行拆分，保留线段。
-- 减时线和连接符杠、延音横线、多小节休止横线：长度、层数或连接范围依赖谱面，保留图元。
-- 倚音尾钩：附着于当前倚音块的末端，不是一个可以无差别替换的完整标准音符字形。
-- 拍号分隔线、段落框及注释框：属于布局几何。
-- 演奏顺序箭头：目前用少量路径确保页面、PNG和PDF一致；历史上存在阅读器替代字体字符映射问题，不因本轮音乐字符优化而更换。
+`tools/prepare-score-fonts.py` 从实际WOFF2生成 `bravura-symbols.json` 的码位、边距、推进和墨迹度量。升降号的设计度量保存在 `bravura-characters.json`。旧的固定字形轮廓JSON和提取脚本已删除。
 
-数字音级、歌词、指法、连音组数字、BPM文字、Fine／D.C.／D.S.／To Coda文字和器乐括号已使用文字，无需重复转换。Bravura轮廓数据中保留的 `metNote*` 不代表当前BPM入口正在绘制音符图形；当前入口是文字。
+网页继续下载 `Bravura.woff2`。PNG轮廓化和PDF嵌入使用同源 `Bravura.ttf`；解包时将glyf字形边界填充至偶数字节，避免fontkit在WOFF2及短loca子集上丢失轮廓。字体回归逐项核对全部使用码位的原始轮廓、设计墨迹和裁剪后的真实轮廓。增加音乐字符没有增加新字体族。
+
+PDF纸张验收与候选审计都检查实际墨迹，包含矩阵变换及相对外层纸张的坐标转换；不能用音乐字体全行框推断一个缩放字符是否越界。回归同时覆盖行框超出但实际圆点仍在纸内，以及真正超出纸边的字符。

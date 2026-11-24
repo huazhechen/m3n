@@ -1,0 +1,186 @@
+{
+  "dynamicPiano": {
+    "character": "",
+    "left": -0.089,
+    "width": 0.455,
+    "ascent": 0.274,
+    "descent": 0.142,
+    "advance": 0.365
+  },
+  "dynamicPP": {
+    "character": "",
+    "left": -0.082,
+    "width": 0.81,
+    "ascent": 0.274,
+    "descent": 0.142,
+    "advance": 0.727
+  },
+  "dynamicPPP": {
+    "character": "",
+    "left": -0.092,
+    "width": 1.165,
+    "ascent": 0.274,
+    "descent": 0.142,
+    "advance": 1.072
+  },
+  "dynamicForte": {
+    "character": "",
+    "left": -0.141,
+    "width": 0.505,
+    "ascent": 0.444,
+    "descent": 0.152,
+    "advance": 0.364
+  },
+  "dynamicFF": {
+    "character": "",
+    "left": -0.135,
+    "width": 0.745,
+    "ascent": 0.444,
+    "descent": 0.152,
+    "advance": 0.609
+  },
+  "dynamicFFF": {
+    "character": "",
+    "left": -0.155,
+    "width": 0.985,
+    "ascent": 0.444,
+    "descent": 0.152,
+    "advance": 0.831
+  },
+  "dynamicMP": {
+    "character": "",
+    "left": -0.02,
+    "width": 0.845,
+    "ascent": 0.274,
+    "descent": 0.142,
+    "advance": 0.826
+  },
+  "dynamicMF": {
+    "character": "",
+    "left": -0.02,
+    "width": 0.838,
+    "ascent": 0.431,
+    "descent": 0.165,
+    "advance": 0.797
+  },
+  "dynamicSforzato": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.733,
+    "ascent": 0.444,
+    "descent": 0.152,
+    "advance": 0.732
+  },
+  "fermataAbove": {
+    "character": "",
+    "left": 0.003,
+    "width": 0.602,
+    "ascent": 0.329,
+    "descent": 0.003,
+    "advance": 0.605
+  },
+  "articAccentAbove": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.339,
+    "ascent": 0.245,
+    "descent": -0.001,
+    "advance": 0.339
+  },
+  "breathMarkComma": {
+    "character": "",
+    "left": 0.001,
+    "width": 0.151,
+    "ascent": 0.251,
+    "descent": -0.002,
+    "advance": 0.153
+  },
+  "ornamentTrill": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.521,
+    "ascent": 0.39,
+    "descent": 0.01,
+    "advance": 0.521
+  },
+  "ornamentShortTrill": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.725,
+    "ascent": 0.245,
+    "descent": 0.0,
+    "advance": 0.73
+  },
+  "articTenutoAbove": {
+    "character": "",
+    "left": -0.001,
+    "width": 0.339,
+    "ascent": 0.048,
+    "descent": 0.0,
+    "advance": 0.338
+  },
+  "articStaccatissimoAboveSmall": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.132,
+    "ascent": 0.295,
+    "descent": 0.0,
+    "advance": 0.132
+  },
+  "segno": {
+    "character": "",
+    "left": 0.004,
+    "width": 0.546,
+    "ascent": 0.759,
+    "descent": 0.027,
+    "advance": 0.557
+  },
+  "coda": {
+    "character": "",
+    "left": -0.004,
+    "width": 0.959,
+    "ascent": 0.898,
+    "descent": 0.158,
+    "advance": 0.954
+  },
+  "wiggleArpeggiatoUp": {
+    "character": "",
+    "left": -0.033,
+    "width": 0.325,
+    "ascent": 0.119,
+    "descent": 0.0,
+    "advance": 0.255
+  },
+  "bracketTop": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.469,
+    "ascent": 0.295,
+    "descent": 0.0,
+    "advance": 0.469
+  },
+  "bracketBottom": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.469,
+    "ascent": 0.0,
+    "descent": 0.295,
+    "advance": 0.469
+  },
+  "augmentationDot": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.1,
+    "ascent": 0.05,
+    "descent": 0.05,
+    "advance": 0.1
+  },
+  "repeatDot": {
+    "character": "",
+    "left": 0.0,
+    "width": 0.1,
+    "ascent": 0.05,
+    "descent": 0.05,
+    "advance": 0.1
+  }
+}

@@ -2,9 +2,9 @@ import { parseM3NDocument } from '@m3n/notation';
 import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
 import { measureNativeControl } from './native-controls.js';
-import { nativePathInk,nativeSvgInk } from './native-ink.js';
+import { nativeSvgInk } from './native-ink.js';
 import { layoutNativeScore } from './native-layout.js';
-import type { TextMeasurer } from './native-measure.js';
+import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js';
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js';
 import { measureNativeNavigation } from './native-navigation.js';
 import { NativeSymbols } from './native-symbols.js';
@@ -13,6 +13,7 @@ import { projectNativeScore } from './native-model.js';
 // The music's measured axis is -8px. Navigation has a different ascent/descent
 // ratio, a left overhang and ink extending beyond its advance width.
 const measurer: TextMeasurer = { measureText(text, style) {
+        if (style.fontFamily === 'Bravura') return new DefaultTextMeasurer().measureText(text,style);
         if (style.fontFamily === 'M3N Numbers')
             return { w: 12, h: 18, baseline: 17 };
         return { w: text.length * style.fontSize * 0.6, advance: 26, inkLeft: -2, inkRight: 30, h: 9, baseline: 6 };
@@ -89,7 +90,7 @@ describe('measured navigation geometry', () => {
     });
     it.each(['segno', 'coda'] as const)('scales %s from actual curve bounds', name => {
         const small = nativeNavigationGlyph(name, 12), large = nativeNavigationGlyph(name, 24);
-        const a = nativePathInk(small.path), b = nativePathInk(large.path);
+        const a = nativeSvgInk(small.svg,new DefaultTextMeasurer()), b = nativeSvgInk(large.svg,new DefaultTextMeasurer());
         expect(a.left).toBeCloseTo(0, 5);
         expect(a.top).toBeCloseTo(0, 5);
         expect(a.bottom).toBeCloseTo(12, 5);

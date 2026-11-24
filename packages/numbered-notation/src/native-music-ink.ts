@@ -1,3 +1,4 @@
+import { nativeDotInk } from './bravura.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeNoteBody } from './native-note-body.js'
@@ -17,8 +18,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
       top: Math.min(n(y1), n(y2)) - half, bottom: Math.max(n(y1), n(y2)) + half })
   }
   const circle = (x: number, y: number, radius: number) => {
-    const r = n(radius)
-    pieces.push({ left: n(x) - r, right: n(x) + r, top: n(y) - r, bottom: n(y) + r })
+    pieces.push(nativeDotInk(x,y,radius,measurer))
   }
   if (glyph.sustain) {
     const axis = glyph.y + nativeMusicAxis(measurer)

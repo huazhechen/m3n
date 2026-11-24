@@ -95,3 +95,9 @@ describe('native painted geometry', () => {
     expect(glyph.musicTop).toBeCloseTo(-mark.top)
   })
 })
+
+it('measures nested translated and quarter-turned font ink with its full matrix', () => {
+  const measurer: TextMeasurer = {measureText: () => ({w:8,h:12,baseline:10,inkLeft:2,inkRight:8,inkBottom:12})}
+  const svg = '<g transform="translate(3 7)"><text x="0" y="0" font-size="1000" font-family="Bravura" transform="matrix(0 .5 -.5 0 100 200)">\uEAA9</text></g>'
+  expect(nativeSvgInk(svg,measurer)).toEqual({left:102,right:108,top:208,bottom:211})
+})

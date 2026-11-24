@@ -19,7 +19,7 @@ describe('note decorations clear measured font edges', () => {
       const painter = new NativeSymbols(measurer)
       for (const octave of [1, 2, -1, -2]) {
         const svg = root(painter.pitch({ ...pitch, octave }, 0, 0, size))
-        const dots = [...svg.querySelectorAll('circle')].map(c => nativeSvgInk(c.outerHTML, measurer))
+        const dots = [...svg.querySelectorAll('[data-m3n-role="music-dot"]')].map(c => nativeSvgInk(c.outerHTML, measurer))
         const text = nativeSvgInk(svg.querySelector('text')!.outerHTML, measurer)
         const clearance = octave > 0 ? text.top - dots[0]!.bottom : dots[0]!.top - text.bottom
         expect(clearance).toBeCloseTo(size * (octave > 0 ? .08 : .12), 3)
@@ -37,7 +37,7 @@ describe('note decorations clear measured font edges', () => {
         const firstBeam = nativeSvgInk(beams[0]!.outerHTML, measurer)
         expect(firstBeam.top - text.bottom).toBeCloseTo(22 * .12, 4)
         const lastBeam = nativeSvgInk(beams.at(-1)!.outerHTML, measurer)
-        const dot = nativeSvgInk(svg.querySelector('circle')!.outerHTML, measurer)
+        const dot = nativeSvgInk(svg.querySelector('[data-m3n-role="music-dot"]')!.outerHTML, measurer)
         expect(dot.top - lastBeam.bottom).toBeCloseTo(22 * .08, 4)
         const metrics = nativeNoteMetrics(a.pitches, beats, false, measurer)
         const ink = nativeSvgInk(svg.documentElement.innerHTML, measurer)
@@ -47,7 +47,7 @@ describe('note decorations clear measured font edges', () => {
         expect([...join.querySelectorAll('line')].map(l => l.getAttribute('y1'))).toEqual(beams.map(l => l.getAttribute('y1')))
       }
       const dotted = root(painter.body({ ...glyph, pitches: [pitch], writtenBeats: 1.5 }))
-      const dot = nativeSvgInk(dotted.querySelector('circle')!.outerHTML, measurer)
+      const dot = nativeSvgInk(dotted.querySelector('[data-m3n-role="music-dot"]')!.outerHTML, measurer)
       const text = nativeSvgInk(dotted.querySelector('text')!.outerHTML, measurer)
       expect((dot.top + dot.bottom) / 2 - text.top).toBeCloseTo((ascent! + descent!) * .64, 4)
     })

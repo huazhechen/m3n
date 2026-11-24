@@ -2,6 +2,7 @@ import { SCORE_TEXT_FONT } from './font-family.js'
 import { describe, expect, it, vi } from 'vitest'
 import { CanvasTextMeasurer, NumberedTextMeasurementCache } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
+import { bravuraGeometry } from './bravura.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
 
@@ -94,4 +95,26 @@ describe('native logical advance and painted ink', () => {
     expect(x - 3).toBeCloseTo(3.5, 4)
     expect(control.width - x - 13).toBeCloseTo(3.5, 4)
   })
+})
+
+it('shares immutable fixed symbol geometry only inside a task and resets it with fonts', () => {
+  const faces = new Set([{status:'loaded'}])
+  vi.stubGlobal('document',{fonts:faces})
+  try {
+    const cache = new NumberedTextMeasurementCache(), timings: Record<string,number> = {}
+    cache.synchronizeFonts()
+    const first = new CanvasTextMeasurer(context(),timings,cache)
+    const glyph = bravuraGeometry('dynamicForte',12,true,first)
+    const sameTask = new CanvasTextMeasurer(context(),timings,cache)
+    expect(bravuraGeometry('dynamicForte',12,true,sameTask)).toBe(glyph)
+    expect(()=>Object.assign(glyph.ink,{left:999})).toThrow()
+    expect(bravuraGeometry('dynamicForte',24,true,sameTask).height).toBeCloseTo(glyph.height*2)
+    expect(bravuraGeometry('dynamicForte',12,false,sameTask)).not.toBe(glyph)
+    const fresh = new CanvasTextMeasurer(context(),undefined,new NumberedTextMeasurementCache())
+    expect(bravuraGeometry('dynamicForte',12,true,fresh)).not.toBe(glyph)
+    faces.add({status:'loaded'})
+    cache.synchronizeFonts()
+    expect(bravuraGeometry('dynamicForte',12,true,sameTask)).not.toBe(glyph)
+    expect(timings).toMatchObject({fixedSymbolRequests:5,fixedSymbolCacheHits:1,fixedSymbolBuilds:4})
+  } finally {vi.unstubAllGlobals()}
 })

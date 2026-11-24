@@ -9,26 +9,26 @@ import { nativeStyle } from './native-style.js';
 import { NativeSymbols } from './native-symbols.js';
 const measurer = new DefaultTextMeasurer();
 const names = ['ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff'] as const;
-describe('native dynamic outlines', () => {
+describe('native dynamic characters', () => {
     it.each(names)('preserves every %s contour and its measured dimensions', name => {
         const svg = new NativeSymbols(measurer).rawMark(name);
-        expect(svg).not.toContain('<text');
+        expect(svg).toContain('<text');
         const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml');
-        expect(root.querySelectorAll('path').length).toBeGreaterThan(0);
+        expect(root.querySelectorAll('text[font-family="Bravura"]').length).toBeGreaterThan(0);
         const ink = nativeSvgInk(svg, measurer);
         expect(ink.left + ink.right).toBeCloseTo(0, 4);
     });
-    it('measures dynamics without consulting text fonts', () => {
-        const painter = new NativeSymbols({ measureText() { throw new Error('Dynamic outlines are font independent'); } });
+    it('measures dynamics using Bravura characters', () => {
+        const painter = new NativeSymbols({ measureText(text, style) { expect(style.fontFamily).toBe('Bravura'); return measurer.measureText(text,style); } });
         for (const name of names)
-            expect(painter.rawMark(name)).toContain('<path');
+            expect(painter.rawMark(name)).toContain('<text');
     });
     it('scales every dynamic from the same measured outline at each music size', () => {
         for (const name of names) {
             const original = nativeDynamicGlyph(name, 12)!;
             for (const size of [6, 12, 24]) {
                 const glyph = nativeDynamicGlyph(name, size)!;
-                const ink = nativeSvgInk(glyph.paths.map(path => `<path d="${path}" fill="#000"/>`).join(''), measurer);
+                const ink = nativeSvgInk(glyph.svg, measurer);
                 expect(glyph.width).toBeCloseTo(original.width * size / 12, 5);
                 expect(ink.right - ink.left).toBeCloseTo(glyph.width, 5);
                 expect(ink.bottom - ink.top).toBeCloseTo(glyph.height, 5);
@@ -43,8 +43,8 @@ describe('native dynamic outlines', () => {
     });
     it('uses a filled Bravura glyph for sfz', () => {
         const svg = new NativeSymbols(measurer).rawMark('sfz');
-        expect(svg).toContain('<path');
-        expect(svg).not.toContain('<text');
+        expect(svg).toContain('<text');
+        expect(svg).toContain('<text');
         expect(svg).not.toContain('font-style="italic"');
     });
     it.each([320, 800])('keeps measured dynamic ink outside a tuplet and below its reserved system top at %s', width => {

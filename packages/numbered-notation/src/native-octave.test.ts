@@ -26,7 +26,7 @@ describe('octave scopes are resolved once into pitch dots', () => {
       const performanceBefore = compileScorePerformance(a)
       const svg = NativeNumberedNotationScore.create(a).render(options).join('')
       expect(svg).not.toMatch(/8v[ab]|stroke-dasharray/)
-      expect(new DOMParser().parseFromString(svg, 'image/svg+xml').querySelectorAll('g.note circle').length).toBeGreaterThan(0)
+      expect(new DOMParser().parseFromString(svg, 'image/svg+xml').querySelectorAll('g.note [data-m3n-role="music-dot"]').length).toBeGreaterThan(0)
       expect(a).toEqual(sourceBefore)
       expect(compileScorePerformance(a)).toEqual(performanceBefore)
     }

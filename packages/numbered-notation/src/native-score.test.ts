@@ -15,7 +15,7 @@ function render(source:string|ScoreDocument,settings:Partial<NumberedNotationRen
  const root=new DOMParser().parseFromString('<main>'+pages.join('')+'</main>','text/html')
  return {pages,root,score,document}
 }
-function numbers(root:Document,id:string){return [...root.querySelectorAll('g.note[data-m3n-id="'+id+'"] text')].map(text=>text.textContent).join('')}
+function numbers(root:Document,id:string){return [...root.querySelectorAll('g.note[data-m3n-id="'+id+'"] text[font-family="M3N Numbers"]')].map(text=>text.textContent).join('')}
 function lyrics(root:Document,id:string,row=1){return [...root.querySelectorAll('text[data-m3n-role="lyric"][data-m3n-id="'+id+'"][data-m3n-rendition="'+row+'"]')].map(text=>text.textContent?.replaceAll('\u200B','')).join('')}
 
 describe('native repeat boundaries', () => {
@@ -35,8 +35,8 @@ describe('native repeat boundaries', () => {
   it('combines adjacent end and start repeats without drawing the opening twice', () => {
     const result = render('{4/4}\nN: ||: 1 2 3 4 :|| ||: 5 6 7 1e :||')
     const measures = [...result.root.querySelectorAll('g.measure')]
-    expect(measures[0]!.querySelectorAll('[data-m3n-role="bar"] > circle')).toHaveLength(6)
-    expect(measures[1]!.querySelectorAll('[data-m3n-role="bar"] > circle')).toHaveLength(2)
+    expect(measures[0]!.querySelectorAll('[data-m3n-role="bar"] > [data-m3n-role="music-dot"]')).toHaveLength(6)
+    expect(measures[1]!.querySelectorAll('[data-m3n-role="bar"] > [data-m3n-role="music-dot"]')).toHaveLength(2)
   })
 })
 
@@ -128,7 +128,7 @@ describe('native engraving acceptance', () => {
     const source = '{2/4}\nN: {inst}{8va}{cresc}{lg}1 2 | {br}3 4{/}{/}{/}{/} | {decres}5 6{/} |||'
     const { root } = render(source, { width: 320, paged: true })
     expect(root.body.textContent).not.toContain('8va')
-    expect(root.querySelector('#m3n-e-1 circle')).not.toBeNull()
+    expect(root.querySelector('#m3n-e-1 [data-m3n-role="music-dot"]')).not.toBeNull()
     expect(root.querySelectorAll('[data-m3n-relation="slur"]').length).toBeGreaterThan(0)
     expect(root.body.textContent?.match(/\(/g)?.length).toBeGreaterThan(1)
     expect(root.body.textContent?.match(/\)/g)?.length).toBeGreaterThan(1)
@@ -325,15 +325,15 @@ it('renders long rests without sustain marks or duplicate DOM IDs', () => {
     expect(lyrics(root, 'm3n-e-3')).toBe('天')
   })
 
-it('uses filled Bravura outlines for staccato and accent', () => {
+it('uses Bravura characters for staccato and accent', () => {
     const { root } = render('{2/4}\nN: 1e{tip} 1e{str} |||')
-    const wedge = root.querySelector('#m3n-e-1 path')!
-    const accent = root.querySelector('#m3n-e-2 path')!
+    const wedge = root.querySelector('#m3n-e-1 [data-m3n-mark="tip"] text')!
+    const accent = root.querySelector('#m3n-e-2 [data-m3n-mark="str"] text')!
     expect(wedge.getAttribute('fill')).toBe('#000')
-    expect(wedge.getAttribute('d')).toMatch(/Z$/)
+    expect(wedge.textContent).toBe('\uF47B')
     expect(accent.getAttribute('fill')).toBe('#000')
     expect(accent.getAttribute('data-m3n-font')).toBe('Bravura')
-    expect(accent.getAttribute('d')).toMatch(/Z$/)
+    expect(accent.textContent).toBe('\uE4A0')
   })
 
 it('retains text directives, section labels and chord annotations together', () => {
@@ -347,7 +347,7 @@ it('retains text directives, section labels and chord annotations together', () 
 it('retains octave intervals and transposes each chord pitch visually', () => {
     const base = render('{4/4}\nN: [135:h] 2 3 4 |||')
     const shifted = render('{4/4}\nN: {8va}[135:h] 2 3 4{/} |||')
-    expect(shifted.root.querySelector('#m3n-e-1')!.querySelectorAll('circle').length).toBeGreaterThan(base.root.querySelector('#m3n-e-1')!.querySelectorAll('circle').length)
+    expect(shifted.root.querySelector('#m3n-e-1')!.querySelectorAll('[data-m3n-role="music-dot"]').length).toBeGreaterThan(base.root.querySelector('#m3n-e-1')!.querySelectorAll('[data-m3n-role="music-dot"]').length)
     expect(numbers(shifted.root, 'm3n-e-1')).toBe('135')
   })
 
@@ -377,7 +377,7 @@ it('renders leading grace notes and keeps them inside the main event group', () 
     const { root } = render('{4/4}\nN: 1{ac(7d)} 2{ap((35))} 3 4 |||')
     expect(numbers(root, 'm3n-e-1')).toContain('7')
     expect(numbers(root, 'm3n-e-2')).toContain('35')
-    expect(root.querySelector('#m3n-e-1')?.querySelectorAll('text').length).toBe(2)
+    expect(root.querySelector('#m3n-e-1')?.querySelectorAll('text[font-family="M3N Numbers"]').length).toBe(2)
   })
 
 it('expands tuplets sequentially with per-note lyrics and a shared playback identity', () => {

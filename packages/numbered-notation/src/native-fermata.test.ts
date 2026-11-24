@@ -12,9 +12,9 @@ it.each([6, 12, 24])('scales the complete fermata curves and dot at %s', size =>
     const svg = size === 12 ? new NativeSymbols(new DefaultTextMeasurer()).rawMark('fermata') : nativeFermataSvg(size);
     const ink = nativeSvgInk(svg, new DefaultTextMeasurer());
     const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml');
-    const path = root.querySelector('path')!;
+    const path = root.querySelector('text')!;
     expect(path.getAttribute('data-m3n-font')).toBe('Bravura');
-    expect(path.getAttribute('d')!.match(/M/g)!.length).toBeGreaterThanOrEqual(2);
+    expect(path.textContent).toBe('\uE4C0');
     expect(ink.bottom - ink.top).toBeGreaterThan(size / 2);
     expect(path.getAttribute('fill')).toBe('#000');
     expect(ink.left + ink.right).toBeCloseTo(0, 4);

@@ -82,7 +82,7 @@ function install(font: ScoreFontResource, family: string) {
 /** Choose the smallest preset covering this score before measuring any glyphs. */
 export async function prepareNumberedNotationFonts(value?: unknown): Promise<void> {
   if (typeof document === 'undefined' || typeof FontFace === 'undefined') return
-  const text = scoreFontText(value) + '演唱作词作曲音域：'
+  const text = scoreFontText(value) + '演唱作词作曲音域：→'
   const cjk = scoreCjkFont(text)
   await Promise.all([
     ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),

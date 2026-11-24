@@ -222,6 +222,32 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(annie.production.pageCount, annie.paged.pageCount)
     assert.equal(annie.production.rows, annie.paged.rows)
     assert.equal(annie.exported, annie.paged.pageCount)
+    const symbolSource = '{title=Symbols}{key=Db}{4/4}{order=A,B}\n===A\nN: ||: '
+      + ['ppp','pp','p','mp','mf','f','ff','fff','sfz'].map((dynamic,index) =>
+        `{${dynamic}}${index === 0 ? '{segno}' : index === 1 ? '{coda}' : ''}1e${index === 0 ? '{fermata}{tr}{prall}{str}{tip}{hold}{breath}' : ''} (2e) [1d3e5ee:h]${index === 0 ? '{arp}{ac(2d3e)}' : ''} 4. ${index === 8 ? ':||' : '|'}`).join(' ')
+      + '\nB: ' + Array(9).fill('1dd 2d 3d 4d |').join(' ') + '\n===B\nN: 1 2 3 4 |||'
+    const symbols = await page.evaluate(async source => {
+      const api = window.scorebook, layout = await api.auditWidth(source,640)
+      const nodes = [...document.querySelectorAll('#scratch text[data-m3n-font="Bravura"]')]
+      const characters = [...new Set(nodes.map(node=>node.textContent))]
+      const arrow = document.querySelector('#scratch text[data-m3n-role="order-arrow"]')?.textContent
+      const framed = api.frameScoreImage([...document.querySelectorAll('#scratch > svg')])
+      const image = await api.renderScoreCanvas(framed,framed.viewBox.baseVal.width,1)
+      return {layout,characters,arrow,png:image.toDataURL().length}
+    },symbolSource)
+    assert.deepEqual(symbols.layout.outside,[])
+    assert.deepEqual(symbols.layout.overlaps,[])
+    for (const {character} of Object.values(JSON.parse(readFileSync(join(root,'packages/numbered-notation/src/bravura-symbols.json'),'utf8'))))
+      assert(symbols.characters.includes(character),`The browser must render music character ${character.codePointAt(0).toString(16)}`)
+    assert.equal(symbols.arrow,'→')
+    assert(symbols.png > 1000,'All transformed music characters must export to PNG')
+    const paperInk = await page.evaluate(() => {
+      const markup = x => `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="0" y="0" font-size="1000" font-family="Bravura" transform="matrix(.03 0 0 .03 ${x} 95)">\uE1E7</text></svg>`
+      return {inside:window.scorebook.compactPage(markup(90)).outside,outside:window.scorebook.compactPage(markup(110)).outside}
+    })
+    assert.deepEqual(paperInk.inside,[],'A scaled font line box must not cause a painted-ink false positive')
+    assert.equal(paperInk.outside.length,1,'The same glyph must still fail when its painted ink crosses the paper edge')
+
     const stable = await page.evaluate(async ({ sources, basics }) => {
       const api = window.scorebook
       await api.prepareSources(sources)

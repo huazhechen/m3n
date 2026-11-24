@@ -1,6 +1,7 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { parse, type TNode } from 'txml/txml'
 import type { TextMeasurer } from './native-measure.js'
+import { transformNativeInk, type NativeMatrix } from './native-transform.js'
 
 /** Painted bounds, in baseline coordinates. Font size is never an ink height. */
 export type NativeInk = { left: number; right: number; top: number; bottom: number }
@@ -92,8 +93,12 @@ export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[
       }
       if (a.transform) {
         const match = /^translate\(\s*([-+.\deE]+)[ ,]+([-+.\deE]+)\s*\)$/.exec(a.transform)
-        if (!match) throw new Error(`Unsupported native transform: ${a.transform}`)
-        b = translateNativeInk(b, Number(match[1]), Number(match[2]))
+        if (match) b = translateNativeInk(b, Number(match[1]), Number(match[2]))
+        else {
+          const matrix = /^matrix\(([^)]+)\)$/.exec(a.transform)?.[1]?.trim().split(/[ ,]+/).map(Number)
+          if (!matrix || matrix.length !== 6 || !matrix.every(Number.isFinite)) throw new Error(`Unsupported native transform: ${a.transform}`)
+          b = transformNativeInk(b, matrix as unknown as NativeMatrix)
+        }
       }
       return b
     })

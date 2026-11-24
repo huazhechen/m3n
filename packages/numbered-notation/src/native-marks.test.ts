@@ -55,7 +55,7 @@ describe('native articulation occupancy', () => {
     expect(glyph.top).toBeCloseTo(-position.top)
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
-    const triangle = root.querySelector('[data-m3n-mark="tip"] path')!
+    const triangle = root.querySelector('[data-m3n-mark="tip"] text')!
     expect(triangle.getAttribute('data-m3n-font')).toBe('Bravura')
     const transform = /translate\(([^ ]+) ([^)]+)\)/.exec(triangle.parentElement!.getAttribute('transform')!)!
     expect(Math.abs(Number(transform[1]) - glyph.x)).toBeLessThanOrEqual(.000000501)

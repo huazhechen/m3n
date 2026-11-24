@@ -25,6 +25,6 @@ export function nativeBarSvg(kind: string, x: number, y: number, measurer: TextM
   const geometry = nativeBarMetrics(kind), top = y + nativeMusicAxis(measurer) - geometry.size / 2
   let svg = ''
   for (const bar of geometry.bars) svg += `<rect${attrs({ x: x - geometry.anchor + bar.x, y: top, width: bar.width, height: geometry.size, fill: '#000' })}/>`
-  for (const dot of geometry.dots) for (const ratio of [0.38, 0.62]) svg += circle(x - geometry.anchor + dot, top + geometry.size * ratio, geometry.radius)
+  for (const dot of geometry.dots) for (const ratio of [0.38, 0.62]) svg += circle(x - geometry.anchor + dot, top + geometry.size * ratio, geometry.radius, measurer, true)
   return `<g${attrs({ 'data-m3n-role': 'bar', 'data-m3n-bar': kind })}>${svg}</g>`
 }

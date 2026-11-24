@@ -72,7 +72,7 @@ node tools/refresh-score-pdfs.mjs
 
 文字度量只在当前生成任务内复用：字体准备完毕后创建 `NumberedTextMeasurementCache`，以完整文字和有效字体样式（字体族、字号、字重、正体／斜体）区分；度量始终按左对齐取得实际墨迹，文字锚点在后续几何中处理。页面选宽、本地／在线谱集的同一任务共用度量；单次页面布局默认也在间距试排间共用。新任务创建独立对象，不读写磁盘，不跨任务保存文字度量、候选或排版结果。每次开始布局检查字体集合与加载状态，变化时清除旧度量，避免后加载字体污染选宽。自定义 `textMeasurer` 继续由调用者负责其度量策略。
 
-计时中的 `textMeasureRequests` 是引擎请求数，`textMeasureCalls` 是实际 Canvas 测量次数，`textMeasureCacheHits` 是本任务复用次数；前者等于后两项之和。`textMeasureCacheResets` 记录字体集合首次绑定或变化。各候选记录自己的增量，不重复累计整册缓存命中。
+计时中的 `textMeasureRequests` 是引擎请求数，`textMeasureCalls` 是实际 Canvas 测量次数，`textMeasureCacheHits` 是本任务复用次数；前者等于后两项之和。`textMeasureCacheResets` 记录字体集合首次绑定或变化。各候选记录自己的增量，不重复累计整册缓存命中。 固定音乐字符的归一几何和SVG片段也只在同一任务内复用，按字形、目标墨迹高度、宽度和居中方式区分；返回不可变结果，字体变化时与文字度量一起清除。`fixedSymbolRequests`、`fixedSymbolBuilds`、`fixedSymbolCacheHits` 分别记录请求、实际构建和复用次数，不复用整曲排版或候选。
 
 每个候选只建立一次 `PreparedNumberedNotationScore`，评分直接读取已有布局，分页／连续版共用横向布局；同曲的候选复用解析文档和字体准备。碰撞检查先按横坐标筛选，再以原来的0.5px相交阈值逐对核验，诊断顺序保持不变。纵向谱行碰撞改用横坐标扫描和两个堆计算所需分离量，保留原来的严格水平相交条件；歌词布局直接按绘制时的文字／线条几何和六位小数坐标计算墨迹，省去生成交互属性和解析SVG的往返，普通音符的投影、谱行墨迹和核心区也直接计算绘制图元边界，复杂装饰保留原测量路径，不改变实际避让。最终SVG绘制保持原样。生产选宽的10档候选只进行完整布局；`--audit-layout` 才对候选执行真实SVG边界和碰撞验收。页面自动选宽、本地与在线导出共用 `tools/lib/numbered-width-measurement.mjs`；五线谱页面和本地测量共用 `tools/lib/staff-width-measurement.mjs`，适配器均交给 `tools/scorebook-width.mjs` 遍历与择宽。独立验收使用空间筛选；在线生产导出复用布局并跳过独立验收，返回值的 `measurementTimings` 提供总量、测量／合页／实绘阶段及逐曲逐候选计时，不显示在产品界面。
 

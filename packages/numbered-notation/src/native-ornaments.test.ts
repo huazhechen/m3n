@@ -16,7 +16,7 @@ const fontIndependent: TextMeasurer = { measureText(text, style) {
 it.each([['tr', 12], ['prall', 6.6]] as const)('draws a centered %s silhouette at the music scale without text or stroke bounds', (name, height) => {
     const svg = nativeOrnamentSvg(name)!;
     const ink = nativeSvgInk(svg, fontIndependent);
-    expect(svg).not.toMatch(/<text|stroke=/);
+    expect(svg).not.toMatch(/<path|stroke=/);
     expect(svg).toContain('fill="#000"');
     expect(ink.left + ink.right).toBeCloseTo(0, 3);
     expect(ink.bottom - ink.top).toBeCloseTo(nativeStyle.music * height / 22, 3);
@@ -30,8 +30,8 @@ it.each([320, 600, 800, 1000])('measures ornament ink with legal note/chord host
     for (const paged of [false, true]) {
         const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: {p}([1 2 3:2]) [1e 3e 5e:h]{tr}{prall} 5 6 | {br} 1{tr}{f} 2 3 4 |||'), { width, paged, textMeasurer: fontIndependent });
         const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html');
-        expect(root.querySelectorAll('[data-m3n-mark="tr"] path')).toHaveLength(2);
-        expect(root.querySelectorAll('[data-m3n-mark="prall"] path')).toHaveLength(1);
+        expect(root.querySelectorAll('[data-m3n-mark="tr"] text')).toHaveLength(2);
+        expect(root.querySelectorAll('[data-m3n-mark="prall"] text')).toHaveLength(1);
         const first = layout.projection.glyphs.find(g => g.markLayout?.some(m => m.name === 'p'))!;
         const dynamic = first.markLayout!.find(m => m.name === 'p')!;
         const system = layout.systems.find(s => s.measures.some(m => m.columns.some(c => c.glyphs.includes(first))))!;

@@ -22,8 +22,8 @@ export function measureNativeControl(kind: NativeControl['kind'], text: string, 
   const m = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: kind === 'section' ? 700 : 400 })
   let width = m.w, anchor = textWidth(text[0]!, size, family) / 2
   if (kind === 'key') { const geometry = nativeKeyGeometry(keyRows ?? [{key:text}],measurer); width = geometry.width; anchor = geometry.anchor }
-  if (kind === 'segno') { width = nativeNavigationGlyph('segno', nativeStyle.text * 1.15).width; anchor = width / 2 }
-  if (kind === 'coda') { width = nativeNavigationGlyph('coda', nativeStyle.text * 1.15).width + nativeStyle.text * .3 + textWidth('Coda', nativeStyle.text, SCORE_TEXT_FONT); anchor = width / 2 }
+  if (kind === 'segno') { width = nativeNavigationGlyph('segno', nativeStyle.text * 1.15, measurer).width; anchor = width / 2 }
+  if (kind === 'coda') { width = nativeNavigationGlyph('coda', nativeStyle.text * 1.15, measurer).width + nativeStyle.text * .3 + textWidth('Coda', nativeStyle.text, SCORE_TEXT_FONT); anchor = width / 2 }
   const meterGeometry = kind === 'meter' ? nativeMeterGeometry(text, measurer) : undefined
   if (meterGeometry) { width = meterGeometry.width; anchor = width / 2 }
   const tempoGeometry = kind === 'tempo' ? nativeTempoGeometry(text, measurer, tempoUnit) : undefined

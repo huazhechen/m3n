@@ -30,7 +30,7 @@ it.each([320,600,800,1000])('keeps complete brackets inside the measured music a
       expect(ink.left).toBeGreaterThan(layout.margin)
       expect(ink.right).toBeLessThan(layout.margin+nativeStyle.music)
       const root = new DOMParser().parseFromString(svg,'text/html')
-      expect(root.querySelectorAll('path')).toHaveLength(2)
+      expect(root.querySelectorAll('text[font-family="Bravura"]')).toHaveLength(2)
       expect(root.querySelector('rect')).not.toBeNull()
       expect(root.querySelector('line')).not.toBeNull()
     }

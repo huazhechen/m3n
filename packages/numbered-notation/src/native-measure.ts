@@ -3,11 +3,14 @@ import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 /** Platform-independent text measurement contract used by the native engine. */
 export type TextStyle = { fontFamily?: string; fontSize: number; fontWeight?: number; fontStyle?: 'normal' | 'italic'; textAlign?: 'left' | 'center' | 'right' }
 export type TextMetrics = { w: number; h: number; baseline: number; inkBottom?: number; centerOffset?: number; advance?: number; inkLeft?: number; inkRight?: number }
-export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMetrics }
+export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMetrics; fixedSymbol?<T extends object>(key: string, create: () => T): T }
 
 /** Owned by one render/export task, never shared by independent tasks. */
 export class NumberedTextMeasurementCache {
   private readonly fonts = new Map<string, Map<string, TextMetrics>>()
+  private readonly symbols = new Map<string, object>()
+  readSymbol<T extends object>(key: string) { return this.symbols.get(key) as T | undefined }
+  writeSymbol(key: string, value: object) { this.symbols.set(key,value) }
   private faces: { face: FontFace; status: string }[] = []
   read(font: string, text: string) { const metrics = this.fonts.get(font)?.get(text); return metrics && { ...metrics } }
   write(font: string, text: string, metrics: TextMetrics) {
@@ -20,6 +23,7 @@ export class NumberedTextMeasurementCache {
     const faces = typeof document === 'undefined' || !document.fonts ? [] : Array.from(document.fonts)
     if (faces.length === this.faces.length && faces.every((face, i) => face === this.faces[i]!.face && face.status === this.faces[i]!.status)) return false
     this.fonts.clear()
+    this.symbols.clear()
     this.faces = faces.map(face => ({ face, status: face.status }))
     return true
   }
@@ -39,6 +43,18 @@ export class CanvasTextMeasurer implements TextMeasurer {
   private requestedFont?: string
   private appliedFont?: string
   constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>, private readonly cache?: NumberedTextMeasurementCache) {}
+  fixedSymbol<T extends object>(key: string, create: () => T): T {
+    if (this.timings) this.timings.fixedSymbolRequests = (this.timings.fixedSymbolRequests ?? 0) + 1
+    const saved = this.cache?.readSymbol<T>(key)
+    if (saved) {
+      if (this.timings) this.timings.fixedSymbolCacheHits = (this.timings.fixedSymbolCacheHits ?? 0) + 1
+      return saved
+    }
+    if (this.timings) this.timings.fixedSymbolBuilds = (this.timings.fixedSymbolBuilds ?? 0) + 1
+    const result = create()
+    this.cache?.writeSymbol(key,result)
+    return result
+  }
   measureText(text: string, style: TextStyle): TextMetrics {
     if (this.timings) this.timings.textMeasureRequests = (this.timings.textMeasureRequests ?? 0) + 1
     const family = style.fontFamily ?? SCORE_TEXT_FONT

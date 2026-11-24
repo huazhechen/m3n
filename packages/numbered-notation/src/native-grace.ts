@@ -28,7 +28,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
     const bottom = Math.max(digit.bottom, beamY + (beams - 1) * beamStep + stroke / 2)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
       const offset = gap + radius + index * (2 * radius + gap)
-      svg += circle(0, pitch.octave > 0 ? digit.top - offset : bottom + offset, radius)
+      svg += circle(0, pitch.octave > 0 ? digit.top - offset : bottom + offset, radius, measurer)
     }
     const bodySvg = svg
     for (let beam = 0; beam < beams; beam++) svg += line(-half, beamY + beam * beamStep, half, beamY + beam * beamStep, stroke)

@@ -1,6 +1,6 @@
 /** Browser-only bounds in the owning SVG's coordinates. Text uses painted
  * ascent/descent rather than SVG getBBox's font-wide line box. */
-export function createSvgInkMeasurer() {
+export function createSvgInkMeasurer(referenceSvg) {
   const context = document.createElement('canvas').getContext('2d')
   const cache = new WeakMap()
   const selector = 'text,path,line,rect,circle,ellipse,polygon,polyline'
@@ -8,7 +8,7 @@ export function createSvgInkMeasurer() {
     if (!node) return undefined
     if (cache.has(node)) return cache.get(node)
     const pieces = node.matches(selector) ? [node] : [...node.querySelectorAll(selector)]
-    const inverse = node.ownerSVGElement.getCTM().inverse()
+    const inverse = (referenceSvg ?? node.ownerSVGElement).getCTM().inverse()
     const boxes = pieces.flatMap(piece => {
       if (piece.closest('defs')) return []
       const style = getComputedStyle(piece)

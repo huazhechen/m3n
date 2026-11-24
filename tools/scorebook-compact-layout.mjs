@@ -94,11 +94,12 @@ export function compactPage(markup, scoreUrls = []) {
     }
   }
   const outside = []
+  const paperInk = createSvgInkMeasurer(svg)
   const width = svg.viewBox.baseVal.width, height = svg.viewBox.baseVal.height
-  for (const node of svg.querySelectorAll('text,path,line,circle')) {
+  for (const node of svg.querySelectorAll('text,path,line,circle,rect,polygon,ellipse')) {
     if (node.closest('defs')) continue
-    const box = node.getBoundingClientRect(), paper = svg.getBoundingClientRect()
-    if (box.width && box.height && (box.left < paper.left - .5 || box.right > paper.left + width + .5 || box.top < paper.top - .5 || box.bottom > paper.top + height + .5)) outside.push(node.outerHTML.slice(0,160))
+    const box = paperInk(node)
+    if (box.width && box.height && (box.x < svg.viewBox.baseVal.x - .5 || box.x + box.width > svg.viewBox.baseVal.x + width + .5 || box.y < svg.viewBox.baseVal.y - .5 || box.y + box.height > svg.viewBox.baseVal.y + height + .5)) outside.push(node.outerHTML.slice(0,160))
   }
   return { markup: svg.outerHTML, glyphs, outside, links }
 }

@@ -1,3 +1,4 @@
+import { nativeDotInk } from './bravura.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
@@ -25,8 +26,8 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
     }
     const beams = index === 0 ? beamCount : 0
     for (let dot = 0; dot < Math.abs(pitch.octave); dot++) {
-      const center = n(body.octaveY(pitch.octave > 0, dot, beams)), radius = n(size * .075)
-      top = Math.min(top, center - radius); bottom = Math.max(bottom, center + radius)
+      const ink = nativeDotInk(0,body.octaveY(pitch.octave > 0,dot,beams),size*.075,measurer)
+      top = Math.min(top, ink.top); bottom = Math.max(bottom, ink.bottom)
     }
     for (let beam = 0; beam < beams; beam++) {
       const center = n(body.beamY(beam)), half = n(body.beamStroke) / 2
