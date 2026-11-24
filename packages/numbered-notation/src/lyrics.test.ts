@@ -27,3 +27,39 @@ describe('lyrics across phrase boundaries', () => {
     expect(lyricsByEvent(document).get(event)?.get(0)?.get(0)?.texts).toEqual(['风'])
   })
 })
+
+describe('shared lyric visit labels', () => {
+  const rows = (source: string) => [...lyricsByEvent(parseM3NDocument(source)).values()]
+    .flatMap(slots => [...slots.values()].flatMap(rows => [...rows.values()]))
+
+  it('omits labels for one row shared by all three visits without losing playback passes', () => {
+    const data = rows('{2/4}\nN: ||: 1 2 :|||{x3}\nL1: 春天\nL2: {L1}\nL3: {L1}')
+    expect(data.map(row => row.texts.join('')).join('')).toBe('春天')
+    expect(data.every(row => row.annotation === undefined)).toBe(true)
+    expect(data.map(row => [...row.passes!])).toEqual([[1, 2, 3], [1, 2, 3]])
+  })
+
+  it('retains labels for different rows and partially shared visits', () => {
+    const data = rows('{2/4}\nN: ||: 1 2 :|||{x3}\nL1: 春天\nL2: 花开\nL3: {L2}')
+    expect(data.flatMap(row => row.annotation ? [row.annotation] : [])).toEqual(['1.', '2.3.'])
+  })
+
+  it('retains a label for a single row that only covers some actual visits', () => {
+    const document = parseM3NDocument('{2/4}\nN: ||: 1 2 :|||{x3}\nL1: 春天\nL2: {L1}\nL3: {L1}')
+    // A single shared block can also be restricted independently of the music.
+    document.lyrics[0]!.sharedPasses = '2,3'
+    const data = [...lyricsByEvent(document).values()].flatMap(slots => [...slots.values()].flatMap(rows => [...rows.values()]))
+    expect(data.flatMap(row => row.annotation ? [row.annotation] : [])).toEqual(['2.3.'])
+    expect(data.map(row => [...row.passes!])).toEqual([[2, 3], [2, 3]])
+  })
+
+  it('omits the redundant chorus label in 明天会更好 and keeps the differing ending labels', () => {
+    const source = readFileSync(new URL('../../../src/scores/ming_tian_hui_geng_hao_01.m3n', import.meta.url), 'utf8')
+    expect(validateM3NDiagnostics(source)).toEqual([])
+    const data = rows(source)
+    const chorus = data.find(row => row.texts.includes('唱'))!
+    expect(chorus.annotation).toBeUndefined()
+    expect([...chorus.passes!]).toEqual([1, 2, 3])
+    expect(data.filter(row => row.texts.includes('骄')).map(row => row.annotation)).toEqual(['1.2.', '3.'])
+  })
+})

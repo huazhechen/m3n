@@ -262,14 +262,18 @@ it('uses a single minimum 0.4 clearance without changing score content', () => {
     for (const minimumNoteGapEm of [-1, Infinity, NaN]) expect(() => render(source, { minimumNoteGapEm })).toThrow('最小音符间距')
   })
 
-it('keeps four verses and three compact chorus passes in Tomorrow Will Be Better', () => {
+it('expands the first verse and repeats the remaining verses and chorus three times in Tomorrow Will Be Better', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
     const { document, root, score } = render(source, { width: 786, pageMargin: 8, coreGap: 18 })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
     const passes = measurePlaybackPasses(measures)
-    expect([...passes.get(measures[0]!)!]).toEqual([1, 2, 3, 4])
-    expect([...passes.get(measures[13]!)!]).toEqual([1, 2, 3])
-    const sharedChorus = measures.slice(14, 18).flatMap(measure => measure.events)
+    expect([...passes.get(measures[0]!)!]).toEqual([1])
+    expect(measures.every(measure => !measure.ending)).toBe(true)
+    const repeatStart = measures.findIndex(measure => measure.left === 'rptstart')
+    expect(repeatStart).toBe(10)
+    expect([...passes.get(measures[repeatStart]!)!]).toEqual([1, 2, 3])
+    expect([...passes.get(measures[20]!)!]).toEqual([1, 2, 3])
+    const sharedChorus = measures.slice(21, 25).flatMap(measure => measure.events)
     const ids = scoreEventIds(document)
     const rows = sharedChorus.flatMap(event => [...root.querySelectorAll(`text[data-m3n-role="lyric"][data-m3n-id="${ids.get(event)}"]`)]
       .map(node => node.getAttribute('data-m3n-rendition')))
@@ -446,6 +450,15 @@ it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ wid
       expect(Number(prefix.getAttribute('x'))).toBeLessThan(Number(syllables[i]!.getAttribute('x')))
       expect(prefix.getAttribute('y')).toBe(syllables[i]!.getAttribute('y'))
     }
+  })
+
+it.each([320, 800].flatMap(width => [false, true].map(paged => ({ width, paged }))))('omits all-visit shared lyric prefixes at width $width, paged=$paged', ({ width, paged }) => {
+    const { root, score } = render('{2/4}\nN: ||: 1 2 | 3 4 :|||{x3}\nL1: 春风吹来\nL2: {L1}\nL3: {L1}', { width, paged })
+    expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+    expect(root.querySelectorAll('text[data-m3n-role="lyric-prefix"]')).toHaveLength(0)
+    const syllables = [...root.querySelectorAll('text[data-m3n-role="lyric"]')]
+    expect(syllables.map(node => node.textContent).join('')).toBe('春风吹来')
+    expect(syllables.every(node => node.getAttribute('data-m3n-passes') === '1-2-3')).toBe(true)
   })
 
 it('attaches verse labels to the first visible syllable after skipped slots', () => {
