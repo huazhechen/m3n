@@ -128,7 +128,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
 
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
-  const fragments = measures.flatMap((measure, index) => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1), index === measures.length - 1))
+  const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
   const lines: NativeMeasure[][] = []
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
@@ -166,7 +166,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
       }
     }
     let index = 0
-    for (const stop of planNativeLines(candidates, { relaxLastLine: end === fragments.length })) { lines.push(group.slice(index, stop)); index = stop }
+    for (const stop of planNativeLines(candidates)) { lines.push(group.slice(index, stop)); index = stop }
     begin = end
   }
   return lines

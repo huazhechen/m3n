@@ -2,7 +2,7 @@ import type { NativeMeasure } from './native-model.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 
 /** Split a dense bar into balanced musical groups, preserving every tuplet. */
-export function splitNativeMeasure(measure: NativeMeasure, width: number, relaxLastLine = false): NativeMeasure[] {
+export function splitNativeMeasure(measure: NativeMeasure, width: number): NativeMeasure[] {
   const capacity = width
   if (measure.minimum <= capacity || measure.columns.length < 2) return [measure]
   const tuplets = new Map<object, { start: number; end: number }>()
@@ -32,7 +32,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number, relaxL
   }
   const fragments: typeof measure.columns[] = []
   let start = 0
-  for (const stop of planNativeLines(candidates, { relaxLastLine })) {
+  for (const stop of planNativeLines(candidates)) {
     fragments.push(groups.slice(start, stop).flatMap(group => group.columns)); start = stop
   }
   if (fragments.length < 2) return [measure]
