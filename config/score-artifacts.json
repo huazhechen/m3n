@@ -2,7 +2,7 @@
   "version": 1,
   "staffGeneration": "deferred",
   "rendererSha256": "ff079cedf786173afb0dc20ec7f37de2a30dd9e765f65a370418ea5866c6c664",
-  "fontManifestSha256": "75a336263f7e73a41a1f62b4e9099955e2a0ec1b8d2765be1931974588240c30",
+  "fontManifestSha256": "54b467092efd3b6f6b50b95d604cc3cb115d5583aad264b42b05b64c1cb7c026",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -538,6 +538,11 @@
       "sourceSha256": "8f4ed0adefc15dfe10850b5349b344cac8937ddd5823ddb79d818051eab60af2",
       "font": "NotoSansSC-58a29f359a9b07cb.ttf",
       "fontSha256": "ba7c28684a23d9737afab4c4666126bcc158f6e0dc6740367f7a7b9f4792dc86"
+    },
+    "src/scores/ma_li_you_zhi_xiao_gao_yang_01.m3n": {
+      "sourceSha256": "15d56747a34066cde34b6253a55b22c17c006c3744c5e9d3255921b3a73a9a2e",
+      "font": "NotoSansSC-b3995ce0325f3ba3.ttf",
+      "fontSha256": "d9c8e3de65482c3bf057539957e6ed3dbd2d5a48fb7fa460d36d53a93c929a75"
     }
   }
 }
