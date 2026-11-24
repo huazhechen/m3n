@@ -65,7 +65,7 @@ it('sings both image verses, the returned chorus and the complete final word', (
       .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
       .map(lyric => lyric.text)).join('').replace(/[，。]/g, '')
   const chorus = '摇摇洁白的树枝花雨满天飞扬落在妈妈头上飘在纺车上给我幸福的故乡永生难忘哦永生永世我不能忘'
-  expect(actual).toBe('忘不了故乡年年梨花放染白了山岗我的小村庄妈妈坐在梨树下纺车嗡嗡响我爬上梨树枝啊那梨花香' + chorus
+  expect(actual).toBe('忘不了故乡年年梨花放染白了山岗我的小村庄妈妈坐在梨树下纺车嗡嗡响我爬上梨树枝闻那梨花香' + chorus
     + '重返了故乡梨花又开放找到了我的梦我一腔衷肠小村一切都依然树下空荡荡开满梨花的树下纺车不再嗡'
     + '摇摇洁白的树枝花雨满天飞扬两行滚滚泪水流在树下给我血肉的故乡永生难忘哦永生永世我不能忘'
     + chorus + '哦永生永世我不能忘')
