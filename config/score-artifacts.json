@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "0d4c7b81595c0bbf6643ba659f7c07770adf549871216815652404896a521e47",
+  "rendererSha256": "77c2ccfa3979ddd8c9a019ccc7eb168be9175e6ff6f2064828b1c517654f9a8f",
   "fontManifestSha256": "0214416336592e408a04eab9ca3c85c79d8e59c26c81b538ea84d905d60516b0",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -405,7 +405,7 @@
       "fontSha256": "b4cdb54238eba2ff49639af61a250fb78fa26880068e6ff675992e3d35b6083a"
     },
     "src/scores/wo_he_wo_de_zu_guo_01.m3n": {
-      "sourceSha256": "ac1bfb4467dda50dbfcc481fad2d679f70d6da9022e80031937246393e1ef612",
+      "sourceSha256": "9c375b701c2df99a6204ce1cc169348ccaa8296a0bd04091d4b9d762a6b27d5d",
       "font": "NotoSansSC-f270b8dc66a7d5cc.ttf",
       "fontSha256": "5c36c37c4164d3d2bfbfd0eb4c3380f08e95928b592638cd304d6d71ff7e6db9"
     },
