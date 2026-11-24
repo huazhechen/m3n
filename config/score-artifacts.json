@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "6df17ce535f69a4816a03ea50bc06c06d61dde386f621db9e61f29befc97601d",
+  "rendererSha256": "061e1799148d1ca0673360fd37aa97d1843ed6bcf4ec280650e78c10ea75e87d",
   "fontManifestSha256": "c138e4c338435e796d574a0ff92e299f73016d80b73ea82cdcb847c083cc54be",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -120,7 +120,7 @@
       "fontSha256": "28f8e0ce7faefa2336339d77ca97670ac5f7e0b81727d9dee77407b323b4fa87"
     },
     "src/scores/guang_yin_de_gu_shi_01.m3n": {
-      "sourceSha256": "f425eaed704421b87ecb6f764586c2d2d38d146611d3b7747fd52e5a2007c4d4",
+      "sourceSha256": "b967a70281643e36295af72dcd85f92e2003a361060554a4ba0eda0b2757e97c",
       "font": "NotoSansSC-e1ed6a5012d0fc38.ttf",
       "fontSha256": "ec189b5123977168b7ba2d4fe716ed4cb81f28a26fb6a631041065170eaa24b5"
     },

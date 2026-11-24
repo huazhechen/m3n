@@ -25,8 +25,8 @@ it('plays the 6/8 reference with requested instrumental simplifications three ti
     beat += event.beats
   }
   // Keep the original vocal reference; simplify only the requested passing notes.
-  const removedOnsets = new Set([2, 8.75, 26, 32.75, 50, 53, 62, 65])
-  const extendedDurations = new Map([[1.5, 1], [25.5, 1], [8.5, 0.5], [32.5, 0.5], [49.5, 1], [52.5, 1], [61.5, 1], [64.5, 1]])
+  const removedOnsets = new Set([2, 8.75, 26, 32.75, 47.5, 50, 53, 62, 65])
+  const extendedDurations = new Map([[1.5, 1], [25.5, 1], [8.5, 0.5], [32.5, 0.5], [45, 3], [49.5, 1], [52.5, 1], [61.5, 1], [64.5, 1]])
   const instrumental = reference.events.filter(([onset]) => !removedOnsets.has(onset!))
     .map(([onset, pitch, duration]) => [onset!, (onset === 1.5 || onset === 25.5) ? 76 : pitch, extendedDurations.get(onset!) ?? duration])
   const expected = [0, 72, 144].flatMap(offset => instrumental.map(([onset, pitch, duration]) => [onset! + offset, pitch, duration]))
