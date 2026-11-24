@@ -8,6 +8,7 @@ import { CircleOfFifths } from './CircleOfFifths'
 import { ScoreControlIcon } from './ScoreControlIcon'
 import { ScoreWidthControl } from './ScoreWidthControl'
 import { PlaybackSpeedControl } from './PlaybackSpeedControl'
+import { PlaybackProgressControl } from './PlaybackProgressControl'
 
 type ScoreControlsProps = {
   playbackOnly?: boolean
@@ -65,9 +66,8 @@ export function ScoreControls(props: ScoreControlsProps) {
         <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={props.isLoading ? '加载中' : playLabel} aria-busy={props.isLoading || undefined} aria-disabled={props.isLoading || undefined} onClick={() => { if (!props.isLoading) props.onTogglePlayback() }}>
           <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{props.isLoading ? '加载中' : playLabel}</span>
         </button>
-        <input type="range" min="0" max="1000" value={Math.round(props.progress * 1000)} aria-label="播放位置" aria-valuetext={`${Math.round(props.progress * 100)}%`}
-          onPointerDown={props.onSeekStart} onKeyDown={props.onSeekStart} onKeyUp={props.onSeekCommit} onBlur={props.onSeekCommit}
-          onInput={event => props.onSeek(Number(event.currentTarget.value) / 1000)} />
+        <PlaybackProgressControl progress={props.progress} isPlaying={props.isPlaying}
+          onSeekStart={props.onSeekStart} onSeek={props.onSeek} onSeekCommit={props.onSeekCommit} />
       <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
           <ScoreControlIcon name="metronome" /><span>节拍器</span>
         </button>
