@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { expect, it } from 'vitest'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import source from '../scores/tong_hua_zhen_01.m3n?raw'
@@ -19,12 +20,13 @@ it('matches the c33d transcription through 都走到 in the original first-pass 
   expect(tokens(performed).slice(0, reference.length)).toEqual(reference)
 })
 
-it('retains only the three original pairs of houses and the original repeat structure', () => {
-  expect(source.match(/^---V[12]$/gm)).toEqual(['---V1', '---V2', '---V1', '---V2', '---V1', '---V2'])
+it('adds full-bar return houses while retaining the existing local houses', () => {
+  expect(source.match(/^---V[12]$/gm)).toEqual(['---V1', '---V2', '---V1', '---V2', '---V1', '---V2', '---V1', '---V2'])
   const houses = source.split(/^---V[12]\n/gm).slice(1).map(part => part.split(/^---/m)[0]!)
   expect(houses.map(house => house.match(/^L: (.*)$/m)?.[1])).toEqual([
     '帽有件抑制自己 | 变成', '鱼把阳光抹成眼 | 影投进',
     '在爱里曲', '前方的山口汇',
+    '刻听说', '刻又陌',
     '% | 呜{%2} | {%2}', '%',
   ])
   expect(source.match(/\|\|:/g)).toHaveLength(2)
@@ -39,7 +41,7 @@ it('plays the introduction repeated 6s as sustains, with the extra opening rest 
   expect(written.slice(0, 9).map(bar => bar.events.map(event => event.tie ?? false))).toEqual([
     [false, false, false, false], [false, true, true], [false, false, false, false],
     [false, true, false, false], [false, false, false, false], [false, true, true],
-    [false, false, false, false], [false, false], [false],
+    [false, false, false, false], [false, false], [false, false, false, false],
   ])
   const notes = compileScorePerformance(document).notes.filter(note => note.start >= 6 && note.start < 8)
   expect(notes.map(note => [note.start, note.end, note.pitch])).toEqual([
@@ -67,13 +69,13 @@ it('checks the new dotted and syncopated rhythms and removes old-image ornaments
 })
 
 it('simplifies bar 17 to bar 15 rhythm while keeping its pitches and outgoing tie', () => {
-  expect(written[16]!.events.map(event => event.beats)).toEqual(written[14]!.events.map(event => event.beats))
-  expect(written[16]!.events.map(event => event.pitches)).toEqual([['2'], ['1'], ['2'], ['1'], ['2'], ['1'], ['7d']])
-  expect(written[16]!.events.at(-1)!.tie).toBe(true)
+  expect(written[15]!.events.map(event => event.beats)).toEqual(written[13]!.events.map(event => event.beats))
+  expect(written[15]!.events.map(event => event.pitches)).toEqual([['2'], ['1'], ['2'], ['1'], ['2'], ['1'], ['7d']])
+  expect(written[15]!.events.at(-1)!.tie).toBe(true)
 })
 
 it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
-  const bar = written[37]!
+  const bar = written[36]!
   expect(bar.events.map(event => [event.pitches, event.beats])).toEqual([
     [['3'], .5], [['5'], .5], [['3'], .5], [['2'], .25], [['1'], .25],
   ])
@@ -85,14 +87,14 @@ it('sets 镇 in bar 38 to two slurred sixteenths in both verses', () => {
 })
 
 it('uses 2 for the third eighth note in bar 43', () => {
-  expect(written[42]!.events.map(event => [event.pitches, event.beats])).toEqual([
+  expect(written[41]!.events.map(event => [event.pitches, event.beats])).toEqual([
     [['1'], .5], [['1'], .5], [['2'], .5], [['6d'], .5],
   ])
 })
 
 it('places 睡美 on adjacent notes and extends 美 over the next note in bar 11', () => {
   const { lyricsByEvent } = deriveScoreInteraction(document)
-  const bar = written[10]!
+  const bar = written[9]!
   const secondVerse = bar.events.map(event => (lyricsByEvent.get(event) ?? [])
     .filter(lyric => lyric.kind === 'text' && lyric.passes?.has(2)).map(lyric => lyric.text))
   expect(secondVerse).toEqual([['睡'], ['美'], [], ['人'], ['被'], ['埋'], ['藏']])
@@ -109,9 +111,13 @@ it('keeps both lyric verses aligned, including the shared rhythms and corrected 
   expect(lyrics.join('')).toContain('听说睡美人被埋藏')
   expect(lyrics.join('')).toContain('睡美人逃避了生活的煎熬小人鱼把阳光抹成眼影投进泡沫的怀抱')
   expect(lyrics.join('').match(/幸福结局的时刻/g)).toHaveLength(2)
-  // Preserve the original one-beat ending plus the next one-beat pickup.
-  const ending = written.find(bar => bar.events.length === 1 && bar.events[0]!.pitches[0] === '7d' && bar.events[0]!.beats === 1)
-  expect(ending).toBeDefined()
+  const repeatStart = written.find(bar => bar.left === 'rptstart')!
+  expect(written.indexOf(repeatStart)).toBe(9)
+  expect(repeatStart.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+  const returnHouse = written.find(bar => bar.right === 'rptend')!
+  expect(returnHouse.ending).toBe('1')
+  expect(returnHouse.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+  expect(written.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 2)).toBe(true)
   expect(tokens(performed)).toHaveLength(502)
   expect(performed.reduce((sum, bar) => sum + bar.events.reduce((sum, event) => sum + event.beats, 0), 0)).toBe(210)
 })
@@ -123,11 +129,24 @@ it('uses the requested ending pitches and lyric alignment within the original sh
   const { lyricsByEvent } = deriveScoreInteraction(document)
   expect(ending!.events.map(event => lyricsByEvent.get(event)?.find(lyric => lyric.kind === 'text')?.text)).toEqual(['幸', '福', '结', '局', '的', '时'])
   const next = written[written.indexOf(ending!) + 1]!
-  expect(next.events.map(event => [event.pitches, event.beats])).toEqual([[['7d'], 1]])
+  expect(next.events.map(event => [event.pitches, event.beats])).toEqual([
+    [['7d'], 1], [[], .5], [['6d'], .25], [['7d'], .25],
+  ])
   expect(lyricsByEvent.get(next.events[0]!)?.find(lyric => lyric.kind === 'text')?.text).toBe('刻')
   const figures = performed.filter(bar => bar.events.map(event => event.pitches.join()).join(' ') === '6 5 3 5 5 3 2 5')
   expect(figures).toHaveLength(2)
   for (const bar of figures) expect(bar.events.map(event => event.beats)).toEqual(Array(8).fill(.25))
   const final = performed.flatMap(bar => bar.events).at(-1)!
   expect([final.pitches, final.beats]).toEqual([['3'], 2])
+})
+
+it('preserves the complete performed melody and every lyric timing after moving repeat boundaries', () => {
+  const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
+  expect(hash(tokens(performed))).toBe('042394b7a2954e7ad7513c8b027a3ee783746ae2e1c23bfc8e0167c7fbf71821')
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
+  const lyrics = compileScorePerformance(document).elements.filter(event => event.voice === 'score:melody')
+    .flatMap(event => (byId.get(event.xmlId) ?? []).filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(event.rendition)))
+      .map(lyric => [event.start, event.end, lyric.text]))
+  expect(hash(lyrics)).toBe('49edd3d8f1223b1b4b00040018aaeebb9e980ccdc4aa90ee35e0d7fb8d4587bf')
 })

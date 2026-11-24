@@ -2,7 +2,7 @@
   "version": 1,
   "staffGeneration": "deferred",
   "rendererSha256": "66eed4e311b37f160f7f2240caaa8621b93ab86053d6e25502b37dd1635f0896",
-  "fontManifestSha256": "51726854fea494561357a51d9f86da49256658afd49b35ce16b06f6fa6cbf03b",
+  "fontManifestSha256": "2accc2160be4572110eaae87d1c98009cd96b76b88763d3ecbea147ea2beb386",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -365,9 +365,9 @@
       "fontSha256": "e74fa5dbe9c49afa8b642bd020a85a5028742f35cbabf3efcfbb3a9b48519bb8"
     },
     "src/scores/tong_hua_zhen_01.m3n": {
-      "sourceSha256": "9e16cdb8715bed237064d082f352c191c596c632fbe3acb9ca4b9793e8138a8f",
-      "font": "NotoSansSC-2920ed29efac25ce.ttf",
-      "fontSha256": "51d6ce59d623c97fb657e7e4598b88f515d9f97372da41dd0c5cd5b02256bfa6"
+      "sourceSha256": "f01731946b68c37f64c617707ae438e7fc29e546f7da6bd1ea49af6f009873e1",
+      "font": "NotoSansSC-e294ba08259fea44.ttf",
+      "fontSha256": "b63f55effb7bf05a5eb8a907dcfbdbed19ff749b0a6cebe4591f64f76073554a"
     },
     "src/scores/tong_zhuo_de_ni_01.m3n": {
       "sourceSha256": "0effa3f48becdbcbb6124b84f164fa3868003eba7de4aff189b92b47fe51b18f",
