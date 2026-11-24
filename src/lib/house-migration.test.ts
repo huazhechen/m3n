@@ -55,9 +55,9 @@ const cases = [
   },
   {
     "file": "xing_xing_dian_deng_01.m3n",
-    "music": "754bb649c9d792d5f1c2fca414c2eb3ebcb652da3ac9147822bb1a271b915468",
-    "lyrics": "9bc9984c9f935e589e617b2f616e434199856fa59914f38be0fa73894d8678e2",
-    "events": 717,
+    "music": "1dcddc9d8664918d0c5e6cbc0e2bf395e047ac5c043fbb5461fb36cda2326237",
+    "lyrics": "ac55cf0560933be23d9636fcd5db6ee220c2c6cca153878bf538cd8a70fb7fa9",
+    "events": 727,
     "syllables": 444
   }
 ]

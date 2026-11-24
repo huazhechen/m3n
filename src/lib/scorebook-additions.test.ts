@@ -130,8 +130,12 @@ describe('new reference scores', () => {
     const reference = starsReference.writtenBarsAfterIntroduction
     // User corrections use the original written bar numbers, before sharing bars 19/21.
     const corrected = [...reference]
-    corrected[9] = '3:.5 2:.5 2:.5 1:.25 7d:.25 6d:1.5 6d:.5'
-    corrected[11] = '5:.5 4:.5 4:.5 2:.5 3:2'
+    corrected[5] = '5:.5 5:.25 5:.25 5:.5 5:.25 6:.25 5:1.5 1:.5'
+    corrected[6] = '2:.5 2:.25 2:.25 2:.5 2:.5 2:.5 2:.25 3:.25 2:.75 6d:.25'
+    corrected[8] = '2:.5 2:.5 2:.5 2:.25 1:.25 2:.25 3:.25 2:.5~ 2:1'
+    corrected[9] = '3:.5 2:.5 1:.25 2:.25 1:.25 7d:.25 6d:1.5 6d:.5'
+    corrected[11] = '5:.5 4:.5 3:.5 2:.5 3:2'
+    corrected[13] = '3:.5 2:.5 1:.5 7d:.25 1:.25 6d:2'
     // The repeat now starts at intro bar 5; each ending writes its final vocal bar.
     corrected[22] = '1e:.25 7:.25 1e:.5~ 1e:.5 1e:.25 2e:.25 7:.5 6:.5 5:.5 6:.5'
     corrected[23] = corrected[22] + '~'
@@ -175,7 +179,7 @@ describe('new reference scores', () => {
     expect(words(48)).toEqual(['偷', '偷', '探', '出', '了', '头', '', '是'])
     const positions = new Map(bars.flatMap((bar, index) => bar.events.map((event, offset) => [event.sourceStart, [index + 1, offset + 1]] as const)))
     expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [positions.get(interval.start!), positions.get(interval.endStart!)]))
-      .toEqual([[[17, 5], [17, 6]], [[20, 4], [20, 5]], [[57, 9], [58, 1]]])
+      .toEqual([[[17, 5], [17, 6]], [[18, 5], [18, 6]], [[19, 7], [19, 8]], [[20, 4], [20, 5]], [[22, 6], [22, 7]], [[23, 3], [23, 4]], [[27, 4], [27, 5]], [[57, 9], [58, 1]]])
   })
 
   it('writes Conan as forty full 4/4 measures and rejects either redundant barline', () => {
