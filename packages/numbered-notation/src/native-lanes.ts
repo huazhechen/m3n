@@ -19,7 +19,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
       const glyphs = measure.columns.flatMap(column => column.glyphs).filter(glyph => glyph.lane === lane.id).map(glyph => ({ ...glyph, y: 0 }))
       const beams = nativeBeamLayout(glyphs, measurer)
       for (const glyph of glyphs) {
-        add(painter.music(glyph, beams.claimed.get(glyph), coreOnly))
+        pieces.push(...painter.musicPieces(glyph, beams.claimed.get(glyph), coreOnly).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
         for (const control of coreOnly ? [] : glyph.controls) add(painter.control(control, control.x!, 0))
         for (const annotation of coreOnly ? [] : glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
         for (const [row, baseline] of glyph.lyricBaselines ?? []) {

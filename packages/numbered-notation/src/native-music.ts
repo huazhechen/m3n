@@ -2,7 +2,8 @@ import { nativeNoteBody } from './native-note-body.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, unionNativeInk } from './native-ink.js'
+import { nativeBodyPieces } from './native-music-ink.js'
 import { nativeStyle, nativeEm as em } from './native-style.js'
 import { NativeSymbols, attrs, n, line, circle } from './native-symbols.js'
 import { nativeGraceGeometry } from './native-grace.js'
@@ -36,6 +37,22 @@ export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextM
 }
 
 export class NativeMusicPainter extends NativeSymbols {
+  bodyPieces(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>) {
+    return nativeBodyPieces(glyph, this.measurer, claimedBeams)
+  }
+
+  musicPieces(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>, coreOnly = false) {
+    if (!glyph.multiRest && (coreOnly || !glyph.graces.length && !(glyph.markLayout?.length ?? glyph.marks.length) && !glyph.event?.postfixes.includes('arp')))
+      return this.bodyPieces(glyph, claimedBeams)
+    return nativeSvgPieces(this.music(glyph, claimedBeams, coreOnly), this.measurer)
+  }
+
+  tieBodyInk(glyph: NativeGlyph) {
+    if (!(glyph.markLayout?.length ?? glyph.marks.length))
+      return unionNativeInk(this.bodyPieces({ ...glyph, pitches: glyph.pitches.map(pitch => ({ ...pitch, accidental: '' })) }))
+    return nativeSvgInk(this.tieBody(glyph), this.measurer)
+  }
+
   /** The connection belongs to the sounding head and its articulations. Side
    * components retain their own ink for local curve clearance. */
   tieBody(glyph: NativeGlyph): string {

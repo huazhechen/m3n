@@ -1,6 +1,6 @@
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
-import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
+import { nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeRibbonRange } from './native-curve.js'
 import { nativeLyricPieces } from './native-lyrics.js'
@@ -41,7 +41,7 @@ export function nativeSystemCore(system: NativeSystem, measurer: TextMeasurer): 
     const columns = system.measures.flatMap(m => m.columns).flatMap(column => {
       const glyphs = column.glyphs.filter(g => g.lane === lane.id)
       if (!glyphs.length) return []
-      const ink = unionNativeInk(glyphs.map(g => nativeSvgInk(painter.music({ ...g, y: 0 }, undefined, true), measurer)))
+      const ink = unionNativeInk(glyphs.map(g => unionNativeInk(painter.musicPieces({ ...g, y: 0 }, undefined, true))))
       return [{ x: column.x, ink, glyphs }]
     })
     const cells = columns.map((column, index) => ({ ...column.ink,
