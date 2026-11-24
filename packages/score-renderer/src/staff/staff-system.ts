@@ -1,6 +1,6 @@
 import { Glyph, StaveConnector, StaveTie, type StaveNote } from 'vexflow/bravura'
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
-import { displayedTempo, m3nChord, numberedHeadingLines } from '@m3n/notation'
+import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure } from './vexflow-engine.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
@@ -107,17 +107,11 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const cx = entry.notes[0]!.getNoteHeadBeginX()
             const top = Math.min(...entry.notes.flatMap(n => n.getYs())) - 40
             const event = item.event
-            if (event.chord) measureNode.children.push(text(m3nChord(event.chord, event.key)?.symbol ?? event.chord, cx, top, 14, 'harm'))
+            if (item.chord) measureNode.children.push(text(item.chord, cx, top, 14, 'harm'))
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, 6 / scale, top, 'reh', true))
             if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.getYs())) + 35, 16, 'dynam', { 'font-style': 'italic' }))
             for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, 13, 'fing'))
-            if (event.postfixes.includes('arp')) {
-              const ys = entry.notes[0]!.getYs(), top = Math.min(...ys) - 5, bottom = Math.max(...ys) + 5
-              const segments = Math.max(2, Math.ceil((bottom - top) / 6))
-              const d = `M${cx - 12} ${top}` + Array.from({ length: segments }, (_, i) => `q${i % 2 ? -4 : 4} 3 0 6`).join('')
-              staff.children.push(element('g', { class: 'arpeg' }, [element('path', { d, fill: 'none', stroke: '#000', 'stroke-width': '1' })]))
-            }
             for (const nav of event.navigation) addNavigation(nav, cx, top, measureNode)
           }
         }
@@ -187,7 +181,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const yTop = models[0]!.staves[lane]?.getYForLine(0) ?? 40
         const low = models[0]!.staves[lane]?.getYForLine(4) ?? 80
         if (interval.kind === 'lg') {
-          const music = new SvgGeometry(node, measureText).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => nodes(m).filter(n => hasClass(n, 'staff')))))
+          const music = new SvgGeometry(node, measureText).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
+            const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
+            return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
+          })))
           const obstacles = music.filter(p => p.left < right && p.right > left)
           const height = 14, y = Math.min(yTop - 15, ...obstacles.map(p => p.top - 6 / scale))
           node.children.push(element('g', { class: 'slur' }, [element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + 2} ${left + (right - left) / 3} ${y - height + 2} ${left} ${y} Z`, fill: '#000' })]))

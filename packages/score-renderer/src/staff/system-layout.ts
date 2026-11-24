@@ -45,18 +45,6 @@ export function arrangeStaffSystem(
 ): StaffSystem {
   const scale = STAFF_SCALE,
     gap = 6 / scale
-  // Keep a tuplet's number and split bracket together while clearing beams.
-  for (const tuplet of findAll(node, (n) => hasClass(n, 'tuplet'))) {
-    const labels = nodes(tuplet).filter((n) => hasClass(n, 'tupletNum') || hasClass(n, 'tupletBracket'))
-    if (!labels.length) continue
-    const music = union(nodes(tuplet).filter((n) => !labels.includes(n)).flatMap((n) => geometry.pieces(n)))
-    const label = union(labels.flatMap((n) => geometry.pieces(n)))
-    tuplet.children = tuplet.children.filter((child) => typeof child === 'string' || !labels.includes(child))
-    tuplet.children.push(element('g', {
-      class: 'm3n-tuplet-label',
-      'data-m3n-below': String(label.top + label.bottom > music.top + music.bottom),
-    }, labels))
-  }
   for (const label of findAll(node, (n) => hasClass(n, 'reh')))
     for (const text of findAll(label, (n) => n.tagName === 'text' || n.tagName === 'tspan'))
       text.attributes['font-size'] = String(16 / scale)
@@ -91,6 +79,23 @@ export function arrangeStaffSystem(
         [line],
       ),
     )
+  }
+  // Rhythm labels belong between music and lyrics. Position them before
+  // packing verses, so a later collision pass cannot push a numeral below text.
+  const tuplets = new Set(findAll(node, n => hasClass(n, 'm3n-tuplet-label')))
+  const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
+  const rhythmObstacles = geometry.pieces(filtered(node, n => isDecoration(n) || hasClass(n, 'verse')))
+  for (const label of tuplets) {
+    const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
+    let dy = 0
+    const intervals = geometry.pieces(label).flatMap(piece => rhythmObstacles
+      .filter(other => overlapsX(piece, other, clearance / 2))
+      .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
+      .sort((a, b) => below ? a.start - b.start : b.end - a.end)
+    for (const interval of intervals)
+      if (dy > interval.start && dy < interval.end) dy = below ? interval.end : interval.start
+    if (dy) translate(label, 0, dy)
+    rhythmObstacles.push(...geometry.pieces(label))
   }
   const verses = findAll(node, (n) => hasClass(n, 'verse'))
   for (const verse of verses) if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) verse.children = []
@@ -181,7 +186,7 @@ export function arrangeStaffSystem(
     if (row) row.push(item)
     else endingRows.push([item])
   }
-  const endingObstacles = geometry.pieces(filtered(node, isDecoration))
+  const endingObstacles = geometry.pieces(filtered(node, isMovableDecoration))
   for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
@@ -204,7 +209,7 @@ export function arrangeStaffSystem(
     }
   }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
-  const music = geometry.pieces(filtered(node, isDecoration))
+  const music = geometry.pieces(filtered(node, isMovableDecoration))
   const obstacles = [...music]
   const hairpinPieces = new Set<Ink>()
   // Keep brackets and curves inside expression
@@ -218,7 +223,7 @@ export function arrangeStaffSystem(
       hasClass(attachment, 'mNum') || hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
   // heading above directions, then music. Place the outer levels last.
-  const attachments = findAll(node, (n) => isDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
+  const attachments = findAll(node, (n) => isMovableDecoration(n) && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
     (a, b) => placementOrder(a) - placementOrder(b),
   )
   for (const attachment of attachments) {
@@ -290,7 +295,7 @@ export function arrangeStaffSystem(
       .trim()
     const inset = (geometry.measure(content, 16, true).width + 21) / scale
     const staff = measures[0] && nodes(measures[0]).find((n) => hasClass(n, 'staff'))
-    const lines = staff ? nodes(staff).filter((n) => n.tagName === 'path') : []
+    const lines = staff ? nodes(staff).filter((n) => hasClass(n, 'staff-line')) : []
     const center = lines.length
       ? (geometry.ink(lines[0]!).top + geometry.ink(lines.at(-1)!).bottom) / 2
       : (ink.top + ink.bottom) / 2

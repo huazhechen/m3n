@@ -37,3 +37,55 @@ describe('staff rhythm engraving', () => {
     }
   })
 })
+
+it('uses meter-specific defaults for 4/8 and 6/4 instead of splitting every denominator unit', () => {
+  expect(model('{4/8}\nN: (1 2 3 4) |').beams.map(beam => beam.notes.length)).toEqual([2, 2])
+  expect(model('{6/4}\nN: (1 2 3 4 5 6 7 1e 2e 3e 4e 5e) |').beams.map(beam => beam.notes.length)).toEqual([6, 6])
+})
+
+it('keeps short tuplets separate and beams a longer tuplet as a complete unit', () => {
+  const short = model('{4/4}\nN: (([1 2 3:2]) ([4 5 6:2])) 1 2 3 |')
+  expect(short.beams.map(beam => beam.notes.length)).toEqual([3, 3])
+  const long = model('{4/4}\nN: ([1 2 3 4 5:4]) 1 2 |')
+  expect(long.beams.map(beam => beam.notes.length)).toEqual([5])
+})
+
+it('shows the occupied-note ratio for unusual tuplets and brackets unbeamed groups', () => {
+  const result = model('{4/4}\nN: ([1 2 3 4 5:3]) 1 2 (3) |')
+  const drawing = drawVexMeasure(result, result.minimum, 0, createStaffContext())
+  const label = findAll(drawing, node => node.attributes.class === 'tupletNum')[0]!
+  // Numerator, denominator, and the two colon dots are separate paths.
+  expect(findAll(label, node => node.tagName === 'path')).toHaveLength(4)
+  const unbeamed = model('{4/4}\nN: [1 2 3:2] 4 5 |')
+  const bracket = drawVexMeasure(unbeamed, unbeamed.minimum, 0, createStaffContext())
+  expect(findAll(findAll(bracket, n => n.attributes.class === 'tupletNum')[0]!, n => n.tagName === 'rect')).toHaveLength(4)
+})
+
+it('breaks beams at an inline key signature without shifting the following beat grid', () => {
+  const result = model('{4/4}\nN: (1 {key=G} 2 3 4 5 6 7 1e) |')
+  expect(result.beams.map(beam => beam.notes.length)).toEqual([2, 2, 2])
+  expect(result.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
+  expect(result.entries[0]![1]!.notes[0]!.getBeam()).toBeUndefined()
+})
+
+it('reserves arpeggio width along with accidentals and grace notes', () => {
+  const plain = model('{4/4}\nN: [1# 3 5:h] 2 3 4 |')
+  const rolled = model('{4/4}\nN: [1# 3 5:h]{arp} 2 3 4 |')
+  const grace = model('{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |')
+  expect(rolled.minimum).toBeGreaterThan(plain.minimum)
+  expect(grace.minimum).toBeGreaterThan(rolled.minimum)
+  const drawing = drawVexMeasure(grace, grace.minimum, 0, createStaffContext())
+  expect(findAll(drawing, n => n.attributes.class === 'arpeg')).toHaveLength(1)
+})
+
+it('aligns pickup beaming with the end of the bar while the complementary final bar starts on the beat', () => {
+  const analysis = analyzeM3N('{4/4}\nN: (1 2 3) | (1 2 3 4 5 6 7 1e) | (1 2 3 4 5) |||')
+  expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])
+  const document = projectStaffDocument(analysis.score)
+  const pickup = createVexMeasure(document.measures[0]!, true, false, measureText, 0.25)
+  expect(pickup.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
+  expect(pickup.beams[0]!.notes).toEqual(pickup.entries[0]!.slice(1).flatMap(entry => entry.notes))
+  const final = createVexMeasure(document.measures.at(-1)!, true, false, measureText, 0.25)
+  expect(final.beams.map(beam => beam.notes.length)).toEqual([2, 2])
+  expect(final.entries[0]!.at(-1)!.notes[0]!.getBeam()).toBeUndefined()
+})

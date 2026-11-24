@@ -1,5 +1,5 @@
 import {
-  incomingMeasureKeys, m3nPitch, parseKey, scoreEventIds, parseM3NGrace, parseM3NGroupPitches,
+  incomingMeasureKeys, m3nChord, m3nPitch, parseKey, scoreEventIds, parseM3NGrace, parseM3NGroupPitches,
   type ScoreDocument, type ScoreEvent, type ScoreEventLyric, type ScoreMeasure,
 } from '@m3n/notation'
 import { staffDisplayScore } from './display-score.js'
@@ -9,23 +9,30 @@ export type StaffEvent = {
   id: string; event: ScoreEvent; pitches: StaffPitch[]; lyrics: ScoreEventLyric[]
   children?: StaffEvent[]; onset: number; beats: number
   key: string; previousKey: string
+  chord?: string
   graces?: Array<{ pitches: StaffPitch[]; duration: number; slash: boolean }>
 }
 export type StaffMeasure = {
   id: string; number: number; melody: StaffEvent[]; bass: StaffEvent[]
   source: ScoreMeasure; key: string; previousKey: string
+  beatOffset?: number
   meterCount: number; meterUnit: number; tempo: number; showTempo: boolean; showMeter: boolean
   force: boolean; section: boolean; fragment: boolean; lastFragment: boolean
 }
 export type StaffDocument = {
   score: ScoreDocument; measures: StaffMeasure[]; hasBass: boolean
 }
-export function staffKey(raw: string) {
+function staffFifths(raw: string) {
   const { tonic, mode } = parseKey(raw)
   const natural: Record<string, number> = { C: 0, D: 2, E: 4, F: -1, G: 1, A: 3, B: 5 }
   const offsets: Record<string, number> = { m: -3, dor: -2, phr: -4, lyd: 1, mix: -1, loc: -5 }
-  const fifths = (natural[tonic[0]!] ?? 0) + (tonic.endsWith('#') ? 7 : tonic.endsWith('b') ? -7 : 0) + (offsets[mode] ?? 0)
-  return ['Cb', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#'][fifths + 7] ?? 'C'
+  return (natural[tonic[0]!] ?? 0) + (tonic.endsWith('#') ? 7 : tonic.endsWith('b') ? -7 : 0) + (offsets[mode] ?? 0)
+}
+export function staffKey(raw: string) {
+  let fifths = staffFifths(raw)
+  while (fifths > 7) fifths -= 12
+  while (fifths < -7) fifths += 12
+  return ['Cb', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#'][fifths + 7]!
 }
 const accidentalNames: Record<string, string> = { s: '#', f: 'b', ss: '##', x: '##', ff: 'bb', n: 'n' }
 /** A typed display projection. No source parsing, serialization, or input mutation. */
@@ -54,6 +61,22 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
     const raw = staffKey(key), i = letters.indexOf(raw[0]!.toLowerCase())
     return targetKeys[((naturals[i]! + (offset[raw.slice(1)] ?? 0) + transpose) % 12 + 12) % 12]!
   }
+  const transposePitch = (letter: string, accidental: string, octave: number, key: string) => {
+    const fifths = staffFifths(key)
+    if (!transpose && fifths >= -7 && fifths <= 7) return { letter, accidental, octave }
+    const semitone = naturals[letters.indexOf(letter)]! + (offset[accidental] ?? 0) + octave * 12 + transpose
+    const sourceLetter = letters[((fifths * 4) % 7 + 7) % 7]!
+    const sourceAlteration = (((fifths * 7 - naturals[letters.indexOf(sourceLetter)]! + 6) % 12 + 12) % 12) - 6
+    const source = sourceLetter.toUpperCase() + (sourceAlteration > 0 ? '#'.repeat(sourceAlteration) : 'b'.repeat(-sourceAlteration))
+    const target = transposeKey(key)
+    const tonicSemitone = (tonic: string) => naturals[letters.indexOf(tonic[0]!.toLowerCase())]! + (offset[tonic.slice(1)] ?? 0)
+    const octaveDelta = Math.round((tonicSemitone(source) + transpose - tonicSemitone(target)) / 12)
+    const steps = letters.indexOf(target[0]!.toLowerCase()) - letters.indexOf(source[0]!.toLowerCase()) + 7 * octaveDelta
+    const position = octave * 7 + letters.indexOf(letter) + steps
+    const nextOctave = Math.floor(position / 7), nextLetter = letters[((position % 7) + 7) % 7]!
+    const alteration = semitone - naturals[letters.indexOf(nextLetter)]! - nextOctave * 12
+    return { letter: nextLetter, octave: nextOctave, accidental: alteration > 0 ? '#'.repeat(alteration) : 'b'.repeat(-alteration) }
+  }
   for (const [partIndex, part] of [...display.score.parts.values()].entries()) {
     const incoming = incomingMeasureKeys(display.score, part.melody)
     let previousKey = input.key
@@ -79,18 +102,9 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
           const identity = `${value.pname}/${oct}`
           const explicit = Boolean(value.accid)
           if (explicit) accidentals.set(identity, accidentalNames[value.accid] ?? '')
-          let accidental = accidentals.get(identity) ?? accidentalNames[value.accidGes ?? ''] ?? ''
-          let letter = value.pname, octave = oct
-          if (transpose) {
-            const semitone = naturals[letters.indexOf(letter)]! + (offset[accidental] ?? 0) + oct * 12 + transpose
-            const target = transposeKey(event.key)
-            const preferFlat = target.includes('b')
-            const spelling = (preferFlat ? ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b'] : ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'])[((semitone % 12) + 12) % 12]!
-            letter = spelling[0]!
-            accidental = spelling.slice(1)
-            octave = Math.floor(semitone / 12)
-          }
-          return { key: `${letter}${accidental === 'n' ? '' : accidental}/${octave}`, accidental, explicit }
+          const accidental = accidentals.get(identity) ?? accidentalNames[value.accidGes ?? ''] ?? ''
+          const transposed = transposePitch(value.pname, accidental, oct, event.key)
+          return { key: `${transposed.letter}${transposed.accidental === 'n' ? '' : transposed.accidental}/${transposed.octave}`, accidental: transposed.accidental, explicit }
         }
         return (measure?.events ?? []).map(event => {
           if (event.key !== activeKey) accidentals.clear()
@@ -102,7 +116,15 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
             const grace = parseM3NGrace(value)
             return grace ? [{ pitches: (parseM3NGroupPitches(grace.pitchSource) ?? []).map(p => pitch(p, event)), duration: 2 ** (grace.depth + 2), slash: grace.kind === 'ac' }] : []
           })
-          const item: StaffEvent = { id, event, pitches: event.pitches.map(p => pitch(p, event)), lyrics, onset, beats: event.beats, key: transposeKey(event.key), previousKey: transposeKey(previous), graces }
+          const chordSymbol = event.chord ? m3nChord(event.chord, event.key)?.symbol ?? event.chord : undefined
+          const transposeChordNote = (note: string) => {
+            const match = /^([A-G])([#b]*)$/.exec(note)
+            if (!match || !transpose) return note
+            const transposed = transposePitch(match[1]!.toLowerCase(), match[2]!, 4, event.key)
+            return transposed.letter.toUpperCase() + transposed.accidental
+          }
+          const chord = chordSymbol?.replace(/^[A-G][#b]*/, transposeChordNote).replace(/\/([A-G][#b]*)$/, (_, bass: string) => `/${transposeChordNote(bass)}`)
+          const item: StaffEvent = { id, event, pitches: event.pitches.map(p => pitch(p, event)), lyrics, onset, beats: event.beats, key: transposeKey(event.key), previousKey: transposeKey(previous), graces, chord }
           if (event.kind === 'tuplet' && event.tuplet) {
             const sung = new Map<number, number>()
             const byVerse = new Map<number, ScoreEventLyric[]>()
@@ -122,7 +144,11 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
           return item
         })
       }
+      const duration = source.events.reduce((sum, event) => sum + event.beats, 0)
+      const capacity = meterCount * 4 / meterUnit
+      const pickup = !measures.length && duration > 0 && duration < capacity
       measures.push({
+        ...(pickup ? { beatOffset: capacity - duration } : {}),
         id: `m3n-measure-${partIndex + 1}-${index + 1}`, number: source.interlude ? number : ++number,
         melody: lane(source), bass: hasBass ? lane(part.bass[index]) : [], source,
         key: transposeKey(key), previousKey: transposeKey(entryKey), meterCount, meterUnit, tempo,
@@ -157,7 +183,9 @@ export function splitStaffMeasure(measure: StaffMeasure, maximumBeats: number): 
   cuts.push(end)
   if (cuts.length === 2) return [measure]
   return cuts.slice(0, -1).map((start, i) => ({
-    ...measure, id: `${measure.id}-fragment-${i + 1}`, fragment: true, lastFragment: i === cuts.length - 2,
+    ...measure, beatOffset: (measure.beatOffset ?? 0) + start, id: `${measure.id}-fragment-${i + 1}`, fragment: true, lastFragment: i === cuts.length - 2,
+    key: measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
+    previousKey: i === 0 ? measure.previousKey : measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
     force: i === 0 && measure.force, section: i === 0 && measure.section,
     showTempo: i === 0 && measure.showTempo, showMeter: i === 0 && measure.showMeter,
     melody: measure.melody.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),

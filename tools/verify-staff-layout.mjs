@@ -33,6 +33,11 @@ const inputs = ['scores', 'works']
   )
   .filter((item) => !filter || item.file.includes(filter))
 const fixtures = [
+  { file: 'fixture/tuplet-groups', source: '{4/4}\nN: (([1 2 3:2]) ([4 5 6:2])) 1 2 3 | ([1 2 3 4 5:3]) 1 2 (3) | 1 2 3 ([0 0 3d:2]) |||' },
+  { file: 'fixture/arpeggio-graces', source: '{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |||' },
+  { file: 'fixture/bass-slur', source: '{4/4}\nN: 1e 2e 3e 4e |||\nB: {lg}1d 2d 3d 4d{/} |' },
+  { file: 'fixture/transposed-harmony', source: '{key=C}{4/4}\nN: 1 2 3 4 | 1 2 3 4 |||\nC: IV | G/B |', settings: { transpose: 5 } },
+  { file: 'fixture/compound-quarter-beats', source: '{6/4}\nN: (1 2 3 4 5 6 7 1e 2e 3e 4e 5e) |||' },
   { file: 'fixture/inline-signatures', source: '{4/4}\nN: 1 2 {key=G} 3 4 | 5 6 7 1e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |' },
   { file: 'fixture/short-breaks', source: '{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||' },
   {
@@ -77,16 +82,16 @@ for (const input of [...fixtures.filter(item => !filter || item.file.includes(fi
     await page.addScriptTag({ url: 'http://staff-audit.local/bundle.js' })
     const width = 640
     const result = await page.evaluate(
-      async ({ source, width, measureNumbers }) => {
+      async ({ source, width, measureNumbers, settings }) => {
         await window.staffWidths.prepare()
-        return window.staffWidths.measure(source, width, true, { measureNumbers })
+        return window.staffWidths.measure(source, width, true, { ...settings, measureNumbers })
       },
       { ...input, width, measureNumbers },
     )
     entries.push({ file: input.file, ...result })
     console.log(input.file, result.pageCount, result.outside.length, result.overlaps.length)
     if(result.outside.length||result.overlaps.length){
-      const svgs=await page.evaluate(({source,width,measureNumbers})=>window.staffWidths.preview(source,width,{measureNumbers}),{...input,width,measureNumbers})
+      const svgs=await page.evaluate(({source,width,measureNumbers,settings})=>window.staffWidths.preview(source,width,{...settings,measureNumbers}),{...input,width,measureNumbers})
       const name=input.file.replaceAll('/','_')
       svgs.forEach((svg,i)=>writeFileSync(join(output,`${name}-${i+1}.svg`),svg))
       await page.screenshot({path:join(output,`${name}.png`),fullPage:true})

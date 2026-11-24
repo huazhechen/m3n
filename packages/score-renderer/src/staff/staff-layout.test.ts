@@ -253,3 +253,62 @@ it('renders an unmeasured interlude with a multimeasure rest symbol and no text 
   expect(marker.flatMap(nodes).filter(node => node.tagName === 'path')).toHaveLength(1)
   expect(marker.flatMap(nodes).some(node => node.tagName === 'text' || node.attributes['stroke-dasharray'])).toBe(false)
 })
+
+it('keeps bass slurs on the bass staff instead of lifting them over the treble staff', () => {
+  const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1e 2e 3e 4e |\nB: {lg}1d 2d 3d 4d{/} |').score)
+  const measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, 0.25)
+  const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+  const geometry = new SvgGeometry(system.node, measure)
+  const slur = findAll(system.node, n => hasClass(n, 'slur'))[0]!
+  const treble = findAll(system.node, n => n.attributes['data-staff'] === 'melody')[0]!
+  expect(geometry.ink(slur).top).toBeGreaterThan(geometry.ink(treble).bottom)
+})
+
+it('reports available widths in the same logical pixels as its line geometry', async () => {
+  const score = analyzeM3N('{4/4}\nN: 1 2 3 4 | 5 6 7 1e |').score
+  const render = await prepareStaffScore(score, { width: 640 })
+  const info = render.layoutInfo()
+  expect(info.lines[0]!.target).toBeCloseTo(info.availableWidth)
+})
+
+it('retains beat phase when an oversized measure is split off the beat', () => {
+  const score = analyzeM3N('{4/4}\nN: (1) 2 (3 4 5) 6 |').score
+  const original = projectStaffDocument(score).measures[0]!
+  const fragment = splitStaffMeasure(original, 1.5)[1]!
+  const model = createVexMeasure(fragment, true, false, textMeasurer(), 0.25)
+  expect(fragment.beatOffset).toBe(1.5)
+  expect(model.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
+  expect(model.beams[0]!.notes).toEqual(model.entries[0]!.slice(1).flatMap(entry => entry.notes))
+})
+
+it('uses the active key when a continuation fragment starts a new system', () => {
+  const score = analyzeM3N('{key=C}{4/4}\nN: 1 {key=G}2 3 4 |').score
+  const continuation = splitStaffMeasure(projectStaffDocument(score).measures[0]!, 2)[1]!
+  expect(continuation.key).toBe('G')
+  expect(continuation.previousKey).toBe('G')
+})
+
+it('centers inline section labels on the five staff rules, excluding clef and key outlines', () => {
+  const document = projectStaffDocument(analyzeM3N('{key=Bb}{4/4}\n===A\nN: 1 2 3 4 |').score)
+  const measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, 0.25)
+  const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+  const geometry = new SvgGeometry(system.node, measure)
+  const label = geometry.ink(findAll(system.node, n => hasClass(n, 'reh'))[0]!)
+  const rules = findAll(system.node, n => hasClass(n, 'staff-line'))
+  expect((label.top + label.bottom) / 2).toBeCloseTo((geometry.ink(rules[0]!).top + geometry.ink(rules[4]!).bottom) / 2)
+})
+
+it('keeps downward tuplet numbers between their music and the first lyric row', () => {
+  const score = analyzeM3N('{key=Bb}{4/4}\nN: ([2 2 1:2]) ([2 2 1:2]) ([2 2 2:2]) ([2 1 6d:2]) |\nL1: 春夏秋冬天地山川日月星辰\nL2: 春夏秋冬天地山川日月星辰').score
+  const document = projectStaffDocument(score), measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, 0.25)
+  const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+  const geometry = new SvgGeometry(system.node, measure)
+  const labels = findAll(system.node, n => hasClass(n, 'm3n-tuplet-label') && n.attributes['data-m3n-below'] === 'true')
+  const lyrics = findAll(system.node, n => hasClass(n, 'verse')).flatMap(n => geometry.pieces(n))
+  expect(labels.length).toBeGreaterThan(0)
+  const lyricTop = Math.min(...lyrics.map(piece => piece.top))
+  for (const label of labels) expect(geometry.ink(label).bottom).toBeLessThan(lyricTop)
+})

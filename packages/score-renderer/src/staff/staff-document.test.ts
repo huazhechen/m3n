@@ -66,3 +66,27 @@ it('applies grace accidentals before the main note and transposes grace pitches 
   expect(projectStaffDocument(score, 2).measures[0]!.melody[0]!.graces![0]!.pitches[0]!.key).toBe('d#/4')
   expect(score).toEqual(before)
 })
+
+it('spells transposed notes by their diatonic degree in the destination signature', () => {
+  const score = analyzeM3N('{key=C}{4/4}\nN: 4 7 1e 4e |').score
+  expect(projectStaffDocument(score, 5).measures[0]!.melody.map(e => e.pitches[0]!.key)).toEqual(['bb/4', 'e/5', 'f/5', 'bb/5'])
+  expect(projectStaffDocument(score, 6).measures[0]!.melody.map(e => e.pitches[0]!.key)).toEqual(['b/4', 'e#/5', 'f#/5', 'b/5'])
+  expect(projectStaffDocument(score, -12).measures[0]!.melody.map(e => e.pitches[0]!.key)).toEqual(['f/3', 'b/3', 'c/4', 'f/4'])
+})
+
+it('transposes Roman, absolute and slash chord symbols with the notes', () => {
+  const score = analyzeM3N('{key=C}{4/4}\nN: 1 2 3 4 | 1 2 3 4 | 1 2 3 4 |\nC: IV | G/B | N.C. |').score
+  const before = structuredClone(score)
+  const projected = projectStaffDocument(score, 5)
+  expect(projected.measures.map(m => m.melody[0]!.chord)).toEqual(['Bb', 'C/E', 'N.C.'])
+  expect(score).toEqual(before)
+})
+
+it('normalizes theoretical signatures enharmonically instead of silently substituting C major', () => {
+  const score = analyzeM3N('{key=G#}{4/4}\nN: 1 2 3 4 |').score
+  const projected = projectStaffDocument(score)
+  expect(projected.measures[0]!.key).toBe('Ab')
+  expect(projected.measures[0]!.melody.map(e => e.pitches[0]!.key)).toEqual(['ab/4', 'bb/4', 'c/5', 'db/5'])
+  expect(projectStaffDocument(score, 1).measures[0]!.key).toBe('A')
+  expect(projectStaffDocument(score, 1).measures[0]!.melody.map(e => e.pitches[0]!.key)).toEqual(['a/4', 'b/4', 'c#/5', 'd/5'])
+})

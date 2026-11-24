@@ -1,6 +1,6 @@
 import {
   Accidental, Articulation, Beam, Dot, Flow, Formatter, Fraction, GraceNote, GraceNoteGroup,
-  KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveModifierPosition, StaveNote, SVGContext, Tuplet, Voice,
+  KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveModifierPosition, StaveNote, Stroke, SVGContext, Tuplet, Voice,
   type Note, type Tickable,
 } from 'vexflow/bravura'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
@@ -14,6 +14,23 @@ export function staffDuration(beats: number) {
   const value = durationValues.find(d => Math.abs(d.beats - beats) < 1e-7)
   if (!value) throw new Error(`五线谱无法表示时值：${beats}`)
   return value
+}
+// VexFlow 4's Stroke draws a legacy glyph absent from its Bravura-only
+// bundle. Keep its modifier measurement, but draw the directionless wave here.
+class StaffArpeggio extends Stroke {
+  constructor() { super(Stroke.Type.ARPEGGIO_DIRECTIONLESS) }
+  override draw() {
+    const context = this.checkContext(), note = this.checkAttachedNote()
+    const x = note.getModifierStartXY(Modifier.Position.LEFT, 0).x + this.getXShift() - 9
+    const ys = note.getYs(), top = Math.min(...ys) - 5, bottom = Math.max(...ys) + 5
+    const segments = Math.max(2, Math.ceil((bottom - top) / 6))
+    this.setRendered()
+    context.openGroup('arpeg')
+    context.beginPath().setLineWidth(1).moveTo(x, top)
+    for (let i = 0; i < segments; i++) context.quadraticCurveTo(x + (i % 2 ? -4 : 4), top + i * 6 + 3, x, top + (i + 1) * 6)
+    context.stroke()
+    context.closeGroup()
+  }
 }
 export type VexEntry = { item: StaffEvent; notes: StaveNote[]; tuplet?: Tuplet }
 export type VexMeasure = ReturnType<typeof createVexMeasure>
@@ -71,6 +88,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
         if (notes.length) note.addModifier(new GraceNoteGroup(notes, true).beamNotes())
       }
       if (!rest) applyPitchAccidentals(note, item.pitches)
+      if (item.event.postfixes.includes('arp')) note.addModifier(new StaffArpeggio())
       note.setStave(staves[lane]!)
       return note
     }
@@ -78,7 +96,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
       if (item.key !== accidentalKey) { accidentalState.clear(); accidentalKey = item.key }
       const entry: VexEntry = { item, notes: (item.children ?? [item]).map(noteFor) }
       if (item.children && item.event.tuplet) {
-        entry.tuplet = new Tuplet(entry.notes, { num_notes: item.event.tuplet.num, notes_occupied: item.event.tuplet.numbase, bracketed: true, ratioed: false })
+        entry.tuplet = new Tuplet(entry.notes, { num_notes: item.event.tuplet.num, notes_occupied: item.event.tuplet.numbase })
         tuplets.push(entry.tuplet)
       }
       return entry
@@ -105,15 +123,40 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     const voice = new Voice({ num_beats: measure.meterCount, beat_value: measure.meterUnit }).setMode(Voice.Mode.SOFT).addTickables(tickables)
     formatter.joinVoices([voice])
     voices.push(voice)
-    const groups = measure.meterUnit >= 8 && measure.meterCount % 3 === 0
-      ? [new Fraction(3, measure.meterUnit)] : [new Fraction(1, measure.meterUnit)]
-    beams.push(...Beam.generateBeams(laneEntries.flatMap(e => e.notes), { groups }))
-    // Rest stems are placeholders, so a leading rest must not choose the
-    // tuplet's side. Use the pitched notes after beaming has set their stems.
-    for (const entry of laneEntries) {
-      const pitched = entry.notes.find(note => !note.isRest())
-      if (entry.tuplet && pitched) entry.tuplet.setTupletLocation(pitched.getStemDirection())
+    // Group by performed meter positions, keeping each tuplet an independent
+    // rhythm unit. Key changes break beams; fragments retain the original grid.
+    const groups = Beam.getDefaultBeamGroups(`${measure.meterCount}/${measure.meterUnit}`).map(group => group.value() * 4)
+    const period = groups.reduce((sum, beats) => sum + beats, 0)
+    let pending: StaveNote[] = [], bucket = '', key = measure.key
+    const flush = () => {
+      if (pending.length > 1) {
+        const ticks = pending.reduce((sum, note) => sum.add(note.getTicks()), new Fraction(0, 1))
+        beams.push(...Beam.generateBeams(pending, { groups: [ticks.divide(Flow.RESOLUTION, 1)] }))
+      }
+      pending = []
     }
+    for (const entry of laneEntries) {
+      if (entry.item.key !== key) { flush(); key = entry.item.key }
+      const position = entry.item.onset + (measure.beatOffset ?? 0)
+      const cycle = Math.floor((position + 1e-7) / period)
+      let within = position - cycle * period, group = 0
+      while (group + 1 < groups.length && within + 1e-7 >= groups[group]!) within -= groups[group++]!
+      const nextBucket = `${cycle}:${group}`
+      if (entry.tuplet) {
+        flush()
+        pending = entry.notes
+        flush()
+        const pitched = entry.notes.find(note => !note.isRest())
+        if (pitched) entry.tuplet.setTupletLocation(pitched.getStemDirection())
+        const beam = entry.notes[0]!.getBeam()
+        entry.tuplet.setBracketed(!beam || entry.notes.some(note => note.isRest() || note.getBeam() !== beam))
+      } else {
+        if (nextBucket !== bucket) flush()
+        pending.push(...entry.notes)
+      }
+      bucket = nextBucket
+    }
+    flush()
   }
   const start = Math.max(...staves.map(s => s.getNoteStartX()))
   staves.forEach(s => s.setNoteStartX(start))
@@ -123,7 +166,7 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
   for (const lane of entries) for (const entry of lane) for (const [i, note] of entry.notes.entries()) {
     const item = entry.item.children?.[i] ?? entry.item
     const widths = item.lyrics.filter(l => l.kind === 'text').map(l => measureText(l.text.replaceAll('~', ' '), 16 / STAFF_SCALE).width)
-    if (item.event.chord) widths.push(measureText(item.event.chord, 14 / STAFF_SCALE).width)
+    if (item.chord) widths.push(measureText(item.chord, 14 / STAFF_SCALE).width)
     textWidths.set(note, Math.max(0, ...widths))
   }
   let right = 0
@@ -219,7 +262,11 @@ export function drawVexMeasure(model: VexMeasure, width: number, x: number, cont
   for (const tuplet of model.tuplets) {
     const markup = capture(() => tuplet.setContext(context).draw())
     const lane = model.entries.findIndex(entries => entries.some(e => e.tuplet === tuplet))
-    nodes(node).filter(n => n.attributes.class === 'staff')[Math.max(0, lane)]!.children.push(element('g', { class: 'tupletNum' }, markup))
+    const entry = model.entries[lane]!.find(e => e.tuplet === tuplet)!
+    const below = entry.notes.find(note => !note.isRest())?.getStemDirection() === -1
+    nodes(node).filter(n => n.attributes.class === 'staff')[lane]!.children.push(element('g', {
+      class: 'm3n-tuplet-label', 'data-m3n-below': String(below),
+    }, [element('g', { class: 'tupletNum' }, markup)]))
   }
   return node
 }
