@@ -37,7 +37,10 @@ it.each(['|', '||', '|||', ':||'])('aligns the white-backed number to the painte
   const bar = nativeMeasureBarPositions(system.measures, 0).at(-1)!
   const barInk = nativeBarInk(bar.kind, bar.x, 0, measurer)
   const [background, text] = nativeSvgPieces(number.svg, measurer)
-  expect(background).toEqual(text)
+  expect(background!.left).toBeCloseTo(text!.left - 2, 4)
+  expect(background!.top).toBeCloseTo(text!.top - 2, 4)
+  expect(background!.bottom).toBeCloseTo(text!.bottom + 2, 4)
+  expect(background!.right).toBeCloseTo(text!.right, 4)
   expect(text!.right).toBeCloseTo(barInk.right, 4)
   expect(text!.bottom).toBeCloseTo(barInk.top - 2, 4)
 })

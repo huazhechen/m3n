@@ -108,7 +108,7 @@ export function arrangeStaffSystem(
         for (const number of findAll(measure, (n) => hasClass(n, 'mNum'))) {
           const barInk = union(bars.flatMap((bar) => geometry.pieces(bar)))
           const ink = geometry.ink(number)
-          number.children.unshift(element('rect', { x: String(ink.left), y: String(ink.top), width: String(ink.right - ink.left), height: String(ink.bottom - ink.top), fill: '#fff' }))
+          number.children.unshift(element('rect', { x: String(ink.left - 2 / scale), y: String(ink.top - 2 / scale), width: String(ink.right - ink.left + 2 / scale), height: String(ink.bottom - ink.top + 4 / scale), fill: '#fff' }))
           translate(number, barInk.right - ink.right, barInk.top - 2 / scale - ink.bottom)
         }
     }
