@@ -42,6 +42,6 @@ export async function probeWidthCandidates(measure, { verify, signal } = {}) {
 export async function selectBestWidth(measure, options) {
   const result = await probeWidthCandidates(measure, options)
   const best = chooseBestWidth(result.candidates)
-  if (!best) throw new Error('没有通过边界和碰撞检查的安全版面。')
+  if (!best) throw new Error('没有可用的排版候选。')
   return { ...result, best }
 }

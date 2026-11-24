@@ -35,18 +35,22 @@ async function prepareMeasurement(source) {
   return measurementDocument
 }
 
-export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
+export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch'), auditLayout = false) {
   const started = performance.now()
   const scoreDocument = await prepareMeasurement(source)
   const parseFontsMs = performance.now() - started
-  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, settings: { coreGap },
+  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap },
     afterMount: host => attachScoreReading(host, measurementDescription) })
   candidate.timings.parseFontsMs = parseFontsMs
   candidate.timings.totalMs += parseFontsMs
   return candidate
 }
 
-export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch')) {
+export function auditWidth(source, width, paged = true, coreGap, host = document.querySelector('#scratch')) {
+  return measure(source, width, paged, coreGap, host, true)
+}
+
+export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch'), auditLayout = false) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width
   const documents = sources.map(source => parseM3NDocument(source))
@@ -54,7 +58,7 @@ export async function sharedA4Page(sources, width, gap = 22, host = document.que
   const fitted = renderSharedNumberedNotationScores(documents, { width, pageMargin: 0 }, gap)
   host.innerHTML = fitted.markup.join('')
   const pages = [...host.querySelectorAll(':scope > svg')]
-  const safety = inspectScorePages(pages)
+  const safety = auditLayout ? inspectScorePages(pages) : { outside: [], overlaps: [] }
   if (safety.outside.length || safety.overlaps.length) throw new Error(`Unsafe shared page: ${JSON.stringify(safety)}`)
   const items = []
   let top = 0

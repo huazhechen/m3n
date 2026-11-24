@@ -12,7 +12,7 @@ import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tool
 export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
-  measurementTimings: { totalMs: number; stages: Record<string, number>; scores: {
+  measurementTimings: { auditLayout: boolean; totalMs: number; stages: Record<string, number>; scores: {
     file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: WidthTimings }[]
   }[] }
 }
@@ -108,9 +108,9 @@ function inspectScoreMarkup(markup: string[], timings: Record<string, number> = 
 }
 
 /** Reuse measured layouts within one export; every invocation starts from the current sources. */
-export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void): Promise<OnlineScorebook> {
+export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void, { auditLayout = false } = {}): Promise<OnlineScorebook> {
   const started = performance.now()
-  const measurementTimings: OnlineScorebook['measurementTimings'] = { totalMs: 0, stages: {}, scores: [] }
+  const measurementTimings: OnlineScorebook['measurementTimings'] = { auditLayout, totalMs: 0, stages: {}, scores: [] }
   const files = new Map(presetScores.map(score => [score.sourcePath, score]))
   if (files.size !== plan.entries.length || plan.entries.some(entry => !files.has(entry.file))) {
     throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
@@ -142,7 +142,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           const widthStarted = performance.now()
           let timings: WidthTimings = {}
           try {
-            const measured = measureNumberedWidth(document, width, { signal })
+            const measured = measureNumberedWidth(document, width, { signal, auditLayout })
             prepared.set(width, measured.prepared)
             timings = measured.candidate.timings
             return measured.candidate
@@ -174,7 +174,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       const start = music.length
       if (members.length > 1) {
         const rendered = renderSharedPreparedNumberedNotationScores(members.map(entry => entry.prepared.get(group.width)!), sharedScoreGap)
-        const safety = inspectScoreMarkup(rendered.markup)
+        const safety = auditLayout ? inspectScoreMarkup(rendered.markup) : { outside: [], overlaps: [] }
         if (safety.outside.length || safety.overlaps.length) throw new Error(`合页实绘未通过边界或碰撞检查：${members.map(entry => entry.title).join(' / ')}`)
         const svg = page(rendered.markup.join(''))
         let top = 0

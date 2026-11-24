@@ -55,9 +55,14 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
   return best.width
 }
 
-function selectWidthInBackground(input: ScoreRenderInput, choose: typeof chooseNumberedScoreWidth) {
+function selectWidthInBackground(target: HTMLElement, input: ScoreRenderInput, choose: typeof chooseNumberedScoreWidth) {
   void yieldToBrowser().then(() => choose(input.scoreDocument, input, input.signal))
-    .then(selected => { if (!input.signal?.aborted) input.onWidthSelected?.(selected) })
+    .then(selected => {
+      if (!input.signal?.aborted) {
+        target.dataset.selectedWidth = String(selected)
+        input.onWidthSelected?.(selected)
+      }
+    })
     .catch(error => {
       if (error instanceof Error && error.name !== 'AbortError') console.error('曲谱版宽选择失败', error)
     })
@@ -99,7 +104,9 @@ export async function prepareScoreExport(scoreDocument: ScoreDocument, settings:
 
 export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInput) {
   const check = () => input.signal?.throwIfAborted()
-  check(); input.onPhase?.('loading-library')
+  check()
+  if (input.autoWidth) delete target.dataset.selectedWidth
+  input.onPhase?.('loading-library')
   if (input.notationMode === 'staff') {
     const { prepareStaffScore } = await loadStaffResources(input.onPhase)
     const width = input.autoWidth ? widthMaximum : input.width
@@ -112,7 +119,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
     attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
     restoreReading()
-    if (input.autoWidth) selectWidthInBackground(input, chooseStaffScoreWidth)
+    if (input.autoWidth) selectWidthInBackground(target, input, chooseStaffScoreWidth)
     return { message: '', width, widthPending: Boolean(input.autoWidth) }
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts } = await import('@m3n/numbered-notation')
@@ -129,6 +136,6 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   if (input.paged && input.sheetClass) wrapScorePagesIntoSheets(target, input.sheetClass)
   attachScoreReading(target, describeAccessibleScore(input.scoreDocument, { ...input, forDisplay: true }))
   restoreReading()
-  if (input.autoWidth) selectWidthInBackground(input, chooseNumberedScoreWidth)
+  if (input.autoWidth) selectWidthInBackground(target, input, chooseNumberedScoreWidth)
   return { message: [...new Set(score.diagnostics.filter(item => item.code.startsWith('NUMBERED_')).map(item => item.message))].join('；'), width, widthPending: Boolean(input.autoWidth) }
 }

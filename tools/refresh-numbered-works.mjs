@@ -35,12 +35,12 @@ try {
   await page.addScriptTag({ url: 'http://work-widths.local/bundle.js' })
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
   for (const { file, source } of inputs) {
-    const result = await probeWidthCandidates(width => page.evaluate(({ source, width }) => window.scorebook.measure(source, width), { source, width }))
+    const result = await probeWidthCandidates(width => page.evaluate(({ source, width }) => window.scorebook.auditWidth(source, width), { source, width }))
     const best = chooseBestWidth(result.candidates)
     assert(best, `${file}: no safe width`)
     const mobileChecks = []
     for (const width of [320, 390]) for (const paged of [false, true]) {
-      const measured = await page.evaluate(({ source, width, paged }) => window.scorebook.measure(source, width, paged), { source, width, paged })
+      const measured = await page.evaluate(({ source, width, paged }) => window.scorebook.auditWidth(source, width, paged), { source, width, paged })
       assert(!measured.error && !measured.outside.length && !measured.overlaps.length, `${file}: unsafe at ${width}px`)
       mobileChecks.push(measured)
     }

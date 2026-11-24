@@ -3,10 +3,27 @@ import { numberedLayoutScore } from '../scorebook-width.mjs'
 import { inspectScorePages } from './score-geometry.mjs'
 
 /** One candidate measurement for reader, online PDF and local PDF. Fonts are
- * prepared once by the caller. A supplied host may retain the measured pages. */
-export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal } = {}) {
+ * prepared once by the caller. Production reads layout metadata only; opt-in
+ * audits mount SVG without changing the layout or its avoidance constraints. */
+export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
+  const prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings)
+  signal?.throwIfAborted()
+  timings.layoutMs = performance.now() - started
+  const quality = prepared.quality
+  if (!auditLayout) {
+    const candidate = { width, pageCount: paged ? prepared.pageCount : 1, rows: prepared.systemCount,
+      outside: [], overlaps: [], lineDensityVariation: quality.lineDensityVariation,
+      lastLineSlack: quality.lastLineSlack, qualityScore: numberedLayoutScore({ width, ...quality }) }
+    if (!paged || prepared.pageCount === 1) {
+      const heightStarted = performance.now()
+      candidate.naturalHeight = prepared.continuousHeight(settings.coreGap)
+      timings.continuousHeightMs = performance.now() - heightStarted
+    }
+    timings.totalMs = performance.now() - started
+    return { candidate: { ...candidate, timings: { ...timings } }, prepared }
+  }
   const ownsHost = !host
   host ??= document.createElement('div')
   if (ownsHost) {
@@ -20,15 +37,11 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
     return { pages: [...host.querySelectorAll(':scope > svg')], ms: performance.now() - started }
   }
   try {
-    const prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings)
-    signal?.throwIfAborted()
-    timings.layoutMs = performance.now() - started
     let stage = performance.now()
     const markup = (paged ? prepared.renderPaged(settings.coreGap) : prepared.renderContinuous(settings.coreGap)).join('')
     timings.svgRenderMs = performance.now() - stage
     const mounted = mount(markup), pages = mounted.pages
     timings.svgMountMs = mounted.ms
-    const quality = prepared.quality
     const candidate = { width, timings, pageCount: pages.length,
       rows: pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0),
       ...inspectScorePages(pages, timings), lineDensityVariation: quality.lineDensityVariation,

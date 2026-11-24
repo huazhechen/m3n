@@ -1,21 +1,40 @@
 import { nativeNoteBody } from './native-note-body.js'
-import { nativeStyle } from './native-style.js'
+import { nativeMusicAxis } from './native-axis.js'
+import { nativeAccidentalGeometry } from './native-accidentals.js'
+import { nativeSvgNumber as n } from './native-svg-number.js'
+import { nativeStyle, nativeEm } from './native-style.js'
 import type { NativeGlyph, NativePitch } from './native-model.js'
 import { nativeInnerMark } from './native-marks.js'
-import { NativeSymbols, line } from './native-symbols.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativePathInk } from './native-ink.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 /** All vertical distances come from the primitives used to paint the note. */
 export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, sustain: boolean, measurer: TextMeasurer = new DefaultTextMeasurer()) {
-  const size = nativeStyle.music, gap = size * 0.12, painter = new NativeSymbols(measurer)
+  const size = nativeStyle.music, gap = size * 0.12
   const body = nativeNoteBody(measurer)
   const base = 2 ** Math.floor(Math.log2(writtenBeats))
   const beamCount = sustain ? 0 : Math.max(0, Math.round(-Math.log2(base)))
+  // Metrics need only vertical extrema. Evaluate the same text, accidental,
+  // circle and beam primitives directly instead of serializing and parsing SVG.
+  const sustainY = sustain && pitches.length ? n(nativeMusicAxis(measurer)) : 0
+  const sustainHalf = n(nativeEm(2.2)) / 2
   const bounds = pitches.map((pitch, index) => {
-    let svg = sustain ? painter.sustain(0, 0) : painter.pitch(pitch, 0, 0, size, index === 0 ? beamCount : 0)
-    if (index === 0) for (let beam = 0; beam < beamCount; beam++) svg += line(-body.width / 2, body.beamY(beam), body.width / 2, body.beamY(beam), body.beamStroke)
-    const ink = nativeSvgInk(svg, measurer)
-    return { top: -ink.top, bottom: ink.bottom }
+    if (sustain) return { top: -sustainY + sustainHalf, bottom: sustainY + sustainHalf }
+    const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal' })
+    let top = 0 - text.baseline, bottom = 0 - text.baseline + (text.inkBottom ?? text.h)
+    if (pitch.accidental) for (const symbol of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2).paths) {
+      const ink = nativePathInk(symbol.d), half = n(symbol.stroke) / 2
+      top = Math.min(top, ink.top - half); bottom = Math.max(bottom, ink.bottom + half)
+    }
+    const beams = index === 0 ? beamCount : 0
+    for (let dot = 0; dot < Math.abs(pitch.octave); dot++) {
+      const center = n(body.octaveY(pitch.octave > 0, dot, beams)), radius = n(size * .075)
+      top = Math.min(top, center - radius); bottom = Math.max(bottom, center + radius)
+    }
+    for (let beam = 0; beam < beams; beam++) {
+      const center = n(body.beamY(beam)), half = n(body.beamStroke) / 2
+      top = Math.min(top, center - half); bottom = Math.max(bottom, center + half)
+    }
+    return { top: -top, bottom }
   })
   const offsets = [0]
   if (!sustain) for (let index = 1; index < pitches.length; index++) offsets.push(offsets[index - 1]! - bounds[index - 1]!.top - gap - bounds[index]!.bottom)

@@ -17,6 +17,7 @@ const endPhase = name => { const now = performance.now(); stages[name] = now - p
 const root = resolve(import.meta.dirname, '..'), output = join(root, 'scorebook')
 const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.slice(7) ?? join(root, 'config/scorebook/editorial-plan.json'))
 const probeOnly = process.argv.includes('--probe-only')
+const auditLayout = process.argv.includes('--audit-layout')
 const plan = JSON.parse(readFileSync(planFile, 'utf8'))
 assert(!process.argv.includes('--retain-unchanged-sizes'), 'Every build now selects widths from the web renderer; remove --retain-unchanged-sizes')
 const temp = join(root, '.tmp', plan.outputKey), profile = plan.page
@@ -39,6 +40,7 @@ const reuseFile = process.argv.find(arg => arg.startsWith('--reuse-widths='))?.s
 const forceMeasure = process.argv.includes('--force-measure')
 assert(!(reuseFile && forceMeasure), 'Choose either --reuse-widths or --force-measure')
 const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) : undefined
+if (reused) assert.equal(reused.auditLayout, auditLayout, 'Reused measurements must match the audit mode')
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
@@ -63,14 +65,14 @@ try {
     const source = readFileSync(join(root, 'src/scores', entry.file), 'utf8')
     sources.set(entry.id, source)
     const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source) && item.renderCache?.strategy === widthSearchStrategy)
-    const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width }) => {
-      try { return await window.scorebook.measure(source, width) }
+    const { candidates, renderCache } = cached ?? await probeWidthCandidates(width => page.evaluate(async ({ source, width, auditLayout }) => {
+      try { return await window.scorebook.measure(source, width, true, undefined, undefined, auditLayout) }
       catch (error) { return { width, error: error.message } }
-    }, { source, width }))
+    }, { source, width, auditLayout }))
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache, measurement: { wallMs: performance.now() - scoreStarted, reused: Boolean(cached) } })
-    writeFileSync(join(temp, 'width-probes.json.tmp'), JSON.stringify({ rendererSha256, entries: records }))
+    writeFileSync(join(temp, 'width-probes.json.tmp'), JSON.stringify({ rendererSha256, auditLayout, entries: records }))
     renameSync(join(temp, 'width-probes.json.tmp'), join(temp, 'width-probes.json'))
     console.log(`${index + 1}/${plan.entries.length} ${entry.title}: ${best.width}px, ${best.pageCount} pages${cached ? ' (reused)' : ''}`)
   }
@@ -89,8 +91,8 @@ try {
   if (!probeOnly) for (const group of optimizedPacking.groups) {
     const entries = records.slice(group.start, group.end), start = music.length
     if (entries.length > 1) {
-      const rendered = await page.evaluate(({ sources, width, gap }) => window.scorebook.sharedA4Page(sources, width, gap),
-        { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap })
+      const rendered = await page.evaluate(({ sources, width, gap, auditLayout }) => window.scorebook.sharedA4Page(sources, width, gap, undefined, auditLayout),
+        { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap, auditLayout })
       music.push({ kind: 'music', ids: entries.map(entry => entry.id), svg: pageSvg(rendered.markup) })
       musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight, coreGap: rendered.coreGap, scoreGap: rendered.scoreGap, trailingGap: rendered.trailingGap,
         items: entries.map((entry, index) => ({ id: entry.id, top: rendered.items[index].top, height: rendered.items[index].sourceHeight })) })
@@ -110,7 +112,7 @@ try {
 } finally { await browser.close() }
 endPhase('browserCloseMs')
 function saveTimings(status = 'complete') {
-  const report = { status, rendererSha256, strategy: widthSearchStrategy, scoreCount: records.length,
+  const report = { status, auditLayout, rendererSha256, strategy: widthSearchStrategy, scoreCount: records.length,
     measuredScores: records.filter(entry => !entry.measurement.reused).length,
     reusedScores: records.filter(entry => entry.measurement.reused).length,
     totalMs: performance.now() - runStarted, stages,
@@ -166,7 +168,7 @@ const report = { title: plan.title, edition: plan.edition, renderer: 'web', rend
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: widthMinimum, maximum: widthMaximum, step: widthStep, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginEm: 0, a4MarginMm: 12, coreSpacing: { continuous: 26.4, pagedMinimum: 26.4, defaultLeadingEm: 1.2, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
-  entries: records, validation: { outside: 0, overlaps: 0, sourceCoverage: true } }
+  entries: records, validation: { outside: auditLayout ? 0 : null, overlaps: auditLayout ? 0 : null, geometryAudited: auditLayout, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')
 writeFileSync(join(temp, 'index.html'), '<!doctype html><meta charset="utf-8"><title>谱集预览</title><style>body{background:#ddd}figure{display:inline-block;width:380px;margin:10px;vertical-align:top}img{width:100%}</style>'

@@ -1,6 +1,6 @@
 # 乐谱生成结果与提交检查
 
-每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护思源黑体子集。浏览器简谱与五线谱阅读器均在540～720px范围按20px档共用同一选宽流程，逐候选检查真实SVG边界与碰撞，再以最少页数和综合质量评分择优；不将选宽结果写回谱源。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
+每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护思源黑体子集。浏览器简谱与五线谱阅读器均在540～720px范围按20px档共用同一选宽流程，逐候选执行完整布局及内部避让，再以最少页数和综合质量评分择优；SVG独立越界及碰撞验收只在测试模式启用；不将选宽结果写回谱源。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
 
 五线谱已迁移至 VexFlow。五线谱和简谱都由浏览器按当前排版实时搜索宽度，不在源文件中保存宽度字段；`npm run prepare:scores` 只更新谱源摘要及字体子集。
 

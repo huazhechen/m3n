@@ -44,10 +44,12 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
     const comparison = await page.evaluate(async ({ sources, plan }) => {
       const api = window.scorebook
-      const entries = []
+      const entries = [], auditedEntries = []
       for (const [index, source] of sources.entries()) {
         const { candidates } = await api.probeWidthCandidates(width => api.measure(source, width))
         entries.push({ ...plan.entries[index], candidates })
+        const audited = await api.probeWidthCandidates(width => api.auditWidth(source, width))
+        auditedEntries.push(audited.candidates.map(({ timings, ...candidate }) => candidate))
       }
       const sharedLocal = api.optimizeScorebook(entries).groups
       const online = await api.buildOnlineScorebook(new AbortController().signal, () => {})
@@ -67,8 +69,9 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
           candidates: local.candidates.map(candidate => candidate.width) })
       }
-      return { readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
+      return { productionCandidates: entries.map(entry => entry.candidates.map(({ timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
+    assert.deepEqual(comparison.productionCandidates, comparison.auditedEntries)
     assert.equal(comparison.sharedPages, 1)
     assert.deepEqual(comparison.sharedOnline, comparison.sharedLocal.map(group => Array(group.end - group.start).fill(group.width)))
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))

@@ -176,5 +176,5 @@ test('common selection propagates cancellation and rejects every unsafe candidat
     widths.push(width); controller.abort(); return candidate(width, 100)
   }, { signal: controller.signal }), { name: 'AbortError' })
   assert.deepEqual(widths, [540])
-  await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /安全版面/)
+  await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /排版候选/)
 })

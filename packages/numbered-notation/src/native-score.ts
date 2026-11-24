@@ -1,3 +1,4 @@
+import { nativeSvgNumber } from './native-svg-number.js'
 import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } from '@m3n/notation'
 import { layoutNativeScore, nativeContinuousPagination, reflowNativeContinuousLayout, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
@@ -44,18 +45,20 @@ export type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 export class PreparedNumberedNotationScore {
   private readonly layout
   readonly pageCount: number
+  readonly systemCount: number
   readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
   constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>) {
     this.layout = layoutNativeScore(document, { ...options, paged: true }, timings)
     this.pageCount = this.layout.pages.length
+    this.systemCount = this.layout.systems.length
     this.quality = nativeLayoutQuality(this.layout)
     this.width = this.layout.options.width
     this.minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
   }
   continuousHeight(coreGap = this.minimumCoreGap) {
-    return Math.ceil(nativeContinuousPagination(this.layout, coreGap).heights[0] ?? 0)
+    return Math.ceil(nativeSvgNumber(nativeContinuousPagination(this.layout, coreGap).heights[0] ?? 0))
   }
   renderPaged(coreGap?: number) {
     if (!this.layout.options.paged || this.layout.options.coreGap !== coreGap) repaginateNativeLayout(this.layout, true, coreGap)
@@ -90,7 +93,7 @@ export function renderSharedNumberedNotationScores(documents: readonly ScoreDocu
   const layouts = documents.map(document => layoutNativeScore(document, { ...options, paged: false, coreGap: minimum }))
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
-  const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeContinuousPagination(layout, gap).heights[0] ?? 0), scoreGap * (layouts.length - 1))
+  const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeSvgNumber(nativeContinuousPagination(layout, gap).heights[0] ?? 0)), scoreGap * (layouts.length - 1))
   const coreGap = fitNativeCoreGap(heightAt, capacity, minimum, Math.max(32, minimum))
   for (const layout of layouts) reflowNativeContinuousLayout(layout, coreGap)
   const trailingGap = Math.max(0, capacity - heightAt(coreGap)) / layouts.length

@@ -13,13 +13,13 @@ function readScore(source) {
   return analysis.score
 }
 
-export async function search(source) {
+export async function search(source, { auditLayout = false } = {}) {
   const score = readScore(source)
-  return probeWidthCandidates(width => measureStaffWidth(score, width))
+  return probeWidthCandidates(width => measureStaffWidth(score, width, {}, undefined, { auditLayout }))
 }
 
-export async function measure(source, width, _verify = false, settings = {}) {
-  return measureStaffWidth(readScore(source), width, settings)
+export async function measure(source, width, verify = false, settings = {}) {
+  return measureStaffWidth(readScore(source), width, settings, undefined, { auditLayout: verify })
 }
 
 export async function preview(source,width,settings = {}) {

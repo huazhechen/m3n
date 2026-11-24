@@ -5,7 +5,7 @@ import { numberedLayoutScore } from '../scorebook-width.mjs'
 
 /** Staff-specific geometry adapter; width enumeration, safety filtering and
  * ranking belong to the same policy used for numbered notation. */
-export async function measureStaffWidth(score, width, settings = {}, signal) {
+export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false } = {}) {
   const started = performance.now(), timings = {}
   const render = await prepareStaffScore(score, { ...settings, width }, signal)
   const info = render.layoutInfo()
@@ -15,6 +15,11 @@ export async function measureStaffWidth(score, width, settings = {}, signal) {
   const lastLineSlack = info.lines.length ? Math.max(0, Math.min(1, 1 - info.lines.at(-1).target / info.availableWidth)) : 0
   const pageCount = render.pageCount(true)
   timings.layoutMs = performance.now() - started
+  const qualityScore = numberedLayoutScore({ width, lineDensityVariation, lastLineSlack })
+  if (!auditLayout) {
+    timings.totalMs = performance.now() - started
+    return { width, pageCount, rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation, lastLineSlack, qualityScore, timings }
+  }
   let stage = performance.now()
   const pages = render(true)
   timings.svgRenderMs = performance.now() - stage
@@ -43,6 +48,6 @@ export async function measureStaffWidth(score, width, settings = {}, signal) {
     timings.geometryMs = performance.now() - stage
     timings.totalMs = performance.now() - started
     return { width, pageCount, rows: info.lines.length, outside, overlaps, lineDensityVariation, lastLineSlack,
-      qualityScore: numberedLayoutScore({ width, lineDensityVariation, lastLineSlack }), timings }
+      qualityScore, timings }
   } finally { host.remove() }
 }

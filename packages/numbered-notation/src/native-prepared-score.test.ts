@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { NativeNumberedNotationScore, numberedLayoutQuality, PreparedNumberedNotationScore, renderSharedNumberedNotationScores, renderSharedPreparedNumberedNotationScores } from './native-score.js'
-import { layoutNativeScore } from './native-layout.js'
 
 describe('prepared export layouts', () => {
   it.each([
@@ -20,7 +19,7 @@ describe('prepared export layouts', () => {
     expect(timings.layoutTrials).toBeGreaterThan(0)
     expect(timings.projectionMs).toBeGreaterThanOrEqual(0)
     expect(prepared.pageCount).toBe(paged.length)
-    expect(prepared.continuousHeight()).toBe(Math.ceil(layoutNativeScore(document, { ...options, paged: false }).pages[0]!.height))
+    expect(prepared.continuousHeight()).toBe(Number(/^<svg\b[^>]*\bheight="([^"]+)"/.exec(fresh(false)[0]!)![1]))
     expect(prepared.renderPaged()).toEqual(paged)
     expect(prepared.renderContinuous()).toEqual(fresh(false))
     expect(prepared.renderContinuous(32)).toEqual(fresh(false, 32))

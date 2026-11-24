@@ -29,9 +29,9 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     prepareBuiltinPdfFont()
     await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
     const fontStability = await page.evaluate(async ({ source, shared }) => {
-      const before = await window.scorebook.measure(source, 570)
+      const before = await window.scorebook.auditWidth(source, 570)
       await window.scorebook.sharedA4Page(shared, 630, 32)
-      const after = await window.scorebook.measure(source, 570)
+      const after = await window.scorebook.auditWidth(source, 570)
       const exported = await window.scorebook.a4Pages(source, 570)
       return { before: before.pageCount, after: after.pageCount, rowsBefore: before.rows, rowsAfter: after.rows, exported: exported.length }
     }, { source: readFileSync(join(root, 'src/scores/bei_jia_er_hu_pan_01.m3n'), 'utf8'),
@@ -41,7 +41,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     for (const width of [640, 800]) {
       const result = await page.evaluate(async ({ source, width }) => {
         const api = window.scorebook
-        const layout = await api.measure(source, width)
+        const layout = await api.auditWidth(source, width)
         const original = [...document.querySelectorAll('#scratch > svg')].map(svg => svg.outerHTML)
         const doc = api.parseM3NDocument(source)
         const directHost = document.createElement('div')
@@ -134,7 +134,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
         return svg.innerHTML
       }
       const originals = []
-      const summary = await api.measure(sources[0], width)
+      const summary = await api.auditWidth(sources[0], width)
       const packed = await api.sharedA4Page(sources, width)
       for (const source of sources) originals.push((await api.render(source, width, false, packed.coreGap))[0].innerHTML)
       const host = document.createElement('div')
@@ -185,13 +185,13 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(geometry.vertical.outside.length, 1)
     assert.equal(geometry.collision.overlaps.length, 1)
     const basics = readFileSync(join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
-    const basicsLayout = await page.evaluate(source => window.scorebook.measure(source, 590), basics)
+    const basicsLayout = await page.evaluate(source => window.scorebook.auditWidth(source, 590), basics)
     assert.equal(basicsLayout.pageCount, 3)
     assert.deepEqual(basicsLayout.outside, [])
     assert.deepEqual(basicsLayout.overlaps, [])
     const longSource = '{title=多页测试}{4/4}\nN: ' + Array.from({ length: 100 }, () => '1 2 3 4 |{br}').join(' ')
     const long = await page.evaluate(async source => {
-      const summary = await window.scorebook.measure(source, 640)
+      const summary = await window.scorebook.auditWidth(source, 640)
       const pages = await window.scorebook.a4Pages(source, 640)
       return { ...summary, exported: pages.length }
     }, longSource)

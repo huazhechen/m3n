@@ -22,6 +22,7 @@ vi.mock('@m3n/numbered-notation', () => ({
   prepareNumberedNotationFonts: mocks.prepare,
   PreparedNumberedNotationScore: class {
     pageCount = 1
+    systemCount = 1
     title: string
     width: number
     quality: { pageCount: number; lineDensityVariation: number; lastLineSlack: number }
@@ -74,6 +75,7 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(result.pages[2].querySelector('a')?.getAttribute('href')).toBe('https://score.cheesefans.com/scores/first')
     const placed = result.pages[2].querySelectorAll(':scope > svg')
     expect(Number(placed[1].getAttribute('y'))).toBeCloseTo((12 + (200 + 200) * 186 / 540) * 96 / 25.4)
+    expect(mocks.inspect).not.toHaveBeenCalled()
     expect(document.body.children).toHaveLength(0)
   })
 
@@ -97,7 +99,7 @@ describe('online scorebook with per-run layout reuse', () => {
     await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.solo).toHaveBeenLastCalledWith('second', 600)
     mocks.inspect.mockImplementation(() => ({ outside: ['ink'], overlaps: [] }))
-    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('安全版面')
+    await expect(buildOnlineScorebook(new AbortController().signal, () => {}, { auditLayout: true })).rejects.toThrow('排版候选')
   })
 
   it('starts from fresh sources and layouts on every export', async () => {
@@ -122,7 +124,7 @@ describe('online scorebook with per-run layout reuse', () => {
   it('reports engine errors without returning an incomplete book', async () => {
     layouts()
     mocks.prepared.mockImplementation(() => { throw new Error('单个谱行高于页面') })
-    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：没有通过边界和碰撞检查的安全版面。')
+    await expect(buildOnlineScorebook(new AbortController().signal, () => {})).rejects.toThrow('《<第一曲>》生成失败：没有可用的排版候选。')
     expect(mocks.shared).not.toHaveBeenCalled()
   })
 })
