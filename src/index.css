@@ -2,6 +2,9 @@
 @import './styles/score-controls.css';
 
 .top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 12;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,6 +13,8 @@
   margin-bottom: var(--ui-space);
   font-size: var(--ui-text);
   border-bottom: 1px solid #d9dbd4;
+  background: #f5f6f0;
+  box-shadow: 0 4px 8px rgb(35 38 41 / 6%);
 }
 
 .top-nav nav,
@@ -1757,10 +1762,10 @@ a.action-button {
   font-size: 0.85rem;
   line-height: 1.5;
 }
-.library-group { margin-bottom: calc(var(--ui-unit) * 2); scroll-margin-top: var(--ui-space); }
+.library-group { margin-bottom: calc(var(--ui-unit) * 2); scroll-margin-top: calc(var(--ui-toolbar-height) + 1px + var(--ui-space)); }
 .library-group-heading {
   position: sticky;
-  top: 0;
+  top: calc(var(--ui-toolbar-height) + 1px);
   z-index: 2;
   display: flex;
   align-items: center;
