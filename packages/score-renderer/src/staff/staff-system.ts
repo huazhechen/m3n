@@ -18,7 +18,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   }
   const allEvents = document.measures.flatMap(m => [m.melody, m.bass].flat())
   const lineOf = new Map<string, number>()
-  lines.forEach((line, i) => line.measures.forEach(m => [m.measure.melody, m.measure.bass].flat().forEach(e => lineOf.set(e.id, i))))
+  lines.forEach((line, i) => line.measures.forEach(m => [m.measure.melody, m.measure.bass].flat().forEach(e => { lineOf.set(e.id, i); e.children?.forEach(child => lineOf.set(child.id, i)) })))
   const intervals = document.score.intervals.flatMap(interval => {
     const start = allEvents.find(e => e.event.sourceStart === interval.start && document.measures.some(m => (interval.staff === 'bass' ? m.bass : m.melody).includes(e)))
     const end = allEvents.find(e => e.event.sourceStart === interval.endStart && document.measures.some(m => (interval.staff === 'bass' ? m.bass : m.melody).includes(e)))
@@ -33,6 +33,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       for (const slot of e.event.tupletTies ?? []) {
         const start = e.children?.[slot], end = e.children?.[slot + 1]
         if (start && end) ties.push({ start, end })
+      }
+      for (const [from, to] of e.event.tupletSlurs ?? []) {
+        const start = e.children?.[from], end = e.children?.[to]
+        if (start && end) intervals.push({ interval: { id: -1, kind: 'lg', staff: lane }, start, end })
       }
       previous = e
     }

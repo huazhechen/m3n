@@ -38,6 +38,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
           tie: (event.tie && slot === event.tieFromTupletIndex) || !!event.tupletTies?.includes(slot),
         }])
       : [{ event, slot: 0, tie: event.tie }])
+  const tiedContinuations = new Set(targetEvents.filter((_, index) => targetEvents[index - 1]?.tie))
   const result: LyricsByEvent = new Map()
   const passesByEvent = new Map<ScoreEvent, ReadonlySet<number>>()
   const positions = new Map<ScoreEvent, LyricPosition>()
@@ -61,12 +62,6 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     if (measurePasses === undefined) return blockPasses
     return new Set([...blockPasses].filter((pass) => measurePasses.has(pass)))
   }
-  const annotatedPhrases = new Set(document.lyrics
-    .filter(block => block.sharedPasses && parsePassRange(block.sharedPasses).size > 1
-      // A generic lyric shared by an entire ordered house is already labeled
-      // by the bracket; do not print the visit numbers again under the note.
-      && !(document.order && !block.range && block.sharedPasses === block.phrasePasses))
-    .map(phraseKey))
   const phrases = new Map<string, ScoreLyricBlock[]>()
   for (const block of document.lyrics) {
     const key = phraseKey(block)
@@ -74,6 +69,20 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
     blocks.push(block)
     phrases.set(key, blocks)
   }
+  const annotatedPhrases = new Set([...phrases].filter(([, blocks]) => {
+    if (!blocks.some(block => block.sharedPasses && parsePassRange(block.sharedPasses).size > 1
+      // A generic lyric shared by an entire ordered house is already labeled
+      // by the bracket; do not print the visit numbers again under the note.
+      && !(document.order && !block.range && block.sharedPasses === block.phrasePasses))) return false
+    if (blocks.length > 1) return true
+    // One shared row needs no label when it covers every actual visit.
+    // Keep labels for rows restricted to only some visits, even without an
+    // alternative lyric row. Playback metadata remains independent of labels.
+    const block = blocks[0]!
+    const passes = lyricPasses(block)!
+    return melodyEvents.some(event => inPhrase(event, block)
+      && [...(passesByEvent.get(event) ?? [1])].some(pass => !passes.has(pass)))
+  }).map(([key]) => key))
   // Adjacent phrases with the same row/pass mapping share the labels already
   // emitted. Include rests and instrumental events when checking adjacency so
   // a phrase without lyrics interrupts the run. Layout breaks do not.
@@ -109,7 +118,7 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       // must not consume any continuation events. Forced `+` lyrics are the
       // explicit exception and may target a continuation event directly.
       if (!syllable.forceTiedTarget) {
-        while (targets[targetIndex - 1]?.tie) targetIndex += 1
+        while (targets[targetIndex] && tiedContinuations.has(targets[targetIndex]!)) targetIndex += 1
       }
       const target = targets[targetIndex]
       targetIndex += 1

@@ -1,4 +1,3 @@
-import { writtenEventSpans } from './fixtures/written-event-spans'
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, playbackMeasureIndexes, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -13,6 +12,24 @@ const ranges: Record<string, Array<[number, number, string]>> = {
   // 月半小夜曲已按上传参考重编，由 yue-ban-reference.test.ts 校验。
 }
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
+
+// Historical lyric fingerprints use the full event interval for each lyric,
+// including all syllables of a tuplet. Playback now emits one element per
+// tuplet slot; combine those slots before comparing the original fingerprints.
+function performedLyricGroups(document: ReturnType<typeof parseM3NDocument>) {
+  const { lyricsByEvent } = deriveScoreInteraction(document)
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, {
+    beats: event.beats, lyrics: lyricsByEvent.get(event) ?? [],
+  }]))
+  return compileScorePerformance(document).elements
+    .filter(element => element.voice === 'score:melody' && (element.tupletSlot ?? 0) === 0)
+    .flatMap(element => {
+      const event = byId.get(element.xmlId)!
+      return event.lyrics
+        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
+        .map(lyric => [element.start, element.start + event.beats, lyric.text])
+    })
+}
 
 // Captured from each original itinerary before changing notation or lyric rows.
 describe.each(baselines.filter(baseline => baseline.id in ranges))('$title without named sections', reference => {
@@ -37,29 +54,27 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
     expect(compileScorePerformance(document).beats).toBe(reference.beats)
   })
 
-  it('preserves every lyric and its performed note timing', () => {
-    const document = parseM3NDocument(fingerprintSource)
-    const { lyricsByEvent } = deriveScoreInteraction(document)
-    const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    const lyrics = writtenEventSpans(compileScorePerformance(document).elements)
-      .filter(element => element.voice === 'score:melody')
-      .flatMap(element => (byId.get(element.xmlId) ?? [])
-        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-        .map(lyric => [element.start, element.end, lyric.text]))
+  it('preserves every lyric and its performed event timing', () => {
+    const lyrics = performedLyricGroups(parseM3NDocument(fingerprintSource))
     expect(lyrics).toHaveLength(reference.lyricCount)
     expect(hash(lyrics)).toBe(reference.lyricsSha256)
   })
 
   it('preserves each visited phrase count, every bar duration and every time signature', () => {
-    const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
-    // The historical A/B boundary splits one logical bar into two 2-beat
-    // fragments. Split it only for comparison with that historical baseline.
+    const bars = parseM3NDocument(fingerprintSource).parts.get('score')!.melody.filter(bar => bar.events.length)
+    // Moving Man Man's repeat barlines past the pickups joins the historical
+    // half-bars. Its performed events and lyrics still match the baselines above.
     if (reference.id === 'man_man_xi_huan_ni') {
-      expect(bars).toHaveLength(36)
-      const joined = bars[21]!
-      expect(joined.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
-      bars.splice(21, 1, { ...joined, events: joined.events.slice(0, 1) },
-        { ...joined, events: joined.events.slice(1) })
+      expect(bars[0]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+      expect(bars.at(-1)!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+      expect(bars).toHaveLength(34)
+      expect(bars.slice(1, -1).every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0)
+        === bar.events[0]!.meterCount! * 4 / bar.events[0]!.meterUnit!)).toBe(true)
+      expect(bars.findIndex(bar => bar.left === 'rptstart')).toBe(11)
+      expect(bars.findIndex(bar => bar.right === 'rptend')).toBe(30)
+      expect(bars.map(bar => [bar.events[0]!.meterCount, bar.events[0]!.meterUnit]))
+        .toEqual(bars.map((_, index) => [index === 27 ? 2 : 4, 4]))
+      return
     }
     const boundaries = ranges[reference.id]!
     expect(bars).toHaveLength(boundaries.at(-1)![1])
@@ -88,7 +103,7 @@ describe.each(baselines.filter(baseline => baseline.id in ranges))('$title witho
 })
 
 
-it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all navigation', () => {
+it('preserves Xin Bu Liao Qing performance and lyrics after moving repeat pickups into endings', () => {
   const source = readFileSync(new URL('../scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
   const before = parseM3NDocument(xinBeforeCleanup), after = parseM3NDocument(source)
   const original = compileScorePerformance(before), actual = compileScorePerformance(after)
@@ -101,15 +116,19 @@ it('simplifies only Xin Bu Liao Qing 明→了 while retaining 朝→朝 and all
   expect(original.notes.length - actual.notes.length).toBe(3)
   expect(actual.beats).toBe(224)
   expect(source).toContain('{lg}3. (2){/} 2')
-  const lyrics = (document: typeof before) => {
-    const { lyricsByEvent } = deriveScoreInteraction(document)
-    const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
-    return writtenEventSpans(compileScorePerformance(document).elements).filter(element => element.voice === 'score:melody')
-      .flatMap(element => (byId.get(element.xmlId) ?? [])
-        .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-        .map(lyric => [element.start, element.end, lyric.text]))
-  }
-  expect(lyrics(after)).toEqual(lyrics(before).map(([start, end, text]) => [
+  expect(performedLyricGroups(after)).toEqual(performedLyricGroups(before).map(([start, end, text]) => [
     start, extendedEnds.get(start as number) ?? end, text,
   ]))
+})
+
+it('returns Xin Bu Liao Qing to full bars through three endings', () => {
+  const source = readFileSync(new URL('../scores/xin_bu_liao_qing_01.m3n', import.meta.url), 'utf8')
+  expect(validateM3NDiagnostics(source)).toEqual([])
+  const bars = parseM3NDocument(source).parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(bars[0]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(1)
+  expect(bars[1]!.left).toBe('rptstart')
+  expect(bars.findIndex(bar => bar.navigation?.includes('segno'))).toBe(17)
+  expect(bars.slice(-3).map(bar => bar.ending)).toEqual(['1', '2', '3'])
+  expect(bars.slice(1, -1).every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
+  expect(bars.at(-1)!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(3)
 })

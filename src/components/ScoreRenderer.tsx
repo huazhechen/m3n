@@ -1,5 +1,4 @@
 import { queryPlaybackElements } from '../lib/score-playback-elements'
-import { widthMaximum } from '../../tools/scorebook-width.mjs'
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
 import { ScoreControls } from './ScoreControls'
@@ -210,9 +209,10 @@ export function ScoreRenderer({
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const autoWidthPending = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
-    && (autoWidthSelectionRef.current?.scoreDocument !== scoreDocument || autoWidthSelectionRef.current.notationMode !== notationMode)
-  const renderWidth = previewWidth ?? (autoWidthPending ? widthMaximum : fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
+  const automaticWidth = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
+  const renderWidth = previewWidth ?? (fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
+  // Updating the displayed automatic width must not start another layout.
+  const requestedWidth = automaticWidth ? undefined : renderWidth
   useEffect(() => {
     transposeRef.current = DEFAULT_PLAYBACK_TRANSPOSE
     setPlaybackTranspose(DEFAULT_PLAYBACK_TRANSPOSE)
@@ -272,7 +272,7 @@ export function ScoreRenderer({
 
   useEffect(() => {
     const paper = paperRef.current
-    if (!paper || renderWidth === 0) return
+    if (!paper || requestedWidth === 0) return
     const controller = new AbortController()
     let cancelled = false
     const isInitialRender = !hasRenderedRef.current
@@ -284,18 +284,13 @@ export function ScoreRenderer({
       try {
         const selectedWidth = autoWidthSelectionRef.current
         const autoWidth = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
-        const { message, width, widthPending } = await renderScoreInto(paper, {
-          scoreDocument, width: renderWidth, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
+        const { message, width } = await renderScoreInto(paper, {
+          scoreDocument, width: requestedWidth ?? selectedWidth?.width, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled) setRenderPhase(phase) },
-          onWidthSelected: selected => {
-            if (cancelled || manualWidthRef.current) return
-            autoWidthSelectionRef.current = { scoreDocument, notationMode, width: selected }
-            setLayoutWidth(current => current === selected ? current : selected)
-          },
         })
         if (cancelled) return
-        if (autoWidth && !widthPending) {
+        if (autoWidth) {
           if (width !== undefined) setLayoutWidth(current => current === width ? current : width)
           if (width !== undefined) autoWidthSelectionRef.current = { scoreDocument, notationMode, width }
         }
@@ -333,7 +328,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, previewWidth, renderMode, renderWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
+  }, [compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -507,7 +502,7 @@ export function ScoreRenderer({
     return () => { cancelled = true }
   }, [playbackTone, toneRetry])
 
-  const togglePlayback = async () => {
+  const togglePlayback = async (startPlaybackId?: string) => {
     if (playerRef.current && !playerRef.current.paused) {
       stopPlaybackRef.current()
       return
@@ -535,6 +530,10 @@ export function ScoreRenderer({
       if (!isCurrent()) return
       readyToneRef.current = tone
       setToneLoading(false)
+      if (startPlaybackId && player.duration > 0) {
+        const milliseconds = scoreRef.current?.timeForElement(startPlaybackId) ?? -1
+        if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
+      }
       scorePlaybackCoordinator.claim(playbackLeaseRef.current)
       setIsPlaying(true)
       await player.play()
@@ -718,6 +717,8 @@ export function ScoreRenderer({
             // Leave the note-on pending: MIDI's accumulated clock can round
             // just below the score timestamp and otherwise consume the first note.
             if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
+          } else if (!onNoteClick && !isPlayRequest && !isSourceUpdating && !isRendering) {
+            void togglePlayback(playbackId)
           }
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}

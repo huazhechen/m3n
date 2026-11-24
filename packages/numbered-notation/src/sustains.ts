@@ -25,7 +25,7 @@ export function sustainContinuations(document: ScoreDocument, lyrics: LyricsByEv
             && interval.start === event.sourceStart)
           if (previous?.tie && (event.kind === 'note' || event.kind === 'chord') && previous.kind === event.kind
             && event.key === previous.key && event.octaveShift === previous.octaveShift && pitches(event) === pitches(previous)
-            && whole(beat) && whole(event.beats) && event.beats >= 1
+            && whole(previous.beats) && whole(beat) && whole(event.beats) && event.beats >= 1
             && event.meterCount === previous.meterCount && event.meterUnit === previous.meterUnit
             && event.tempo === previous.tempo && event.dynamic === previous.dynamic
             && !event.postfixes.length && !event.prefix && !event.chord && !event.text && !event.sectionLabel

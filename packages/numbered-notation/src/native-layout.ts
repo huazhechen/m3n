@@ -74,6 +74,10 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
         const start = glyphs[slot], end = glyphs[slot + 1]
         if (start && end) relations.push({ kind: 'tie', first: start, last: end, level: 0 })
       }
+      for (const [from, to] of event.tupletSlurs ?? []) {
+        const start = glyphs[from], end = glyphs[to]
+        if (start && end) relations.push({ kind: 'slur', first: start, last: end, level: 0 })
+      }
       if (event.kind === 'tuplet') relations.push({ kind: 'tuplet', first, last: glyphs.at(-1)!, label: String(event.tuplet?.num ?? glyphs.length), level: 0 })
     }
   }

@@ -24,6 +24,24 @@ describe('staff page packing', () => {
     expect(holder.querySelector('#m3n-e-1-n2-v1')).toBeNull()
     expect(holder.querySelector('#m3n-e-1-n3-v1')?.textContent).toBe('夏')
   })
+  it('engraves a partial tuplet slur from the second child rather than the group start', () => {
+    const engrave = (body: string) => {
+      const projected = projectStaffDocument(analyzeM3N('{4/4}\nN: ' + body + ' 1^. |||').score)
+      const measure = textMeasurer(), lines = planStaffLines(projected, 600, false, measure, 0.25)
+      const holder = document.createElement('div')
+      holder.innerHTML = engraveStaffSystems(projected, lines, 600, measure, 0.25, false).map(system => xml(system.node)).join('')
+      const slur = holder.querySelector('g.slur path')!
+      expect(slur).not.toBeNull()
+      expect(holder.querySelectorAll('g.slur')).toHaveLength(1)
+      expect(holder.querySelectorAll('g.tie')).toHaveLength(0)
+      return slur.getAttribute('d')!.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+    }
+    const partial = engrave('([3 {lg}4 5{/}:2])')
+    const whole = engrave('{lg}([3 4 5:2]){/}')
+    expect(partial[0]).toBeGreaterThan(whole[0]!)
+    expect(partial[6]).toBeCloseTo(whole[6]!)
+  })
+
   it('caches candidate layouts without mutating input or changing pagination geometry', async () => {
     const source = readFileSync(`../../src/scores/turkish_march_01.m3n`, 'utf8')
     const score = analyzeM3N(source).score

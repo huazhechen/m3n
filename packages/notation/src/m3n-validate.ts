@@ -1,6 +1,6 @@
 import { validateSectionOrder } from './notation/section-order.js'
 import { durationInBeats } from './notation/m3n-primitives.js' 
-import { parseM3NGrace } from './notation/m3n-groups.js'
+import { parseM3NGrace, parseM3NTupletPitches } from './notation/m3n-groups.js'
 import { parseLyricItems } from './notation/lyrics.js'
 import type { M3NToken as Token } from './notation/m3n-tokens.js'
 import { createScoreDiagnostic, type ScoreDiagnostic } from './notation/diagnostics.js'
@@ -531,7 +531,8 @@ function validateBody(
       const pitchSource = match[1] ?? ''
       const mode = (match[2] ?? '').trim()
       const harmony = mode === 'h'
-      const sequence = splitPitchSequence(pitchSource, !harmony)
+      const tuplet = !harmony ? parseM3NTupletPitches(pitchSource) : null
+      const sequence = splitPitchSequence(tuplet ? pitchSource.replace(/\{lg\}|\{\/\}/g, '') : pitchSource, !harmony)
       if (sequence.error) diagnostics.push(lineMessage(token, `分组${sequence.error}`))
       const elementCount = sequence.pitches.length + (sequence.hasRest ? (pitchSource.replace(/\s+/g, '').match(/0/g)?.length ?? 0) : 0)
       if (elementCount < 2) diagnostics.push(lineMessage(token, '音符分组至少需要两个元素'))

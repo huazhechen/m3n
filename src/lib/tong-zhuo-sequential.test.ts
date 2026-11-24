@@ -16,7 +16,7 @@ it('preserves all performed pitches, durations, ties, articulations, dynamics an
   expect(createHash('sha256').update(JSON.stringify(events)).digest('hex')).toBe('dafae121220d8f283619daab86b73d9d4614b92edba2d991ab69ee3ceddda3f1')
 })
 
-it('preserves every performed lyric and its note timing when distributing the five verses across two-row and single-row passages', () => {
+it('preserves every performed lyric and its note timing when distributing the five verses across shared passages', () => {
   const document = parseM3NDocument(source)
   const { lyricsByEvent } = deriveScoreInteraction(document)
   const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyricsByEvent.get(event) ?? []]))
@@ -29,16 +29,18 @@ it('preserves every performed lyric and its note timing when distributing the fi
   expect(createHash('sha256').update(JSON.stringify(lyrics)).digest('hex')).toBe('8a4a20fead0fd4e71c489f4d08b37f7c6b908460a186b7fda624485f2f28dacd')
 })
 
-it('repeats the complete 24-bar verse and chorus, then writes the final verse and chorus separately', () => {
+it('returns to bar 9 with D.S. and flows into the repeated tail without Coda', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
   expect(document.order).toBeUndefined()
   expect(document.sections ?? []).toHaveLength(0)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(bars).toHaveLength(48)
-  expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([40])
-  expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index] : [])).toEqual([23, 47])
-  expect(bars.every(bar => !bar.ending && !bar.navigation?.length && bar.events.every(event => !event.navigation.length))).toBe(true)
+  expect(bars).toHaveLength(32)
+  expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([24])
+  expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index] : [])).toEqual([23, 31])
+  expect(bars[8]!.navigation).toContain('segno')
+  expect(bars[23]!.navigation).toContain('ds')
+  expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
   expect(compileScorePerformance(document).beats).toBe(240)
   expect(unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(80)
 })

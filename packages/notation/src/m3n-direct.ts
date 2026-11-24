@@ -289,6 +289,7 @@ function parseBody(
           tie: mode === 'h' ? Boolean(group[5]) : Boolean(tuplet?.tiesFromLast),
           tieFromTupletIndex: tuplet?.tiesFromLast ? pitches.length - 1 : undefined,
           ...(tuplet?.internalTies.length ? { tupletTies: tuplet.internalTies } : {}),
+          ...(tuplet?.internalSlurs.length ? { tupletSlurs: tuplet.internalSlurs } : {}),
           postfixes: [],
           navigation: [],
           octaveShift: 0,
