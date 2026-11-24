@@ -73,7 +73,7 @@ test('staff equal-measure mode changes positions without changing notehead sizes
   const before = await sizes()
   await page.getByLabel('M3N source').fill(source)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  const rows = await paper.locator('g.system').evaluateAll((systems) =>
+  const measureWidths = () => paper.locator('g.system').evaluateAll((systems) =>
     systems.map((system) =>
       [...system.querySelectorAll('g.measure')].map((measure) => {
         const path = measure.querySelector('g.staff > path') as SVGGraphicsElement
@@ -81,7 +81,12 @@ test('staff equal-measure mode changes positions without changing notehead sizes
       }),
     ),
   )
-  for (const row of rows) expect(Math.max(...row) - Math.min(...row)).toBeLessThanOrEqual(3)
+  // Editing starts an asynchronous render. The old preview can still report
+  // aria-busy=false before the next render begins; wait for the new geometry.
+  await expect.poll(async () => {
+    const rows = await measureWidths()
+    return rows.length ? Math.max(...rows.map(row => Math.max(...row) - Math.min(...row))) : Infinity
+  }).toBeLessThanOrEqual(3)
   const after = await sizes()
   expect(after).toHaveLength(before.length)
   for (const [i, size] of after.entries()) expect(size).toBeCloseTo(before[i]!, 3)

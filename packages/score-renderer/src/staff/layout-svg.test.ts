@@ -2,6 +2,38 @@ import { describe, expect, it } from 'vitest'
 import { element, hasClass, SvgGeometry, textMeasurer, translate, xml } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
+  it('keeps borrowed numeric ink equivalent through live transforms and default queries isolated', () => {
+    const box = Object.freeze({ left: 1, right: 4, top: -2, bottom: 5 })
+    const note = element('g', {})
+    note.numericInk = [box]
+    const root = element('g', {}, [note])
+    const borrowed = new SvgGeometry(root, textMeasurer(), true), copied = new SvgGeometry(root, textMeasurer())
+    expect(borrowed.pieces(root)[0]).toBe(box)
+    const saved = copied.pieces(root)
+    saved[0]!.left = -1000
+    expect(borrowed.pieces(root)[0]!.left).toBe(1)
+    for (const transform of ['translate(10 20)', 'scale(-2 3)', 'rotate(30)', 'matrix(1 0.5 0.2 1 3 4)']) {
+      root.attributes.transform = transform
+      expect(borrowed.pieces(root)).toEqual(copied.pieces(root))
+      expect(borrowed.pieces(root)[0]).not.toBe(box)
+    }
+    delete root.attributes.transform
+    borrowed.compileStatic(root, () => false)
+    expect(borrowed.pieces(root)).toEqual(copied.pieces(root))
+    translate(root, 15, 5)
+    expect(borrowed.pieces(root)).toEqual(copied.pieces(root))
+  })
+  it('keeps partition identities distinct when immutable ink is reused by excluded and included nodes', () => {
+    const box = Object.freeze({ left: 0, right: 5, top: 0, bottom: 10 })
+    const omitted = element('g', { class: 'ending' }), music = element('g', {})
+    omitted.numericInk = music.numericInk = [box]
+    const root = element('g', {}, [omitted, music])
+    const partition = new SvgGeometry(root, textMeasurer(), true).partitionWithoutClasses(root, ['ending'])
+    expect(partition.all).toEqual([box, box])
+    expect(partition.without).toEqual([box])
+    expect(partition.all[0]).not.toBe(partition.without[0])
+    expect(partition.all[1]).toBe(partition.without[0])
+  })
   it('matches whole class tokens across SVG whitespace', () => {
     const node = element('g', { class: 'notehead\tstaff\nverse\u00a0ending' })
     for (const token of ['notehead', 'staff', 'verse', 'ending']) expect(hasClass(node, token)).toBe(true)

@@ -221,7 +221,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const yTop = models[0]!.staves[lane]?.getYForLine(0) ?? 40
         const low = models[0]!.staves[lane]?.getYForLine(4) ?? 80
         if (interval.kind === 'lg') {
-          const music = slurMusic[lane] ??= new SvgGeometry(node, measureText).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
+          const music = slurMusic[lane] ??= new SvgGeometry(node, measureText, true).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
@@ -247,7 +247,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const e = m.measure.melody[0]?.event
         return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, 16, true).width + 21 > width / 2)
       }).map(m => m.id))
-      const geometry = new SvgGeometry(node, measureText)
+      const geometry = new SvgGeometry(node, measureText, true)
       const system = arrangeStaffSystem(node, geometry, width, headings)
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + 5; continue }
       return system

@@ -11,7 +11,7 @@ vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffMeasurementTask: prepareStaffTask,
   prepareStaffScore: prepareStaff,
 }))
-vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {} }))
+vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {}, NumberedLayoutTask: class {} }))
 vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
   measureNumberedWidth: (document: ScoreDocument, width: number, { settings }: { settings: Record<string, unknown> }) => {
     const quality = numberedQuality(document, { ...settings, width, paged: true, pageMargin: settings.pageMargin ?? 0 })
@@ -102,6 +102,21 @@ describe('numbered automatic width margins', () => {
     expect(numberedQuality.mock.calls.every(([, options]) => options.pageMargin === (margin ?? 0))).toBe(true)
     expect(numberedQuality.mock.calls.every(([, options]) => options.paged === true)).toBe(true)
     expect(new Set(numberedQuality.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
+    expect(new Set(numberedQuality.mock.calls.map(([, options]) => options.layoutTask)).size).toBe(1)
+  })
+
+  it('starts every independent selection with fresh preparation', async () => {
+    numberedQuality.mockReset()
+    numberedQuality.mockReturnValue({ pageCount: 1, lineDensityVariation: 0, lastLineSlack: 0 })
+    const score = {} as ScoreDocument
+    await chooseNumberedScoreWidth(score, { paged: true })
+    const first = numberedQuality.mock.calls.map(([, options]) => options.layoutTask)
+    numberedQuality.mockClear()
+    await chooseNumberedScoreWidth(score, { paged: true })
+    const second = numberedQuality.mock.calls.map(([, options]) => options.layoutTask)
+    expect(first.every(task => task === first[0])).toBe(true)
+    expect(second.every(task => task === second[0])).toBe(true)
+    expect(second[0]).not.toBe(first[0])
   })
 
   it('keeps the automatic width at least 480px when narrower layouts fit', async () => {

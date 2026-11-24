@@ -18,7 +18,7 @@ vi.mock('./samples', () => ({
   loadPresetScore: mocks.load,
 }))
 vi.mock('@m3n/numbered-notation', () => ({
-  NumberedTextMeasurementCache: class {},
+  NumberedTextMeasurementCache: class {}, NumberedLayoutTask: class {},
   numberedLayoutQuality: mocks.quality,
   prepareNumberedNotationFonts: mocks.prepare,
   PreparedNumberedNotationScore: class {
@@ -63,6 +63,7 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(new Set(mocks.prepared.mock.calls.map(call => call[1].width))).toEqual(new Set([...Array.from({ length: 13 }, (_, index) => 480 + index * 20), 490]))
     expect(mocks.prepared.mock.calls[0][0]).toBe(mocks.prepared.mock.calls[1][0])
     expect(new Set(mocks.prepared.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
+    expect(new Set(mocks.prepared.mock.calls.map(([, options]) => options.layoutTask)).size).toBe(1)
     expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 480 }), expect.objectContaining({ title: 'second', width: 480 })], 32)
     expect(result.scoreCount).toBe(2)
     expect(result.measurementTimings.scores).toHaveLength(2)

@@ -149,8 +149,8 @@ function matrix(raw: string): Matrix {
   }
   return m
 }
-function transform(b: Ink, m: Matrix): Ink {
-  if (m === identity) return { left: b.left, right: b.right, top: b.top, bottom: b.bottom }
+function transform(b: Ink, m: Matrix, borrow = false): Ink {
+  if (m === identity) return borrow ? b : { left: b.left, right: b.right, top: b.top, bottom: b.bottom }
   if (m[1] === 0 && m[2] === 0) {
     const left = m[0] * b.left + m[4], right = m[0] * b.right + m[4]
     const top = m[3] * b.top + m[5], bottom = m[3] * b.bottom + m[5]
@@ -197,6 +197,9 @@ export class SvgGeometry {
   constructor(
     private readonly root: XmlNode,
     readonly measure: MeasureText,
+    // Internal engraving readers never mutate returned boxes. Public/default
+    // queries continue returning defensive copies, including numeric paths.
+    private readonly borrowImmutableInk = false,
   ) {}
   /** Compile immutable music blocks after drawing and before attachments move.
    * The caller excludes mutable subtrees. Root transforms stay live; filtered
@@ -255,7 +258,7 @@ export class SvgGeometry {
   }
   partitionWithoutClasses(node: XmlNode, classes: readonly string[]): { all: Ink[]; without: Ink[] } {
     const all: Ink[] = [], without: Ink[] = []
-    this.collect(node, identity, { size: 16 / 0.7, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) })
+    this.collect(node, identity, { size: 16 / 0.7, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
     return { all, without }
   }
   pieces(
@@ -285,10 +288,10 @@ export class SvgGeometry {
       return !intersects(compiled.classes, filter.classNames)
   }
   private collect(node: XmlNode, parent: Matrix, inherited: { size: number; bold: boolean; italic: boolean },
-    omit: OmitNode | undefined, result: Ink[], secondary?: { result: Ink[]; omit: OmitNode }): void {
+    omit: OmitNode | undefined, result: Ink[], secondary?: { result: Ink[]; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
     const compiled = this.staticPieces.get(node)
     if (compiled && compiled.transform === (node.attributes.transform ?? '') && this.unaffected(compiled, omit) && this.unaffected(compiled, secondary?.omit)) {
-      for (const box of compiled.boxes) { const placed = transform(box, parent); result.push(placed); secondary?.result.push(placed) }
+      for (const box of compiled.boxes) { const placed = transform(box, parent, borrow); result.push(placed); secondary?.result.push(placed) }
       return
     }
     const a = node.attributes,
@@ -300,7 +303,7 @@ export class SvgGeometry {
       if (!local) { local = matrix(raw); this.transforms.set(raw, local) }
       m = multiply(parent, local)
     }
-    if (node.numericInk) { for (const box of node.numericInk) { const placed = transform(box, m); result.push(placed); secondary?.result.push(placed) }; return }
+    if (node.numericInk) { for (const box of node.numericInk) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }; return }
     if (['defs', 'style', 'desc'].includes(node.tagName)) return
     // Paths dominate music drawing; they do not consume inherited font styles.
     const shape = ['path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)
@@ -313,7 +316,7 @@ export class SvgGeometry {
     if (node.tagName === 'use') {
       const ref = this.definitions.get((a['xlink:href'] ?? a.href ?? '').replace(/^#/, ''))
       if (!ref) throw new Error('五线谱字形引用缺失。')
-      this.collect(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style, undefined, result, secondary)
+      this.collect(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style, undefined, result, secondary, borrow)
       return
     }
     const half = a.stroke === 'none' ? 0 : num('stroke-width') / 2
@@ -336,7 +339,7 @@ export class SvgGeometry {
         saved = { d, half, boxes: inflated }
         this.paths.set(node, saved)
       }
-      for (const box of saved.boxes) { const placed = transform(box, m); result.push(placed); secondary?.result.push(placed) }
+      for (const box of saved.boxes) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }
       return
     } else if (node.tagName === 'text') {
       const size = Math.max(
@@ -383,7 +386,7 @@ export class SvgGeometry {
       }
     } else {
       for (const child of node.children)
-        if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result, secondary && !secondary.omit(child) ? secondary : undefined)
+        if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result, secondary && !secondary.omit(child) ? secondary : undefined, borrow)
       return
     }
     for (const b of boxes) { const placed = transform({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }, m); result.push(placed); secondary?.result.push(placed) }

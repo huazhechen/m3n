@@ -2,7 +2,7 @@ import plan from '../../config/scorebook/editorial-plan.json'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
 import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
 import { parseM3NDocument } from '@m3n/notation'
-import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
+import { PreparedNumberedNotationScore, prepareNumberedNotationFonts, renderSharedPreparedNumberedNotationScores, NumberedTextMeasurementCache, NumberedLayoutTask } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores } from './samples'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
@@ -142,6 +142,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     measurementTimings.stages.fontPreparationMs = performance.now() - started
     const measurementStarted = performance.now()
     const textMeasurementCache = new NumberedTextMeasurementCache()
+    const layoutTask = new NumberedLayoutTask()
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
       const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
@@ -160,7 +161,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           const widthStarted = performance.now()
           let timings: WidthTimings = {}
           try {
-            const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: { textMeasurementCache } })
+            const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: { textMeasurementCache, layoutTask } })
             prepared.set(width, measured.prepared)
             timings = measured.candidate.timings
             return measured.candidate
@@ -187,7 +188,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       signal.throwIfAborted()
       const scoreTiming = measurementTimings.scores.find(score => score.file === entry.file)!
       const started = performance.now()
-      const measured = measureNumberedWidth(documents.get(entry.file)!.document, width, { signal, auditLayout, settings: { textMeasurementCache } })
+      const measured = measureNumberedWidth(documents.get(entry.file)!.document, width, { signal, auditLayout, settings: { textMeasurementCache, layoutTask } })
       entry.prepared.set(width, measured.prepared)
       scoreTiming.candidates.push({ width, timings: measured.candidate.timings })
       scoreTiming.wallMs += performance.now() - started

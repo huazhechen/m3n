@@ -1,5 +1,5 @@
 import { parseM3NDocument } from '@m3n/notation'
-import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
+import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores, NumberedTextMeasurementCache, NumberedLayoutTask } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { attachScoreReading } from '../src/lib/score-reading-dom'
 import { renderScoreInto } from '../src/lib/render-score'
@@ -9,6 +9,7 @@ import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
 
 export async function prepare(fontBase64) {
   textMeasurementCache = new NumberedTextMeasurementCache()
+  layoutTask = new NumberedLayoutTask()
   measurementSource = measurementDocument = measurementDescription = undefined
   // Publishing supplies a freshly generated subset for the actual book text.
   if (fontBase64) {
@@ -24,6 +25,7 @@ export async function prepare(fontBase64) {
 export async function prepareSources(sources) {
   for (const source of sources) await prepareNumberedNotationFonts(parseM3NDocument(source))
   textMeasurementCache = new NumberedTextMeasurementCache()
+  layoutTask = new NumberedLayoutTask()
   measurementSource = measurementDocument = measurementDescription = undefined
 }
 
@@ -34,7 +36,7 @@ export async function render(source, width, paged = true, coreGap, host = docume
 
 // Keep only the current song: candidate widths share parsing and font preparation.
 let measurementSource, measurementDocument, measurementDescription
-let textMeasurementCache
+let textMeasurementCache, layoutTask
 async function prepareMeasurement(source) {
   if (source !== measurementSource) {
     const document = parseM3NDocument(source)
@@ -51,7 +53,8 @@ export async function measure(source, width, paged = true, coreGap, host = docum
   const scoreDocument = await prepareMeasurement(source)
   const parseFontsMs = performance.now() - started
   textMeasurementCache ??= new NumberedTextMeasurementCache()
-  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap, textMeasurementCache },
+  layoutTask ??= new NumberedLayoutTask()
+  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap, textMeasurementCache, layoutTask },
     afterMount: host => attachScoreReading(host, measurementDescription) })
   candidate.timings.parseFontsMs = parseFontsMs
   candidate.timings.totalMs += parseFontsMs

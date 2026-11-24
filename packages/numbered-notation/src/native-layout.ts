@@ -30,6 +30,7 @@ export type NativeRenderOptions = {
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   textMeasurementCache?: NumberedTextMeasurementCache
+  layoutTask?: NativeLayoutTask
   pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
@@ -54,7 +55,11 @@ function validate(options: NativeRenderOptions) {
 
 function relationsFor(document: ScoreDocument, projection: NativeProjection): NativeRelation[] {
   const byEvent = new Map<ScoreEvent, NativeGlyph[]>()
-  for (const glyph of projection.glyphs) if (glyph.event) byEvent.set(glyph.event, [...(byEvent.get(glyph.event) ?? []), glyph])
+  for (const glyph of projection.glyphs) if (glyph.event) {
+    const members = byEvent.get(glyph.event)
+    if (members) members.push(glyph)
+    else byEvent.set(glyph.event, [glyph])
+  }
   const relations: NativeRelation[] = []
   const head = new Map<ScoreEvent, NativeGlyph>()
   for (const part of document.parts.values()) for (const staff of ['melody', 'bass'] as const) {
@@ -113,12 +118,7 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     flush()
   }
   // Reserve enclosure ink only at passage endpoints, independent of wrapping.
-  const starts = new Set(relations.filter(relation => relation.kind === 'inst').map(relation => relation.first))
-  const ends = new Set(relations.filter(relation => relation.kind === 'inst').map(relation => relation.last))
-  for (const glyph of projection.glyphs) if (glyph.instrumental) {
-    if (!starts.has(glyph)) glyph.parenthesisLeft = 0
-    if (!ends.has(glyph)) glyph.parenthesisRight = 0
-  }
+  reserveInstrumentalEndpoints(relations, projection)
   // Rhythm brackets precede arcs, including a short tie from their last child.
   // Arcs stay inside expression hairpins regardless of the respective spans.
   // Within each layer, inner relations precede outer ones; all fragments
@@ -135,6 +135,15 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   }
   alignNativeArcs(relations, projection)
   return relations
+}
+
+function reserveInstrumentalEndpoints(relations: NativeRelation[], projection: NativeProjection): void {
+  const starts = new Set<NativeGlyph>(), ends = new Set<NativeGlyph>()
+  for (const relation of relations) if (relation.kind === 'inst') { starts.add(relation.first); ends.add(relation.last) }
+  for (const glyph of projection.glyphs) if (glyph.instrumental) {
+    if (!starts.has(glyph)) glyph.parenthesisLeft = 0
+    if (!ends.has(glyph)) glyph.parenthesisRight = 0
+  }
 }
 
 /** Break complete measures first, splitting oversized measures at time columns. */
@@ -177,19 +186,48 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
   return lines
 }
 
-type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation }
+type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
+type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; relations?: NativeRelationPlan }
+
+/** One selection/export task, with immutable score inputs. Only unplaced
+ * preparation is shared: every candidate/trial still owns its placement state.
+ * A new task starts empty; changes in fonts, measurer or notation settings
+ * cannot reuse a previous preparation. */
+export class NativeLayoutTask {
+  private readonly scores = new WeakMap<ScoreDocument, Map<string, {
+    cache: NumberedTextMeasurementCache; revision: number; measurer?: TextMeasurer
+    preparation: NativeLayoutPreparation; headers: Map<string, NativeHeaderPreparation>
+  }>>()
+  preparationFor(document: ScoreDocument, options: NativeRenderOptions, cache: NumberedTextMeasurementCache): NativeLayoutPreparation {
+    let variants = this.scores.get(document)
+    if (!variants) { variants = new Map(); this.scores.set(document, variants) }
+    const key = JSON.stringify([options.fixedDo ?? false, options.transpose ?? 0, options.tempoScale ?? 1, options.includeBass ?? true])
+    let entry = variants.get(key)
+    if (!entry || entry.cache !== cache || entry.revision !== cache.revision || entry.measurer !== options.textMeasurer) {
+      entry = { cache, revision: cache.revision, measurer: options.textMeasurer, preparation: { header: new Map() }, headers: new Map() }
+      variants.set(key, entry)
+    }
+    const headerKey = JSON.stringify([Math.max(320, Math.round(options.width)), options.pageMargin ?? 32])
+    let header = entry.headers.get(headerKey)
+    if (!header) { header = new Map(); entry.headers.set(headerKey, header) }
+    entry.preparation.header = header
+    return entry.preparation
+  }
+}
 
 export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
   validate(supplied)
   const cache = supplied.textMeasurementCache ?? new NumberedTextMeasurementCache()
   if (cache.synchronizeFonts() && timings) timings.textMeasureCacheResets = (timings.textMeasureCacheResets ?? 0) + 1
   supplied = { ...supplied, textMeasurementCache: cache }
+  const taskPreparationStarted = timings ? performance.now() : 0
+  const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
+  if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
   // Explicit spacing remains a fixed engraving override. Automatic spacing is
   // selected against the same virtual A4 pages in continuous and paged views;
   // custom vertical gaps must not change the horizontal line breaks.
-  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied, timings)
+  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied, timings, supplied.layoutTask ? preparation : undefined)
   const minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
-  const preparation: NativeLayoutPreparation = {header:new Map()}
   let baseline: NativeLayout
   try {
     baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 }, timings, preparation)
@@ -276,7 +314,24 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     else projection = measured
   }
   recordPart('scoreProjectionMs', projectionStarted)
-  const relations = relationsFor(document, projection), available = options.width - 2 * margin
+  // Relation identities, nesting and arc chains depend on musical inputs, not
+  // the spacing trial. Only remap endpoints to this trial's private glyphs.
+  const relationPreparationStarted = timings ? performance.now() : 0
+  let relations: NativeRelation[]
+  if (preparation?.relations) {
+    relations = preparation.relations.map(relation => ({ ...relation, first: projection.glyphs[relation.first]!, last: projection.glyphs[relation.last]! }))
+    reserveInstrumentalEndpoints(relations, projection)
+    if (timings) timings.relationPlanReuses = (timings.relationPlanReuses ?? 0) + 1
+  } else {
+    relations = relationsFor(document, projection)
+    if (preparation) {
+      const indices = new Map(projection.glyphs.map((glyph, index) => [glyph, index]))
+      preparation.relations = relations.map(relation => ({ ...relation, first: indices.get(relation.first)!, last: indices.get(relation.last)! }))
+    }
+    if (timings) timings.relationPlanBuilds = (timings.relationPlanBuilds ?? 0) + 1
+  }
+  recordPart('relationPreparationMs', relationPreparationStarted)
+  const available = options.width - 2 * margin
   const headerStarted = timings ? performance.now() : 0
   const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeStyle.headerGap, options, preparation?.header)
   recordPart('headerGeometryMs', headerStarted)

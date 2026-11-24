@@ -38,8 +38,8 @@ export function arrangeStaffSystem(
   sectionHeadings: Set<string>,
 ): StaffSystem {
   const classes = new Map<string, XmlNode[]>()
-  const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending'])
-  const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending)(?:\s|$)/
+  const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending', 'mNum'])
+  const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending|mNum)(?:\s|$)/
   const index = (child: XmlNode) => {
     const raw = child.attributes.class
     if (raw && interesting.test(raw)) for (const name of raw.split(/\s+/)) if (wanted.has(name)) {
@@ -93,7 +93,7 @@ export function arrangeStaffSystem(
   // packing verses, so a later collision pass cannot push a numeral below text.
   const tuplets = new Set(byClass('m3n-tuplet-label'))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
-  const rhythmObstacles = geometry.withoutClasses(node, [...decorations, 'verse'])
+  const rhythmObstacles = tuplets.size ? geometry.withoutClasses(node, [...decorations, 'verse']) : []
   for (const label of tuplets) {
     const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
     let dy = 0
@@ -111,7 +111,7 @@ export function arrangeStaffSystem(
   // Pack actual lyric ink for each staff independently, with no phantom row
   // for trailing placeholders. The engine's music and bass staves stay intact.
   const measures = nodes(node).filter((n) => hasClass(n, 'measure'))
-  for (const measure of measures) {
+  for (const measure of byClass('mNum').length ? measures : []) {
     if (measure !== measures.at(-1)) {
       const removeNumbers = (parent: XmlNode) => {
         parent.children = parent.children.filter((child) => typeof child === 'string' || !hasClass(child, 'mNum'))
@@ -129,15 +129,18 @@ export function arrangeStaffSystem(
         }
     }
   }
-  const lanes = Math.max(0, ...measures.map((m) => nodes(m).filter((n) => hasClass(n, 'staff')).length))
+  const staffsByMeasure = measures.map(m => nodes(m).filter(n => hasClass(n, 'staff')))
+  const lanes = Math.max(0, ...staffsByMeasure.map(staffs => staffs.length))
   let staffSpacing = 0
   for (let lane = 0; lane < lanes; lane++) {
-    const staffs = measures.flatMap((m) => nodes(m).filter((n) => hasClass(n, 'staff'))[lane] ?? [])
+    const staffs = staffsByMeasure.flatMap(staffs => staffs[lane] ?? [])
     const rows = new Map<number, XmlNode[]>()
     for (const staff of staffs)
       for (const verse of findAll(staff, (n) => hasClass(n, 'verse') && n.children.length > 0)) {
         const row = Number(/-v(\d+)/.exec(verse.attributes.id ?? '')?.[1] ?? 1)
-        rows.set(row, [...(rows.get(row) ?? []), verse])
+        const members = rows.get(row)
+        if (members) members.push(verse)
+        else rows.set(row, [verse])
       }
     if (!rows.size) continue
     const body = union(staffs.flatMap((staff) => geometry.withoutClasses(staff, ['verse'])))
@@ -150,7 +153,7 @@ export function arrangeStaffSystem(
       bottom = bounds.bottom + dy
     }
     if (lane + 1 < lanes) {
-      const next = measures.flatMap((m) => nodes(m).filter((n) => hasClass(n, 'staff'))[lane + 1] ?? [])
+      const next = staffsByMeasure.flatMap(staffs => staffs[lane + 1] ?? [])
       const nextInk = union(next.flatMap((staff) => geometry.pieces(staff)))
       const shift = Math.max(0, bottom + 12 / scale - nextInk.top)
       if (shift) {
@@ -197,7 +200,10 @@ export function arrangeStaffSystem(
     if (row) row.push(item)
     else endingRows.push([item])
   }
-  const endingObstacles = geometry.withoutClasses(node, decorations.filter(name => name !== 'm3n-tuplet-label'))
+  // Endings and other attachments use the same music obstacles. Rows without
+  // either need no intermediate collection; the final partition still runs.
+  let endingObstacles: Ink[] | undefined
+  const musicObstacles = () => endingObstacles ??= geometry.withoutClasses(node, decorations.filter(name => name !== 'm3n-tuplet-label'))
   for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
@@ -208,7 +214,7 @@ export function arrangeStaffSystem(
       right = Math.max(right, ink.right + dx)
       arranged.push({ ending, ink: moveInk(ink, dx, top - ink.top) })
     }
-    const clearances = arranged.flatMap(({ ink }) => endingObstacles
+    const clearances = arranged.flatMap(({ ink }) => musicObstacles()
       .filter((other) => overlapsX(ink, other) && other.top >= ink.bottom)
       .map((other) => other.top - ink.bottom))
     const dy = clearances.length ? Math.max(0, Math.min(...clearances) - 5 / scale) + 3 / scale : 0
@@ -220,8 +226,6 @@ export function arrangeStaffSystem(
     }
   }
   const isHairpin = (attachment: XmlNode) => hasClass(attachment, 'hairpin') || hasClass(attachment, 'm3n-hairpin-row')
-  const music = endingObstacles
-  const obstacles = [...music]
   const hairpinPieces = new Set<Ink>()
   // Keep brackets and curves inside expression
   // markings. Text is moved only when its actual horizontal span collides.
@@ -237,6 +241,8 @@ export function arrangeStaffSystem(
   const attachments = findAll(node, (n) => isMovableDecoration(n) && !hasClass(n, 'mNum') && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
     (a, b) => placementOrder(a) - placementOrder(b),
   )
+  const music = attachments.length ? musicObstacles() : []
+  const obstacles = [...music]
   for (const attachment of attachments) {
     let ink = geometry.ink(attachment)
     if (ink.right === ink.left && ink.bottom === ink.top) continue

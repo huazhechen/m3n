@@ -40,10 +40,10 @@ const yieldToPaint = () => new Promise<void>(resolve => {
 type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWidth' | 'signal' | 'onPhase'>
 
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
-  const { prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
+  const { prepareNumberedNotationFonts, NumberedTextMeasurementCache, NumberedLayoutTask } = await import('@m3n/numbered-notation')
   const { measureNumberedWidth } = await import('../../tools/lib/numbered-width-measurement.mjs')
   await prepareNumberedNotationFonts(scoreDocument)
-  const taskSettings = { ...settings, textMeasurementCache: settings.textMeasurementCache ?? new NumberedTextMeasurementCache() }
+  const taskSettings = { ...settings, textMeasurementCache: settings.textMeasurementCache ?? new NumberedTextMeasurementCache(), layoutTask: new NumberedLayoutTask() }
   const { best } = await selectBestWidth(async width => {
     await yieldToBrowser()
     signal?.throwIfAborted()

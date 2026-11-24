@@ -57,7 +57,7 @@ describe('page-aware automatic note spacing', () => {
   })
 })
 
-it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_01.m3n','katyusha_01.m3n'].map(file=>({fixedDo,width,file})))))('isolates projection state between automatic spacing trials ($file, $width, fixedDo=$fixedDo)', ({width,fixedDo,file}) => {
+it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_01.m3n','katyusha_01.m3n','flower_dance_01.m3n'].map(file=>({fixedDo,width,file})))))('isolates projection state between automatic spacing trials ($file, $width, fixedDo=$fixedDo)', ({width,fixedDo,file}) => {
   const source = readFileSync(new URL('../../../src/scores/'+file,import.meta.url),'utf8')
   const document = parseM3NDocument(source), before = structuredClone(document)
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
@@ -73,4 +73,6 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   expect(document).toEqual(before)
   expect(timings.projectionBuilds).toBe(1)
   expect(timings.projectionReuses).toBe(timings.layoutTrials!-1)
+  expect(timings.relationPlanBuilds).toBe(1)
+  expect(timings.relationPlanReuses).toBe(timings.layoutTrials!-1)
 })
