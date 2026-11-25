@@ -1,4 +1,5 @@
 import { nativeStyle } from './native-style.js'
+import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
@@ -284,8 +285,7 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
     equalCells: { count: ranges.length, tailRight } }
 }
 
-/** Preserve preceding rhythm spacing on final rows without a width threshold.
- * Overlong trials fall back to the current capacity; hard minima never shrink. */
+/** Trial the preceding row's spacing, then choose section-ending justification. */
 export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: number, previous: NativeHorizontalSpacing, previousWidth: number) {
   let inherited: number
   if (current.equalCells && previous.equalCells) {
@@ -295,7 +295,8 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     const stretch = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
     inherited = current.minimumWidth + stretch * current.stretchWeight
   }
-  return Math.min(inherited, width)
+  return lastLineWidth(current.minimumWidth, inherited, width,
+    current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)
 }
 
 /** Justify a complete system, then publish event and measure positions. */

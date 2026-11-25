@@ -8,7 +8,7 @@ import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { readXml, findAll, nodes, hasClass, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
 import { arrangeStaffSystem, systemDistance, type StaffSystem } from './system-layout.js'
 import { createStaffMeasure, drawStaffMeasure, STAFF_SCALE } from './staff-engine.js'
-import { planStaffLines } from './line-layout.js'
+import { planStaffLines, type StaffMeasureMinimum } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { staffHeader } from './staff-header.js'
 
@@ -94,7 +94,7 @@ describe('staff layout contract', () => {
     expect(lines[1]!.target).toBeLessThanOrEqual(lines[0]!.target * 0.6)
     expect(lines[1]!.target).toBeGreaterThanOrEqual(lines[1]!.minimum)
   })
-  it('preserves final-row spacing above the former 60% cutoff', () => {
+  it('keeps middle-band final rows open when full stretch would differ too much', () => {
     const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 | 5 6 7 1e | {br} 1 2 3 4 |||').score)
     const lines = planStaffLines(document, 600, false, textMeasurer(), 0.25, () => 200)
     expect(lines).toHaveLength(2)
@@ -105,6 +105,23 @@ describe('staff layout contract', () => {
       measure => measure.id === document.measures.at(-1)!.id ? 250 : 200)
     expect(larger.at(-1)!.target - last!.target).toBeCloseTo(50)
     expect(larger.at(-1)!.target).toBeLessThan(first!.target)
+  })
+
+  it.each([
+    { minimum: 100, weight: 1, fill: false },
+    { minimum: 100, weight: 2, fill: false },
+    { minimum: 200, weight: 2, fill: true },
+    { minimum: 300, weight: 2, fill: true },
+  ])('uses trial occupancy and preceding stretch for staff endings: %j', sample => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 | 5 6 7 1e | {br} 1 2 3 4 |||').score)
+    const lastId = document.measures.at(-1)!.id
+    const minimum: StaffMeasureMinimum = measure => measure.id === lastId ? sample.minimum : 200
+    minimum.describe = measure => ({ weight: measure.id === lastId ? sample.weight : 1, beats: 4, labelWidth: 0 })
+    const lines = planStaffLines(document, 600, false, textMeasurer(), 0.25, minimum)
+    expect(lines).toHaveLength(2)
+    const [first, last] = lines
+    const inherited = last!.minimum + (first!.target - first!.minimum) / first!.weight * last!.weight
+    expect(last!.target).toBeCloseTo(sample.fill ? first!.target : inherited)
   })
 
   it('clears a lone ending bracket from music and relations after initial placement', () => {

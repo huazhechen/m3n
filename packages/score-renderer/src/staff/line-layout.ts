@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
 import { createStaffPreparation, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
@@ -107,7 +107,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
   if (last && previous) {
     const inherited = equal ? Math.max(last.minimum, previous.target / previous.measures.length * last.measures.length)
       : last.minimum + (previous.weight > 0 ? Math.max(0, previous.target - previous.minimum) / previous.weight : 0) * last.weight
-    last.target = Math.max(last.minimum, Math.min(available, inherited))
+    last.target = lastLineWidth(last.minimum, inherited, available, equal ? 0 : last.minimum)
   }
   return lines
 }

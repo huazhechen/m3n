@@ -1,4 +1,5 @@
 import { parseM3NDocument } from '@m3n/notation'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { nativeHorizontalSpacing, nativeLastLineWidth, type NativeHorizontalSpacing } from './native-horizontal.js'
 import { layoutNativeScore } from './native-layout.js'
@@ -9,15 +10,28 @@ const quarters = '1 2 3 4 | '
 const options = { width: 800, paged: false, textMeasurer: new DefaultTextMeasurer() }
 
 describe('short final rows', () => {
+  it.each([0, 32])('fills the C-section ending at measure 61 of Turkish March, margin=%s', pageMargin => {
+    const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8'))
+    const layout = layoutNativeScore(document, { ...options, width: 672, pageMargin })
+    const ending = layout.systems.find(system => system.measures.some(measure => measure.number === 61))!
+    expect(ending.measures.at(-1)!.number).toBe(61)
+    expect(ending.measures.at(-1)!.end).toBeCloseTo(672 - pageMargin, 6)
+  })
   it('inherits surplus per rhythm weight without scaling glyphs or minimum clearances', () => {
     expect(nativeLastLineWidth({ minimumWidth: 100, stretchWeight: 2 }, 800, previous, 800)).toBe(180)
   })
 
-  it('preserves rhythm spacing continuously across the former 60% threshold', () => {
+  it('keeps middle-band rows open when filling would greatly increase preceding stretch', () => {
     expect(nativeLastLineWidth({ minimumWidth: 400, stretchWeight: 2 }, 800, previous, 800)).toBe(480)
     expect(nativeLastLineWidth({ minimumWidth: 400.01, stretchWeight: 2 }, 800, previous, 800)).toBe(480.01)
     // Longer final rows keep their inherited rhythm spacing as well.
     expect(nativeLastLineWidth({ minimumWidth: 300, stretchWeight: 5 }, 800, previous, 800)).toBe(500)
+  })
+
+  it('fills near-complete terminal rows and uses rhythm density in the middle band', () => {
+    expect(nativeLastLineWidth({ minimumWidth: 600, stretchWeight: 2 }, 800, previous, 800)).toBe(800)
+    expect(nativeLastLineWidth({ minimumWidth: 80, stretchWeight: 12 }, 800, previous, 800)).toBe(800)
+    expect(nativeLastLineWidth({ minimumWidth: 320, stretchWeight: 6 }, 800, previous, 800)).toBe(560)
   })
 
   it('falls back to the available width when inherited stretch would overflow', () => {
