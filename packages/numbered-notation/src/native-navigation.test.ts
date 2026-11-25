@@ -8,7 +8,7 @@ import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js';
 import { nativeNavigationGlyph } from './native-navigation-glyphs.js';
 import { measureNativeNavigation } from './native-navigation.js';
 import { NativeSymbols } from './native-symbols.js';
-import { nativeBarMetrics, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js';
+import { nativeBarMetrics, nativeHorizontalSpacing, nativeMeasureBars, placeNativeHorizontal } from './native-horizontal.js';
 import { projectNativeScore } from './native-model.js';
 // The music's measured axis is -8px. Navigation has a different ascent/descent
 // ratio, a left overhang and ink extending beyond its advance width.
@@ -19,6 +19,30 @@ const measurer: TextMeasurer = { measureText(text, style) {
         return { w: text.length * style.fontSize * 0.6, advance: 26, inkLeft: -2, inkRight: 30, h: 9, baseline: 6 };
     } };
 describe('measured navigation geometry', () => {
+    it.each([false, true])('shares Flower Dance bars 26–27 while preserving D.S. clearance (equalMeasures=%s)', equalMeasures => {
+        const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8');
+        const projection = projectNativeScore(parseM3NDocument(source), {textMeasurer:measurer});
+        const measures = projection.measures.slice(25, 27), exit = measures[0]!, entry = measures[1]!;
+        const options = {equalMeasures, minimumNoteGap:9};
+        for (const width of [0, 400]) {
+            const minimum = nativeHorizontalSpacing(measures, options).minimumWidth;
+            placeNativeHorizontal(measures, options, 0, minimum + width);
+            expect(nativeMeasureBars(measures, 0).closing).toBeUndefined();
+            expect(nativeMeasureBars(measures, 1).opening).toBe(true);
+            expect(exit.barX).toBe(entry.openingBarX);
+            const mark = exit.navigation![0]!;
+            expect(mark.text).toBe('D.S.');
+            expect(mark.x!).toBeGreaterThan(Math.max(...exit.columns.flatMap(column => column.glyphs).map(note => note.x + note.musicRight!)));
+            expect(mark.x! + mark.width).toBeLessThan(entry.openingBarX! - nativeBarMetrics('rptstart').anchor);
+        }
+        // Wrapping restores the closing boundary and keeps D.S. on its original row.
+        const minimum = nativeHorizontalSpacing([exit], options).minimumWidth;
+        placeNativeHorizontal([exit], options, 0, minimum);
+        expect(nativeMeasureBars([exit], 0).closing).toBe('dbl');
+        expect(exit.navigation![0]!.x! + exit.navigation![0]!.width).toBeLessThan(exit.barX!);
+        expect(nativeMeasureBars([entry], 0).opening).toBe(true);
+        expect(projection.measures.at(-1)!.source.right).toBe('end');
+    });
     it.each([320,600,800])('keeps Flower Dance Coda clear of its first sixteenth at %spx', width => {
         const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8');
         for (const equalMeasures of [false, true]) {

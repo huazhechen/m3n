@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "7244d5ce4d47586b55d68cf47fc71e84d68e1233de04dcdd6c0593bb274be7a8",
+  "rendererSha256": "077a058cf3e61f61ab90cc16b38703da444ee635359a72f338095071c974fce7",
   "fontManifestSha256": "f552a65b590192af38b92511533e6d5bc3cfbc331e3e7a78f361eb927ff9a2e9",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -110,7 +110,7 @@
       "fontSha256": "f4892545b2ed74735979ce9df8a40d90fcb69cdd084290d2670a3ab33e7c15b7"
     },
     "src/scores/flower_dance_01.m3n": {
-      "sourceSha256": "72c71520ef127faa87868fe30dd787ad286f343e64f1ae62fc7264055b21bd64",
+      "sourceSha256": "a2f0fdb3d4d611ea3ed4318a2aba1fd5650959b9ddb1a525b229e62528dd2b57",
       "font": "NotoSansSC-5536f5e7c5f7b076.ttf",
       "fontSha256": "cb8311ab9982d045e5a2d550e7656e8293543609dc451bcbad9590751d7c631e"
     },

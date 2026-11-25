@@ -17,7 +17,7 @@ export function nativeBarMetrics(kind: string | undefined) {
   return { size, width, anchor, bars, dots, radius }
 }
 
-type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
+type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
@@ -32,8 +32,7 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
   if (closing === 'rptboth') closing = joinsNext ? 'rptboth' : 'rptend'
   if (joinsNext && next.source.left === 'rptstart') {
     if (closesRepeat(closing)) closing = 'rptboth'
-    else if ((closing === 'single' || closing === 'dbl') && !(measure.source.repeatCount && measure.source.repeatCount > 2)
-      && !measure.source.navigation?.length && !measure.source.events.some(event => event.navigation.some(name => name !== 'segno'))) closing = undefined
+    else if ((closing === 'single' || closing === 'dbl') && !(measure.source.repeatCount && measure.source.repeatCount > 2)) closing = undefined
   }
   return { opening, closing }
 }
@@ -56,9 +55,14 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     cells: lanes.map(lane => minimumCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
-    const prefix = !opening && measure.navigation?.length ? nativeStyle.navigationGap + measure.navigation.reduce((sum, mark) => sum + mark.width + nativeStyle.navigationGap, 0) : 0
+    const index = surrounding.indexOf(measure), previous = surrounding[index - 1]
+    // Exit text stays before the shared repeat boundary, owned by its source measure.
+    const navigationMeasure = opening
+      ? previous && nativeMeasureBars(surrounding, index - 1).closing === undefined ? previous : undefined
+      : measure
+    const prefix = navigationMeasure?.navigation?.length ? nativeStyle.navigationGap + navigationMeasure.navigation.reduce((sum, mark) => sum + mark.width + nativeStyle.navigationGap, 0) : 0
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
-    items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
+    items.push({ measure, navigationMeasure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
       // A bar has no musical duration; only its clearance matches a quarter note.
       cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, (nativeStyle.music * .25), scale)) })
   }
@@ -302,11 +306,12 @@ export function placeNativeHorizontal(measures: NativeMeasure[], options: Horizo
       for (const glyph of item.column.glyphs) { glyph.x = position; glyphs.push(glyph) }
     } else if (item.controls) item.controls.forEach(control => { control.x = position - control.anchor })
     else if (item.prefix) return
-    else if (item.opening) item.measure.openingBarX = position
     else {
-      item.measure.barX = position
+      if (item.opening) item.measure.openingBarX = position
+      else item.measure.barX = position
+      if (item.navigationMeasure) item.navigationMeasure.barX = position
       let cursor = position - item.left + nativeStyle.navigationGap
-      for (const mark of item.measure.navigation ?? []) { mark.x = cursor; cursor += mark.width + nativeStyle.navigationGap }
+      for (const mark of item.navigationMeasure?.navigation ?? []) { mark.x = cursor; cursor += mark.width + nativeStyle.navigationGap }
     }
   })
   return glyphs
