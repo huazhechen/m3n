@@ -236,7 +236,20 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           })))
           const obstacles = music.filter(p => p.left < right && p.right > left)
           const height = 14, y = Math.min(yTop - 15, ...obstacles.map(p => p.top - 6 / scale))
-          node.children.push(element('g', { class: 'slur' }, [element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + 2} ${left + (right - left) / 3} ${y - height + 2} ${left} ${y} Z`, fill: '#000' })]))
+          const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + 2} ${left + (right - left) / 3} ${y - height + 2} ${left} ${y} Z`, fill: '#000' })
+          // The controls divide x evenly, so x is linear in t and the two
+          // edges are y - 3*h*t*(1-t). Bound short slices exactly; a volta
+          // number near an endpoint must not avoid the curve's distant peak.
+          const count = Math.max(1, Math.ceil(Math.abs(right - left) / 4))
+          const boxes = Array.from({ length: count }, (_, i) => {
+            const a = i / count, b = (i + 1) / count
+            const peak = Math.max(a, Math.min(b, 0.5))
+            return { left: left + (right - left) * a, right: left + (right - left) * b,
+              top: y - 3 * height * peak * (1 - peak),
+              bottom: y - 3 * (height - 2) * Math.min(a * (1 - a), b * (1 - b)) }
+          })
+          path.pathInk = { d: path.attributes.d!, boxes }
+          node.children.push(element('g', { class: 'slur' }, [path]))
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
           if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + 30, 14, 'dynam'))
           else {

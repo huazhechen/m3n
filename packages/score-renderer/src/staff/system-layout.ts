@@ -94,10 +94,24 @@ export function arrangeStaffSystem(
   const tuplets = new Set(byClass('m3n-tuplet-label'))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
   const rhythmObstacles = tuplets.size ? geometry.withoutClasses(node, [...decorations, 'verse']) : []
+  const tupletMusic = new Map<XmlNode, Ink[]>()
+  for (const staff of tuplets.size ? findAll(node, n => hasClass(n, 'staff')) : []) {
+    const labels = nodes(staff).filter(n => tuplets.has(n))
+    if (!labels.length) continue
+    const music = geometry.withoutClasses(staff, [...decorations, 'verse'])
+    for (const label of labels) tupletMusic.set(label, music)
+  }
   for (const label of tuplets) {
     const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
-    let dy = 0
-    const intervals = geometry.pieces(label).flatMap(piece => rhythmObstacles
+    // VexFlow leaves a fixed margin outside the stave. Re-anchor the actual
+    // bracket strokes and numeral to this staff before resolving collisions.
+    const localMusic = tupletMusic.get(label)!
+    const pieces = geometry.pieces(label)
+    const offsets = pieces.flatMap(piece => localMusic
+      .filter(other => overlapsX(piece, other, clearance / 2))
+      .map(other => below ? other.bottom - piece.top + clearance : other.top - piece.bottom - clearance))
+    let dy = offsets.length ? (below ? Math.max(...offsets) : Math.min(...offsets)) : 0
+    const intervals = pieces.flatMap(piece => rhythmObstacles
       .filter(other => overlapsX(piece, other, clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
       .sort((a, b) => below ? a.start - b.start : b.end - a.end)
@@ -207,18 +221,12 @@ export function arrangeStaffSystem(
   for (const row of endingRows) {
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
-    const arranged: Array<{ ending: XmlNode; ink: Ink }> = []
     for (const { ending, ink } of [...row].sort((a, b) => a.ink.left - b.ink.left)) {
       const dx = Math.max(0, right + 3.5 / scale - ink.left)
       translate(ending, dx, top - ink.top)
       right = Math.max(right, ink.right + dx)
-      arranged.push({ ending, ink: moveInk(ink, dx, top - ink.top) })
     }
-    const clearances = arranged.flatMap(({ ink }) => musicObstacles()
-      .filter((other) => overlapsX(ink, other) && other.top >= ink.bottom)
-      .map((other) => other.top - ink.bottom))
-    const dy = clearances.length ? Math.max(0, Math.min(...clearances) - 5 / scale) + 3 / scale : 0
-    if (dy) for (const { ending } of arranged) translate(ending, 0, dy)
+
     if (row.length > 1) {
       row.forEach(({ ending }) => groupedEndings.add(ending))
       node.children = node.children.filter((child) => typeof child === 'string' || !row.some((item) => item.ending === child))
@@ -249,11 +257,7 @@ export function arrangeStaffSystem(
     const padding = hasClass(attachment, 'reh') ? 4 / scale : 0
     let dx = Math.max(0, padding - ink.left)
     if (ink.right + dx + padding > width / scale) dx -= ink.right + dx + padding - width / scale
-    let dy = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? Infinity : 0
-    if (!Number.isFinite(dy)) {
-      const below = obstacles.filter(other => overlapsX(ink, other) && other.top >= ink.bottom)
-      dy = below.length ? Math.min(...below.map(p => p.top)) - ink.bottom - 2 / scale : 0
-    }
+    let dy = 0
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
     const localGap = hasClass(attachment, 'repeatMark') ? 4 / scale : gap
@@ -269,6 +273,14 @@ export function arrangeStaffSystem(
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
     const clearance = ending ? 2 / scale : localGap
+    if (ending) {
+      // Empty space underneath a volta's horizontal rule is not ink. Let
+      // high notes and slurs fit there when they clear the hooks and number.
+      const offsets = attachmentPieces.flatMap(piece => obstacles
+        .filter(other => overlapsX(piece, other, clearance / 2))
+        .map(other => other.top - piece.bottom - clearance))
+      if (offsets.length) dy = Math.min(...offsets)
+    }
     const intervals = attachmentPieces.flatMap(piece => obstacles
       .filter(other => overlapsX(piece, other, isHairpin(attachment) && hairpinPieces.has(other) ? 0 : clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))

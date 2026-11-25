@@ -332,3 +332,57 @@ it('keeps downward tuplet numbers between their music and the first lyric row', 
   const lyricTop = Math.min(...lyrics.map(piece => piece.top))
   for (const label of labels) expect(geometry.ink(label).bottom).toBeLessThan(lyricTop)
 })
+
+
+it('fits a volta around high central music using its strokes instead of its empty interior', () => {
+  const rule = element('path', { d: 'M20 -30 H160', fill: 'none', stroke: '#000', 'stroke-width': '1' })
+  const ending = element('g', { class: 'ending voltaBracket' }, [rule,
+    element('path', { d: 'M20 -30 V-15 M160 -30 V-15', fill: 'none', stroke: '#000', 'stroke-width': '1' }),
+  ])
+  const highNote = element('rect', { x: '80', y: '20', width: '20', height: '10' })
+  const staff = element('g', { class: 'staff' }, [highNote,
+    element('rect', { x: '0', y: '60', width: '180', height: '40' }),
+  ])
+  const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [staff]), ending])
+  const geometry = new SvgGeometry(node, textMeasurer())
+  arrangeStaffSystem(node, geometry, 320, new Set())
+  const strokes = geometry.pieces(ending)
+  const horizontal = strokes.find(piece => piece.right - piece.left > 100)!
+  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(2)
+  expect(Math.max(...strokes.map(piece => piece.bottom))).toBeGreaterThan(geometry.ink(highNote).top)
+})
+
+it('pulls triplet brackets toward local music on both sides of the staff', () => {
+  for (const notes of ['1 2 3', '1e 2e 3e']) {
+    const document = projectStaffDocument(analyzeM3N(`{4/4}\nN: [${notes}:2] 4 5 |`).score)
+    const measure = textMeasurer()
+    const lines = planStaffLines(document, 640, false, measure, 0.25)
+    const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+    const geometry = new SvgGeometry(system.node, measure)
+    const label = findAll(system.node, n => hasClass(n, 'm3n-tuplet-label'))[0]!
+    const staff = findAll(system.node, n => hasClass(n, 'staff'))[0]!
+    const music = geometry.withoutClasses(staff, ['m3n-tuplet-label', 'verse'])
+    const below = label.attributes['data-m3n-below'] === 'true'
+    const gaps = geometry.pieces(label).flatMap(piece => music
+      .filter(other => overlapsX(piece, other, 1.5 / STAFF_SCALE))
+      .map(other => (below ? piece.top - other.bottom : other.top - piece.bottom) * STAFF_SCALE))
+    expect(Math.min(...gaps)).toBeCloseTo(3)
+  }
+})
+
+it('keeps slur endpoint clearance local instead of extending the peak over its full span', () => {
+  const document = projectStaffDocument(analyzeM3N('{4/4}\nN: {lg}1 2 3 4{/} |').score)
+  const measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, 0.25)
+  const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+  const slur = findAll(system.node, n => hasClass(n, 'slur'))[0]!
+  const path = nodes(slur)[0]!
+  const geometry = new SvgGeometry(slur, measure)
+  const bounds = geometry.ink(slur)
+  const pieces = geometry.pieces(slur)
+  expect(pieces.length).toBeGreaterThan(2)
+  expect(pieces[0]!.top).toBeGreaterThan(bounds.top + 5)
+  const original = element('path', { ...path.attributes })
+  const fullBounds = new SvgGeometry(original, measure).ink(original)
+  for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge]).toBeCloseTo(fullBounds[edge])
+})
