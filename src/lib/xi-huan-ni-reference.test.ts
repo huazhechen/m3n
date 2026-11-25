@@ -30,7 +30,7 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   const document = parseM3NDocument(source)
-  expect(document).toMatchObject({ title: '喜欢你', composer: '梁文福', lyricist: '梁文福', key: 'C', meterCount: 6, meterUnit: 8 })
+  expect(document).toMatchObject({ title: '喜欢你', singer: '陈洁仪', composer: '梁文福', lyricist: '梁文福', key: 'C', meterCount: 6, meterUnit: 8 })
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
   const actual = bars.slice(33, 47).map(bar => bar.events.map(event => {
@@ -38,6 +38,8 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
     return { pitch: `${letter!.toUpperCase()}${octave}`, beats: event.beats }
   }))
   expect(actual).toEqual(chorus)
+  expect(bars[46]!.events.at(-1)).toMatchObject({ pitches: ['2e'], beats: 0.5, tie: true })
+  expect(bars[47]!.events[0]).toMatchObject({ pitches: ['2e'], beats: 0.5 })
   expect(bars[0]!.events.map(event => event.beats)).toEqual([1.5, 1, 0.5])
   expect(source).toContain('1e~ 1e. {fine} |')
   expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
