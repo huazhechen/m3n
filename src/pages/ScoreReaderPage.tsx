@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyzeM3N, formatScoreDiagnostic } from '@m3n/notation'
 import { ScoreRenderer } from '../components/ScoreRenderer'
@@ -11,9 +11,12 @@ import { useScoreSource } from '../hooks/useScoreSource'
 import type { ScoreDisplaySettings } from '../lib/render-score'
 import { readRenderMode } from '../lib/renderer-settings'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
+import { attachScoreSwipe } from '../lib/score-swipe'
 
 export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'scores' | 'works' }) {
   const { slug } = useParams()
+  const navigate = useNavigate()
+  const readerRef = useRef<HTMLElement>(null)
   const [works, setWorks] = useState<typeof presetScores>([])
   const basePath = collection === 'works' ? '/works' : '/scores'
   const navProps = collection === 'works' ? { libraryTo: basePath, libraryLabel: '独立作品' } : {}
@@ -35,14 +38,21 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
   const { invalidMeasureIds: invalidMeasures } = analysis
   const result = { ...analysis.score, ...analysis.interaction, diagnostics: analysis.diagnostics }
 
-  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
-
   const scoreIndex = score ? orderedScores.indexOf(score) : -1
   const previousScore = scoreIndex > 0 ? orderedScores[scoreIndex - 1] : undefined
   const nextScore = scoreIndex >= 0 ? orderedScores[scoreIndex + 1] : undefined
+  useEffect(() => {
+    if (status !== 'ready' || !readerRef.current) return
+    return attachScoreSwipe(readerRef.current, direction => {
+      const destination = direction === 'previous' ? previousScore : nextScore
+      if (destination) void navigate(`${basePath}/${destination.slug}`)
+    })
+  }, [status, basePath, previousScore, nextScore, navigate])
+
+  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
 
   return (
-    <main>
+    <main ref={readerRef}>
       <TopNav {...navProps} actions={<div className="score-reader-actions">
         <div className="score-reader-navigation" role="group" aria-label="切换曲目">
           {score && previousScore ? (
