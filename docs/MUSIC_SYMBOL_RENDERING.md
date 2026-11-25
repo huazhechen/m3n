@@ -11,14 +11,14 @@
 | 延长记号 | fermataAbove E4C0 |
 | 重音、换气 | articAccentAbove E4A0、breathMarkComma E4CE |
 | 颤音、短波音 | ornamentTrill E566、ornamentShortTrill E56C |
-| 保持音、简谱跳音／特短断奏 | articTenutoAbove E4A4、articStaccatissimoAboveSmall F47B |
+| 保持音、简谱跳音、特短断奏 | articTenutoAbove E4A4、articStaccatissimoAboveSmall F47B、articStaccatissimoAbove E4A6 |
 | Segno、Coda圆十字 | segno E047、coda E048 |
 | 琶音波浪段 | wiggleArpeggiatoUp EAA9 |
 | 双声部括号钩头 | bracketTop E003、bracketBottom E004 |
 | 八度点、时值附点 | augmentationDot E1E7 |
 | 反复圆点 | repeatDot E044 |
 
-升降号覆盖主音符、和音、倚音、调号与谱头音域；双升／双降保留原来的两个升号／两个降号组合。跳音保持小倒三角，F47B是Bravura专用字形，不能依赖替代字体。括号由字体钩头与随声部高度伸缩的竖线组合；琶音按和音的实际高度重复、旋转字符。圆点按既有直径定位，不改变音乐轴和八度层级。
+升降号覆盖主音符、和音、倚音、调号与谱头音域；双升／双降保留原来的两个升号／两个降号组合。跳音保持小倒三角，特短断奏使用独立楔形；F47B是Bravura专用字形，不能依赖替代字体。括号由字体钩头与随声部高度伸缩的竖线组合；琶音按和音的实际高度重复、旋转字符。圆点按既有直径定位，不改变音乐轴和八度层级。
 
 除升降号已有的字号度量外，其余固定字形统一在1000px字号下测量真实墨迹，再用SVG矩阵缩放至目标墨迹高度，避免小字号的像素取整放大圆点、保持音等记号的预留边界。字形的居中、基线和负边距都来自实际测量；圆点与括号钩头需要指定宽度时按两轴缩放。矩阵保留12位小数，避免大字号乘以六位小数比例造成误差；最终平移位置仍保留六位小数。直接几何与SVG解析共用矩阵变换，琶音的90度旋转也进入避让。
 

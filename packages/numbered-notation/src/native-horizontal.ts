@@ -273,7 +273,7 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
     equalCells: { count: ranges.length, tailRight } }
 }
 
-/** Inherit the preceding row's spacing only for a genuinely short final row.
+/** Preserve preceding rhythm spacing on final rows without a width threshold.
  * Overlong trials fall back to the current capacity; hard minima never shrink. */
 export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: number, previous: NativeHorizontalSpacing, previousWidth: number) {
   let inherited: number
@@ -284,10 +284,7 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     const stretch = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
     inherited = current.minimumWidth + stretch * current.stretchWeight
   }
-  // Check capacity BEFORE the short-row threshold. A high previous stretch or
-  // wider lyrics here must never carry an overlong inherited row into placement.
-  if (inherited > width) return width
-  return inherited <= width * .6 ? inherited : width
+  return Math.min(inherited, width)
 }
 
 /** Justify a complete system, then publish event and measure positions. */

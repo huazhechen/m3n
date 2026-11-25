@@ -13,16 +13,16 @@ describe('short final rows', () => {
     expect(nativeLastLineWidth({ minimumWidth: 100, stretchWeight: 2 }, 800, previous, 800)).toBe(180)
   })
 
-  it('uses the trial width for the 60% threshold, including its exact boundary', () => {
+  it('preserves rhythm spacing continuously across the former 60% threshold', () => {
     expect(nativeLastLineWidth({ minimumWidth: 400, stretchWeight: 2 }, 800, previous, 800)).toBe(480)
-    expect(nativeLastLineWidth({ minimumWidth: 400.01, stretchWeight: 2 }, 800, previous, 800)).toBe(800)
-    // A small minimum is insufficient when inheriting stretch makes it long.
-    expect(nativeLastLineWidth({ minimumWidth: 300, stretchWeight: 5 }, 800, previous, 800)).toBe(800)
+    expect(nativeLastLineWidth({ minimumWidth: 400.01, stretchWeight: 2 }, 800, previous, 800)).toBe(480.01)
+    // Longer final rows keep their inherited rhythm spacing as well.
+    expect(nativeLastLineWidth({ minimumWidth: 300, stretchWeight: 5 }, 800, previous, 800)).toBe(500)
   })
 
   it('falls back to the available width when inherited stretch would overflow', () => {
     expect(nativeLastLineWidth({ minimumWidth: 100, stretchWeight: 30 }, 800, previous, 800)).toBe(800)
-    expect(nativeLastLineWidth({ minimumWidth: 120, stretchWeight: 4 }, 400, { minimumWidth: 320, stretchWeight: 8 }, 640)).toBe(400)
+    expect(nativeLastLineWidth({ minimumWidth: 120, stretchWeight: 4 }, 400, { minimumWidth: 320, stretchWeight: 8 }, 640)).toBe(280)
   })
 
   it('does not invent surplus when the preceding row has no elastic gaps', () => {

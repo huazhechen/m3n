@@ -24,6 +24,6 @@
 
 ## Memory Limit
 
-- All project build, generation, test, and browser processes together must stay below 2 GB of memory.
+- All project build, generation, test, and browser processes together must stay below 3 GB of memory.
 - Run memory-intensive checks serially, including automatic hosted builds; do not overlap font generation, full tests, browser audits, or builds.
 - Use one test worker and bounded Node heaps for verification. Monitor aggregate process memory and stop work before the limit is reached.

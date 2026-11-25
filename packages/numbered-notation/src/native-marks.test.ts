@@ -3,6 +3,7 @@ import { SCORE_TEXT_FONT } from './font-family.js'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { NativeSymbols } from './native-symbols.js'
 import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
@@ -17,6 +18,13 @@ describe('native articulation occupancy', () => {
     const glyph = score.projection.glyphs[0]!
     expect(glyph.top).toBeCloseTo(19.2 + 2.8 + height)
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(glyph.top)
+  })
+
+  it('distinguishes ordinary staccato from staccatissimo in the printed score', () => {
+    const symbols = new NativeSymbols(new DefaultTextMeasurer())
+    expect(symbols.rawMark('tip')).toContain(String.fromCodePoint(0xF47B))
+    expect(symbols.rawMark('brk')).toContain(String.fromCodePoint(0xE4A6))
+    expect(symbols.rawMark('tip')).not.toEqual(symbols.rawMark('brk'))
   })
 
   it('places articulations before ornaments and expressions using boundary gaps', () => {

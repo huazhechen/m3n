@@ -123,7 +123,8 @@ export class NativeSymbols {
   }
 
   rawMark(mark: string): string {
-    if (mark === 'tip' || mark === 'brk') return bravuraSvg('articStaccatissimoAboveSmall', nativeStyle.staccatissimo, this.measurer)
+    if (mark === 'tip') return bravuraSvg('articStaccatissimoAboveSmall', nativeStyle.staccatissimo, this.measurer)
+    if (mark === 'brk') return bravuraSvg('articStaccatissimoAbove', nativeStyle.staccatissimo, this.measurer)
     if (mark === 'hold') return bravuraSvg('articTenutoAbove', nativeStyle.tenuto, this.measurer)
     return this.mark(mark, 0, 0)
   }

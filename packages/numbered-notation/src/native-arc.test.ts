@@ -50,6 +50,32 @@ describe('native musical arc geometry', () => {
     }
   })
 
+  it('uses independent flatter and thinner ties without inheriting an adjacent phrase slur', () => {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1~ 1) {lg}2 3{/} 4 |||'), options)
+    const system = score.systems[0]!, tie = score.relations.find(r => r.kind === 'tie')!, slur = score.relations.find(r => r.kind === 'slur')!
+    expect(tie.arcGroup).not.toBe(slur.arcGroup)
+    const tieArc = nativeArcGeometry(tie, system), slurArc = nativeArcGeometry(slur, system)
+    expect(tieArc.height).toBeLessThan(slurArc.height)
+    const sameSpanSlur = nativeArcGeometry({ ...tie, kind: 'slur', arcGroup: undefined }, system)
+    expect(tieArc.height).toBeLessThan(sameSpanSlur.height)
+    const middle = (arc: typeof tieArc) => nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
+    expect(middle(tieArc).bottom - middle(tieArc).top).toBeLessThan(middle(slurArc).bottom - middle(slurArc).top)
+  })
+
+  it.each([320, 720])('draws tapered curved cross-line ties at %spx', width => {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4~ | {br}4 5 6 7 |||'), { width, paged: true, pageMargin: 0 })
+    const tie = score.relations.find(r => r.kind === 'tie')!
+    for (const system of score.systems) {
+      const arc = system.relationLayout!.get(tie)!.arc!
+      const left = nativeArcSlice(arc.commands, arc.left)!, right = nativeArcSlice(arc.commands, arc.right)!
+      const middle = nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
+      expect(left.bottom - left.top).toBeCloseTo(0)
+      expect(right.bottom - right.top).toBeCloseTo(0)
+      expect(middle.top).toBeLessThan(left.top)
+      expect(arc.commands.some(command => command.op === 'L')).toBe(false)
+    }
+  })
+
   it('clears a high intervening note and shares that envelope with pagination', () => {
     const layout = layoutNativeScore(parseM3NDocument('{3/4}\nN: {lg}1 2ee 3{/} |||'), options)
     const arc = nativeArcGeometry(layout.relations[0]!, layout.systems[0]!)

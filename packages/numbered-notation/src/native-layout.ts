@@ -84,7 +84,8 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
         const start = glyphs[from], end = glyphs[to]
         if (start && end) relations.push({ kind: 'slur', first: start, last: end, level: 0 })
       }
-      if (event.kind === 'tuplet') relations.push({ kind: 'tuplet', first, last: glyphs.at(-1)!, label: String(event.tuplet?.num ?? glyphs.length), level: 0 })
+      if (event.kind === 'tuplet') relations.push({ kind: 'tuplet', first, last: glyphs.at(-1)!, label: event.tuplet && event.tuplet.numbase !== 2 ** Math.floor(Math.log2(event.tuplet.num))
+        ? `${event.tuplet.num}:${event.tuplet.numbase}` : String(event.tuplet?.num ?? glyphs.length), level: 0 })
     }
   }
   const intervals = document.intervals
@@ -120,12 +121,11 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
   }
   // Reserve enclosure ink only at passage endpoints, independent of wrapping.
   reserveInstrumentalEndpoints(relations, projection)
-  // Rhythm brackets precede arcs, including a short tie from their last child.
-  // Arcs stay inside expression hairpins regardless of the respective spans.
-  // Within each layer, inner relations precede outer ones; all fragments
-  // retain that ordering through wrapping/pagination.
+  // Ties attach directly to their notes, including outgoing tuplet ties.
+  // Tuplets and slurs nest by musical span, not a fixed symbol-type order.
+  // Expression hairpins remain outside; wrapping preserves the global order.
   const order = new Map(projection.glyphs.map((glyph, index) => [glyph, index]))
-  const layer = (relation: NativeRelation) => relation.kind === 'tuplet' ? 0
+  const layer = (relation: NativeRelation) => relation.kind === 'tie' ? 0
     : relation.kind === 'cresc' || relation.kind === 'decres' ? 2 : 1
   relations.sort((a, b) => layer(a) - layer(b)
     || (order.get(a.last)! - order.get(a.first)!) - (order.get(b.last)! - order.get(b.first)!))

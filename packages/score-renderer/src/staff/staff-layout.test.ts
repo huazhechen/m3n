@@ -94,6 +94,19 @@ describe('staff layout contract', () => {
     expect(lines[1]!.target).toBeLessThanOrEqual(lines[0]!.target * 0.6)
     expect(lines[1]!.target).toBeGreaterThanOrEqual(lines[1]!.minimum)
   })
+  it('preserves final-row spacing above the former 60% cutoff', () => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 | 5 6 7 1e | {br} 1 2 3 4 |||').score)
+    const lines = planStaffLines(document, 600, false, textMeasurer(), 0.25, () => 200)
+    expect(lines).toHaveLength(2)
+    const [first, last] = lines
+    // A slightly larger final minimum must increase the target smoothly,
+    // rather than snapping it from inherited spacing to the full line.
+    const larger = planStaffLines(document, 600, false, textMeasurer(), 0.25,
+      measure => measure.id === document.measures.at(-1)!.id ? 250 : 200)
+    expect(larger.at(-1)!.target - last!.target).toBeCloseTo(50)
+    expect(larger.at(-1)!.target).toBeLessThan(first!.target)
+  })
+
   it('clears a lone ending bracket from music and relations after initial placement', () => {
     const slur = element('g', { class: 'slur' }, [element('rect', { x: '80', y: '12', width: '20', height: '13' })])
     const ending = element('g', { class: 'ending voltaBracket' }, [element('path', { d: 'M20 20 V5 H160 V20', fill: 'none', stroke: '#000', 'stroke-width': '1' })])

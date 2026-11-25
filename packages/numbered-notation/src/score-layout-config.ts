@@ -30,6 +30,7 @@ const numbered = {
   navigationSymbol: 18.4,
   breath: 10,
   staccatissimo: 7,
+  tieHeight: 7.2, tieFullHeightSpan: 72, tieThicknessRatio: 0.065,
   tenuto: 1.26,
   repeatCount: 13,
   measureNumber: 10,

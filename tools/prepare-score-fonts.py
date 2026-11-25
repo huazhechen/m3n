@@ -99,6 +99,7 @@ symbol_codes = {
     'fermataAbove': 0xE4C0, 'articAccentAbove': 0xE4A0, 'breathMarkComma': 0xE4CE,
     'ornamentTrill': 0xE566, 'ornamentShortTrill': 0xE56C,
     'articTenutoAbove': 0xE4A4, 'articStaccatissimoAboveSmall': 0xF47B,
+    'articStaccatissimoAbove': 0xE4A6,
     'segno': 0xE047, 'coda': 0xE048, 'wiggleArpeggiatoUp': 0xEAA9,
     'bracketTop': 0xE003, 'bracketBottom': 0xE004,
     'augmentationDot': 0xE1E7, 'repeatDot': 0xE044,

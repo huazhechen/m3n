@@ -22,14 +22,15 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
     && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
   const covered = selected.length ? selected : members
   const automaticHeight = (peer: NativeRelation) => {
-    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / 55)
-    return 11 * ratio * (2 - ratio)
+    const tie = peer.kind === 'tie'
+    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / (tie ? nativeStyle.tieFullHeightSpan : 55))
+    return (tie ? nativeStyle.tieHeight : 11) * ratio * (2 - ratio)
   }
   const peers = relation.arcGroup === undefined ? [relation] : system.relations.filter(peer =>
     peer.arcGroup === relation.arcGroup && members.includes(peer.first) && members.includes(peer.last))
   const endpoints = [firstHere ? relation.first : undefined, lastHere ? relation.last : undefined].filter(glyph => glyph !== undefined)
   const port = -Math.max(0, ...(endpoints.length ? endpoints : covered).map(nativeTiePortTop))
-  const thickness = nativeStyle.music * 0.09
+  const thickness = nativeStyle.music * (relation.kind === 'tie' ? nativeStyle.tieThicknessRatio : 0.09)
   let commands: NativeArcCommand[] = []
   // A continuation begins at the music cell's allocated edge, just as its
   // open right end reaches the system boundary. Glyph side bearings must not
@@ -40,30 +41,16 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // Like the staff renderer, each broken slur segment is a complete tapered
   // Bezier bow, including intermediate systems. Scale its rise to this local
   // span, rather than drawing a fixed hook followed by a horizontal strip.
+  const localSpan = Math.max(0, right - left)
   const height = complete ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight))
-    : relation.kind === 'slur' ? Math.min(17.6, 4.4 + .44 * Math.sqrt(Math.max(0, right - left) / 1)) : 9.9
-  if (complete || relation.kind === 'slur') {
-    const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
-    commands.push({ op: 'M', x: left, y: port },
-      { op: 'C', cx1: left + run, cy1: port - outer, cx2: right - run, cy2: port - outer, x: right, y: port },
-      { op: 'C', cx1: right - run, cy1: port - inner, cx2: left + run, cy2: port - inner, x: left, y: port }, { op: 'Z' })
-  } else {
-    // A closing continuation can end on the first note at a zero margin.
-    // Shorten its horizontal turn instead of extending outside the canvas.
-    const top = port - height, bottom = top + thickness, run = Math.min(height * 1.2, Math.max(0, right - left))
-    if (firstHere) {
-      commands.push({ op: 'M', x: left, y: port },
-        { op: 'Q', cx: left + run * 0.45, cy: top, x: left + run, y: top },
-        { op: 'L', x: right, y: top }, { op: 'L', x: right, y: bottom }, { op: 'L', x: left + run, y: bottom },
-        { op: 'Q', cx: left + run * 0.45, cy: bottom, x: left, y: port }, { op: 'Z' })
-    } else if (lastHere) {
-      commands.push({ op: 'M', x: left, y: top }, { op: 'L', x: right - run, y: top },
-        { op: 'Q', cx: right - run * 0.45, cy: top, x: right, y: port },
-        { op: 'Q', cx: right - run * 0.45, cy: bottom, x: right - run, y: bottom },
-        { op: 'L', x: left, y: bottom }, { op: 'Z' })
-    } else commands.push({ op: 'M', x: left, y: top }, { op: 'L', x: right, y: top },
-      { op: 'L', x: right, y: bottom }, { op: 'L', x: left, y: bottom }, { op: 'Z' })
-  }
+    : relation.kind === 'slur' ? Math.min(17.6, 4.4 + .44 * Math.sqrt(localSpan))
+      : Math.min(nativeStyle.tieHeight, nativeStyle.tieHeight * Math.sqrt(localSpan / nativeStyle.tieFullHeightSpan))
+  // Every fragment is a tapered bow. Ties use a flatter, thinner profile and
+  // never inherit a neighbouring slur's phrase height or a horizontal band.
+  const run = localSpan / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
+  commands = [{ op: 'M', x: left, y: port },
+    { op: 'C', cx1: left + run, cy1: port - outer, cx2: right - run, cy2: port - outer, x: right, y: port },
+    { op: 'C', cx1: right - run, cy1: port - inner, cx2: left + run, cy2: port - inner, x: left, y: port }, { op: 'Z' }]
   // An interior note only needs to clear the ribbon at its actual horizontal
   // footprint. Its height must not become a new endpoint for the whole arc.
   const slicer = prepareNativeArc(commands)

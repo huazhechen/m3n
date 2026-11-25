@@ -23,12 +23,13 @@ export function alignNativeArcs(relations: NativeRelation[], projection: NativeP
       const start = positions.get(relation.first), end = positions.get(relation.last)
       return start === undefined || end === undefined ? [] : [{ relation, start, end }]
     })
-    const levels = new Map<number, typeof spans>()
+    const levels = new Map<string, typeof spans>()
     for (const span of spans) {
       const depth = spans.filter(other => other.start <= span.start && other.end >= span.end
         && (other.start < span.start || other.end > span.end)).length
-      const siblings = levels.get(depth) ?? []
-      siblings.push(span); levels.set(depth, siblings)
+      const key = `${span.relation.kind}:${depth}`
+      const siblings = levels.get(key) ?? []
+      siblings.push(span); levels.set(key, siblings)
     }
     for (const siblings of levels.values()) {
       siblings.sort((a, b) => a.start - b.start)

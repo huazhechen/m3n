@@ -54,13 +54,33 @@ describe('native tuplet brackets', () => {
     expect(lanes[0]!.geometry.baseline).toBeGreaterThan(lanes[1]!.geometry.baseline)
   })
 
-  it('keeps a tuplet inside a shorter outgoing tie from its last child', () => {
+  it('keeps an outgoing tie attached to its note inside the tuplet layer', () => {
     const score = layout('[1 2 3~:2] (3) 0.')
     const system = score.systems[0]!
     const bracket = system.relations.find(r => r.kind === 'tuplet')!
     const tie = system.relations.find(r => r.kind === 'tie')!
-    expect(system.relations.indexOf(bracket)).toBeLessThan(system.relations.indexOf(tie))
-    expect(system.relationLayout!.get(tie)!.ink.bottom).toBeLessThan(system.relationLayout!.get(bracket)!.ink.top)
+    expect(system.relations.indexOf(tie)).toBeLessThan(system.relations.indexOf(bracket))
+    expect(system.relationLayout!.get(bracket)!.ink.bottom).toBeLessThan(system.relationLayout!.get(tie)!.ink.top)
+  })
+
+  it.each(['([3~ 3 3:2]) 4 5 6', '([3 {lg}4 5{/}:2]) 4 5 6'])('nests an internal connection beneath the rhythm bracket: %s', music => {
+    const system = layout(music).systems[0]!
+    const bracket = system.relations.find(r => r.kind === 'tuplet')!
+    const arc = system.relations.find(r => r.kind === 'tie' || r.kind === 'slur')!
+    expect(system.relations.indexOf(arc)).toBeLessThan(system.relations.indexOf(bracket))
+    expect(system.relationLayout!.get(bracket)!.ink.bottom).toBeLessThan(system.relationLayout!.get(arc)!.ink.top)
+  })
+
+  it('keeps a phrase slur outside the whole rhythm group', () => {
+    const system = layout('{lg}([1 2 3:2]) 4{/} 5 6').systems[0]!
+    const bracket = system.relations.find(r => r.kind === 'tuplet')!
+    const slur = system.relations.find(r => r.kind === 'slur')!
+    expect(system.relations.indexOf(bracket)).toBeLessThan(system.relations.indexOf(slur))
+    expect(system.relationLayout!.get(slur)!.ink.bottom).toBeLessThan(system.relationLayout!.get(bracket)!.ink.top)
+  })
+
+  it.each([['[1 2 3:2] 4 5', '3'], ['[1 2 3 4 5:3] 6', '5:3'], ['[1 2 3 4 5:4]', '5']])('preserves enough ratio information for %s', (music, label) => {
+    expect(layout(music).relations.find(r => r.kind === 'tuplet')!.label).toBe(label)
   })
 
   it('only lifts for music ink beneath a painted bracket primitive', () => {

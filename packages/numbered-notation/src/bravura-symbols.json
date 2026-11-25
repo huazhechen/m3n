@@ -127,6 +127,14 @@
     "descent": 0.0,
     "advance": 0.132
   },
+  "articStaccatissimoAbove": {
+    "character": "",
+    "left": 0.001,
+    "width": 0.099,
+    "ascent": 0.293,
+    "descent": 0.002,
+    "advance": 0.102
+  },
   "segno": {
     "character": "",
     "left": 0.004,
