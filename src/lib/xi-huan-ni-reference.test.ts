@@ -43,7 +43,7 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
   expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
 })
 
-it('reuses only the first lyrics and first verse melody throughout the repeats', () => {
+it('returns to the photographed repeat at the car-window verse and reuses the first lyrics', () => {
   const document = parseM3NDocument(source)
   const performance = compileScorePerformance(document)
   const { lyricsByEvent } = deriveScoreInteraction(document)
@@ -56,12 +56,13 @@ it('reuses only the first lyrics and first verse melody throughout the repeats',
   const chorus1 = `这样跟着你随便你带我到哪里${chorusTail}`
   expect(lyrics).toBe(
     `喜欢你给我你的外衣让我像躲在你身体里喜欢你借我你的梳子让我用柔软头发吻你${verseTail}${chorus1}` +
-    `喜欢你给我你的外衣让我像躲在你身体里喜欢你借我你的梳子让我用柔软头发吻你${verseTail}${chorus1}我喜欢${chorus1}`,
+    `${verseTail}${chorus1}我喜欢${chorus1}`,
   )
   expect(source).not.toMatch(/^L\d+:/m)
   expect(source.match(/^---V[12]$/gm)).toHaveLength(2)
   expect(source).not.toContain('N: 3e 1e (6~ 6)')
-  expect(performance.beats).toBe(336)
+  expect(document.parts.get('score')!.melody.filter(bar => bar.events.length).findIndex(bar => bar.left === 'rptstart')).toBe(17)
+  expect(performance.beats).toBe(288)
   expect(performance.notes[0]).toMatchObject({ start: 1.5, pitch: 64 })
   expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
   expect(document.parts.get('score')!.melody.flatMap(bar => bar.events).filter(event => event.kind === 'rest').every(event => event.beats <= 1.5)).toBe(true)
