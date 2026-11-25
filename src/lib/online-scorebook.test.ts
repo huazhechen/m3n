@@ -40,6 +40,9 @@ vi.mock('@m3n/numbered-notation', () => ({
   renderSharedPreparedNumberedNotationScores: mocks.shared,
 }))
 const markup = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200" data-engine="m3n"><text data-m3n-role="title" text-anchor="middle">Title</text></svg>'
+const textLength = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getComputedTextLength')
+beforeAll(() => Object.defineProperty(SVGElement.prototype, 'getComputedTextLength', { configurable: true, value() { return (this.textContent?.length ?? 0) * Number(this.getAttribute('font-size') ?? 1) } }))
+afterAll(() => { if (textLength) Object.defineProperty(SVGElement.prototype, 'getComputedTextLength', textLength); else Reflect.deleteProperty(SVGElement.prototype, 'getComputedTextLength') })
 const viewBox = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'viewBox')
 beforeAll(() => Object.defineProperty(SVGElement.prototype, 'viewBox', { configurable: true, get() {
   const [x, y, width, height] = (this.getAttribute('viewBox') ?? '').split(/\s+/).map(Number)

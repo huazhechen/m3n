@@ -10,7 +10,7 @@ import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplay
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
-const bookStyle = scoreLayoutConfig.scorebook
+import { scorebookFrontPages } from './scorebook-front'
 
 
 export const scorebookTitle = plan.title
@@ -33,60 +33,6 @@ function page(markup = '') {
   // These are complete A4 pages; printing must not add a second paper margin.
   svg.innerHTML = `<rect width="100%" height="100%" fill="white"/>${markup}`
   return svg
-}
-
-function text(svg: SVGSVGElement, value: string, x: number, y: number, size: number, url?: string) {
-  const node = document.createElementNS(svgNS, 'text')
-  node.textContent = value
-  node.setAttribute('x', String(x)); node.setAttribute('y', String(y))
-  node.setAttribute('font-size', String(size)); node.setAttribute('font-family', scoreLayoutConfig.fonts.cjk)
-  node.setAttribute('fill', '#000')
-  if (url) {
-    const link = document.createElementNS(svgNS, 'a')
-    link.setAttribute('href', url); link.append(node); svg.append(link)
-  } else svg.append(node)
-  return node
-}
-
-function frontPages(entries: BookEntry[]) {
-  // Share the publishing script's compact grid and keep chapter headings with a song.
-  const { rowHeightEm } = plan.contents
-  const rowHeight = bookStyle.entryTitle * rowHeightEm
-  const rowsPerColumn = Math.floor((plan.page.height - bookStyle.contentsRowsTop - bookStyle.contentsBottomInset) / rowHeight) + 1
-  type Row = { section: typeof plan.sections[number] } | { entry: BookEntry }
-  const columns: Row[][] = []
-  for (const section of plan.sections) {
-    const rows: Row[] = [{ section }, ...entries.filter(entry => entry.section === section.id).map(entry => ({ entry }))]
-    for (const row of rows) {
-      let column = columns.at(-1)
-      if (!column || column.length >= rowsPerColumn || 'section' in row && column.length === rowsPerColumn - 1) {
-        column = []; columns.push(column)
-      }
-      column.push(row)
-    }
-  }
-  const contentsCount = Math.ceil(columns.length / 2), frontCount = 1 + contentsCount
-  const cover = page()
-  text(cover, scorebookTitle, plan.page.width / 2, bookStyle.coverTitleY, bookStyle.coverTitle, website).setAttribute('text-anchor', 'middle')
-  text(cover, website, plan.page.width / 2, bookStyle.coverWebsiteY, bookStyle.coverWebsite, website).setAttribute('text-anchor', 'middle')
-  const contents = Array.from({ length: contentsCount }, (_, index) => {
-    const svg = page()
-    text(svg, '目录', bookStyle.contentsLeft, bookStyle.contentsTop, bookStyle.contentsTitle)
-    for (let side = 0; side < 2; side++) {
-      const x = bookStyle.contentsLeft + side * bookStyle.columnStep
-      for (const [rowIndex, row] of (columns[index * 2 + side] ?? []).entries()) {
-        const y = bookStyle.contentsRowsTop + rowIndex * rowHeight
-        if ('section' in row) { text(svg, row.section.title, x, y, bookStyle.sectionTitle); continue }
-        const entry = row.entry, first = frontCount + entry.musicStart + 1
-        const label = entry.pageCount === 1 ? String(first) : `${first}–${first + entry.pageCount - 1}`
-        const url = `${website}scores/${encodeURIComponent(entry.slug)}`
-        text(svg, entry.title, x, y, bookStyle.entryTitle, url)
-        text(svg, label, x + bookStyle.pageNumberOffset, y, bookStyle.pageNumber, url).setAttribute('text-anchor', 'end')
-      }
-    }
-    return svg
-  })
-  return [cover, ...contents]
 }
 
 function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
@@ -234,7 +180,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
     }
     signal.throwIfAborted()
-    const pages = [...frontPages(packed.entries), ...music]
+    const pages = [...scorebookFrontPages(plan, packed.entries), ...music]
     measurementTimings.stages.renderingMs = performance.now() - renderingStarted
     measurementTimings.totalMs = performance.now() - started
     return { pages, scoreCount: entries.length, sharedPages, measurementTimings }

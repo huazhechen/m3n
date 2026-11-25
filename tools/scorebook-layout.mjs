@@ -1,3 +1,5 @@
+import { scorebookFrontPages } from '../src/lib/scorebook-front'
+export function frontPages(plan, entries) { return scorebookFrontPages(plan, entries).map(svg => svg.outerHTML) }
 import { parseM3NDocument } from '@m3n/notation'
 import { prepareNumberedNotationFonts, renderSharedNumberedNotationScores, NumberedTextMeasurementCache, NumberedLayoutTask } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'

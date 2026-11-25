@@ -11,7 +11,6 @@ import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy, widthMinimum, widthMaximum, widthStep } from './scorebook-width.mjs'
 import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
-const bookStyle = scoreLayoutConfig.scorebook
 
 const runStarted = performance.now(), stages = {}
 let phaseStarted = runStarted
@@ -45,12 +44,11 @@ const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) 
 if (reused) assert.equal(reused.auditLayout, auditLayout, 'Reused measurements must match the audit mode')
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
-const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
-const text = (value, x, y, size = bookStyle.entryTitle, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="${scoreLayoutConfig.fonts.text}" ${attrs}>${escape(value)}</text>`
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization
 let optimizedPacking
+let front
 const timingFile = resolve(process.argv.find(arg => arg.startsWith('--timing-report='))?.slice(16) ?? join(temp, 'measurement-timings.json'))
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })
@@ -112,7 +110,10 @@ try {
       Object.assign(entry, { width: chooseBestWidth(entry.candidates).width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
     }
   }
-  if (!probeOnly) { endPhase('pageRenderingMs'); saveTimings('rendered') }
+  if (!probeOnly) {
+    front = await page.evaluate(({ plan, entries }) => window.scorebook.frontPages(plan, entries), { plan, entries: records })
+    endPhase('pageRenderingMs'); saveTimings('rendered')
+  }
 } finally { await browser.close() }
 endPhase('browserCloseMs')
 function saveTimings(status = 'complete') {
@@ -131,41 +132,13 @@ function saveTimings(status = 'complete') {
 }
 if (probeOnly) { saveTimings(); console.log(`Width probes complete: ${records.length} scores`); process.exit(0) }
 
-// Book furniture does not alter the engraved score pages.
-const tocRows = plan.sections.flatMap(section => [{ section }, ...records.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
-const tocColumns = []
-const { rowHeightEm } = plan.contents
-const rowHeight = bookStyle.entryTitle * rowHeightEm
-const rowsPerColumn = Math.floor((plan.page.height - bookStyle.contentsRowsTop - bookStyle.contentsBottomInset) / rowHeight) + 1
-for (const row of tocRows) {
-  let column = tocColumns.at(-1)
-  if (!column || column.length >= rowsPerColumn || row.section && column.length === rowsPerColumn - 1) {
-    column = []; tocColumns.push(column)
-  }
-  column.push(row)
-}
-const tocCount = Math.ceil(tocColumns.length / 2), frontCount = 1 + tocCount
+// Use the browser's measured typography and the same front pages as online export.
+const frontCount = front.length
 for (const entry of records) {
   entry.pages = Array.from({ length: entry.pageCount }, (_, index) => frontCount + entry.musicStart + index + 1)
   delete entry.musicStart
 }
-const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, bookStyle.coverTitleY, bookStyle.coverTitle, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')
-  + text('https://score.cheesefans.com/', profile.width / 2, bookStyle.coverWebsiteY, bookStyle.coverWebsite, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')) }]
-for (let index = 0; index < tocCount; index++) {
-  let content = text('目录', bookStyle.contentsLeft, bookStyle.contentsTop, bookStyle.contentsTitle)
-  for (let side = 0; side < 2; side++) {
-    const x = bookStyle.contentsLeft + side * bookStyle.columnStep, right = x + bookStyle.pageNumberOffset
-    for (const [rowIndex, row] of (tocColumns[index * 2 + side] ?? []).entries()) {
-      const y = bookStyle.contentsRowsTop + rowIndex * rowHeight
-      if (row.section) content += text(row.section.title, x, y, bookStyle.sectionTitle)
-      else {
-        const entry = row.entry, label = entry.pages.length === 1 ? entry.pages[0] : `${entry.pages[0]}–${entry.pages.at(-1)}`
-        content += text(entry.title, x, y, bookStyle.entryTitle) + text(label, right, y, bookStyle.pageNumber, 'text-anchor="end"')
-      }
-    }
-  }
-  pages.push({ kind: 'contents', svg: pageSvg(content) })
-}
+const pages = front.map((svg, index) => ({ kind: index === 0 ? 'cover' : 'contents', svg }))
 pages.push(...music)
 for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `${String(index + 1).padStart(3, '0')}.svg`), page.svg)
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))

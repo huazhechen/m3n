@@ -112,6 +112,7 @@ const imageExport = { footerMinimumFontSize: 12, footerFontSizeWidthRatio: 0.02,
 const rendering = { offscreenPosition: -20000, auditOffscreenPosition: -100000, previewPageGap: 16 } as const
 const scorebook = {
   sharedScoreGapCoreRatio, sharedScoreGap,
+  contentsLeaderSpaceEm: .35, contentsLeaderMinimumEm: 1,
   coverTitle: 40, coverWebsite: 18, contentsTitle: 30, sectionTitle: 16, entryTitle: 16, pageNumber: 14,
   coverTitleY: 350, coverWebsiteY: 410, contentsLeft: 40, contentsTop: 65,
   columnStep: 377, contentsRowsTop: 120, contentsBottomInset: 40, pageNumberOffset: 337,

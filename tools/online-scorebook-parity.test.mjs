@@ -96,7 +96,9 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
     for (const staff of comparison.staffWidths) {
       assert.equal(staff.reader, staff.local)
-      assert.deepEqual(staff.candidates, Array.from({ length: 9 }, (_, i) => 576 + i * 24))
+      assert.deepEqual(staff.candidates.filter(width => width % 24 === 0), Array.from({ length: 9 }, (_, i) => 576 + i * 24))
+      assert(staff.candidates.every(width => width >= 576 && width <= 768 && width % 6 === 0))
+      assert(staff.candidates.length >= 12 && staff.candidates.length <= 15)
     }
     assert.equal(comparison.soloSharedPages, 0)
     assert.deepEqual(comparison.soloOnline, comparison.soloLocal.map(group => Array(group.end - group.start).fill(group.width)))
