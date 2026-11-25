@@ -4,7 +4,7 @@ import { nativeLyricSvg } from './native-lyrics.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { attrs, n } from './native-symbols.js'
-import { NUMBER_FONT_CSS } from './font-data.js'
+import { numberFontCss } from './number-font-css.js'
 import { type NativeLayout, type NativeLane, type NativeSystem } from './native-layout.js'
 import type { NativeGlyph, NativeMeasure } from './native-model.js'
 
@@ -74,7 +74,7 @@ export function renderNativePages(layout: NativeLayout): string[] {
       // Keep the measured page and all music positions intact. An integral
       // continuous viewport avoids CSS quantization scaling the entire score.
       const height = layout.options.paged ? n(page.height) : Math.ceil(n(page.height))
-      return `<svg${attrs({ xmlns: 'http://www.w3.org/2000/svg', width: page.width, height, viewBox: `0 0 ${n(page.width)} ${height}`, 'data-engine': 'm3n', role: 'img', 'aria-label': layout.document.title || '简谱' })}><defs><style>${NUMBER_FONT_CSS}</style></defs><rect width="100%" height="100%" fill="#fff"/>${page.header ?? ''}${page.systems.map(system => painter.system(system)).join('')}</svg>`
+      return `<svg${attrs({ xmlns: 'http://www.w3.org/2000/svg', width: page.width, height, viewBox: `0 0 ${n(page.width)} ${height}`, 'data-engine': 'm3n', role: 'img', 'aria-label': layout.document.title || '简谱' })}><defs><style>${numberFontCss}</style></defs><rect width="100%" height="100%" fill="#fff"/>${page.header ?? ''}${page.systems.map(system => painter.system(system)).join('')}</svg>`
     })
   } finally { painter.dispose() }
 }

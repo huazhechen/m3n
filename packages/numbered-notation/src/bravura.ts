@@ -1,3 +1,5 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
+import { SCORE_MUSIC_FONT } from './font-family.js'
 import symbols from './bravura-symbols.json'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
@@ -10,13 +12,13 @@ export type BravuraGlyph = keyof typeof symbols
  * The large em avoids pixel rounding inflating small dots and articulation ink. */
 export function bravuraGeometry(name: BravuraGlyph, height: number, centered = false, measurer: TextMeasurer = new DefaultTextMeasurer(), width?: number) {
   const create = () => {
-    const character = symbols[name].character, fontSize = 1000
-    const m = measurer.measureText(character, {fontSize,fontFamily:'Bravura',fontWeight:400,fontStyle:'normal'})
+    const character = symbols[name].character, fontSize = scoreLayoutConfig.fonts.measurementSize
+    const m = measurer.measureText(character, {fontSize,fontFamily:SCORE_MUSIC_FONT,fontWeight:scoreLayoutConfig.fonts.regularWeight,fontStyle:'normal'})
     const bounds = {left:m.inkLeft ?? 0,right:m.inkRight ?? m.w,top:-m.baseline,bottom:-m.baseline+(m.inkBottom ?? m.h)}
     const sy = height / (bounds.bottom-bounds.top), sx = width === undefined ? sy : width / (bounds.right-bounds.left)
     const matrix = Object.freeze(nativeMatrix(sx,0,0,sy,-(centered ? (bounds.left+bounds.right)/2 : bounds.left)*sx,-bounds.top*sy))
     const ink = Object.freeze(transformNativeInk(bounds,matrix))
-    const svg = `<text x="0" y="0" font-size="${fontSize}" font-family="Bravura" font-weight="400" fill="#000" aria-hidden="true" data-m3n-font="Bravura" transform="matrix(${matrix.join(' ')})">${character}</text>`
+    const svg = `<text x="0" y="0" font-size="${fontSize}" font-family="${SCORE_MUSIC_FONT}" font-weight="${scoreLayoutConfig.fonts.regularWeight}" fill="#000" aria-hidden="true" data-m3n-font="${SCORE_MUSIC_FONT}" transform="matrix(${matrix.join(' ')})">${character}</text>`
     return Object.freeze({character,fontSize,matrix,ink,svg,width:ink.right-ink.left,height:ink.bottom-ink.top})
   }
   return measurer.fixedSymbol ? measurer.fixedSymbol(`Bravura:${name}:${height}:${centered}:${width}`,create) : create()

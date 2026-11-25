@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
@@ -10,6 +11,7 @@ import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy, widthMinimum, widthMaximum, widthStep } from './scorebook-width.mjs'
 import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
 import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
+const bookStyle = scoreLayoutConfig.scorebook
 
 const runStarted = performance.now(), stages = {}
 let phaseStarted = runStarted
@@ -44,7 +46,7 @@ if (reused) assert.equal(reused.auditLayout, auditLayout, 'Reused measurements m
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
-const text = (value, x, y, size = 16, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="Barlow Semi Condensed, Bravura, Noto Sans SC" ${attrs}>${escape(value)}</text>`
+const text = (value, x, y, size = bookStyle.entryTitle, attrs = '') => `<text x="${x}" y="${y}" font-size="${size}" font-family="${scoreLayoutConfig.fonts.text}" ${attrs}>${escape(value)}</text>`
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization
@@ -56,7 +58,7 @@ try {
     ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
     : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html>' }))
   await page.goto('http://scorebook.local/')
-  await page.setContent('<style>body{margin:0}#scratch{position:absolute;left:-20000px;top:0}</style><div id="scratch"></div>')
+  await page.setContent(`<style>body{margin:0}#scratch{position:absolute;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0}</style><div id="scratch"></div>`)
   await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
   endPhase('browserSetupMs')
@@ -145,18 +147,18 @@ for (const entry of records) {
   entry.pages = Array.from({ length: entry.pageCount }, (_, index) => frontCount + entry.musicStart + index + 1)
   delete entry.musicStart
 }
-const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, 350, 40, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')
-  + text('https://score.cheesefans.com/', profile.width / 2, 410, 18, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')) }]
+const pages = [{ kind: 'cover', svg: pageSvg(text(plan.title, profile.width / 2, bookStyle.coverTitleY, bookStyle.coverTitle, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')
+  + text('https://score.cheesefans.com/', profile.width / 2, bookStyle.coverWebsiteY, bookStyle.coverWebsite, 'text-anchor="middle" data-scorebook-url="https://score.cheesefans.com/"')) }]
 for (let index = 0; index < tocCount; index++) {
-  let content = text('目录', 40, 65, 30)
+  let content = text('目录', bookStyle.contentsLeft, bookStyle.contentsTop, bookStyle.contentsTitle)
   for (let side = 0; side < 2; side++) {
-    const x = 40 + side * 377, right = x + 337
+    const x = bookStyle.contentsLeft + side * bookStyle.columnStep, right = x + bookStyle.pageNumberOffset
     for (const [rowIndex, row] of (tocColumns[index * 2 + side] ?? []).entries()) {
-      const y = 120 + rowIndex * rowHeight
-      if (row.section) content += text(row.section.title, x, y, 16)
+      const y = bookStyle.contentsRowsTop + rowIndex * rowHeight
+      if (row.section) content += text(row.section.title, x, y, bookStyle.sectionTitle)
       else {
         const entry = row.entry, label = entry.pages.length === 1 ? entry.pages[0] : `${entry.pages[0]}–${entry.pages.at(-1)}`
-        content += text(entry.title, x, y, 16) + text(label, right, y, 14, 'text-anchor="end"')
+        content += text(entry.title, x, y, bookStyle.entryTitle) + text(label, right, y, bookStyle.pageNumber, 'text-anchor="end"')
       }
     }
   }

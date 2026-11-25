@@ -1,3 +1,4 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeLayoutScore } from './native-quality.js'
 import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
@@ -208,7 +209,7 @@ export class NativeLayoutTask {
       entry = { cache, revision: cache.revision, measurer: options.textMeasurer, preparation: { header: new Map() }, headers: new Map() }
       variants.set(key, entry)
     }
-    const headerKey = JSON.stringify([Math.max(320, Math.round(options.width)), options.pageMargin ?? 32])
+    const headerKey = JSON.stringify([Math.max(nativeStyle.minimumWidth, Math.round(options.width)), options.pageMargin ?? nativeStyle.defaultPageMargin])
     let header = entry.headers.get(headerKey)
     if (!header) { header = new Map(); entry.headers.set(headerKey, header) }
     entry.preparation.header = header
@@ -286,9 +287,9 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   const minimumNoteGap = supplied.minimumNoteGap ?? nativeStyle.minimumNoteGap
   const minimumNoteGapFloor = supplied.minimumNoteGapFloor ?? 0
   if (!Number.isFinite(minimumNoteGapFloor) || minimumNoteGapFloor < 0 || minimumNoteGapFloor > minimumNoteGap) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
-  const options = { ...supplied, width: Math.max(320, Math.round(supplied.width)), minimumNoteGap, minimumNoteGapFloor, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
-  const margin = options.pageMargin ?? 32
-  if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
+  const options = { ...supplied, width: Math.max(nativeStyle.minimumWidth, Math.round(supplied.width)), minimumNoteGap, minimumNoteGapFloor, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const margin = options.pageMargin ?? nativeStyle.defaultPageMargin
+  if (margin * 2 + nativeStyle.minimumContentWidth > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = window.document.createElement('canvas').getContext('2d')
@@ -305,7 +306,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     for (const glyph of projection.glyphs) {
       if (!glyph.instrumental) continue
       if (!enclosure) {
-        const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
+        const style = { fontSize: nativeStyle.music, fontFamily: SCORE_NUMBER_FONT }
         const left = measurer.measureText('(', style), right = measurer.measureText(')', style)
         enclosure = { left: left.w - Math.min(0, left.inkLeft ?? 0), right: Math.max(right.w, right.inkRight ?? right.w) }
       }

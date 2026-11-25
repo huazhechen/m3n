@@ -1,3 +1,4 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
@@ -24,19 +25,19 @@ class NativeRelationPainter extends NativeSymbols {
       if (!opens && !closes) return ''
       const role = 'instrument-parenthesis'
       const baseline = (text: string) => {
-        const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'})
+        const metrics = this.measurer.measureText(text, {fontSize:nativeStyle.music, fontFamily:SCORE_NUMBER_FONT})
         return nativeMusicAxis(this.measurer) + metrics.baseline - metrics.h / 2
       }
       // The text origin uses advance width; reservation also includes any ink
       // outside that advance. Subtracting the reservation would lose it again.
-      const leftWidth = this.measurer.measureText('(', {fontSize:nativeStyle.music, fontFamily:'M3N Numbers'}).w
+      const leftWidth = this.measurer.measureText('(', {fontSize:nativeStyle.music, fontFamily:SCORE_NUMBER_FONT}).w
       // Stroke caps, accidentals and stacked music can extend beyond the
       // rhythmic advance. Use the already measured music ink at both ends;
       // lyric padding remains independent of the instrumental enclosure.
       const left = Math.max(first.musicLeft ?? first.left, first.inkLeft ?? 0)
       const right = Math.max(last.musicRight ?? last.right, last.inkRight ?? 0)
-      return (opens ? this.text('(', first.x - left - leftWidth - first.parenthesisGap!, baseline('('), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role }) : '')
-        + (closes ? this.text(')', last.x + right + last.parenthesisGap!, baseline(')'), nativeStyle.music, 'M3N Numbers', { 'data-m3n-role': role }) : '')
+      return (opens ? this.text('(', first.x - left - leftWidth - first.parenthesisGap!, baseline('('), nativeStyle.music, SCORE_NUMBER_FONT, { 'data-m3n-role': role }) : '')
+        + (closes ? this.text(')', last.x + right + last.parenthesisGap!, baseline(')'), nativeStyle.music, SCORE_NUMBER_FONT, { 'data-m3n-role': role }) : '')
     }
     if (relation.kind === 'tie' || relation.kind === 'slur') {
       const arc = preparedArc ?? nativeArcGeometry(relation, system)
@@ -52,7 +53,7 @@ class NativeRelationPainter extends NativeSymbols {
       const bracket = nativeTupletGeometry(relation, system, this.measurer)
       return `<g${attrs({ 'data-m3n-relation': 'tuplet' })}>`
         + bracket.segments.map(([a, b, c, d]) => line(a, b, c, d, bracket.stroke)).join('')
-        + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, 'M3N Numbers', { 'text-anchor': 'middle' }) + '</g>'
+        + this.text(relation.label!, bracket.center, bracket.baseline, bracket.fontSize, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' }) + '</g>'
     }
     return ''
   }

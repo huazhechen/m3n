@@ -1,3 +1,4 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import { nativeAccidentalGeometry, nativeAccidentalAdvance } from './native-accidentals.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -7,7 +8,7 @@ export type NativeKeyRow = { key: string; label?: string }
 /** Key rows share measured positions between engraving and reservation. */
 export function nativeKeyGeometry(rows: NativeKeyRow[], measurer: TextMeasurer) {
   const size = nativeStyle.text
-  const style = { fontSize: size, fontFamily: 'M3N Numbers' }
+  const style = { fontSize: size, fontFamily: SCORE_NUMBER_FONT }
   const prepared = rows.map(({key,label}) => {
     const match = /^([16]=)([A-G])([#b♯♭]*)(.*)$/.exec(key)
     const prefix = match ? `${label ? label + '. ' : ''}${match[1]}` : ''

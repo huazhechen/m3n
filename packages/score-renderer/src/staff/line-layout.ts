@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
 import { createStaffPreparation, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
@@ -45,14 +46,14 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
 function describeStaffMeasure(measure: StaffMeasure, measureText: MeasureText): StaffMeasureDescription {
   const label = measure.melody[0]?.event
   return {
-    labelWidth: label?.sectionLabel ? measureText(label.sectionLabel, 16, true).width + 21 : 0,
+    labelWidth: label?.sectionLabel ? measureText(label.sectionLabel, scoreLayoutConfig.staff.annotation, true).width + scoreLayoutConfig.staff.sectionLabelInset : 0,
     weight: Math.max(...[measure.melody, measure.bass].map(lane => lane.reduce((n, e) => n + Math.sqrt(e.beats), 0)), 1),
     beats: Math.max(...[measure.melody, measure.bass].map(lane => lane.reduce((n, e) => n + e.beats, 0))),
   }
 }
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
   minimum: StaffMeasureMinimum = createStaffMeasureMinimum(document.hasBass, measureText)): StaffLine[] {
-  const available = (width - 4) / STAFF_SCALE
+  const available = (width - scoreLayoutConfig.staff.contentEdgeInset) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
   const measureOne = (measure: StaffMeasure): MeasuredStaffMeasure => {
     const body = minimum(measure, false, spacing)
@@ -66,7 +67,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
     const item = measureOne(measure)
     if (item.body + item.head > available && depth < 10) {
       const { beats } = minimum.describe?.(measure) ?? describeStaffMeasure(measure, measureText)
-      const fragments = (minimum.split ?? splitStaffMeasure)(measure, beats * Math.max(0.1, (available - item.head - 20) / item.body) * 0.85)
+      const fragments = (minimum.split ?? splitStaffMeasure)(measure, beats * Math.max(0.1, (available - item.head - scoreLayoutConfig.staff.engine.fragmentSafetyInset) / item.body) * 0.85)
       if (fragments.length > 1) { fragments.forEach(f => visit(f, depth + 1)); return }
       throw new Error(`单个五线谱事件无法放入当前版宽：${measure.id}`)
     }

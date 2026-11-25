@@ -9,6 +9,7 @@ import { arrangeStaffSystem } from './system-layout.js'
 import { element, nodes, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
 const style = scoreLayoutConfig.staff
+const engine = style.engine
 
 // Projection identity and this map both belong to one measurement task.
 const relationPlans = new WeakMap<StaffPreparation, WeakMap<StaffDocument, ReturnType<typeof prepareSystemRelations>>>()
@@ -68,8 +69,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
-    const rows = numberedHeadingLines(value, rawWidth - 12 / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? 700 : 400)
-    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': 'bold' } : {}))[0]!))
+    const rows = numberedHeadingLines(value, rawWidth - style.attachmentWrapInset / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight)
+    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}))[0]!))
   }
   let plans = preparation && relationPlans.get(preparation)
   if (preparation && !plans) { plans = new WeakMap(); relationPlans.set(preparation, plans) }
@@ -84,21 +85,21 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
     }
   }))
   return lines.map((line, lineIndex) => {
-    let bassY = 130
+    let bassY = engine.initialBassY
     for (let pass = 0; pass < 8; pass++) {
       const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode) => {
           const display = displayedTempo(qpm, meterCount, meterUnit)
           const tempo = element('g', { class: 'tempo' })
           const codes: Record<number, string> = { 1: 'noteheadWhole', 2: 'noteheadHalf', 4: 'noteheadBlack', 8: 'noteheadBlack', 16: 'noteheadBlack' }
-          const glyph = [staffGlyph((codes[display.unit] ?? 'noteheadBlack') as StaffGlyph, tempoX, -30, 32)]
+          const glyph = [staffGlyph((codes[display.unit] ?? 'noteheadBlack') as StaffGlyph, tempoX, engine.tempoHeadY, style.tempoMusic / scale)]
           tempo.children.push(...glyph)
-          if (display.unit !== 1) tempo.children.push(element('path', { d: `M${tempoX + 9} -31 v-24`, stroke: '#000', 'stroke-width': '1.3', fill: 'none' }))
+          if (display.unit !== 1) tempo.children.push(element('path', { d: `M${tempoX + engine.tempoStemX} ${engine.tempoStemY} v${-engine.tempoStemLength}`, stroke: '#000', 'stroke-width': String(engine.tempoStemStroke), fill: 'none' }))
           if (display.unit >= 8) {
             const flags: Record<number, string> = { 8: 'flag8Up', 16: 'flag16Up', 32: 'flag32Up', 64: 'flag64Up' }
-            tempo.children.push(staffGlyph((flags[display.unit] ?? 'flag8Up') as StaffGlyph, tempoX + 9, -55, 32))
+            tempo.children.push(staffGlyph((flags[display.unit] ?? 'flag8Up') as StaffGlyph, tempoX + engine.tempoStemX, engine.tempoFlagY, style.tempoMusic / scale))
           }
-          if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + 16), cy: '-31', r: '1.8', fill: '#000' }))
-          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? 25 : 18), -28, style.tempo, 'tempo-text')))
+          if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + engine.tempoDotX), cy: String(engine.tempoStemY), r: String(engine.tempoDotRadius), fill: '#000' }))
+          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? engine.tempoDottedTextX : engine.tempoTextX), engine.tempoTextY, style.tempo, 'tempo-text')))
           parent.children.push(tempo)
       }
       const node = element('g', { class: 'system' })
@@ -133,7 +134,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
                 if (lyric.kind === 'placeholder') { staff.children.push(element('g', attrs)); continue }
                 cx ??= (note.headLeft + note.headRight) / 2
                 const value = lyric.kind === 'extender' ? '_' : lyric.text.replaceAll('~', ' ')
-                const syl = staffLyricDrawing(value, cx, (model.staves[lane]!.y + 80) + 30, Boolean(lyric.underlined && lyric.kind === 'text'), measureText, preparation?.lyricTexts)
+                const syl = staffLyricDrawing(value, cx, (model.staves[lane]!.y + engine.bottom) + engine.lyricInitialOffset, Boolean(lyric.underlined && lyric.kind === 'text'), measureText, preparation?.lyricTexts)
                 staff.children.push(element('g', attrs, [syl]))
               }
             })
@@ -141,16 +142,16 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             if (!(item.chord || event.text || event.sectionLabel || event.dynamic || event.prefix || event.navigation.length ||
               event.postfixes.some(value => /^f[1-5]$/.test(value)))) continue
             const cx = entry.notes[0]!.headLeft
-            const top = Math.min(...entry.notes.flatMap(n => n.ys)) - 40
+            const top = Math.min(...entry.notes.flatMap(n => n.ys)) - engine.attachmentTopGap
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
-            if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, 6 / scale, top, 'reh', true))
-            if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.ys)) + 35, style.dynamic, 'dynam', { 'font-style': 'italic' }))
+            if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
+            if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.ys)) + engine.dynamicBottomGap, style.dynamic, 'dynam', { 'font-style': 'italic' }))
             for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, style.fingering, 'fing'))
             for (const nav of event.navigation) addNavigation(nav, cx, top, measureNode)
           }
         }
-        for (const nav of member.measure.source.navigation ?? []) addNavigation(nav, x + target - 15, -10, measureNode)
+        for (const nav of member.measure.source.navigation ?? []) addNavigation(nav, x + target - engine.navigationBarInset, engine.navigationY, measureNode)
         if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode)
         for (const [i, entry] of model.entries[0]!.entries()) {
           const previous = model.entries[0]![i - 1]?.item.event.tempo
@@ -159,15 +160,15 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.headLeft, measureNode)
         }
         if (member.measure.source.multiRest || member.measure.source.interlude) {
-          const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = (model.staves[0]!.y + 60)
+          const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = (model.staves[0]!.y + engine.middle)
           const count = member.measure.source.interlude ? '' : String(member.measure.source.multiRest)
-          const countY = model.staves[0]!.y + 40 - 0.5 - 2 / scale - measureText(count, style.restCount / scale, true).descent
-          measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...(count ? nodes(text(count, cx, countY, style.restCount, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' })) : [])]))
+          const countY = model.staves[0]!.y + engine.top - engine.lineStroke / 2 - engine.restCountGap / scale - measureText(count, style.restCount / scale, true).descent
+          measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - engine.restHalfWidth} ${cy} h${engine.restHalfWidth * 2} M${cx - engine.restHalfWidth} ${cy - engine.restHook} v${engine.restHook * 2} M${cx + engine.restHalfWidth} ${cy - engine.restHook} v${engine.restHook * 2}`, stroke: '#000', 'stroke-width': String(engine.restStroke), fill: 'none' }), ...(count ? nodes(text(count, cx, countY, style.restCount, 'rest', { 'text-anchor': 'middle', 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) })) : [])]))
         }
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
-        const y1 = (model.staves[0]!.y + 40), y2 = (model.staves.at(-1)!.y + 80)
-        if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': '1', fill: 'none' })]))
-        if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - 10, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
+        const y1 = (model.staves[0]!.y + engine.top), y2 = (model.staves.at(-1)!.y + engine.bottom)
+        if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), fill: 'none' })]))
+        if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
       }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {
@@ -176,9 +177,9 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       }
       if (document.hasBass) {
         const first = models[0]!
-        const top = first.staves[0]!.y + 40, bottom = first.staves[1]!.y + 80
-        const brace = [staffGlyph('brace', 0, 0, 40)]
-        brace[0]!.attributes.transform = `translate(-12 ${bottom}) scale(2.8 ${(bottom - top) / 39.88})`
+        const top = first.staves[0]!.y + engine.top, bottom = first.staves[1]!.y + engine.bottom
+        const brace = [staffGlyph('brace', 0, 0, style.music / scale)]
+        brace[0]!.attributes.transform = `translate(${engine.braceX} ${bottom}) scale(2.8 ${(bottom - top) / engine.braceReferenceHeight})`
         node.children.push(element('g', { class: 'grpSym' }, brace))
       }
       // Endings retain their range identity over system and page boundaries.
@@ -188,23 +189,23 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if (!ending) { index++; continue }
         const start = index
         while (index < line.measures.length && line.measures[index]!.measure.source.ending === ending) index++
-        const left = start === 0 ? models[start]!.staves[0]!.noteStartX : models[start]!.staves[0]!.x + 3, right = models[index - 1]!.staves[0]!.x + models[index - 1]!.staves[0]!.width - 3
+        const left = start === 0 ? models[start]!.staves[0]!.noteStartX : models[start]!.staves[0]!.x + engine.endingBarInset, right = models[index - 1]!.staves[0]!.x + models[index - 1]!.staves[0]!.width - engine.endingBarInset
         const originalId = member.measure.id.replace(/-fragment-\d+$/, '')
         const range = endingRanges.get(originalId)!
         const first = range.start === originalId && (!member.measure.fragment || member.measure.id.endsWith('-fragment-1'))
         const cls = `ending voltaBracket id-m3n-ending-${range.index}`
         node.children.push(element('g', { class: cls }, [
-          ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} 17 V5`, stroke: '#000', 'stroke-width': '1', fill: 'none' })] : []),
-          element('path', { d: `M${left} 5 H${right}`, stroke: '#000', 'stroke-width': '1', fill: 'none' }),
-          element('path', { d: `M${right} 5 V17`, stroke: '#000', 'stroke-width': '1', fill: 'none' }),
-          ...nodes(text(first ? `${ending}.` : '', left + 4, 22, style.volta, 'ending')),
+          ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${engine.endingBottom} V${engine.endingTop}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), fill: 'none' })] : []),
+          element('path', { d: `M${left} ${engine.endingTop} H${right}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), fill: 'none' }),
+          element('path', { d: `M${right} ${engine.endingTop} V${engine.endingBottom}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), fill: 'none' }),
+          ...nodes(text(first ? `${ending}.` : '', left + engine.endingTextInset, engine.endingTextY, style.volta, 'ending')),
         ]))
       }
       for (const tie of ties) {
         const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
         if (!first && !last) continue
         const a = first?.last, b = last?.first
-        ;(first?.staff ?? last!.staff).children.push(element('g', { class: 'tie' }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX, line.target - inset - 3)))
+        ;(first?.staff ?? last!.staff).children.push(element('g', { class: 'tie' }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX, line.target - inset - engine.endingBarInset)))
       }
       const slurMusic: Array<Ink[] | undefined> = []
       for (const { interval, start, end } of intervals) {
@@ -212,53 +213,53 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if (lineIndex < from || lineIndex > to) continue
         const a = anchors.get(start.id), b = anchors.get(end.id)
         const lane = interval.staff === 'bass' ? 1 : 0
-        const left = a?.first.headLeft ?? models[0]!.start + 2
-        const right = b?.last.headRight ?? (line.target - inset - 3)
-        const yTop = (models[0]!.staves[lane]?.y ?? 0) + 40
-        const low = (models[0]!.staves[lane]?.y ?? 0) + 80
+        const left = a?.first.headLeft ?? models[0]!.start + engine.relationStartInset
+        const right = b?.last.headRight ?? (line.target - inset - engine.endingBarInset)
+        const yTop = (models[0]!.staves[lane]?.y ?? 0) + engine.top
+        const low = (models[0]!.staves[lane]?.y ?? 0) + engine.bottom
         if (interval.kind === 'lg') {
           const music = slurMusic[lane] ??= new SvgGeometry(node, measureText, true).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
           const obstacles = music.filter(p => p.left < right && p.right > left)
-          const height = 14, y = Math.min(yTop - 15, ...obstacles.map(p => p.top - 6 / scale))
-          const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + 2} ${left + (right - left) / 3} ${y - height + 2} ${left} ${y} Z`, fill: '#000' })
+          const height = engine.slurHeight, y = Math.min(yTop - engine.slurTopGap, ...obstacles.map(p => p.top - style.attachmentGap / scale))
+          const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + engine.slurThickness} ${left + (right - left) / 3} ${y - height + engine.slurThickness} ${left} ${y} Z`, fill: '#000' })
           // The controls divide x evenly, so x is linear in t and the two
           // edges are y - 3*h*t*(1-t). Bound short slices exactly; a volta
           // number near an endpoint must not avoid the curve's distant peak.
-          const count = Math.max(1, Math.ceil(Math.abs(right - left) / 4))
+          const count = Math.max(1, Math.ceil(Math.abs(right - left) / engine.slurInkSlice))
           const boxes = Array.from({ length: count }, (_, i) => {
             const a = i / count, b = (i + 1) / count
             const peak = Math.max(a, Math.min(b, 0.5))
             return { left: left + (right - left) * a, right: left + (right - left) * b,
               top: y - 3 * height * peak * (1 - peak),
-              bottom: y - 3 * (height - 2) * Math.min(a * (1 - a), b * (1 - b)) }
+              bottom: y - 3 * (height - engine.slurThickness) * Math.min(a * (1 - a), b * (1 - b)) }
           })
           path.pathInk = { d: path.attributes.d!, boxes }
           node.children.push(element('g', { class: 'slur' }, [path]))
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
-          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + 30, style.expression, 'dynam'))
+          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam'))
           else {
-            const y = low + 25, cresc = interval.kind === 'cresc', endX = Math.max(left + 4, right)
+            const y = low + engine.hairpinBottomGap, cresc = interval.kind === 'cresc', endX = Math.max(left + engine.hairpinMinimumWidth, right)
             const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
-            parent.children.push(element('g', { class: 'hairpin' }, [element('path', { d: cresc ? `M${endX} ${y - 5} L${left} ${y} L${endX} ${y + 5}` : `M${left} ${y - 5} L${endX} ${y} L${left} ${y + 5}`, stroke: '#000', 'stroke-width': '1', fill: 'none' })]))
+            parent.children.push(element('g', { class: 'hairpin' }, [element('path', { d: cresc ? `M${endX} ${y - engine.hairpinHalfHeight} L${left} ${y} L${endX} ${y + engine.hairpinHalfHeight}` : `M${left} ${y - engine.hairpinHalfHeight} L${endX} ${y} L${left} ${y + engine.hairpinHalfHeight}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), fill: 'none' })]))
           }
         } else if (interval.kind === '8va' || interval.kind === '8vb') {
-          const y = interval.kind === '8va' ? yTop - 40 : low + 35
+          const y = interval.kind === '8va' ? yTop - engine.octaveAboveGap : low + engine.octaveBelowGap
           node.children.push(element('g', { class: 'octave', 'data-m3n-below': String(interval.kind === '8vb') }, [
             ...(a ? nodes(text(interval.kind, left, y, style.octave, 'octave')) : []),
-            element('path', { d: `M${left + (a ? 25 : 0)} ${y - 4} H${right} v${interval.kind === '8va' ? 8 : -8}`, stroke: '#000', 'stroke-width': '1', 'stroke-dasharray': '4 3', fill: 'none' }),
+            element('path', { d: `M${left + (a ? engine.octaveTextWidth : 0)} ${y - engine.octaveLineOffset} H${right} v${(interval.kind === '8va' ? 1 : -1) * engine.octaveHook}`, stroke: '#000', 'stroke-width': String(engine.lineStroke), 'stroke-dasharray': `${engine.octaveDash} ${engine.octaveDashGap}`, fill: 'none' }),
           ]))
-        } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - 25, style.expression, 'dir', { 'font-style': 'italic' }))
+        } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - engine.expressionTopGap, style.expression, 'dir', { 'font-style': 'italic' }))
       }
       const headings = new Set(line.measures.filter(m => {
         const e = m.measure.melody[0]?.event
-        return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + 21 > width / 2)
+        return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + style.sectionLabelInset > width / 2)
       }).map(m => m.id))
       const geometry = new SvgGeometry(node, measureText, true)
       const system = arrangeStaffSystem(node, geometry, width, headings)
-      if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + 5; continue }
+      if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system
     }
     throw new Error('五线谱歌词与低音谱表的净空无法稳定。')

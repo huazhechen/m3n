@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeStyle } from './native-style.js'
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { parse, type TNode } from 'txml/txml'
@@ -77,7 +78,7 @@ export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[
     } else if (node.tagName === 'text') {
       const text = decode(node.children.filter(c => typeof c === 'string').join(''))
       const family = a['font-family'] ?? SCORE_TEXT_FONT
-      const m = measurer.measureText(text, { fontSize: num('font-size', nativeStyle.text), fontFamily: family, fontWeight: num('font-weight', family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : 400), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
+      const m = measurer.measureText(text, { fontSize: num('font-size', nativeStyle.text), fontFamily: family, fontWeight: num('font-weight', family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : scoreLayoutConfig.fonts.regularWeight), fontStyle: a['font-style'] === 'italic' ? 'italic' : 'normal' })
       const advance = m.advance ?? m.w, anchor = a['text-anchor'] === 'middle' ? advance / 2 : a['text-anchor'] === 'end' ? advance : 0
       b = { left: num('x') - anchor + (m.inkLeft ?? 0), right: num('x') - anchor + (m.inkRight ?? m.w), top: num('y') - m.baseline, bottom: num('y') - m.baseline + (m.inkBottom ?? m.h) }
     } else if (node.tagName === 'path') b = nativePathInk(a.d!)

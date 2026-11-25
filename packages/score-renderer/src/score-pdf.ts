@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import fontkit from '@pdf-lib/fontkit'
 import {
   PDFDocument, PDFName, PDFString, LineCapStyle, LineJoinStyle,
@@ -31,7 +32,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
   options.signal?.throwIfAborted()
   options.onPhase?.('pages')
   const host = document.createElement('div')
-  host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
+  host.style.cssText = `position:fixed;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0;pointer-events:none;`
   host.setAttribute('aria-hidden', 'true')
   document.body.append(host)
   const pt = 72 / 25.4
@@ -73,7 +74,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         if (tag === 'text') {
           const text = element as SVGTextElement
           const fontSize = Number.parseFloat(style.fontSize)
-          const isMusic = style.fontFamily.includes('M3N Numbers')
+          const isMusic = style.fontFamily.includes(scoreLayoutConfig.fonts.numbers)
           const bold = Number.parseInt(style.fontWeight, 10) >= 600
           const italic = style.fontStyle === 'italic'
           page.pushOperators(setFillingRgbColor(0, 0, 0), setStrokingRgbColor(0, 0, 0), beginText())

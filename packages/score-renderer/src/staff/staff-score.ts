@@ -28,7 +28,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {
-    if (!Number.isFinite(w) || w < 320 || !Number.isFinite(minimumGap) || minimumGap < 0 || !Number.isFinite(outputGap) || outputGap < 0 || !Number.isFinite(margin) || margin < 0 || margin * 2 + 80 > w)
+    if (!Number.isFinite(w) || w < scoreLayoutConfig.staff.minimumWidth || !Number.isFinite(minimumGap) || minimumGap < 0 || !Number.isFinite(outputGap) || outputGap < 0 || !Number.isFinite(margin) || margin < 0 || margin * 2 + scoreLayoutConfig.staff.minimumContentWidth > w)
       throw new Error('五线谱版宽、页边距或行距无效。')
   }
   validate(width)
@@ -47,8 +47,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     if (saved) return saved
     signal?.throwIfAborted()
     const innerWidth = candidateWidth - 2 * margin
-    const gutter = projected.hasBass ? 14 : 1
-    const musicWidth = innerWidth - gutter - 1
+    const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
+    const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
     const attempt = (spacing: number): Layout => {
@@ -124,6 +124,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
               width: String(width),
               height: String(page.height + 2 * margin),
               'font-family': SCORE_TEXT_FONT,
+              'font-weight': String(scoreLayoutConfig.fonts.regularWeight),
               color: '#000',
               'data-notation': 'staff',
               'data-m3n-note-spacing': String(result.spacing),
@@ -170,7 +171,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return {
         spacing: result.spacing,
         headerHeight: result.header.height,
-        availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? 15 : 2) - 4,
+        availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter) - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset,
         pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,
         lines: result.lines.map((line) => ({
           minimum: line.minimum * STAFF_SCALE,

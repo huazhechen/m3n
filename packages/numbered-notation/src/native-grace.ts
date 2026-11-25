@@ -1,3 +1,4 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
 import { nativeStyle } from './native-style.js'
@@ -13,10 +14,10 @@ export type NativeGracePitch = NativePitch & { writtenBeats?: number }
  */
 export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLeft: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
   const size = nativeStyle.graceNote, painter = new NativeSymbols(measurer)
-  const number = measurer.measureText('0', {fontSize: size, fontFamily: 'M3N Numbers'})
+  const number = measurer.measureText('0', {fontSize: size, fontFamily: SCORE_NUMBER_FONT})
   const { beamStroke: stroke } = nativeNoteBody(measurer, size)
   const half = number.w / 2, beamStep = size * 0.14
-  const digits = pitches.map(pitch => nativeSvgInk(painter.text(pitch.degree, 0, 0, size, 'M3N Numbers', { 'text-anchor': 'middle' }), measurer))
+  const digits = pitches.map(pitch => nativeSvgInk(painter.text(pitch.degree, 0, 0, size, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' }), measurer))
   const beamY = Math.max(...digits.map(digit => digit.bottom)) + size * 0.12 + stroke / 2
   const notes = pitches.map((pitch, index) => {
     const beats = pitch.writtenBeats ?? 0.25
@@ -47,7 +48,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
   }
   const block = unionNativeInk(notes.map(note => translateNativeInk(note.footprint, note.x, 0)))
   const sideGap = size * 0.2
-  const main = measurer.measureText('0', {fontSize: nativeStyle.music, fontFamily: 'M3N Numbers'})
+  const main = measurer.measureText('0', {fontSize: nativeStyle.music, fontFamily: SCORE_NUMBER_FONT})
   const x = -mainLeft - sideGap - block.right
   const y = -main.baseline - size * 0.18 - block.bottom
   for (const note of notes) {

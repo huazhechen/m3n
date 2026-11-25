@@ -1,9 +1,10 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 const ns = 'http://www.w3.org/2000/svg'
 
 /** Flatten text to the same measured character positions for screen and PDF. */
 export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
   const host = document.createElement('div')
-  host.style.cssText = 'position:fixed;left:-20000px;top:0;pointer-events:none;'
+  host.style.cssText = `position:fixed;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0;pointer-events:none;`
   host.setAttribute('aria-hidden', 'true')
   document.body.append(host); host.append(svg)
   try {

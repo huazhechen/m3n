@@ -7,6 +7,7 @@ import { DefaultTextMeasurer } from './native-measure.js';
 import { NativeSymbols } from './native-symbols.js';
 import { layoutNativeScore } from './native-layout.js';
 import { NativeNumberedNotationScore } from './native-score.js';
+import { scoreLayoutConfig } from './score-layout-config.js';
 const options = { width: 800, paged: false };
 const layout = (music: string) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`), options);
 describe('native accidental geometry', () => {
@@ -44,8 +45,19 @@ describe('native accidental geometry', () => {
         const chord = layout('[1 3## 5:h] 2 3 4').projection.glyphs[0]!;
         const plain = layout('[1 3 5:h] 2 3 4').projection.glyphs[0]!;
         expect(chord.left).toBeCloseTo(single.left);
-        expect(chord.left - plain.left).toBeCloseTo(nativeAccidentalAdvance('♯♯', 22));
+        expect(chord.left - plain.left).toBeCloseTo(nativeAccidentalAdvance('♯♯', scoreLayoutConfig.numbered.music));
         expect(chord.right).toBe(plain.right);
+    });
+    it.each([24, 30])('reserves measured accidental width at configured music size %s', size => {
+        const previous = scoreLayoutConfig.numbered.music;
+        scoreLayoutConfig.numbered.music = size;
+        try {
+            for (const [source, symbol] of [['1#', '♯'], ['1b', '♭'], ['1=', '♮'], ['1##', '♯♯'], ['1bb', '♭♭']] as const) {
+                const plain = layout('1 2 3 4').projection.glyphs[0]!;
+                const note = layout(`${source} 2 3 4`).projection.glyphs[0]!;
+                expect(note.left - plain.left).toBeCloseTo(nativeAccidentalAdvance(symbol, size));
+            }
+        } finally { scoreLayoutConfig.numbered.music = previous; }
     });
     it('uses music characters for main notes, stacked tones and grace notes at their own sizes', () => {
         const source = '{4/4}\nN: 1#{ac(7b)} [2 4= 6:h] 3## 4bb |||';

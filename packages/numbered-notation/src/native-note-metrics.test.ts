@@ -1,3 +1,5 @@
+import { parseM3NDocument } from '@m3n/notation'
+import { layoutNativeScore } from './native-layout.js'
 import { describe, expect, it } from 'vitest'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeNoteBody } from './native-note-body.js'
@@ -34,3 +36,18 @@ describe('direct note metrics match actual painted primitives', () => {
       }
   })
 })
+
+it.each([4.62, 8])('reserves sustain ink including round caps at half width %s', halfWidth => {
+  const previous = nativeStyle.sustainHalfWidth;
+  nativeStyle.sustainHalfWidth = halfWidth;
+  try {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1^^ 2 |||'), { width: 480, paged: false });
+    const sustains = score.projection.glyphs.filter(note => note.sustain);
+    expect(sustains.length).toBeGreaterThan(0);
+    for (const note of sustains) {
+      expect(note.musicLeft).toBeGreaterThanOrEqual(note.inkLeft!);
+      expect(note.musicRight).toBeGreaterThanOrEqual(note.inkRight!);
+      expect(note.musicLeft).toBeCloseTo(halfWidth + nativeStyle.sustainStroke / 2);
+    }
+  } finally { nativeStyle.sustainHalfWidth = previous; }
+});

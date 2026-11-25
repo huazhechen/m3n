@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { numberedLayoutScore } from '../scorebook-width.mjs'
 import { inspectScorePages } from './score-geometry.mjs'
@@ -27,7 +28,7 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
   const ownsHost = !host
   host ??= document.createElement('div')
   if (ownsHost) {
-    host.style.cssText = 'position:absolute;left:-100000px;top:0'
+    host.style.cssText = `position:absolute;left:${scoreLayoutConfig.rendering.auditOffscreenPosition}px;top:0`
     document.body.append(host)
   }
   const mount = markup => {

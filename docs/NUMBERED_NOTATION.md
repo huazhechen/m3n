@@ -111,7 +111,9 @@ To Coda 在跳转小节末显示，Coda 起点使用Bravura圆十字轮廓和Bar
 
 ## 设计px配置
 
-统一入口为 `packages/numbered-notation/src/score-layout-config.ts`：`numbered` 包含简谱字号、谱头／谱行间距及线宽，`lyrics` 包含两种谱式共用的歌词字号与间距，`staff` 包含五线谱由项目绘制的标题、说明、段名、速度、和弦、指法、小节号等字号，`imageExport` 包含图片导出页脚字号，`pageWidth` 分别配置自动搜索范围、合页准入门限和页面手动滑条范围。`native-style.ts` 与 `lyric-spacing.ts` 仅作为内部兼容入口，不再独立保存配置。音乐字体按目标墨迹高度换算的字形系数和VexFlow内部默认字形度量仍属于绘制几何，不是额外的文字字号配置。
+统一入口为 `packages/numbered-notation/src/score-layout-config.ts`：`fonts` 配置共用字体族、字重和大字号字形测量基准；`numbered` 配置简谱字号、固定绘制尺寸及净空；`lyrics` 配置两种谱式共用的歌词字号与间距；`staff` 配置自研五线谱的全部音乐与文字字号、谱头及附件间距。`staff.engine` 保存统一缩放之前的五线谱设计坐标、线宽和距离，字号在 `staff` 中以最终逻辑px保存，进入引擎时除以 `staff.engine.scale`。`imageExport` 配置图片导出页脚与留白，`scorebook` 配置封面、目录字号和位置，`rendering` 配置离屏测量位置，`pageWidth` 配置选宽范围。`native-style.ts` 与 `lyric-spacing.ts` 仅作为兼容入口。
+
+测量、占位和绘制必须读取同一个配置项：例如简谱主音符与和弦的变音记号均按 `numbered.music` 计算占宽，不能另写测量字号；延音横线按配置线长加圆头描边宽度预留左右空间；五线谱连音组括号按配置字号测量标签，不能按字数乘固定宽度估算。字体文件生成的em度量、字形轮廓、无单位比例、音乐时值、数值求解精度，以及PDF的mm／pt物理单位不属于独立px配置。网站导航、按钮和弹窗等界面CSS不在此配置范围内。
 
 全部数值是谱面内部逻辑px，不是设备物理像素。配置值取整不影响实际墨迹测量、曲线坐标及分页拟合的小数精度。
 

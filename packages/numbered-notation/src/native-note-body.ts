@@ -1,10 +1,11 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeStyle } from './native-style.js'
 
 /** Music body coordinates relative to its alphabetic baseline. Design gaps
  * use the note size; font edges come from the same zero used by the layout. */
 export function nativeNoteBody(measurer: TextMeasurer, size = nativeStyle.music) {
-  const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
+  const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
   const top = -zero.baseline, bottom = (zero.inkBottom ?? zero.h) - zero.baseline
   const beamStroke = size * .055, beamStep = size * .14
   const beamY = (index: number) => bottom + size * .12 + beamStroke / 2 + index * beamStep

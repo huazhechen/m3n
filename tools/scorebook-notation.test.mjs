@@ -257,9 +257,24 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(valsentino.production.pageCount, valsentino.paged.pageCount)
     assert.equal(valsentino.production.rows, valsentino.paged.rows)
     assert.equal(valsentino.exported, valsentino.paged.pageCount)
+    const accidentals = await page.evaluate(async () => {
+      const results = []
+      for (const note of ['1b', '1#', '1=', '1bb', '1##', '[1 3bb 5:h]']) {
+        const source = `{title=Test}{4/4}\nN: ${note} 2 3 4 |||`
+        for (const paged of [true, false]) {
+          const layout = await window.scorebook.auditWidth(source, 480, paged)
+          results.push({ note, paged, outside: layout.outside, overlaps: layout.overlaps })
+        }
+      }
+      return results
+    })
+    for (const { note, paged, outside, overlaps } of accidentals) {
+      assert.deepEqual(outside, [], `${note} must reserve its painted accidental at the left edge (paged=${paged})`)
+      assert.deepEqual(overlaps, [], `${note} must preserve measured clearance (paged=${paged})`)
+    }
     const symbolSource = '{title=Symbols}{key=Db}{4/4}{order=A,B}\n===A\nN: ||: '
       + ['ppp','pp','p','mp','mf','f','ff','fff','sfz'].map((dynamic,index) =>
-        `{${dynamic}}${index === 0 ? '{segno}' : index === 1 ? '{coda}' : ''}1e${index === 0 ? '{fermata}{tr}{prall}{str}{tip}{hold}{breath}' : ''} (2e) [1d3e5ee:h]${index === 0 ? '{arp}{ac(2d3e)}' : ''} 4. ${index === 8 ? ':||' : '|'}`).join(' ')
+        `{${dynamic}}${index === 0 ? '{segno}' : index === 1 ? '{coda}' : ''}1e${index === 0 ? '{fermata}{tr}{prall}{str}{tip}{brk}{hold}{breath}' : ''} (2e) [1d3e5ee:h]${index === 0 ? '{arp}{ac(2d3e)}' : ''} 4. ${index === 8 ? ':||' : '|'}`).join(' ')
       + '\nB: ' + Array(9).fill('1dd 2d 3d 4d |').join(' ') + '\n===B\nN: 1 2 3 4 |||'
     const symbols = await page.evaluate(async source => {
       const api = window.scorebook, layout = await api.auditWidth(source,640)

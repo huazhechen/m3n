@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import plan from '../../config/scorebook/editorial-plan.json'
 import type { WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
 import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
@@ -9,6 +10,7 @@ import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplay
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+const bookStyle = scoreLayoutConfig.scorebook
 
 
 export const scorebookTitle = plan.title
@@ -37,7 +39,7 @@ function text(svg: SVGSVGElement, value: string, x: number, y: number, size: num
   const node = document.createElementNS(svgNS, 'text')
   node.textContent = value
   node.setAttribute('x', String(x)); node.setAttribute('y', String(y))
-  node.setAttribute('font-size', String(size)); node.setAttribute('font-family', 'Noto Sans SC')
+  node.setAttribute('font-size', String(size)); node.setAttribute('font-family', scoreLayoutConfig.fonts.cjk)
   node.setAttribute('fill', '#000')
   if (url) {
     const link = document.createElementNS(svgNS, 'a')
@@ -63,21 +65,21 @@ function frontPages(entries: BookEntry[]) {
   }
   const contentsCount = Math.ceil(columns.length / 2), frontCount = 1 + contentsCount
   const cover = page()
-  text(cover, scorebookTitle, plan.page.width / 2, 350, 40, website).setAttribute('text-anchor', 'middle')
-  text(cover, website, plan.page.width / 2, 410, 18, website).setAttribute('text-anchor', 'middle')
+  text(cover, scorebookTitle, plan.page.width / 2, bookStyle.coverTitleY, bookStyle.coverTitle, website).setAttribute('text-anchor', 'middle')
+  text(cover, website, plan.page.width / 2, bookStyle.coverWebsiteY, bookStyle.coverWebsite, website).setAttribute('text-anchor', 'middle')
   const contents = Array.from({ length: contentsCount }, (_, index) => {
     const svg = page()
-    text(svg, '目录', 40, 65, 30)
+    text(svg, '目录', bookStyle.contentsLeft, bookStyle.contentsTop, bookStyle.contentsTitle)
     for (let side = 0; side < 2; side++) {
-      const x = 40 + side * 377
+      const x = bookStyle.contentsLeft + side * bookStyle.columnStep
       for (const [rowIndex, row] of (columns[index * 2 + side] ?? []).entries()) {
-        const y = 120 + rowIndex * rowHeight
-        if ('section' in row) { text(svg, row.section.title, x, y, 16); continue }
+        const y = bookStyle.contentsRowsTop + rowIndex * rowHeight
+        if ('section' in row) { text(svg, row.section.title, x, y, bookStyle.sectionTitle); continue }
         const entry = row.entry, first = frontCount + entry.musicStart + 1
         const label = entry.pageCount === 1 ? String(first) : `${first}–${first + entry.pageCount - 1}`
         const url = `${website}scores/${encodeURIComponent(entry.slug)}`
-        text(svg, entry.title, x, y, 16, url)
-        text(svg, label, x + 337, y, 14, url).setAttribute('text-anchor', 'end')
+        text(svg, entry.title, x, y, bookStyle.entryTitle, url)
+        text(svg, label, x + bookStyle.pageNumberOffset, y, bookStyle.pageNumber, url).setAttribute('text-anchor', 'end')
       }
     }
     return svg
@@ -101,7 +103,7 @@ function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
 function inspectScoreMarkup(markup: string[], timings: Record<string, number> = {}) {
   const started = performance.now()
   const host = document.createElement('div')
-  host.style.cssText = 'position:absolute;left:-100000px;top:0'
+  host.style.cssText = `position:absolute;left:${scoreLayoutConfig.rendering.auditOffscreenPosition}px;top:0`
   host.innerHTML = markup.join('')
   document.body.append(host)
   timings.svgMountMs = (timings.svgMountMs ?? 0) + performance.now() - started

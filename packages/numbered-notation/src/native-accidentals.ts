@@ -1,3 +1,5 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
+import { SCORE_MUSIC_FONT } from './font-family.js'
 import { bravuraAccidentalCharacters } from './bravura-characters.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
@@ -11,7 +13,7 @@ function measuredGlyphs(symbols: string, size: number, measurer: TextMeasurer) {
     if (!glyph) return []
     // Preserve the intended ink height, not a nominal font em size.
     const fontSize = n(height(symbol, size) / (glyph.ascent + glyph.descent))
-    const metrics = measurer.measureText(glyph.character, { fontSize, fontFamily: 'Bravura', fontWeight: 400, fontStyle: 'normal' })
+    const metrics = measurer.measureText(glyph.character, { fontSize, fontFamily: SCORE_MUSIC_FONT, fontWeight: scoreLayoutConfig.fonts.regularWeight, fontStyle: 'normal' })
     const width = (metrics.inkRight ?? metrics.w) - (metrics.inkLeft ?? 0)
     return [{ symbol, character: glyph.character, fontSize, ascent: glyph.ascent, metrics, width }]
   })

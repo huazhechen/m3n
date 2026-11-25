@@ -1,6 +1,7 @@
+import { SCORE_NUMBER_FONT, SCORE_MUSIC_FONT, SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { NUMBER_FONT_CSS } from './font-data.js'
 import { LATIN_FONTS, CJK_FONTS, BRAVURA_FONTS } from './font-resources.js'
-import { SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
 
 export type ScoreFontResource = { file: string; url: string; webUrl?: string; characters: string; weight?: number; style?: string }
 const buffers = new Map<string, Promise<Uint8Array>>()
@@ -28,7 +29,7 @@ export function scoreCjkFont(text: string): ScoreFontResource {
   return font
 }
 
-export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, _weight = 400, _italic = false, _numbers = false, family = ''): ScoreFontResource {
+export function scoreFontForCharacter(char: string, textFont: ScoreFontResource, _weight: number = scoreLayoutConfig.fonts.regularWeight, _italic = false, _numbers = false, family = ''): ScoreFontResource {
   if (family.startsWith(SCORE_CJK_FONT) && supports(textFont, char)) return textFont
   const latin = LATIN_FONTS[0]
   if (supports(latin, char)) return latin
@@ -69,7 +70,7 @@ function install(font: ScoreFontResource, family: string) {
     promise = (async () => {
       const source = font.webUrl ? `url("${font.webUrl}")` : Uint8Array.from(await loadScoreFont(font))
       const face = new FontFace(family, source, {
-        weight: String(font.weight ?? 400), style: font.style ?? 'normal', unicodeRange: unicodeRange(font.characters),
+        weight: String(font.weight ?? scoreLayoutConfig.fonts.regularWeight), style: font.style ?? 'normal', unicodeRange: unicodeRange(font.characters),
       })
       await face.load()
       document.fonts.add(face)
@@ -86,13 +87,13 @@ export async function prepareNumberedNotationFonts(value?: unknown): Promise<voi
   const cjk = scoreCjkFont(text)
   await Promise.all([
     ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),
-    install(BRAVURA_FONTS[0], 'Bravura'), install(cjk, SCORE_CJK_FONT),
+    install(BRAVURA_FONTS[0], SCORE_MUSIC_FONT), install(cjk, SCORE_CJK_FONT),
     (async () => {
       const key = 'numbers'
       if (!installed.has(key)) {
         const source = /src:(.*);font-weight/.exec(NUMBER_FONT_CSS)?.[1]
         if (!source) throw new Error('简谱数字字体资源无效。')
-        const font = new FontFace('M3N Numbers', source)
+        const font = new FontFace(SCORE_NUMBER_FONT, source)
         installed.set(key, font.load().then(() => { document.fonts.add(font) }).catch(error => { installed.delete(key); throw error }))
       }
       await installed.get(key)

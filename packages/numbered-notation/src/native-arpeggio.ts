@@ -9,7 +9,7 @@ export function nativeArpeggioGeometry(host: NativeInk, measurer: TextMeasurer) 
   const size = nativeStyle.music, gap = size * .16
   const height = host.bottom - host.top
   const count = Math.max(1, Math.ceil(height / (size * .5))), step = height / count
-  const shape = bravuraGlyph('wiggleArpeggiatoUp', 10, false, measurer), scale = step / shape.width
+  const shape = bravuraGlyph('wiggleArpeggiatoUp', nativeStyle.arpeggioReferenceHeight, false, measurer), scale = step / shape.width
   const x = host.left - gap
   const paths: string[] = []
   for (let index = 0; index < count; index++) {

@@ -1,5 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 import { staffCharacterInk } from './staff-music-font.js'
@@ -96,7 +95,7 @@ export function textMeasurer(): MeasureText {
     if (saved) return saved
     let result: FontInk
     if (context) {
-      context.font = `${italic ? 'italic' : 'normal'} ${bold ? 700 : 400} ${size}px ${family}`
+      context.font = `${italic ? 'italic' : 'normal'} ${bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight} ${size}px ${family}`
       const m = context.measureText(text)
       result = {
         width: m.width,
@@ -260,13 +259,13 @@ export class SvgGeometry {
   }
   partitionWithoutClasses(node: XmlNode, classes: readonly string[]): { all: Ink[]; without: Ink[] } {
     const all: Ink[] = [], without: Ink[] = []
-    this.collect(node, identity, { size: scoreLayoutConfig.staff.text / 0.7, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
+    this.collect(node, identity, { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
     return { all, without }
   }
   pieces(
     node: XmlNode,
     parent: Matrix = identity,
-    inherited: { size: number; bold: boolean; italic: boolean } = { size: scoreLayoutConfig.staff.text / 0.7, bold: false, italic: false },
+    inherited: { size: number; bold: boolean; italic: boolean } = { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false },
     omit?: OmitNode,
   ): Ink[] {
     const result: Ink[] = []
@@ -311,7 +310,7 @@ export class SvgGeometry {
     const shape = ['path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)
     const style = shape ? inherited : {
       size: a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size,
-      bold: a['font-weight'] === 'bold' || a['font-weight'] === '700' || inherited.bold ||
+      bold: a['font-weight'] === 'bold' || a['font-weight'] === String(scoreLayoutConfig.fonts.boldWeight) || inherited.bold ||
         hasClass(node, 'reh') || hasClass(node, 'tempo') || hasClass(node, 'ending'),
       italic: a['font-style'] === 'italic' || inherited.italic || hasClass(node, 'dynam'),
     }
@@ -343,7 +342,7 @@ export class SvgGeometry {
       }
       for (const box of saved.boxes) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }
       return
-    } else if (node.tagName === 'text' && a['font-family'] === 'Bravura') {
+    } else if (node.tagName === 'text' && a['font-family'] === scoreLayoutConfig.fonts.music) {
       boxes = staffCharacterInk(textContent(node), num('font-size', style.size), num('x'), num('y'))
     } else if (node.tagName === 'text') {
       const size = Math.max(

@@ -1,3 +1,4 @@
+import { nativeStyle } from './native-style.js'
 import { bravuraGeometry } from './bravura.js'
 import { unionNativeInk, translateNativeInk, type NativeInk } from './native-ink.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
@@ -11,8 +12,8 @@ import type { NativeMeasure } from './native-model.js'
 export function nativeMeasureBarPositions(measures: NativeMeasure[], index: number) {
   const measure = measures[index]!, marks = nativeMeasureBars(measures, index)
   const positions: { kind: string; x: number }[] = []
-  if (marks.opening) positions.push({ kind: 'rptstart', x: measure.openingBarX ?? measure.start + 2 })
-  if (marks.closing !== undefined) positions.push({ kind: marks.closing, x: measure.barX ?? measure.end - 3 })
+  if (marks.opening) positions.push({ kind: 'rptstart', x: measure.openingBarX ?? measure.start + nativeStyle.openingBarFallbackInset })
+  if (marks.closing !== undefined) positions.push({ kind: marks.closing, x: measure.barX ?? measure.end - nativeStyle.closingBarFallbackInset })
   return positions
 }
 

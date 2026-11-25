@@ -1,5 +1,5 @@
+import { SCORE_NUMBER_FONT, SCORE_TEXT_FONT } from './font-family.js'
 import { lyricSpacing } from './lyric-spacing.js'
-import { SCORE_TEXT_FONT } from './font-family.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
@@ -164,8 +164,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphMarks = segment === 0 && slot === 0 ? marks : []
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
           const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
-          const pitchWidth = sustain ? nativeStyle.music * 0.42 : textWidth('0', nativeStyle.music, 'M3N Numbers')
-          const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, 22, options.textMeasurer)))
+          const pitchWidth = sustain ? 2 * nativeStyle.sustainHalfWidth + nativeStyle.sustainStroke : textWidth('0', nativeStyle.music, SCORE_NUMBER_FONT)
+          const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, nativeStyle.music, options.textMeasurer)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
           let left = pitchWidth / 2 + accidentalWidth, right = pitchWidth / 2 + dotCount * nativeStyle.music * 0.27
@@ -217,7 +217,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right
           glyph.instrumental = document.intervals.some(interval => interval.kind === 'inst' && interval.staff === staff && interval.start !== undefined && interval.end !== undefined && interval.start <= event.sourceStart && event.sourceEnd <= interval.end)
           if (glyph.instrumental) {
-            const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
+            const style = { fontSize: nativeStyle.music, fontFamily: SCORE_NUMBER_FONT }
             const left = options.textMeasurer.measureText('(', style), right = options.textMeasurer.measureText(')', style)
             // Each side contributes the same half-gap as a quarter note.
             glyph.parenthesisGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap)

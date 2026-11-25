@@ -1,3 +1,4 @@
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -16,10 +17,10 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   while (last >= 0 && last + 1 < spans.length && spans[last]!.end + 1 === spans[last + 1]!.start) last++
   const peers = current < 0 ? [relation] : spans.slice(first, last + 1).map(span => span.item)
   const size = nativeStyle.music, fontSize = nativeStyle.tuplet, hook = size * 0.18, gap = size * 0.14
-  const stroke = Math.max(1, size * 0.055), halfStroke = stroke / 2
-  const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
+  const stroke = Math.max(nativeStyle.minimumTupletStroke, size * 0.055), halfStroke = stroke / 2
+  const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT }).w / 2
   const shape = (peer: NativeRelation) => {
-    const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: 'M3N Numbers', textAlign: 'center' })
+    const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: SCORE_NUMBER_FONT, textAlign: 'center' })
     // Stroke caps belong inside the row, even when the first head is flush.
     const left = Math.max(system.measures[0]!.start + halfStroke, peer.first.x - halfBody)
     const right = Math.min(system.measures.at(-1)!.end - halfStroke, peer.last.x + halfBody), center = (left + right) / 2

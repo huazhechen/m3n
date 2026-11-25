@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffResources, prepareStaffScore, prepareStaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureStaffWidth } from './lib/staff-width-measurement.mjs'
@@ -27,6 +28,6 @@ export async function preview(source,width,settings = {}) {
  const render=await prepareStaffScore(readScore(source),{...settings,width})
  const host=document.createElement('main');document.body.replaceChildren(host)
  const pages=render(true);host.replaceChildren(...pages)
- pages.forEach(svg=>{svg.style.display='block';svg.style.marginBottom='16px'})
+ pages.forEach(svg=>{svg.style.display='block';svg.style.marginBottom=`${scoreLayoutConfig.rendering.previewPageGap}px`})
  return pages.map(svg=>svg.outerHTML)
 }

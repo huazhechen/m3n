@@ -1,3 +1,5 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeDotInk } from './bravura.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
@@ -16,10 +18,10 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   // Metrics need only vertical extrema. Evaluate the same text, accidental,
   // circle and beam primitives directly instead of serializing and parsing SVG.
   const sustainY = sustain && pitches.length ? n(nativeMusicAxis(measurer)) : 0
-  const sustainHalf = n(2.2) / 2
+  const sustainHalf = n(nativeStyle.sustainStroke) / 2
   const bounds = pitches.map((pitch, index) => {
     if (sustain) return { top: -sustainY + sustainHalf, bottom: sustainY + sustainHalf }
-    const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal' })
+    const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: SCORE_NUMBER_FONT, fontWeight: scoreLayoutConfig.fonts.regularWeight, fontStyle: 'normal' })
     let top = 0 - text.baseline, bottom = 0 - text.baseline + (text.inkBottom ?? text.h)
     if (pitch.accidental) for (const { ink } of nativeAccidentalGeometry(pitch.accidental, size, body.width / 2, measurer).glyphs) {
       top = Math.min(top, ink.top); bottom = Math.max(bottom, ink.bottom)

@@ -1,5 +1,6 @@
+import { SCORE_NUMBER_FONT, SCORE_MUSIC_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { bravuraSvg, nativeDotSvg } from './bravura.js'
-import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
@@ -30,14 +31,14 @@ export function attrs(values: Record<string, string | number | undefined>) {
   return result
 }
 export const line = (x1: number, y1: number, x2: number, y2: number, width = nativeStyle.stroke) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
-export const circle = (x: number, y: number, radius = 1.6, measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
+export const circle = (x: number, y: number, radius = nativeStyle.defaultDotRadius, measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
 export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${n(nativeStyle.symbolStroke)}" stroke-linejoin="round"${extra}/>`
 
 export class NativeSymbols {
   constructor(readonly measurer: TextMeasurer) {}
   dispose() {}
   text(text: string, x: number, y: number, size = nativeStyle.text, family = SCORE_TEXT_FONT, extra: Record<string, string | number | undefined> = {}): string {
-    const fontWeight = extra['font-weight'] ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : 400)
+    const fontWeight = extra['font-weight'] ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : scoreLayoutConfig.fonts.regularWeight)
     const center = extra['text-anchor'] === 'middle'
     const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(fontWeight), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
     return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, 'font-weight': fontWeight, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
@@ -45,13 +46,13 @@ export class NativeSymbols {
 
   sustain(x: number, y: number): string {
     const axis = y + nativeMusicAxis(this.measurer)
-    return line(x - 4.62, axis, x + 4.62, axis, 2.2)
+    return line(x - nativeStyle.sustainHalfWidth, axis, x + nativeStyle.sustainHalfWidth, axis, nativeStyle.sustainStroke)
   }
 
   pitch(pitch: NativePitch, x: number, y: number, size = nativeStyle.music, beams = 0): string {
-    let svg = this.text(pitch.degree, x, y, size, 'M3N Numbers', { 'text-anchor': 'middle' })
+    let svg = this.text(pitch.degree, x, y, size, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
     if (pitch.accidental) {
-      const halfBody = this.measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
+      const halfBody = this.measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT }).w / 2
       const symbols = nativeAccidentalGeometry(pitch.accidental, size, halfBody, this.measurer)
       svg += `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'accidental' })}>`
         + symbols.glyphs.map(glyph => this.accidental(glyph)).join('') + '</g>'
@@ -65,13 +66,13 @@ export class NativeSymbols {
   }
 
   accidental(glyph: NativeAccidentalGlyph): string {
-    return this.text(glyph.character, glyph.x, glyph.y, glyph.fontSize, 'Bravura', { 'data-m3n-symbol': glyph.symbol, 'data-m3n-font': 'Bravura', 'aria-hidden': 'true' })
+    return this.text(glyph.character, glyph.x, glyph.y, glyph.fontSize, SCORE_MUSIC_FONT, { 'data-m3n-symbol': glyph.symbol, 'data-m3n-font': SCORE_MUSIC_FONT, 'aria-hidden': 'true' })
   }
 
   tempo(text: string, x: number, y: number, prepared?: NativeTempoGeometry): string {
     const geometry = prepared ?? nativeTempoGeometry(text, this.measurer)
     return `<g${attrs({ transform: `translate(${n(x)} ${n(y)})`, 'data-m3n-role': 'tempo', 'data-m3n-tempo-unit': geometry.unit })}>`
-      + this.text(geometry.text, geometry.textX, geometry.baseline, nativeStyle.text, 'M3N Numbers') + '</g>'
+      + this.text(geometry.text, geometry.textX, geometry.baseline, nativeStyle.text, SCORE_NUMBER_FONT) + '</g>'
   }
 
   segno(x: number, y: number): string {
@@ -99,26 +100,26 @@ export class NativeSymbols {
 
   control(control: NativeControl, x = 0, y = 0): string {
     if (control.kind === 'section') {
-      const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: 700 })
-      return `<rect${attrs({ x: x + 0.5, y: y - control.top + 0.5, width: control.width - 1, height: control.top + control.bottom - 1, stroke: '#000', 'stroke-width': 1, fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? 3.5), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, SCORE_TEXT_FONT, { 'font-weight': 700 })
+      const text = this.measurer.measureText(control.text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: scoreLayoutConfig.fonts.boldWeight })
+      return `<rect${attrs({ x: x + nativeStyle.frameStroke / 2, y: y - control.top + nativeStyle.frameStroke / 2, width: control.width - nativeStyle.frameStroke, height: control.top + control.bottom - nativeStyle.frameStroke, stroke: '#000', 'stroke-width': nativeStyle.frameStroke, fill: 'none' })}/>` + this.text(control.text, x + (control.textInset ?? nativeStyle.annotation * 0.25), y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.annotation, SCORE_TEXT_FONT, { 'font-weight': scoreLayoutConfig.fonts.boldWeight })
     }
     if (control.kind === 'tempo') return this.tempo(control.text, x, y, control.tempoGeometry)
     if (control.kind === 'segno') return this.segno(x, y)
     if (control.kind === 'coda') return this.coda(x, y)
     if (control.kind === 'meter') {
       const meter = control.meterGeometry ?? nativeMeterGeometry(control.text, this.measurer)
-      return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
+      return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, nativeStyle.meter, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
         + `<rect${attrs({ x, y: y + meter.lineY, width: control.width, height: meter.lineHeight, fill: '#000' })}/>`
-        + this.text(meter.denominator, x + control.width / 2, y + meter.denominatorBaseline, nativeStyle.meter, 'M3N Numbers', { 'text-anchor': 'middle' })
+        + this.text(meter.denominator, x + control.width / 2, y + meter.denominatorBaseline, nativeStyle.meter, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
     }
     const geometry = nativeKeyGeometry(control.keyRows ?? [{key:control.text}],this.measurer)
     const axis = nativeMusicAxis(this.measurer)
     return geometry.rows.map(row => {
       const left = x+row.x, baseline = y+axis-geometry.height/2+row.y+row.baseline
-      return this.text(row.prefix,left,baseline,nativeStyle.text,'M3N Numbers')
+      return this.text(row.prefix,left,baseline,nativeStyle.text,SCORE_NUMBER_FONT)
         + `<g transform="translate(${n(left+row.accidentalX)} ${n(baseline)})">`
         + row.glyphs.map(glyph => this.accidental(glyph)).join('') + '</g>'
-        + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,'M3N Numbers')
+        + this.text(row.name,left+row.nameX,baseline,nativeStyle.text,SCORE_NUMBER_FONT)
     }).join('')
   }
 

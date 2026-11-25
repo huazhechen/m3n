@@ -1,4 +1,5 @@
-import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from './font-family.js'
+import { SCORE_NUMBER_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from './font-family.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
 import { nativeStyle } from './native-style.js'
@@ -27,9 +28,9 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   }
   const available = width - 2 * margin
   const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
-  const title = once('title',()=>wrapNativeText(document.title, available - 2, nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
+  const title = once('title',()=>wrapNativeText(document.title, available - nativeStyle.headerWrapInset, nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
   const headerContent = once('content',()=>numberedHeaderContent(document))
-  const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - 2, nativeStyle.subtitle, measurer)))
+  const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - nativeStyle.headerWrapInset, nativeStyle.subtitle, measurer)))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
   const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT, advance = nativeStyle.subtitleLineHeight) => once(JSON.stringify([lines,size,weight,family,advance]), () => {
@@ -72,12 +73,12 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,pitchBaseline,size)
     const low = once('low-svg',()=>rawPitch(range[0])), high = once('high-svg',()=>rawPitch(range[1]))
     const lowInk = once('low-ink',()=>nativeSvgInk(low,measurer)), highInk = once('high-ink',()=>nativeSvgInk(high,measurer))
-    const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: 'M3N Numbers' })
+    const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
     // Display-only notes reserve the measured numeral body, including its
     // advance bearings; zero-duration cells use the minimum clearance.
-    const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
+    const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
     const gap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * 0.1
-    const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
+    const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,SCORE_NUMBER_FONT)
     const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
     const label = '音域：'
     const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
@@ -130,7 +131,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]
-    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT, fontWeight: item.framed ? 700 : SCORE_TEXT_WEIGHT }) }))
+    const measured = labels.map(item => ({ ...item, metrics: measurer.measureText(item.text, { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT, fontWeight: item.framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT }) }))
     const height = Math.max(...measured.map(item => item.metrics.h + (item.framed ? nativeStyle.text * (7 / 16) : 0)))
     const top = orderBottom + minimumCoreGap
     let x = margin
@@ -156,9 +157,9 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     let rowSvg = ''
     for (const item of row.items) {
       if (item.framed) rowSvg += `<g data-m3n-order-index="${orderIndex++}">`
-      if (item.framed) rowSvg += `<rect${attrs({ x: item.x + 0.5, y: item.y + 0.5, width: item.width - 1, height: item.height - 1, fill: 'none', stroke: '#000', 'stroke-width': 1 })}/>`
+      if (item.framed) rowSvg += `<rect${attrs({ x: item.x + nativeStyle.frameStroke / 2, y: item.y + nativeStyle.frameStroke / 2, width: item.width - nativeStyle.frameStroke, height: item.height - nativeStyle.frameStroke, fill: 'none', stroke: '#000', 'stroke-width': nativeStyle.frameStroke })}/>`
       rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, SCORE_TEXT_FONT, {
-        'font-weight': item.framed ? 700 : SCORE_TEXT_WEIGHT,
+        'font-weight': item.framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT,
         'data-m3n-role': item.framed ? 'order' : item.text === '→' ? 'order-arrow' : 'order-prefix',
       })
       if (item.framed) rowSvg += '</g>'

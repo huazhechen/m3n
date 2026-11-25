@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeStyle } from './native-style.js'
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -12,7 +13,7 @@ export function numberedOrderLines(order: readonly string[] | undefined, availab
   const lines: string[][] = []
   let line: string[] = [], used = text('演奏顺序：') + gap
   for (const name of order?.filter(Boolean) ?? []) {
-    const framed = text(name, 700) + frameInset * 2
+    const framed = text(name, scoreLayoutConfig.fonts.boldWeight) + frameInset * 2
     const addition = framed + (line.length ? arrow + gap * 2 : 0)
     if (used + addition > available + 1e-6 && line.length) {
       lines.push(line); line = []; used = continuation

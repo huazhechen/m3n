@@ -1,7 +1,7 @@
 import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { scoreExportFooter } from './score-export-footer.js'
 /** Combine the unchanged SVG pages, with a width-relative frame around the image. */
-export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06, scoreUrl = 'https://score.cheesefans.com/'): SVGSVGElement {
+export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio: number = scoreLayoutConfig.imageExport.marginRatio, scoreUrl = 'https://score.cheesefans.com/'): SVGSVGElement {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
   if (!Number.isFinite(marginRatio) || marginRatio < 0) throw new Error('图片外边距比例必须是非负有限数值。')
   const sizes = pages.map(page => ({ width: page.viewBox.baseVal.width, height: page.viewBox.baseVal.height }))
@@ -31,7 +31,7 @@ export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .
   const footer = doc.createElementNS(ns, 'text')
   footer.textContent = scoreExportFooter(scoreUrl).text
   footer.setAttribute('x', String(width + margin))
-  footer.setAttribute('y', String(height + margin * 1.55))
+  footer.setAttribute('y', String(height + margin * scoreLayoutConfig.imageExport.footerMarginRatio))
   footer.setAttribute('text-anchor', 'end')
   footer.setAttribute('font-family', SCORE_TEXT_FONT)
   footer.setAttribute('font-size', String(Math.max(scoreLayoutConfig.imageExport.footerMinimumFontSize, width * scoreLayoutConfig.imageExport.footerFontSizeWidthRatio)))

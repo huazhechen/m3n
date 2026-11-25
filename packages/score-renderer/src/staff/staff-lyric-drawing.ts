@@ -1,4 +1,4 @@
-import { lyricSpacing, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { STAFF_SCALE } from './staff-engine.js'
 import { element, type Ink, type FontInk, type MeasureText, type XmlNode } from './layout-svg.js'
 
@@ -30,14 +30,14 @@ class LyricDrawing implements XmlNode {
     }
     if (underlineWidth !== undefined) {
       const width = this.underlineWidth = underlineWidth
-      const left = x - width / 2, right = left + width, half = 1 / STAFF_SCALE / 2
-      this.numericInk.push({ left: Math.min(left, right) - half, right: Math.max(left, right) + half, top: y + 4 - half, bottom: y + 4 + half })
+      const left = x - width / 2, right = left + width, half = scoreLayoutConfig.staff.lyricUnderlineHalfWidth / STAFF_SCALE
+      this.numericInk.push({ left: Math.min(left, right) - half, right: Math.max(left, right) + half, top: y + scoreLayoutConfig.staff.engine.lyricUnderlineOffset - half, bottom: y + scoreLayoutConfig.staff.engine.lyricUnderlineOffset + half })
     }
   }
   renderNodes(): Array<XmlNode | string> {
     const text = element('text', { x: String(this.x), y: String(this.y), 'font-size': String(lyricSpacing.fontSize / STAFF_SCALE), 'font-family': SCORE_TEXT_FONT, 'text-anchor': 'middle' }, [this.textValue])
     const children = [text]
-    if (this.underlineWidth !== undefined) children.push(element('path', { d: `M${this.x - this.underlineWidth / 2} ${this.y + 4} h${this.underlineWidth}`, stroke: '#000', 'stroke-width': String(1 / STAFF_SCALE), fill: 'none' }))
+    if (this.underlineWidth !== undefined) children.push(element('path', { d: `M${this.x - this.underlineWidth / 2} ${this.y + scoreLayoutConfig.staff.engine.lyricUnderlineOffset} h${this.underlineWidth}`, stroke: '#000', 'stroke-width': String(scoreLayoutConfig.staff.lyricUnderlineHalfWidth * 2 / STAFF_SCALE), fill: 'none' }))
     return [element('g', { class: 'syl' }, children)]
   }
 }

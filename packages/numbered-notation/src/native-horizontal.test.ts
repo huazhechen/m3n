@@ -45,9 +45,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [47.66770, 48.07841, 46.86327].entries())
+        for (const [index, gap] of [47.63508, 48.01119, 46.78912].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(339.36781, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(339.17616, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -58,9 +58,9 @@ describe('native spacing and measured note envelopes', () => {
         const source = '{4/4}\nN: ' + Array(9).fill('(5 6) 6~ 6^ |').join(' ')
             + '\n---\nN: ||: 0 0 (0 3) (6 7) | (1e 3) (1e 7~) (7 6) (5 6~) |';
         const result = layout(source, 800, narrowSpacing);
-        // The repeat opening is included once in the minimum-width chain.
+        // The repeat opening is included once; sustain widths include both round caps.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(77.83102740320373, 5);
+        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(80.55102740320353, 5);
         const opening = result.projection.measures[9]!;
         expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(135.41860242849134, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);

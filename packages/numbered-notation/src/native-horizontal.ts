@@ -49,18 +49,18 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
-  const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / 12
+  const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / nativeStyle.spacingReference
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
     cells: lanes.map(lane => minimumCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
     const geometry = nativeBarMetrics(kind)
-    const prefix = !opening && measure.navigation?.length ? 4.4 + measure.navigation.reduce((sum, mark) => sum + mark.width + 4.4, 0) : 0
+    const prefix = !opening && measure.navigation?.length ? nativeStyle.navigationGap + measure.navigation.reduce((sum, mark) => sum + mark.width + nativeStyle.navigationGap, 0) : 0
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
     items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
       // A bar has no musical duration; only its clearance matches a quarter note.
-      cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, 6, scale)) })
+      cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, nativeStyle.quarterClearance, scale)) })
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
@@ -70,7 +70,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       // Entry navigation consumes no musical time, but reserves quarter-note
       // clearance on both sides, with the same elastic weight as a barline.
       const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor,
-        control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, 6, scale))
+        control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, nativeStyle.quarterClearance, scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A section heading introduces the repeat, rather than belonging inside it.
@@ -83,7 +83,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
       }
       const cells = column.glyphs.map(glyph => {
-        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, 6, scale)
+        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, nativeStyle.quarterClearance, scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -305,8 +305,8 @@ export function placeNativeHorizontal(measures: NativeMeasure[], options: Horizo
     else if (item.opening) item.measure.openingBarX = position
     else {
       item.measure.barX = position
-      let cursor = position - item.left + 4.4
-      for (const mark of item.measure.navigation ?? []) { mark.x = cursor; cursor += mark.width + 4.4 }
+      let cursor = position - item.left + nativeStyle.navigationGap
+      for (const mark of item.measure.navigation ?? []) { mark.x = cursor; cursor += mark.width + nativeStyle.navigationGap }
     }
   })
   return glyphs

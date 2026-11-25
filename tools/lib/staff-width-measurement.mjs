@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareStaffScore } from '@m3n/score-renderer/staff'
 import { a4SourcePageHeight } from '@m3n/score-renderer'
 import { auditStaffInkCollisions, auditStaffSystemCollisions, staffInkBounds } from './staff-ink-collisions.mjs'
@@ -26,7 +27,7 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   timings.svgRenderMs = performance.now() - stage
   if (pages.length !== pageCount || !pageCount) throw new Error('Staff pagination mismatch')
   const host = document.createElement('div')
-  host.style.cssText = 'position:absolute;left:-100000px;top:0'
+  host.style.cssText = `position:absolute;left:${scoreLayoutConfig.rendering.auditOffscreenPosition}px;top:0`
   document.body.append(host)
   const outside = [], overlaps = []
   try {

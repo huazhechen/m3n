@@ -60,7 +60,7 @@ export class PreparedNumberedNotationScore {
 }
 
 /** Same shared-page fitting as the script, reusing this export's measured rows. */
-export function renderSharedPreparedNumberedNotationScores(scores: readonly PreparedNumberedNotationScore[], scoreGap = 22) {
+export function renderSharedPreparedNumberedNotationScores(scores: readonly PreparedNumberedNotationScore[], scoreGap = nativeStyle.sharedScoreGap) {
   if (scores.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
   const width = scores[0]!.width
@@ -75,7 +75,7 @@ export function renderSharedPreparedNumberedNotationScores(scores: readonly Prep
 }
 
 /** Whole scores on one page, sharing one core parameter and one logical width. */
-export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = 22) {
+export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = nativeStyle.sharedScoreGap) {
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
   const minimum = Math.max(...documents.map(document => document.minimumCoreGap ?? nativeStyle.minimumCoreGap))

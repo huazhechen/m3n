@@ -1,3 +1,5 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
+import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeDotInk } from './bravura.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -22,13 +24,13 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   if (glyph.sustain) {
     const axis = glyph.y + nativeMusicAxis(measurer)
-    line(glyph.x - 4.62, axis, glyph.x + 4.62, axis, 2.2)
+    line(glyph.x - nativeStyle.sustainHalfWidth, axis, glyph.x + nativeStyle.sustainHalfWidth, axis, nativeStyle.sustainStroke)
     return pieces
   }
   const body = nativeNoteBody(measurer), beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
   for (const [index, pitch] of glyph.pitches.entries()) {
     const x = glyph.x, y = glyph.y + (glyph.pitchOffsets?.[index] ?? 0)
-    const metrics = measurer.measureText(pitch.degree, { fontSize: size, fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal', textAlign: 'center' })
+    const metrics = measurer.measureText(pitch.degree, { fontSize: size, fontFamily: SCORE_NUMBER_FONT, fontWeight: scoreLayoutConfig.fonts.regularWeight, fontStyle: 'normal', textAlign: 'center' })
     const qx = n(x), qy = n(y)
     const left = (metrics.centerOffset ? n(x - metrics.centerOffset) : qx) - (metrics.advance ?? metrics.w) / 2
     pieces.push({ left: left + (metrics.inkLeft ?? 0), right: left + (metrics.inkRight ?? metrics.w),
@@ -41,7 +43,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
   const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + 4.29 + index * 5.94, glyph.y + body.dotY, 1.65)
+  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + nativeStyle.dotFirstOffset + index * nativeStyle.dotStep, glyph.y + body.dotY, nativeStyle.dotRadius)
   const beams = Math.max(0, Math.round(-Math.log2(base)))
   for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
   return pieces

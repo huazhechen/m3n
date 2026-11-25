@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -31,7 +32,7 @@ try {
     ? route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
     : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html>' }))
   await page.goto('http://work-widths.local/')
-  await page.setContent('<style>body{margin:0}#scratch{position:absolute;left:-20000px;top:0}</style><div id="scratch"></div>')
+  await page.setContent(`<style>body{margin:0}#scratch{position:absolute;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0}</style><div id="scratch"></div>`)
   await page.addScriptTag({ url: 'http://work-widths.local/bundle.js' })
   await page.evaluate(font => window.scorebook.prepare(font), font.toString('base64'))
   for (const { file, source } of inputs) {

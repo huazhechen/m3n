@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeMusicAxis } from './native-axis.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeStyle } from './native-style.js'
@@ -14,10 +15,10 @@ export function measureNativeNavigation(name: 'fine' | 'dc' | 'ds' | 'tocoda', m
   const text = name === 'tocoda' ? 'To Coda' : name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.'
   const size = name === 'fine' ? nativeStyle.fine : nativeStyle.navigation
   const family = SCORE_TEXT_FONT, painter = new NativeSymbols(measurer)
-  const metrics = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: 500 })
-  const raw = nativeSvgInk(painter.text(text, 0, 0, size, family, { 'font-weight': 500 }), measurer)
+  const metrics = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: scoreLayoutConfig.fonts.textWeight })
+  const raw = nativeSvgInk(painter.text(text, 0, 0, size, family, { 'font-weight': scoreLayoutConfig.fonts.textWeight }), measurer)
   const axis = nativeMusicAxis(measurer)
   const left = Math.min(0, raw.left), baseline = axis - (raw.top + raw.bottom) / 2
-  const svg = painter.text(text, -left, baseline, size, family, { 'data-m3n-role': 'navigation', 'font-weight': 500 })
+  const svg = painter.text(text, -left, baseline, size, family, { 'data-m3n-role': 'navigation', 'font-weight': scoreLayoutConfig.fonts.textWeight })
   return { text, size, width: Math.max(metrics.advance ?? metrics.w, raw.right) - left, svg, ink: nativeSvgInk(svg, measurer) }
 }

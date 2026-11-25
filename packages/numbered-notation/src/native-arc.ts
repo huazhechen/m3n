@@ -23,8 +23,8 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   const covered = selected.length ? selected : members
   const automaticHeight = (peer: NativeRelation) => {
     const tie = peer.kind === 'tie'
-    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / (tie ? nativeStyle.tieFullHeightSpan : 55))
-    return (tie ? nativeStyle.tieHeight : 11) * ratio * (2 - ratio)
+    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / (tie ? nativeStyle.tieFullHeightSpan : nativeStyle.arcFullHeightSpan))
+    return (tie ? nativeStyle.tieHeight : nativeStyle.arcHeight) * ratio * (2 - ratio)
   }
   const peers = relation.arcGroup === undefined ? [relation] : system.relations.filter(peer =>
     peer.arcGroup === relation.arcGroup && members.includes(peer.first) && members.includes(peer.last))
@@ -43,7 +43,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // span, rather than drawing a fixed hook followed by a horizontal strip.
   const localSpan = Math.max(0, right - left)
   const height = complete ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight))
-    : relation.kind === 'slur' ? Math.min(17.6, 4.4 + .44 * Math.sqrt(localSpan))
+    : relation.kind === 'slur' ? Math.min(nativeStyle.brokenSlurMaximumHeight, nativeStyle.brokenSlurMinimumHeight + nativeStyle.brokenSlurHeightFactor * Math.sqrt(localSpan))
       : Math.min(nativeStyle.tieHeight, nativeStyle.tieHeight * Math.sqrt(localSpan / nativeStyle.tieFullHeightSpan))
   // Every fragment is a tapered bow. Ties use a flatter, thinner profile and
   // never inherit a neighbouring slur's phrase height or a horizontal band.

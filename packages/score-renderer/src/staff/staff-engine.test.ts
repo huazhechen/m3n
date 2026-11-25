@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { findAll, SvgGeometry } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
@@ -141,3 +142,23 @@ it('keeps above-staff articulations clear of upward stems and beams', () => {
     expect(geometry.ink(mark).bottom).toBeLessThan(Math.min(...note.ys, note.stemEnd))
   }
 })
+
+it.each([12, 18])('measures tuplet bracket clearance with the configured %spx label', size => {
+  const previous = scoreLayoutConfig.staff.tuplet;
+  scoreLayoutConfig.staff.tuplet = size;
+  try {
+    const measure = projectStaffDocument(analyzeM3N('{4/4}\nN: [1 2 3:2] 4 5 |').score).measures[0]!;
+    const measured = (_text: string, fontSize: number) => ({ width: fontSize * 0.6, left: 0, right: fontSize * 0.6, ascent: fontSize, descent: 0 });
+    const result = createStaffMeasure(measure, true, false, measured, 0.25);
+    const drawing = drawStaffMeasure(result, result.minimum, 0);
+    const label = findAll(drawing, n => n.attributes.class === 'tupletNum')[0]!;
+    const text = findAll(label, n => n.tagName === 'text')[0]!;
+    const geometry = new SvgGeometry(label, measured);
+    const paths = findAll(label, n => n.tagName === 'path');
+    const center = Number(text.attributes.x), width = measured('3', size / scoreLayoutConfig.staff.engine.scale).width;
+    expect(Number(text.attributes['font-size'])).toBe(size / scoreLayoutConfig.staff.engine.scale);
+    expect(text.attributes['font-family']).toBe(scoreLayoutConfig.fonts.text);
+    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - scoreLayoutConfig.staff.engine.tupletTextGap + scoreLayoutConfig.staff.engine.lineStroke / 2);
+    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + scoreLayoutConfig.staff.engine.tupletTextGap - scoreLayoutConfig.staff.engine.lineStroke / 2);
+  } finally { scoreLayoutConfig.staff.tuplet = previous; }
+});

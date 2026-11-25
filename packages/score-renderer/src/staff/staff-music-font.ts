@@ -1,8 +1,9 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import glyphs from './staff-glyphs.json' with { type: 'json' }
 import { element, type Ink, type XmlNode } from './layout-svg.js'
 
 export type StaffGlyph = keyof typeof glyphs
-export const STAFF_MUSIC_SIZE = 40 // SMuFL: one em = four staff spaces.
+export const STAFF_MUSIC_SIZE = scoreLayoutConfig.staff.music / scoreLayoutConfig.staff.engine.scale // SMuFL: one em = four staff spaces.
 export const staffGlyphMetrics = (name: StaffGlyph, size = STAFF_MUSIC_SIZE) => {
   const g = glyphs[name]
   return { left: g.left * size, right: g.right * size, top: g.top * size, bottom: g.bottom * size, advance: g.advance * size }
@@ -33,9 +34,9 @@ class MusicCharacter implements XmlNode {
     this.numericInk = staffCharacterInk(glyphs[name].character, size, x, y)
   }
   renderNodes(): XmlNode[] {
-    return [element('g', this.attributes, [element('text', { x: '0', y: '0', 'font-size': '1000',
-      transform: `matrix(${this.size / 1000} 0 0 ${this.size / 1000} ${this.x} ${this.y})`,
-      'font-family': 'Bravura', 'font-weight': 'normal', 'font-style': 'normal', 'aria-hidden': 'true',
+    return [element('g', this.attributes, [element('text', { x: '0', y: '0', 'font-size': String(scoreLayoutConfig.fonts.measurementSize),
+      transform: `matrix(${this.size / scoreLayoutConfig.fonts.measurementSize} 0 0 ${this.size / scoreLayoutConfig.fonts.measurementSize} ${this.x} ${this.y})`,
+      'font-family': scoreLayoutConfig.fonts.music, 'font-weight': String(scoreLayoutConfig.fonts.regularWeight), 'font-style': 'normal', 'aria-hidden': 'true',
       'data-m3n-glyph': this.name }, [glyphs[this.name].character])])]
   }
 }
