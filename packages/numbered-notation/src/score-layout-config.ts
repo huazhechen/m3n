@@ -121,12 +121,12 @@ const scorebook = {
   columnStep: 377, contentsRowsTop: 120, contentsBottomInset: 40, pageNumberOffset: 337,
 } as const
 
-// 页面宽度 1–9 档：24px 的 24–32 倍；合页在 28 倍（第 5 档）检查准入。
+// 页面宽度 1–9 档：24px 的 24–32 倍；合页固定在 24 倍（第 1 档）检查准入并排版。
 const pageWidth = {
   unit: numbered.music,
   minimumMultiple: 24,
   maximumMultiple: 32,
-  sharedMaximumMultiple: 28,
+  sharedMaximumMultiple: 24,
   defaultMultiple: 30,
   // 页面手动滑条范围，独立于自动搜索的九档。
   manualMinimumMultiple: 20,

@@ -23,49 +23,49 @@ test('prefer fewer A4 pages, then the shared quality score, excluding unsafe ren
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 672)
-  ? candidates : [...candidates, candidate(672, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 576)
+  ? candidates : [...candidates, candidate(576, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('672px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
+test('576px determines sharing eligibility and the shared page width', () => {
   assert.equal(sharedPreferredWidth, 576)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(320)), entry('B', make(320))]
   assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 576, pageCount: 1 }])
-  entries[1].candidates.find(item => item.width === 672).overlaps.push('lyric')
+  entries[1].candidates.find(item => item.width === 576).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
 })
 
-test('shared widths stop at 672px while solo selection can still choose 768px', () => {
-  assert.equal(sharedWidthMaximum, 672)
-  assert.deepEqual(sharedWidthCandidates, [576, 600, 624, 648, 672])
+test('shared widths stop at 576px while solo selection can still choose 768px', () => {
+  assert.equal(sharedWidthMaximum, 576)
+  assert.deepEqual(sharedWidthCandidates, [576])
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
-    { qualityScore: width === 768 ? 10 : width === 720 ? 9 : width === 696 ? 8 : width === 672 ? 2 : 1 }))))
+    { qualityScore: width === 768 ? 10 : width === 720 ? 9 : width === 696 ? 8 : width === 576 ? 2 : 1 }))))
   assert.equal(chooseBestWidth(entries[0].candidates).width, 768)
-  assert.equal(packScorebook(entries)[0].width, 672)
-  assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 672)
+  assert.equal(packScorebook(entries)[0].width, 576)
+  assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 576)
 })
 
-test('passing 768px or narrower widths cannot bypass 672px admission', () => {
-  for (const atAdmission of [candidate(672, 250, 2), candidate(672, 520)]) {
-    const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 250), atAdmission, candidate(768, 250)]))
+test('passing wider widths cannot bypass 576px admission', () => {
+  for (const atAdmission of [candidate(576, 250, 2), candidate(576, 520)]) {
+    const entries = ['A', 'B'].map(title => entry(title, [atAdmission, candidate(600, 250), candidate(768, 250)]))
     assert.equal(packScorebook(entries).length, 2)
     assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups.length, 2)
   }
 })
 
-test('a shared page prefers balanced quality over the narrowest feasible width', () => {
+test('a shared page stays at 576px even when wider candidates score higher', () => {
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
     { qualityScore: width === 648 ? 2 : .5 })) ))
-  assert.equal(packScorebook(entries)[0].width, 648)
-  entries[1].candidates.find(item => item.width === 648).outside.push('ink')
-  assert.notEqual(packScorebook(entries)[0].width, 648)
+  assert.equal(packScorebook(entries)[0].width, 576)
+  entries[1].candidates.find(item => item.width === 576).outside.push('ink')
+  assert.equal(packScorebook(entries).length, 2)
 })
 
 test('packing optimizes the complete sequence instead of greedily choosing the narrowest first page', () => {
-  const entries = [200, 200, 700, 200].map((height, index) => entry(String(index), [candidate(600, height), candidate(696, height), candidate(672, height)]))
+  const entries = [200, 200, 560, 200].map((height, index) => entry(String(index), [candidate(600, height), candidate(696, height), candidate(576, height)]))
   const packed = packScorebook(entries)
   assert.equal(packed.length, 2)
-  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 600], [2, 4, 672]])
+  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 576], [2, 4, 576]])
 })
 
 test('section boundaries, explicit breaks, opt-outs and long works stay on separate pages', () => {
@@ -74,7 +74,7 @@ test('section boundaries, explicit breaks, opt-outs and long works stay on separ
     assert.equal(packScorebook([entry('A', short), entry('B', short, extra)]).length, 2)
   }
   assert.deepEqual(packScorebook([entry('A', [candidate(600, undefined, 2)]), entry('B', short)]), [
-    { start: 0, end: 1, width: 600, pageCount: 2 }, { start: 1, end: 2, width: 600, pageCount: 1 },
+    { start: 0, end: 1, width: 576, pageCount: 2 }, { start: 1, end: 2, width: 576, pageCount: 1 },
   ])
   assert.deepEqual(packScorebook([]), [])
 })
@@ -152,7 +152,7 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 36)
   const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 455), candidate(600, 455), candidate(768, 515)]))
-  // The 672px admission check rejects the combined height, even if 768px fits.
+  // The 576px admission check rejects the combined height, even if 768px fits.
   assert.equal(packScorebook(entries).length, 2)
   for (const work of entries) work.candidates[1] = candidate(600, 450)
   assert.equal(packScorebook(entries).length, 2) // 936px exceeds the 600px capacity.
@@ -227,7 +227,7 @@ test('shared packing ignores off-level and above-threshold candidates', () => {
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250))))
   for (const work of entries) work.candidates.push(candidate(588, 250, 1, { qualityScore: 100 }))
   assert.equal(packScorebook(entries)[0].width, 576)
-  assert(sharedWidthCandidates.every(width => widthCandidates.includes(width) && width <= 672))
+  assert(sharedWidthCandidates.every(width => widthCandidates.includes(width) && width <= 576))
 })
 
 for (const coarseBest of [576, 648, 768]) {
