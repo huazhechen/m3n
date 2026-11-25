@@ -3,7 +3,6 @@ import { unionNativeInk, translateNativeInk, type NativeInk } from './native-ink
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeMusicAxis } from './native-axis.js'
 import type { TextMeasurer } from './native-measure.js'
-import { nativeEm as em } from './native-style.js'
 import { attrs, circle } from './native-symbols.js'
 import { nativeBarMetrics, nativeMeasureBars } from './native-horizontal.js'
 import type { NativeMeasure } from './native-model.js'
@@ -12,8 +11,8 @@ import type { NativeMeasure } from './native-model.js'
 export function nativeMeasureBarPositions(measures: NativeMeasure[], index: number) {
   const measure = measures[index]!, marks = nativeMeasureBars(measures, index)
   const positions: { kind: string; x: number }[] = []
-  if (marks.opening) positions.push({ kind: 'rptstart', x: measure.openingBarX ?? measure.start + em(2) })
-  if (marks.closing !== undefined) positions.push({ kind: marks.closing, x: measure.barX ?? measure.end - em(3) })
+  if (marks.opening) positions.push({ kind: 'rptstart', x: measure.openingBarX ?? measure.start + 2 })
+  if (marks.closing !== undefined) positions.push({ kind: marks.closing, x: measure.barX ?? measure.end - 3 })
   return positions
 }
 

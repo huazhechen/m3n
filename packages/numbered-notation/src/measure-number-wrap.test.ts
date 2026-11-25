@@ -18,7 +18,7 @@ it.each(sources.map((source, index) => ({ source, index })))('keeps fixed-spacin
             }) {
                 return { w: [...text].reduce((sum, character) => sum + style.fontSize * (character.codePointAt(0)! > 127 ? 1 : .5), 0), h: style.fontSize, baseline: style.fontSize * .8 };
             } };
-        const svg = NumberedNotationScore.create(document).render({ width: 320, paged: false, pageMargin: 11, textMeasurer, measureNumbers, minimumNoteGapEm: .4 });
+        const svg = NumberedNotationScore.create(document).render({ width: 320, paged: false, pageMargin: 11, textMeasurer, measureNumbers, minimumNoteGap: 9 });
         const root = new DOMParser().parseFromString(svg.join(''), 'text/html');
         return [...root.querySelectorAll('g.system')].map(system => [...system.querySelectorAll('g.note')].map(note => note.getAttribute('data-m3n-id'))).filter(notes => notes.length);
     };

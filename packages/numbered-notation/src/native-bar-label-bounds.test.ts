@@ -9,7 +9,7 @@ import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 const measurer = new DefaultTextMeasurer()
 
 describe('bar labels with small page margins', () => {
-  it.each([false, true].flatMap(paged => [0, 22 * .2].map(pageMargin => ({ paged, pageMargin }))))('keeps multi-digit measure numbers and repeat counts in the canvas: $paged/$pageMargin', ({ paged, pageMargin }) => {
+  it.each([false, true].flatMap(paged => [0, 24 * .2].map(pageMargin => ({ paged, pageMargin }))))('keeps multi-digit measure numbers and repeat counts in the canvas: $paged/$pageMargin', ({ paged, pageMargin }) => {
     const width = 320
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 |'), { width, paged, pageMargin, textMeasurer: measurer })
     const system = score.systems[0]!
@@ -43,4 +43,18 @@ it.each(['|', '||', '|||', ':||'])('aligns the white-backed number to the painte
   expect(background!.right).toBeCloseTo(text!.right, 4)
   expect(text!.right).toBeCloseTo(barInk.right, 4)
   expect(text!.bottom).toBeCloseTo(barInk.top - 2, 4)
+})
+
+it.each([false, true].flatMap(paged => ['', '{lg}1 2 3 4{/} |{br}'].map(decoration => ({ paged, decoration }))))('reserves the same actual number bounds with labels shown or hidden ($paged/$decoration)', ({ paged, decoration }) => {
+  const document = parseM3NDocument('{4/4}\nN: ' + decoration + '1 2 3 4 |{br} '.repeat(24))
+  const options = { width: 320, pageMargin: 0, paged, textMeasurer: measurer }
+  const hidden = layoutNativeScore(document, options)
+  const visible = layoutNativeScore(document, { ...options, measureNumbers: true })
+  const geometry = (layout: typeof hidden) => ({
+    pages: layout.pages.map(page => [page.height, page.coreGap]),
+    systems: layout.systems.map(system => [system.page, system.top, system.bottom, ...system.lanes.map(lane => lane.y)]),
+    notes: layout.projection.glyphs.map(glyph => [glyph.x, glyph.y]),
+  })
+  expect(geometry(hidden)).toEqual(geometry(visible))
+  expect(hidden.systems.flatMap(system => system.decorationLayout ?? []).some(label => label.hidden)).toBe(true)
 })

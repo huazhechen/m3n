@@ -4,7 +4,7 @@ import { nativeMusicAxis } from './native-axis.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import { nativeBodyPieces } from './native-music-ink.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, n, line, circle } from './native-symbols.js'
 import { nativeGraceGeometry } from './native-grace.js'
 import { nativeMarkStack } from './native-marks.js'
@@ -106,7 +106,7 @@ export class NativeMusicPainter extends NativeSymbols {
       glyph.pitches.forEach((pitch, index) => { music += this.pitch(pitch, glyph.x, glyph.y + (glyph.pitchOffsets?.[index] ?? 0), nativeStyle.music, index === 0 ? beamCount : 0) })
       const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
       const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-      for (let index = 0; index < dots; index++) music += circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65), this.measurer)
+      for (let index = 0; index < dots; index++) music += circle(glyph.x + body.width / 2 + 4.29 + index * 5.94, glyph.y + body.dotY, 1.65, this.measurer)
       const beams = Math.max(0, Math.round(-Math.log2(base)))
       for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) music += line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
     }

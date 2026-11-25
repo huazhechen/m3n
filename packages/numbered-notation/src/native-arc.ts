@@ -1,5 +1,5 @@
 import { nativeSvgNumber as n } from './native-svg-number.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import { prepareNativeArc, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
@@ -22,8 +22,8 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
     && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
   const covered = selected.length ? selected : members
   const automaticHeight = (peer: NativeRelation) => {
-    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / em(55))
-    return em(11) * ratio * (2 - ratio)
+    const ratio = Math.min(1, Math.abs(peer.last.x - peer.first.x) / 55)
+    return 11 * ratio * (2 - ratio)
   }
   const peers = relation.arcGroup === undefined ? [relation] : system.relations.filter(peer =>
     peer.arcGroup === relation.arcGroup && members.includes(peer.first) && members.includes(peer.last))
@@ -41,7 +41,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // Bezier bow, including intermediate systems. Scale its rise to this local
   // span, rather than drawing a fixed hook followed by a horizontal strip.
   const height = complete ? Math.max(automaticHeight(relation), ...peers.map(automaticHeight))
-    : relation.kind === 'slur' ? Math.min(em(17.6), em(4.4) + em(.44) * Math.sqrt(Math.max(0, right - left) / em(1))) : em(9.9)
+    : relation.kind === 'slur' ? Math.min(17.6, 4.4 + .44 * Math.sqrt(Math.max(0, right - left) / 1)) : 9.9
   if (complete || relation.kind === 'slur') {
     const run = (right - left) / 4, outer = height * 4 / 3, inner = Math.max(0, height - thickness) * 4 / 3
     commands.push({ op: 'M', x: left, y: port },

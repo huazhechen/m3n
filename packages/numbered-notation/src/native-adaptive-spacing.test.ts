@@ -16,11 +16,11 @@ describe('page-aware automatic note spacing', () => {
     const source = readFileSync(new URL('../../../src/scores/por_una_cabeza_01.m3n', import.meta.url), 'utf8')
     const document = parseM3NDocument(source), before = structuredClone(document)
     const settings = { ...options, width: 540 }
-    const compact = layoutNativeScore(document, { ...settings, minimumNoteGapEm: .4 })
+    const compact = layoutNativeScore(document, { ...settings, minimumNoteGap: 9 })
     const automatic = layoutNativeScore(document, settings)
-    expect(automatic.options.minimumNoteGapEm).toBe(.4)
+    expect(automatic.options.minimumNoteGap).toBe(9)
     expect(automatic.pages).toHaveLength(compact.pages.length)
-    const wider = layoutNativeScore(document, { ...settings, minimumNoteGapEm: .6 })
+    const wider = layoutNativeScore(document, { ...settings, minimumNoteGap: 15 })
     expect(wider.pages).toHaveLength(compact.pages.length)
     expect(nativeLayoutScore(automatic)).toBeGreaterThan(nativeLayoutScore(wider))
     expect(document).toEqual(before)
@@ -30,12 +30,12 @@ describe('page-aware automatic note spacing', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + '(1 2 3 4 5 6 7 1e) | '.repeat(31))
     const settings = { ...options, width: 540 }
     const automatic = layoutNativeScore(document, settings)
-    expect(automatic.options.minimumNoteGapEm).toBe(.4)
+    expect(automatic.options.minimumNoteGap).toBe(9)
     expect(automatic.pages).toHaveLength(1)
-    expect(layoutNativeScore(document, { ...settings, minimumNoteGapEm: .6 }).pages.length).toBeGreaterThan(1)
+    expect(layoutNativeScore(document, { ...settings, minimumNoteGap: 15 }).pages.length).toBeGreaterThan(1)
     for (const coreGap of [undefined, 32]) {
       const continuous = layoutNativeScore(document, { ...settings, paged: false, coreGap })
-      expect(continuous.options.minimumNoteGapEm).toBe(automatic.options.minimumNoteGapEm)
+      expect(continuous.options.minimumNoteGap).toBe(automatic.options.minimumNoteGap)
       expect(rows(continuous)).toEqual(rows(automatic))
     }
     const prepared = new PreparedNumberedNotationScore(document, settings)
@@ -43,19 +43,20 @@ describe('page-aware automatic note spacing', () => {
     expect(prepared.renderPaged()).toEqual(NativeNumberedNotationScore.create(document).render(settings))
   })
 
-  it('falls back to 0.4 when every wider step would add a page', () => {
+  it('falls back to 9px when every wider step would add a page', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + '(1 2 3 4 5 6 7 1e) | '.repeat(10))
-    const automatic = layoutNativeScore(document, options)
-    expect(automatic.options.minimumNoteGapEm).toBe(.4)
+    const settings = { ...options, width: 340 }
+    const automatic = layoutNativeScore(document, settings)
+    expect(automatic.options.minimumNoteGap).toBe(9)
     expect(automatic.pages).toHaveLength(1)
-    for (const gap of [.5, .6]) {
-      expect(layoutNativeScore(document, { ...options, minimumNoteGapEm: gap }).pages.length).toBeGreaterThan(1)
+    for (const gap of [12, 15]) {
+      expect(layoutNativeScore(document, { ...settings, minimumNoteGap: gap }).pages.length).toBeGreaterThan(1)
     }
   })
 
   it('honors a fixed spacing override and validates supplied options before probing', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |||')
-    expect(layoutNativeScore(document, { ...options, minimumNoteGapEm: .5 }).options.minimumNoteGapEm).toBe(.5)
+    expect(layoutNativeScore(document, { ...options, minimumNoteGap: 12 }).options.minimumNoteGap).toBe(12)
     expect(() => layoutNativeScore(document, { ...options, coreGap: -1 })).toThrow('非负有限数值')
   })
 })
@@ -65,11 +66,11 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   const document = parseM3NDocument(source), before = structuredClone(document)
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)
-  const candidates = [.4,.5,.6].map(minimumNoteGapEm => layoutNativeScore(document, {
-    ...settings, coreGap:nativeStyle.minimumCoreGap, minimumNoteGapEm,
+  const candidates = [9,12,15].map(minimumNoteGap => layoutNativeScore(document, {
+    ...settings, coreGap:nativeStyle.minimumCoreGap, minimumNoteGap,
   }))
   candidates.sort((a,b) => a.pages.length-b.pages.length || nativeLayoutScore(b)-nativeLayoutScore(a)
-    || a.options.minimumNoteGapEm!-b.options.minimumNoteGapEm!)
+    || a.options.minimumNoteGap!-b.options.minimumNoteGap!)
   const reference = candidates[0]!
   repaginateNativeLayout(reference,true)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(reference))

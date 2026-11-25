@@ -35,7 +35,7 @@ try {
           rowsPerPage: pagination.heights.map((_, index) => pagination.positions.slice(layout.headerBlocks.length).filter(p => p.page === index).length) }
       }
       const before = trial(16), after = trial(24)
-      const current = trial((doc.minimumCoreGapEm ?? 1.2) * 22)
+      const current = trial(doc.minimumCoreGap ?? 28)
       if (current.pages !== layout.pages.length || JSON.stringify(current.coreGaps) !== JSON.stringify(layout.pages.map(p => p.coreGap))) throw new Error('Source spacing trial differs from current renderer')
       if (after.pages !== before.pages || doc.title.includes('Valsentino')) {
         // A fixed 24px render has identical page membership to a 24–32px

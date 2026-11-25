@@ -20,7 +20,7 @@ describe('native annotations', () => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\n===A{br}\nN: ||: ${mark}1 2 3 4eee :|||`), { ...options, textMeasurer: measurer })
     const system = score.systems[0]!, heading = annotations(score).find(item => item.kind === 'section')!
     const coreTop = Math.max(...nativeLanePieces(system, measurer, true).get('melody')!.map(piece => -piece.top))
-    expect(heading.top - heading.height - coreTop).toBeCloseTo(5.6, 6)
+    expect(heading.top - heading.height - coreTop).toBeCloseTo(6, 6)
   })
 
   it('keeps the core gap when a repeat bar slightly exceeds the measured octave-note height', () => {
@@ -32,7 +32,7 @@ describe('native annotations', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\n===B{br}\nN: ||: {f}(1e){tip} (2e){tip} 3e 4e :|||'), { ...options, textMeasurer: measurer })
     const heading = annotations(score).find(item => item.kind === 'section')!
     const coreTop = Math.max(...nativeLanePieces(score.systems[0]!, measurer, true).get('melody')!.map(piece => -piece.top))
-    expect(heading.top - heading.height - coreTop).toBeCloseTo(5.6, 6)
+    expect(heading.top - heading.height - coreTop).toBeCloseTo(6, 6)
   })
 
   it.each(['chord', 'text'])('anchors the first character of a %s to its note', kind => {
@@ -62,7 +62,7 @@ describe('native annotations', () => {
     const ink = nativeSvgInk(nativeAnnotationSvg(item, 0, new NativeSymbols(overhang)), overhang)
     expect(high.x).toBeGreaterThan(32 + 10)
     expect(high.x).toBeLessThan(ink.right)
-    expect(ink.bottom).toBeLessThanOrEqual(-high.top - 5.6 + 1e-8)
+    expect(ink.bottom).toBeLessThanOrEqual(-high.top - 6 + 1e-8)
   })
 
   it('keeps centered heading ink inside both measured frame insets', () => {
@@ -82,7 +82,7 @@ describe('native annotations', () => {
     const arc = nativeArcGeometry(labelled.relations[0]!, labelled.systems[0]!)
     expect(arc).toEqual(nativeArcGeometry(bare.relations[0]!, bare.systems[0]!))
     const text = annotations(labelled)[0]!
-    expect(text.top - text.height).toBeGreaterThanOrEqual(-nativeRibbonRange(arc, text.x - text.width / 2, text.x + text.width / 2)!.top + 5.6 - 1e-8)
+    expect(text.top - text.height).toBeGreaterThanOrEqual(-nativeRibbonRange(arc, text.x - text.width / 2, text.x + text.width / 2)!.top + 6 - 1e-8)
   })
 
   it('clears neighboring high notes covered by the text width', () => {
@@ -90,7 +90,7 @@ describe('native annotations', () => {
     const text = annotations(score)[0]!, high = score.projection.glyphs[2]!
     expect(high.x).toBeGreaterThanOrEqual(text.x - text.width / 2)
     expect(high.x).toBeLessThanOrEqual(text.x + text.width / 2)
-    expect(text.top - text.height).toBeGreaterThanOrEqual(high.top + 5.6 - 1e-8)
+    expect(text.top - text.height).toBeGreaterThanOrEqual(high.top + 6 - 1e-8)
   })
 
   it('does not move a local label for an unrelated high note outside its range', () => {
@@ -102,8 +102,8 @@ describe('native annotations', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\n===A{br}\nN: {chord=C}{text=Play softly}1 2 3 4 |||'), options)
     const [chord, text, section] = annotations(score)
     expect([chord!.kind, text!.kind, section!.kind]).toEqual(['chord', 'text', 'section'])
-    expect(text!.top - text!.height).toBeGreaterThanOrEqual(chord!.top + 5.6 - 1e-8)
-    expect(section!.top - section!.height).toBeGreaterThanOrEqual(text!.top + 5.6 - 1e-8)
+    expect(text!.top - text!.height).toBeGreaterThanOrEqual(chord!.top + 6 - 1e-8)
+    expect(section!.top - section!.height).toBeGreaterThanOrEqual(text!.top + 6 - 1e-8)
     expect(section!.x - section!.width / 2).toBe(32)
     expect(score.systems[0]!.lanes[0]!.top).toBe(section!.top)
   })
@@ -113,7 +113,7 @@ describe('native annotations', () => {
     const glyph = score.projection.glyphs[0]!, text = annotations(score)[0]!
     const pieces = glyph.musicInk!.filter(ink => glyph.x + ink.right > text.x - text.width / 2 && glyph.x + ink.left < text.x + text.width / 2)
     const top = Math.max(...pieces.map(ink => -ink.top))
-    expect(text.top - text.height).toBeCloseTo(top + 5.6, 5)
+    expect(text.top - text.height).toBeCloseTo(top + 6, 5)
     if (wide) expect(top).toBeCloseTo(-glyph.graceLayout!.ink.top, 4)
     else expect(top).toBeLessThan(-glyph.graceLayout!.ink.top)
   })

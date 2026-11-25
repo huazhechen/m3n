@@ -205,7 +205,7 @@ describe('staff layout contract', () => {
   })
   it('fits measured header text, supports leading, and stretches gaps within fixed pages', async () => {
     const render = await prepare(
-      '{title=长标题测试长标题测试长标题测试长标题测试}{leading=0.8}{4/4}\nN: ' +
+      '{title=长标题测试长标题测试长标题测试长标题测试}{leading=18}{4/4}\nN: ' +
         Array.from({ length: 12 }, () => '1 2 3 4 | {br}').join(' ') +
         '1 2 3 4 |||',
       540,

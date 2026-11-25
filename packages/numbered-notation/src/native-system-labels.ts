@@ -19,7 +19,7 @@ export function placeNativeNavigation(system: NativeSystem) {
   }
 }
 
-/** Repeat counts reserve space; row-end numbers overlay the bar without avoidance. */
+/** Always measure row-end numbers for page bounds; visibility only controls painting. */
 export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer, measureNumbers: boolean, width: number) {
   const lane = system.lanes.find(lane => lane.id === 'melody')
   if (!lane) return
@@ -46,20 +46,19 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
         raw = painter.text(text, bar.x + dx, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
         ink = nativeSvgInk(raw, measurer)
       }
-      const y = (rightAligned ? barInk.top - 2 : top - nativeStyle.music * 0.12) - ink.bottom
+      const y = (rightAligned ? barInk.top - nativeStyle.measureNumberBarGap : top - nativeStyle.music * 0.12) - ink.bottom
       if (rightAligned) {
-        lane.top = Math.max(lane.top, -(y + ink.top - 2))
-        raw = `<rect x="${n(ink.left - 2)}" y="${n(ink.top - 2)}" width="${n(ink.right - ink.left + 2)}" height="${n(ink.bottom - ink.top + 4)}" fill="#fff"/>${raw}`
+        raw = `<rect x="${n(ink.left - nativeStyle.measureNumberPadding)}" y="${n(ink.top - nativeStyle.measureNumberPadding)}" width="${n(ink.right - ink.left + nativeStyle.measureNumberPadding)}" height="${n(ink.bottom - ink.top + 2 * nativeStyle.measureNumberPadding)}" fill="#fff"/>${raw}`
       } else {
         top = y + ink.top
         lane.top = Math.max(lane.top, -top)
         regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
       }
       system.decorationLayout ??= []
-      system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>` })
+      system.decorationLayout.push({ lane: lane.id, svg: `<g transform="translate(0 ${n(y)})">${raw}</g>`, ...(rightAligned && !measureNumbers ? { hidden: true } : {}) })
     }
     if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
     const first = glyphs[0]
-    if (measureNumbers && !measure.source.interlude && first && index === system.measures.length - 1) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'measure-number', 'data-m3n-id': first.xmlId })
+    if (!measure.source.interlude && first && index === system.measures.length - 1) place(String(measure.number ?? measure.index + 1), nativeStyle.measureNumber, { 'data-m3n-role': 'measure-number', 'data-m3n-id': first.xmlId })
   }
 }

@@ -15,7 +15,7 @@ describe('native articulation occupancy', () => {
   it.each([['tip', 7], ['brk', 7], ['hold', 1.26], ['str', 6]] as const)('measures %s by its own height', (name, height) => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1{${name}} 2 3 4 |||`), options)
     const glyph = score.projection.glyphs[0]!
-    expect(glyph.top).toBeCloseTo(17.6 + 2.64 + height)
+    expect(glyph.top).toBeCloseTo(19.2 + 2.8 + height)
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(glyph.top)
   })
 
@@ -24,7 +24,7 @@ describe('native articulation occupancy', () => {
     expect(stack.items.map(item => item.name)).toEqual(['tip', 'hold', 'f1', 'tr', 'mf'])
     let bottom = -17.6
     for (const mark of stack.items) {
-      expect(bottom - mark.top - mark.height).toBeCloseTo(2.64)
+      expect(bottom - mark.top - mark.height).toBeCloseTo(2.8)
       bottom = mark.top
     }
     expect(stack.top).toBeCloseTo(-bottom)
@@ -70,8 +70,8 @@ describe('native articulation occupancy', () => {
     for (let index = 1; index < score.systems.length; index++) {
       const upper = nativeSystemCore(score.systems[index - 1]!, score.measurer)!
       const lower = nativeSystemCore(score.systems[index]!, score.measurer)!
-      expect(lower.top - upper.bottom).toBeCloseTo(26.4)
+      expect(lower.top - upper.bottom).toBeCloseTo(28)
     }
-    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(27.24)
+    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(29)
   })
 })

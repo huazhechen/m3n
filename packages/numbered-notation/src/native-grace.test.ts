@@ -16,7 +16,7 @@ const unusual: TextMeasurer = { measureText(text, style) {
   const overhang = style.fontSize * 0.15
   return {w: advance + overhang, h:style.fontSize * 1.1, baseline:style.fontSize * 0.85, advance, inkLeft:-overhang, inkRight:advance, centerOffset:-overhang / 2}
 } }
-const layout = (music: string, textMeasurer: TextMeasurer = normal, width = 800, minimumNoteGapEm?: number) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`),{width,paged:false,textMeasurer,minimumNoteGapEm})
+const layout = (music: string, textMeasurer: TextMeasurer = normal, width = 800, minimumNoteGap?: number) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`),{width,paged:false,textMeasurer,minimumNoteGap})
 
 describe('measured native grace blocks', () => {
   it('uses the ordinary font-relative beam stroke and reserves both round caps', () => {
@@ -89,7 +89,7 @@ describe('measured native grace blocks', () => {
     expect(notes.map(n => n.getAttribute('data-m3n-beams'))).toEqual(['2','3','3'])
     expect(notes.map(n => n.querySelectorAll('line').length)).toEqual([0,0,0])
     expect(grace.querySelectorAll(':scope > line')).toHaveLength(3)
-    expect([...grace.querySelectorAll('text')].map(n => n.getAttribute('font-size'))).toEqual(['15.4','15.4','15.4'])
+    expect([...grace.querySelectorAll('text')].map(n => n.getAttribute('font-size'))).toEqual(['15','15','15'])
     expect(grace.querySelector('path:not([data-m3n-symbol])')!.getAttribute('d')).toContain(' C')
   })
 

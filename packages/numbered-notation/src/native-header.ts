@@ -1,7 +1,7 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from './font-family.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
@@ -19,7 +19,7 @@ export { wrapNativeText }
 export type NativeHeaderPreparation = Map<string, unknown>
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGapEm?:number} = {}, preparation?: NativeHeaderPreparation) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeStyle.headerGap, options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation) {
   const once = <T>(key: string, create: () => T): T => {
     if (!preparation) return create()
     if (preparation.has(key)) return preparation.get(key) as T
@@ -27,24 +27,23 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   }
   const available = width - 2 * margin
   const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
-  const title = once('title',()=>wrapNativeText(document.title, available - em(2), nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
+  const title = once('title',()=>wrapNativeText(document.title, available - 2, nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
   const headerContent = once('content',()=>numberedHeaderContent(document))
-  const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - em(2), nativeStyle.subtitle, measurer)))
+  const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - 2, nativeStyle.subtitle, measurer)))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
-  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT) => once(JSON.stringify([lines,size,weight,family]), () => {
+  const textBlock = (lines: string[], size: number, weight = SCORE_TEXT_WEIGHT, family = SCORE_TEXT_FONT, advance = nativeStyle.subtitleLineHeight) => once(JSON.stringify([lines,size,weight,family,advance]), () => {
     if (!lines.length) return { rows: [], height: 0 }
     const metrics = lines.map(text => measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: weight }))
-    const advance = size * 1.25
     const top = Math.min(...metrics.map((m, index) => index * advance - m.baseline))
     const bottom = Math.max(...metrics.map((m, index) => index * advance - m.baseline + m.h))
     return { rows: lines.map((text, index) => ({ text, baseline: index * advance - top })), height: bottom - top }
   })
-  const titleBlock = textBlock(title, nativeStyle.title, SCORE_TITLE_WEIGHT, SCORE_TITLE_FONT), titleRows = titleBlock.rows
+  const titleBlock = textBlock(title, nativeStyle.title, SCORE_TITLE_WEIGHT, SCORE_TITLE_FONT, nativeStyle.titleLineHeight), titleRows = titleBlock.rows
   let subtitleHeight = 0
   const subtitleRows = subtitleBlocks.flatMap((lines, index) => {
     const block = textBlock(lines, nativeStyle.subtitle)
-    const top = subtitleHeight + (index ? em(5) : 0)
+    const top = subtitleHeight + (index ? nativeStyle.headerRowGap : 0)
     subtitleHeight = top + block.height
     return block.rows.map(row => ({ ...row, baseline: top + row.baseline }))
   })
@@ -52,8 +51,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0
   const creditSvg = headerContent.credits.map((text, index) => {
-    const raw = painter.text(text, width - margin, 0, nativeStyle.annotation, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
-    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? em(5) : 0) - ink.top
+    const raw = painter.text(text, width - margin, 0, nativeStyle.credit, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
+    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? nativeStyle.headerRowGap : 0) - ink.top
     creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
@@ -64,7 +63,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     signatures.push(measureNativeTempo({ unit: document.meterUnit, bpm: document.tempo * document.meterUnit / 4 * (options.tempoScale ?? 1) }, measurer))
   }
   let signatureX = margin
-  const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.text; return raw })
+  const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.signatureItemGap; return raw })
   const range = numberedPitchRange(document,options)
   if (range) {
     const size = nativeStyle.text
@@ -77,7 +76,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     // Display-only notes reserve the measured numeral body, including its
     // advance bearings; zero-duration cells use the minimum clearance.
     const zero = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' })
-    const gap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) * 0.1
+    const gap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * 0.1
     const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,'M3N Numbers')
     const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
     const label = '音域：'
@@ -92,25 +91,25 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const rangeInk = nativeSvgInk(rangeSvg, measurer)
     const wrap = signatureX + rangeInk.right > width - margin
     const rangeX = wrap ? margin : signatureX
-    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + em(5) - rangeInk.top : 0
+    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + nativeStyle.headerRowGap - rangeInk.top : 0
     signaturePieces.push(`<g data-m3n-role="pitch-range" transform="translate(${n(rangeX)} ${n(rangeY)})">${rangeSvg}</g>`)
   }
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
   const titleBottom = margin + titleHeight
-  const sideTop = titleBottom + (titleHeight ? nativeStyle.music * 0.8 : 0)
-  const subtitleTop = titleBottom + (titleHeight ? nativeStyle.music * 0.4 : 0)
-  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.text, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'data-m3n-role': 'subtitle' })).join('')
+  const sideTop = titleBottom + (titleHeight ? nativeStyle.titleSideGap : 0)
+  const subtitleTop = titleBottom + (titleHeight ? nativeStyle.titleSubtitleGap : 0)
+  const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.subtitle, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'data-m3n-role': 'subtitle' })).join('')
   const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
   const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
     ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
   }))
   type Bounds = { left: number; right: number; top: number; bottom: number }
-  const centeredGap = nativeStyle.music * 0.4
+  const centeredGap = nativeStyle.headerCollisionGap
   const forbidden = (moving: Bounds[], obstacles: Bounds[], centered = false) => moving.flatMap(ink => obstacles.flatMap(other =>
     ink.right + nativeStyle.text > other.left + 1e-6 && other.right + (centered ? nativeStyle.text : 0) > ink.left + 1e-6
-      ? [{ start: other.top - ink.bottom - (centered ? centeredGap : 0), end: other.bottom + (centered ? centeredGap : em(5)) - ink.top }] : []))
+      ? [{ start: other.top - ink.bottom - (centered ? centeredGap : 0), end: other.bottom + (centered ? centeredGap : nativeStyle.headerRowGap) - ink.top }] : []))
   const minimumOffset = (intervals: { start: number; end: number }[]) => {
     let offset = 0
     for (const interval of intervals.sort((a, b) => a.start - b.start)) {
@@ -157,7 +156,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     let rowSvg = ''
     for (const item of row.items) {
       if (item.framed) rowSvg += `<g data-m3n-order-index="${orderIndex++}">`
-      if (item.framed) rowSvg += `<rect${attrs({ x: item.x + em(0.5), y: item.y + em(0.5), width: item.width - em(1), height: item.height - em(1), fill: 'none', stroke: '#000', 'stroke-width': em(1) })}/>`
+      if (item.framed) rowSvg += `<rect${attrs({ x: item.x + 0.5, y: item.y + 0.5, width: item.width - 1, height: item.height - 1, fill: 'none', stroke: '#000', 'stroke-width': 1 })}/>`
       rowSvg += painter.text(item.text, item.x + item.textInset, item.baseline, nativeStyle.text, SCORE_TEXT_FONT, {
         'font-weight': item.framed ? 700 : SCORE_TEXT_WEIGHT,
         'data-m3n-role': item.framed ? 'order' : item.text === '→' ? 'order-arrow' : 'order-prefix',

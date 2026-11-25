@@ -26,7 +26,7 @@ describe('native measured-block pagination', () => {
         expect(() => paginateNativeBlocks([{ height: 361 }], options)).toThrow('单个谱行');
     });
 });
-it('fits paged core gaps while keeping continuous core gaps at 1.2em', () => {
+it('fits paged core gaps while keeping continuous core gaps at 28px', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + Array.from({ length: 30 }, () => '1 2 3 4 |').join(' '));
     const options = { width: 320, paged: true };
     const natural = layoutNativeScore(document, options);
@@ -40,10 +40,10 @@ it('fits paged core gaps while keeping continuous core gaps at 1.2em', () => {
     };
     expect(step(natural)).toBeGreaterThanOrEqual(natural.pages[0]!.coreGap! - 1e-6);
     for (const page of natural.pages) {
-        expect(page.coreGap).toBeGreaterThanOrEqual(26.4);
+        expect(page.coreGap).toBeGreaterThanOrEqual(28);
         expect(page.coreGap).toBeLessThanOrEqual(32);
     }
-    expect(step(continuous)).toBeCloseTo(26.4);
+    expect(step(continuous)).toBeCloseTo(28);
     for (const width of [320, 600, 800, 1000]) {
         const paged = layoutNativeScore(document, { width, paged: true });
         const continuous = layoutNativeScore(document, { width, paged: false });
@@ -53,7 +53,7 @@ it('fits paged core gaps while keeping continuous core gaps at 1.2em', () => {
             expect(system.bottom - system.top).toBeCloseTo(counterpart.bottom - counterpart.top);
             const previous = paged.systems[index - 1];
             if (previous?.page === system.page)
-                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(26.4 - 1e-6);
+                expect(system.lanes[0]!.y - previous.lanes[0]!.y).toBeGreaterThanOrEqual(28 - 1e-6);
         });
     }
 });

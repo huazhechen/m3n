@@ -23,12 +23,18 @@ describe('elastic page core parameter', () => {
     expect(following.positions.map(position => position.top)).toEqual([0, 26])
   })
 
-  it('reserves extra top space only on continuation pages before fitting their gaps', () => {
-    const result = paginateNativeBlocks(Array.from({ length: 5 }, () => row()), {
-      pageHeight: 40, margin: 0, gap: 16, maxGap: 32, elastic: true, continuationTopInset: 11,
-    })
-    expect(result.positions.map(position => position.page)).toEqual([0, 0, 1, 2, 3])
-    expect(result.positions.map(position => position.top)).toEqual([0, 30, 11, 11, 11])
+  it.each([0, -20])('reserves only actual overlay overflow at a continuation-page top (music top %s)', musicTop => {
+    const music = row(0, musicTop)
+    const label = { ...music, boundaryInk: [{ left: 0, right: 10, top: -15, bottom: -5 }] }
+    const options = { pageHeight: 40, margin: 0, gap: 16, elastic: true }
+    const ordinary = paginateNativeBlocks([row(), row(), music], options)
+    const numbered = paginateNativeBlocks([row(), row(), label], options)
+    expect(ordinary.positions.map(position => position.page)).toEqual([0, 0, 1])
+    expect(numbered.positions.map(position => position.page)).toEqual([0, 0, 1])
+    expect(ordinary.positions[2]!.top).toBe(0 - musicTop)
+    expect(numbered.positions[2]!.top).toBe(Math.max(-musicTop, 15))
+    // A taller decoration already covers the label; no extra inset is added.
+    if (musicTop < -15) expect(numbered.positions).toEqual(ordinary.positions)
   })
 
   it('scales collision clearance with half the core parameter instead of adding the full increase', () => {
@@ -46,28 +52,28 @@ describe('elastic page core parameter', () => {
     expect(result.coreGaps).toEqual([32])
     expect(result.positions[1]!.top).toBe(42)
   })
-  it('keeps continuous scores at 1.2em while paged layout stretches to 32px', () => {
+  it('keeps continuous scores at 28px while paged layout stretches to 32px', () => {
     const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 |{br} 1 2 3 4 |')
     const continuous = layoutNativeScore(document, { width: 320, paged: false, pageMargin: 0 })
     const paged = layoutNativeScore(document, { width: 320, paged: true, pageMargin: 0 })
-    expect(continuous.pages[0]!.coreGap).toBeCloseTo(26.4)
+    expect(continuous.pages[0]!.coreGap).toBeCloseTo(28)
     expect(paged.pages[0]!.coreGap).toBe(32)
-    expect(paged.systems[1]!.top - paged.systems[0]!.top).toBeCloseTo(continuous.systems[1]!.top - continuous.systems[0]!.top + 5.6, 6)
+    expect(paged.systems[1]!.top - paged.systems[0]!.top).toBeCloseTo(continuous.systems[1]!.top - continuous.systems[0]!.top + 4, 6)
   })
   it('fits whole scores together using one parameter before distributing remaining inter-score space', () => {
     const documents = [4, 4].map(count => parseM3NDocument('{4/4}\nN: ' + Array(count).fill('1 2 3 4 |{br}').join(' ')))
-    const result = renderSharedNumberedNotationScores(documents, { width: 320, pageMargin: 0 }, 22)
-    expect(result.coreGap).toBeGreaterThanOrEqual(26.4)
+    const result = renderSharedNumberedNotationScores(documents, { width: 330, pageMargin: 0 }, 22)
+    expect(result.coreGap).toBeGreaterThanOrEqual(28)
     expect(result.coreGap).toBeLessThan(32)
     expect(result.markup).toHaveLength(2)
-    expect(result.markup).toEqual(documents.map(document => NativeNumberedNotationScore.create(document).render({ width: 320, pageMargin: 0, paged: false, coreGap: result.coreGap })[0]))
-    expect(result.usedHeight).toBeLessThanOrEqual(Math.floor(320 * 273 / 186))
+    expect(result.markup).toEqual(documents.map(document => NativeNumberedNotationScore.create(document).render({ width: 330, pageMargin: 0, paged: false, coreGap: result.coreGap })[0]))
+    expect(result.usedHeight).toBeLessThanOrEqual(Math.floor(330 * 273 / 186))
     // Shared fitting matches each score rendered with that exact parameter.
     const heights = documents.map(document => {
-      const svg = NativeNumberedNotationScore.create(document).render({ width: 320, pageMargin: 0, paged: false, coreGap: result.coreGap })[0]!
+      const svg = NativeNumberedNotationScore.create(document).render({ width: 330, pageMargin: 0, paged: false, coreGap: result.coreGap })[0]!
       return Number(/^<svg\b[^>]*\bheight="([^"]+)"/.exec(svg)![1])
     })
     expect(result.usedHeight).toBeCloseTo(heights[0]! + heights[1]! + result.scoreGap + result.trailingGap, 8)
-    expect(() => renderSharedNumberedNotationScores(Array(20).fill(documents[0]!), { width: 320, pageMargin: 0 })).toThrow('最小核心行距')
+    expect(() => renderSharedNumberedNotationScores(Array(20).fill(documents[0]!), { width: 330, pageMargin: 0 })).toThrow('最小核心行距')
   })
 })

@@ -32,12 +32,12 @@ export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   textMeasurementCache?: NumberedTextMeasurementCache
   layoutTask?: NativeLayoutTask
-  pageMargin?: number; coreGap?: number; minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number
+  pageMargin?: number; coreGap?: number; minimumNoteGap?: number; minimumNoteGapFloor?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -50,7 +50,7 @@ function validate(options: NativeRenderOptions) {
   if (options.tempoScale !== undefined && (!Number.isFinite(options.tempoScale) || options.tempoScale <= 0)) throw new Error('显示速度倍率必须为正有限数值。')
   if (!Number.isFinite(options.width)) throw new Error('简谱宽度必须为有限数值。')
   for (const value of [options.pageMargin, options.coreGap]) if (value !== undefined && (!Number.isFinite(value) || value < 0)) throw new Error('简谱页边距和行距必须为非负有限数值。')
-  if (options.minimumNoteGapEm !== undefined && (!Number.isFinite(options.minimumNoteGapEm) || options.minimumNoteGapEm < 0)) throw new Error('最小音符间距必须为非负有限数值。')
+  if (options.minimumNoteGap !== undefined && (!Number.isFinite(options.minimumNoteGap) || options.minimumNoteGap < 0)) throw new Error('最小音符间距必须为非负有限数值。')
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
 }
 
@@ -227,25 +227,25 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   // Explicit spacing remains a fixed engraving override. Automatic spacing is
   // selected against the same virtual A4 pages in continuous and paged views;
   // custom vertical gaps must not change the horizontal line breaks.
-  if (supplied.minimumNoteGapEm !== undefined) return layoutNativeScoreAtGap(document, supplied, timings, supplied.layoutTask ? preparation : undefined)
-  const minimumCoreGap = document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap
+  if (supplied.minimumNoteGap !== undefined) return layoutNativeScoreAtGap(document, supplied, timings, supplied.layoutTask ? preparation : undefined)
+  const minimumCoreGap = document.minimumCoreGap ?? nativeStyle.minimumCoreGap
   let baseline: NativeLayout
   try {
-    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGapEm: 0.4 }, timings, preparation)
+    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap: nativeStyle.minimumNoteGap }, timings, preparation)
   } catch (error) {
     // Continuous engraving still supports a single row taller than A4.
     if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
-      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGapEm: 0.4 }, timings)
+      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: nativeStyle.minimumNoteGap }, timings)
     }
     throw error
   }
   let selected = baseline
   let selectedScore = nativeLayoutScore(selected)
-  for (let hundredths = 60; hundredths > 40; hundredths -= 10) {
+  for (const minimumNoteGap of nativeStyle.noteGapCandidates.slice(1).reverse()) {
     let candidate: NativeLayout
     try {
       candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGapEm: hundredths / 100, textMeasurer: baseline.measurer }, timings, preparation)
+        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation)
     } catch (error) {
       // Wider spacing can make a decorated row too tall for one A4 page.
       // Other layout failures remain visible instead of becoming fallbacks.
@@ -254,7 +254,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     const score = nativeLayoutScore(candidate)
     if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
-      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGapEm! < selected.options.minimumNoteGapEm!)) {
+      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!)) {
       selected = candidate
       selectedScore = score
     }
@@ -278,15 +278,15 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   }
   if (timings) timings.layoutTrials = (timings.layoutTrials ?? 0) + 1
   validate(supplied)
-  if (document.minimumCoreGapEm !== undefined && (!Number.isFinite(document.minimumCoreGapEm) || document.minimumCoreGapEm < 0)) throw new Error('最小行距必须为非负有限数值。')
+  if (document.minimumCoreGap !== undefined && (!Number.isFinite(document.minimumCoreGap) || document.minimumCoreGap < 0)) throw new Error('最小行距必须为非负有限数值。')
   const headerDocument = document
   const expanded = preparation?.projection ? preparation.expanded
     : supplied.fixedDo && (document.orderKeys?.some(Boolean) || hasPassKeys(document)) ? keyedDisplayPerformance(document) : undefined
   if (expanded) document = expanded.document
-  const minimumNoteGapEm = supplied.minimumNoteGapEm ?? 0.4
-  const minimumNoteGapFloorEm = supplied.minimumNoteGapFloorEm ?? 0
-  if (!Number.isFinite(minimumNoteGapFloorEm) || minimumNoteGapFloorEm < 0 || minimumNoteGapFloorEm > minimumNoteGapEm) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
-  const options = { ...supplied, width: Math.max(320, Math.round(supplied.width)), minimumNoteGapEm, minimumNoteGapFloorEm, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const minimumNoteGap = supplied.minimumNoteGap ?? nativeStyle.minimumNoteGap
+  const minimumNoteGapFloor = supplied.minimumNoteGapFloor ?? 0
+  if (!Number.isFinite(minimumNoteGapFloor) || minimumNoteGapFloor < 0 || minimumNoteGapFloor > minimumNoteGap) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
+  const options = { ...supplied, width: Math.max(320, Math.round(supplied.width)), minimumNoteGap, minimumNoteGapFloor, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
   const margin = options.pageMargin ?? 32
   if (margin * 2 + 40 > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
@@ -309,7 +309,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
         const left = measurer.measureText('(', style), right = measurer.measureText(')', style)
         enclosure = { left: left.w - Math.min(0, left.inkLeft ?? 0), right: Math.max(right.w, right.inkRight ?? right.w) }
       }
-      glyph.parenthesisGap = nativeStyle.music * minimumNoteGapEm
+      glyph.parenthesisGap = minimumNoteGap
       glyph.parenthesisLeft = enclosure.left + glyph.parenthesisGap
       glyph.parenthesisRight = enclosure.right + glyph.parenthesisGap
     }
@@ -402,7 +402,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     for (const [index] of system.measures.entries()) for (const lane of system.lanes) {
       for (const bar of nativeLaneBarPositions(system.measures, index, lane.id)) {
         const ink = nativeBarInk(bar.kind, bar.x, 0, measurer)
-        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top, headingClearance: nativeStyle.music * (2 / 22) })
+        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -ink.top, headingClearance: nativeStyle.headingBarGap })
       }
     }
     relationBounds.set(system, regions)
@@ -508,11 +508,10 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
-  const gap = options.coreGap ?? (document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
+  const gap = options.coreGap ?? (document.minimumCoreGap ?? nativeStyle.minimumCoreGap)
   const pageFitStarted = timings ? performance.now() : 0
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true,
-    continuationTopInset: options.paged ? nativeStyle.music * 0.5 : 0 })
+    margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(nativeStyle.maximumCoreGap, gap) : gap), elastic: true })
   positionNativeLayout(layout, pagination)
   if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
   record('verticalPaginationMs')
@@ -547,11 +546,10 @@ export function nativeContinuousPagination(layout: NativeLayout, coreGap: number
 
 /** Change page membership and vertical spacing without repeating horizontal layout. */
 export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, coreGap?: number) {
-  const gap = coreGap ?? (layout.document.minimumCoreGapEm !== undefined ? layout.document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
+  const gap = coreGap ?? (layout.document.minimumCoreGap ?? nativeStyle.minimumCoreGap)
   const pagination = paginateNativeBlocks(layout.verticalBlocks, {
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, maxGap: coreGap ?? (paged ? Math.max(32, gap) : gap), elastic: true,
-    continuationTopInset: paged ? nativeStyle.music * 0.5 : 0,
+    margin: layout.margin, gap, maxGap: coreGap ?? (paged ? Math.max(nativeStyle.maximumCoreGap, gap) : gap), elastic: true,
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

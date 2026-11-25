@@ -22,10 +22,10 @@ describe('header text blocks in the native implementation', () => {
 
     it('keeps the configured title gap to side information and the smaller gap to a subtitle', () => {
         const withoutSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(22 * 0.8, 8);
+        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(18, 8);
         const withSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{subtitle=副标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(22 * 0.8, 8);
-        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(22 * 0.4, 8);
+        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(18, 8);
+        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(8, 8);
     });
 
     it('accounts for measured order rows and configured gaps exactly once', () => {
@@ -124,7 +124,7 @@ it('aligns range numerals and separator to the measured music axis', () => {
     const parts = [...root.querySelector('[data-m3n-role="pitch-range"]')!.children];
     expect(parts).toHaveLength(4);
     expect(parts[0]!.textContent).toBe('音域：');
-    const zero = varied.measureText('0', { fontSize: 22 }), axis = zero.h / 2 - zero.baseline;
+    const zero = varied.measureText('0', { fontSize: 24 }), axis = zero.h / 2 - zero.baseline;
     for (const part of parts) {
         const ink = nativeSvgInk(part.outerHTML, varied);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(axis, 4);
@@ -145,4 +145,16 @@ it('reserves a complete numeral body for narrow range digits', () => {
         return root.querySelector('[data-m3n-role="pitch-range"]')!.children[2]!.getAttribute('transform');
     });
     expect(separators[0]).toBe(separators[1]);
+});
+
+it('uses independent 36px title and 18px subtitle baseline advances', () => {
+    const document = { ...parseM3NDocument('N: 1 2 3 4 |||'), title: '主标题\n第二行', subtitle: '副标题\n第二行' };
+    const header = nativeHeaderGeometry(document, 800, 0, measurer);
+    const root = new DOMParser().parseFromString(header.svg, 'text/html');
+    for (const [role, advance] of [['title', 36], ['subtitle', 18]] as const) {
+        const rows = [...root.querySelectorAll(`[data-m3n-role="${role}"]`)];
+        expect(rows).toHaveLength(2);
+        expect(Number(rows[1]!.getAttribute('y')) - Number(rows[0]!.getAttribute('y'))).toBeCloseTo(advance);
+    }
+    expect(header.subtitleTop - header.titleBottom).toBe(8);
 });

@@ -13,5 +13,5 @@ it('clears the actual intervening octave dots without promoting lower beam width
     glyph.musicInk!.filter(piece => piece.bottom < 0 && Math.abs((piece.right - piece.left) - (piece.bottom - piece.top)) < 1e-6).flatMap(piece =>
       [piece.left, piece.right].map(x => piece.top - nativeArcSlice(arc.commands, glyph.x + x)!.bottom)))
   expect(gaps.length).toBeGreaterThan(0)
-  expect(Math.min(...gaps)).toBeCloseTo(22 * .05, 6)
+  expect(Math.min(...gaps)).toBeCloseTo(24 * .05, 6)
 })

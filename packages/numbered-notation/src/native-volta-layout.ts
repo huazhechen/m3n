@@ -51,7 +51,7 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
       // A multi-rest's anchor is near its left cap, not the center of a numeral.
       // Without a preceding bar, use its measured painted edge for the first hook.
       const bodyLeft = firstGlyph.multiRest ? firstGlyph.inkLeft! : firstGlyph.sustain ? nativeStyle.music * 0.21 : halfBody
-      const rawLeft = first ? precedingBar ? precedingBar.x + nativeStyle.music * (5 / 22)
+      const rawLeft = first ? precedingBar ? precedingBar.x + 5
         : firstGlyph.x - bodyLeft : firstGlyph.x - (firstGlyph.musicLeft ?? firstGlyph.left)
       const rawRight = last ? followingBar?.x ?? lastGlyph.x + (lastGlyph.sustain ? nativeStyle.music * 0.21 : halfBody)
         : Math.max(...system.measures.map(measure => measure.end))

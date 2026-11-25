@@ -32,8 +32,8 @@ describe('instrumental parentheses clear painted host edges', () => {
     expect(fragments).toBeGreaterThanOrEqual(width <= 600 ? 2 : 1)
   })
 
-  for (const width of [320, 800]) for (const minimumNoteGapEm of [0.4, 0.6]) it.each(examples)('%s at ' + width + ', gap ' + minimumNoteGapEm, (_name, notes) => {
-    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: {inst}${notes}{/} |||`), { width, paged: false, pageMargin: 11, minimumNoteGapEm })
+  for (const width of [320, 800]) for (const minimumNoteGap of [9, 15]) it.each(examples)('%s at ' + width + ', gap ' + minimumNoteGap, (_name, notes) => {
+    const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: {inst}${notes}{/} |||`), { width, paged: false, pageMargin: 11, minimumNoteGap })
     const system = layout.systems[0]!
     const relation = system.relations.find(relation => relation.kind === 'inst')!
     const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
@@ -46,7 +46,7 @@ describe('instrumental parentheses clear painted host edges', () => {
     const leftInk = nativeSvgInk(painter.music(first), layout.measurer)
     const rightInk = nativeSvgInk(painter.music(last), layout.measurer)
     const advance = layout.measurer.measureText('(', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }).w
-    expect(leftInk.left - leftX - advance).toBeGreaterThanOrEqual(nativeStyle.music * minimumNoteGapEm - 1e-5)
-    expect(rightX - rightInk.right).toBeGreaterThanOrEqual(nativeStyle.music * minimumNoteGapEm - 1e-5)
+    expect(leftInk.left - leftX - advance).toBeGreaterThanOrEqual(minimumNoteGap - 1e-5)
+    expect(rightX - rightInk.right).toBeGreaterThanOrEqual(minimumNoteGap - 1e-5)
   })
 })

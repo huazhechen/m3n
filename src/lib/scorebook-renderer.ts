@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@m3n/notation'
-import { NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, type PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, type PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
@@ -37,7 +37,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
-      const minimum = Math.max(...scores.map(score => (score.staff!.document.minimumCoreGapEm ?? 1.2) * 22))
+      const minimum = Math.max(...scores.map(score => (score.staff!.document.minimumCoreGap ?? scoreLayoutConfig.staff.minimumCoreGap)))
       const capacity = a4SourcePageHeight(width)
       const renderAt = async (coreGap: number) => Promise.all(scores.map(async score => {
         signal.throwIfAborted()

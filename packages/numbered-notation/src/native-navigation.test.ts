@@ -22,7 +22,7 @@ describe('measured navigation geometry', () => {
     it.each([320,600,800])('keeps Flower Dance Coda clear of its first sixteenth at %spx', width => {
         const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8');
         for (const equalMeasures of [false, true]) {
-            const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:false,equalMeasures,minimumNoteGapEm:.4,textMeasurer:measurer});
+            const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:false,equalMeasures,minimumNoteGap:9,textMeasurer:measurer});
             const note = layout.projection.glyphs.find(glyph => glyph.controls.some(control => control.kind === 'coda'))!;
             const control = note.controls.find(control => control.kind === 'coda')!;
             const rightInk = Math.max(...control.ink.map(ink => ink.right));
@@ -31,25 +31,25 @@ describe('measured navigation geometry', () => {
         }
     });
     it.each(['segno', 'coda'] as const)('gives %s quarter-note clearance on both sides before justification', name => {
-        for (const minimumNoteGapEm of [.4, .6]) {
+        for (const minimumNoteGap of [9, 15]) {
             const projection = projectNativeScore(parseM3NDocument(`{1/4}\nN: ||: {${name}}((1 2 3 4)) |||`), {textMeasurer:measurer});
-            const options = {minimumNoteGapEm};
+            const options = {minimumNoteGap};
             const spacing = nativeHorizontalSpacing(projection.measures, options);
             placeNativeHorizontal(projection.measures, options, 0, spacing.minimumWidth);
             const measure = projection.measures[0]!, note = projection.glyphs[0]!;
             const control = note.controls.find(control => control.kind === name)!;
             const bar = nativeBarMetrics('rptstart');
             const barRight = measure.openingBarX! + bar.width - bar.anchor;
-            expect(control.x! - barRight).toBeCloseTo(22 * minimumNoteGapEm, 8);
+            expect(control.x! - barRight).toBeCloseTo(minimumNoteGap, 8);
             // The following sixteenth contributes half of a quarter's margin.
-            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(22 * minimumNoteGapEm / 2 * 1.5, 8);
+            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap / 2 * 1.5, 8);
         }
     });
     it.each([false, true])('keeps Segno attached to the preceding bar under justification (equalMeasures=%s)', equalMeasures => {
-        for (const opening of [false, true]) for (const minimumNoteGapEm of [.4, .6]) {
+        for (const opening of [false, true]) for (const minimumNoteGap of [9, 15]) {
             const source = opening ? '{2/4}\nN: ||: {segno}1 2 | 3 4 |||' : '{2/4}\nN: 1 2 | {segno}3 4 |||';
             const projection = projectNativeScore(parseM3NDocument(source), {textMeasurer:measurer});
-            const options = {minimumNoteGapEm, equalMeasures};
+            const options = {minimumNoteGap, equalMeasures};
             const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth;
             for (const width of [minimum, minimum + 400]) {
                 placeNativeHorizontal(projection.measures, options, 0, width);
@@ -57,8 +57,8 @@ describe('measured navigation geometry', () => {
                 const control = note.controls.find(control => control.kind === 'segno')!;
                 const bar = nativeBarMetrics(opening ? 'rptstart' : 'single');
                 const anchor = opening ? projection.measures[0]!.openingBarX! : projection.measures[0]!.barX!;
-                expect(control.x! - (anchor + bar.width - bar.anchor)).toBeCloseTo(22 * minimumNoteGapEm, 8);
-                expect(note.x - note.musicLeft! - control.x! - control.width).toBeGreaterThanOrEqual(22 * minimumNoteGapEm - 1e-6);
+                expect(control.x! - (anchor + bar.width - bar.anchor)).toBeCloseTo(minimumNoteGap, 8);
+                expect(note.x - note.musicLeft! - control.x! - control.width).toBeGreaterThanOrEqual(minimumNoteGap - 1e-6);
             }
         }
     });

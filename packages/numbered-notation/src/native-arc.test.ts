@@ -23,7 +23,7 @@ describe('native musical arc geometry', () => {
     const topAtMidpoint = (start.y + outer.y + 3 * outer.cy1 + 3 * outer.cy2) / 8
     const innerAtMidpoint = (outer.y + inner.y + 3 * inner.cy1 + 3 * inner.cy2) / 8
     expect(-topAtMidpoint).toBeCloseTo(arc.top)
-    expect(innerAtMidpoint - topAtMidpoint).toBeCloseTo(22 * 0.09)
+    expect(innerAtMidpoint - topAtMidpoint).toBeCloseTo(24 * 0.09)
     expect(system.lanes[0]!.top).toBeCloseTo(arc.top)
   })
 
@@ -39,7 +39,7 @@ describe('native musical arc geometry', () => {
       expect(middle.top).toBeLessThan(Math.min(left.top, right.top) - 4)
       expect(left.bottom - left.top).toBeCloseTo(0)
       expect(right.bottom - right.top).toBeCloseTo(0)
-      expect(middle.bottom - middle.top).toBeCloseTo(22 * .09)
+      expect(middle.bottom - middle.top).toBeCloseTo(24 * .09)
       expect(arc.height).toBeGreaterThan(9.9)
       expect(arc.commands.at(-1)?.op).toBe('Z')
       expect(nativeArcPath(arc)).not.toMatch(/NaN|Infinity/)
@@ -81,7 +81,7 @@ describe('native musical arc geometry', () => {
       expect(ink.right).toBeLessThanOrEqual(width + .001)
       const center = nativeArcSlice(arc!.commands, (arc!.left + arc!.right) / 2)!
       expect(center.top).toBeCloseTo(ink.top, 5)
-      expect(center.bottom - center.top).toBeCloseTo(1.98)
+      expect(center.bottom - center.top).toBeCloseTo(2.16)
     }
   })
 
@@ -115,8 +115,8 @@ describe('native musical arc geometry', () => {
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
     expect(relation.last.controls.map(control => control.kind)).toContain('meter')
-    expect(relation.last.top).toBeCloseTo(26.58)
-    expect(relation.last.musicTop).toBeCloseTo(17.6)
+    expect(relation.last.top).toBeCloseTo(27.18)
+    expect(relation.last.musicTop).toBeCloseTo(19.2)
     const control = relation.last.controls.find(control => control.kind === 'meter')!
     const gaps = control.ink.flatMap(piece => {
       const left = Math.max(arc.left, control.x! + piece.left), right = Math.min(arc.right, control.x! + piece.right)
@@ -132,7 +132,7 @@ describe('native musical arc geometry', () => {
     const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4e~ | {3/4}4e{tip} 5 6 |||'), options)
     const relation = layout.relations.find(relation => relation.kind === 'tie')!
     const arc = nativeArcGeometry(relation, layout.systems[0]!)
-    expect(nativeTiePortTop(relation.first) - relation.first.tieTop!).toBeCloseTo(22 * 0.05)
+    expect(nativeTiePortTop(relation.first) - relation.first.tieTop!).toBeCloseTo(24 * 0.05)
     const mark = relation.last.markLayout!.find(value => value.name === 'tip')!
     expect(arc.top - arc.height).toBeCloseTo(-mark.top)
   })
@@ -157,7 +157,7 @@ describe('native musical arc geometry', () => {
     const arc = nativeArcGeometry(layout.relations[0]!, layout.systems[0]!)
     const middle = nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
     expect(middle.top).toBeCloseTo(-arc.top)
-    expect(middle.bottom - middle.top).toBeCloseTo(1.98)
+    expect(middle.bottom - middle.top).toBeCloseTo(2.16)
     const tip = nativeArcSlice(arc.commands, arc.left)!
     expect(tip.top).toBeCloseTo(tip.bottom)
     expect(nativeArcSlice(arc.commands, arc.left - 1)).toBeUndefined()

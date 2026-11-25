@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -24,7 +24,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
-  const minimumGap = (score.minimumCoreGapEm ?? 1.2) * 22
+  const minimumGap = score.minimumCoreGap ?? scoreLayoutConfig.staff.minimumCoreGap
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {

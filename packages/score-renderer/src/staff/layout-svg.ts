@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
@@ -258,13 +259,13 @@ export class SvgGeometry {
   }
   partitionWithoutClasses(node: XmlNode, classes: readonly string[]): { all: Ink[]; without: Ink[] } {
     const all: Ink[] = [], without: Ink[] = []
-    this.collect(node, identity, { size: 16 / 0.7, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
+    this.collect(node, identity, { size: scoreLayoutConfig.staff.text / 0.7, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
     return { all, without }
   }
   pieces(
     node: XmlNode,
     parent: Matrix = identity,
-    inherited: { size: number; bold: boolean; italic: boolean } = { size: 16 / 0.7, bold: false, italic: false },
+    inherited: { size: number; bold: boolean; italic: boolean } = { size: scoreLayoutConfig.staff.text / 0.7, bold: false, italic: false },
     omit?: OmitNode,
   ): Ink[] {
     const result: Ink[] = []

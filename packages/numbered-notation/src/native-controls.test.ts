@@ -88,7 +88,7 @@ describe('native instrumental parentheses', () => {
         expect(brackets.map(node => node.textContent)).toEqual(index === 0 ? ['('] : index === systems.length - 1 ? [')'] : [])
         for (const bracket of brackets) {
           expect(Number(bracket.getAttribute('x'))).toBeGreaterThanOrEqual(32 - 0.1)
-          const width = 22 * 0.58 // The deterministic non-browser text measurer.
+          const width = 24 * 0.58 // The deterministic non-browser text measurer.
           expect(Number(bracket.getAttribute('x')) + width).toBeLessThanOrEqual(288 + 0.1)
         }
       })

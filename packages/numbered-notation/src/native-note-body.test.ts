@@ -35,10 +35,10 @@ describe('note decorations clear measured font edges', () => {
         const svg = root(painter.body(a)), beams = [...svg.querySelectorAll('line')]
         const text = nativeSvgInk(svg.querySelector('text')!.outerHTML, measurer)
         const firstBeam = nativeSvgInk(beams[0]!.outerHTML, measurer)
-        expect(firstBeam.top - text.bottom).toBeCloseTo(22 * .12, 4)
+        expect(firstBeam.top - text.bottom).toBeCloseTo(24 * .12, 4)
         const lastBeam = nativeSvgInk(beams.at(-1)!.outerHTML, measurer)
         const dot = nativeSvgInk(svg.querySelector('[data-m3n-role="music-dot"]')!.outerHTML, measurer)
-        expect(dot.top - lastBeam.bottom).toBeCloseTo(22 * .08, 4)
+        expect(dot.top - lastBeam.bottom).toBeCloseTo(24 * .08, 4)
         const metrics = nativeNoteMetrics(a.pitches, beats, false, measurer)
         const ink = nativeSvgInk(svg.documentElement.innerHTML, measurer)
         expect(metrics.top).toBeCloseTo(-ink.top, 4)

@@ -17,6 +17,6 @@ it.each([320, 800].flatMap(width => [false, true].flatMap(paged => [3, 123456789
     const paintedLeft = Number(cap.getAttribute('x1')) - Number(cap.getAttribute('stroke-width')) / 2
     expect(fragment.left).toBeCloseTo(paintedLeft, 5)
     const ending = new DOMParser().parseFromString(`<svg>${fragment.svg}</svg>`, 'image/svg+xml')
-    expect(Number(ending.querySelector('text')!.getAttribute('x')) - paintedLeft).toBeCloseTo(22 * .15, 5)
+    expect(Number(ending.querySelector('text')!.getAttribute('x')) - paintedLeft).toBeCloseTo(24 * .15, 5)
   },
 )

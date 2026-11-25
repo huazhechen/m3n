@@ -15,7 +15,7 @@ const repeatInk = (score: ReturnType<typeof layout>) => nativeSvgInk(score.syste
 describe('measured bar obstacles', () => {
   it.each([false, true])('keeps bars within bounds when instrumental passages wrap (paged: %s)', paged => {
     const source = `{4/4}\nN: {inst}${Array(7).fill('1 2 3 4 |').join(' ')}{/} |||`
-    const score = layoutNativeScore(parseM3NDocument(source), { width: 360, pageMargin: 0, paged, minimumNoteGapEm: .6, textMeasurer: measurer })
+    const score = layoutNativeScore(parseM3NDocument(source), { width: 360, pageMargin: 0, paged, minimumNoteGap: 15, textMeasurer: measurer })
     expect(score.systems.length).toBeGreaterThan(1)
     for (const system of score.systems) for (let index = 0; index < system.measures.length; index++) {
       for (const bar of nativeMeasureBarPositions(system.measures, index)) {
@@ -130,10 +130,10 @@ it('draws a combined repeat with thin bars on both sides of the thick bar', () =
 
 it.each([480, 720])('merges the two adjacent Turkish March repeats at %ipx', width => {
   const source = readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8')
-  const score = layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4 })
+  const score = layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9 })
   const merged = score.systems.flatMap(system => system.measures.flatMap((measure, index) =>
     nativeMeasureBarPositions(system.measures, index).filter(bar => bar.kind === 'rptboth').map(() => measure.index + 1)))
-  expect(merged).toEqual([9, 44])
+  expect(merged).toEqual(width === 480 ? [9] : [9, 44])
 })
 
 it('splits adjacent repeats into closing and opening marks across a forced line break', () => {

@@ -1,4 +1,4 @@
-import { nativeEm, nativeStyle } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
@@ -18,7 +18,7 @@ export function nativeBarMetrics(kind: string | undefined) {
 }
 
 type HorizontalItem = { measure: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
-type HorizontalOptions = { minimumNoteGapEm?: number; minimumNoteGapFloorEm?: number; equalMeasures?: boolean }
+type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
 export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
@@ -49,7 +49,7 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
-  const scale = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) / 12
+  const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / 12
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
@@ -104,10 +104,10 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
     if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
-      previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * 0.5
-      cell.beforeStretch = (cell.beforeStretch ?? 1) * 0.5
-      previous.cell.after *= 0.5
-      cell.before *= 0.5
+      previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * nativeStyle.groupSpacingRatio
+      cell.beforeStretch = (cell.beforeStretch ?? 1) * nativeStyle.groupSpacingRatio
+      previous.cell.after *= nativeStyle.groupSpacingRatio
+      cell.before *= nativeStyle.groupSpacingRatio
     } else if (previous?.item.measure === item.measure && left && right) {
       // Group boundaries reserve an absolute clearance, independent of duration.
       groupEnds.add(previous.cell); groupStarts.add(cell)
@@ -118,8 +118,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   // Exterior ink stays flush with the line.
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
-    const floor = glyph ? nativeStyle.music * (options.minimumNoteGapFloorEm ?? 0) / 2 : 0
-    const groupGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4) / 2
+    const floor = glyph ? (options.minimumNoteGapFloor ?? 0) / 2 : 0
+    const groupGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / 2
     if (groupStarts.has(cell)) cell.before = groupGap
     if (groupEnds.has(cell)) cell.after = groupGap
     cell.before = Math.max(cell.before, floor); cell.after = Math.max(cell.after, floor)
@@ -174,7 +174,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = next.controls ? Math.max(...next.controls.map(control =>
       control.anchor - (control.ink.length ? Math.min(...control.ink.map(ink => ink.left)) : 0)))
       : next.column ? Math.max(...next.column.glyphs.map(glyph => glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)) : next.left
-    item.fixedAfter = item.right + nativeEm(12) + left
+    item.fixedAfter = item.right + nativeStyle.inlineSectionGap + left
   }
   return items
 }

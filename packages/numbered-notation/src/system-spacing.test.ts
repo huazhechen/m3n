@@ -19,9 +19,9 @@ it.each([
         const ink = system.lanes.flatMap(lane => pieces.get(lane.id)!.map(r => ({ top: lane.y + r.top, bottom: lane.y + r.bottom })));
         return { top: Math.min(...ink.map(r => r.top)), bottom: Math.max(...ink.map(r => r.bottom)) };
     });
-    expect(cores[1]!.top - cores[0]!.bottom).toBeGreaterThanOrEqual(26.4 - 1e-6);
+    expect(cores[1]!.top - cores[0]!.bottom).toBeGreaterThanOrEqual(28 - 1e-6);
     const ink = nativeLanePieces(native.systems[1]!, measurer).get('melody')!;
-    expect(Math.min(...ink.map(piece => native.systems[1]!.lanes[0]!.y + piece.top)) - cores[0]!.bottom).toBeLessThan(26.4);
+    expect(Math.min(...ink.map(piece => native.systems[1]!.lanes[0]!.y + piece.top)) - cores[0]!.bottom).toBeLessThan(28);
     const previousInk = nativeLanePieces(native.systems[0]!, measurer).get('melody')!;
     let checked = 0;
     for (const upper of previousInk)
@@ -39,5 +39,5 @@ it('excludes grace notes from the native core while keeping their painted ink fo
     const core = nativeLanePieces(system, measurer, true).get('melody')!;
     const ink = nativeLanePieces(system, measurer).get('melody')!;
     expect(Math.min(...ink.map(r => r.top))).toBeLessThan(Math.min(...core.map(r => r.top)));
-    expect(Math.max(...core.map(r => r.bottom)) - Math.min(...core.map(r => r.top))).toBeCloseTo(22);
+    expect(Math.max(...core.map(r => r.bottom)) - Math.min(...core.map(r => r.top))).toBeCloseTo(24);
 });

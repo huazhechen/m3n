@@ -15,3 +15,5 @@ export { NativeLayoutTask as NumberedLayoutTask } from './native-layout.js'
 export { sortedNativeInkSeparation as sortedInkSeparation } from './native-ink-separation.js'
 
 export { lyricSpacing } from './lyric-spacing.js'
+
+export { scoreLayoutConfig } from './score-layout-config.js'

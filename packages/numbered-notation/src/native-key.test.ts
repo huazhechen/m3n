@@ -37,7 +37,7 @@ describe('native measured key signatures', () => {
     it('centers the key block on the measured music digit axis', () => {
         const control = measureNativeControl('key', '1=F#', measurer);
         const ink = nativeSvgInk(painter.control(control), measurer);
-        const digit = measurer.measureText('0', { fontSize: 22, fontFamily: 'M3N Numbers' });
+        const digit = measurer.measureText('0', { fontSize: 24, fontFamily: 'M3N Numbers' });
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(digit.h / 2 - digit.baseline, 3);
     });
     it('does not count the fallback font trailing em space as painted key ink', () => {
@@ -46,7 +46,7 @@ describe('native measured key signatures', () => {
         const control = measureNativeControl('key', '1=C', measurer, rows);
         const ink = nativeSvgInk(painter.control(control), measurer);
         expect(ink.bottom - ink.top).toBeCloseTo(geometry.height, 6);
-        const digit = measurer.measureText('0', { fontSize: 22, fontFamily: 'M3N Numbers' });
+        const digit = measurer.measureText('0', { fontSize: 24, fontFamily: 'M3N Numbers' });
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(digit.h / 2 - digit.baseline, 6);
     });
     it('shows a single first-visit override without redundant pass labels', () => {

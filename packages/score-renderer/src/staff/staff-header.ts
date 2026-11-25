@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import {
   numberedHeadingLines,
   numberedHeaderContent,
@@ -8,6 +8,8 @@ import {
   type ScoreDocument,
 } from '@m3n/notation'
 import { element, type XmlNode, type MeasureText, type Ink, overlapsX } from './layout-svg.js'
+
+const style = scoreLayoutConfig.staff
 
 /** Measured page furniture, independent of the music engraving engine. */
 export function staffHeader(score: ScoreDocument, width: number, measure: MeasureText, transpose = 0) {
@@ -50,21 +52,21 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
   }
   let y = 0
   const titleMeasurer = { measureText: (text: string, style: { fontSize: number }) => ({ w: measure(text, style.fontSize, false, false, SCORE_TITLE_FONT).width }) }
-  for (const line of numberedHeadingLines(score.title, width - 2, 32, titleMeasurer, SCORE_TITLE_WEIGHT)) {
-    const ink = put(line, width / 2, y, 32, 'middle', false, SCORE_TITLE_FONT)
+  for (const line of numberedHeadingLines(score.title, width - 2, style.title, titleMeasurer, SCORE_TITLE_WEIGHT)) {
+    const ink = put(line, width / 2, y, style.title, 'middle', false, SCORE_TITLE_FONT)
     y = ink.bottom + 5
   }
   const sideTop = y
   for (const text of content.subtitles)
-    for (const line of wrap(text, 16)) {
-      const ink = put(line, width / 2, y, 16, 'middle')
+    for (const line of wrap(text, style.subtitle)) {
+      const ink = put(line, width / 2, y, style.subtitle, 'middle')
       y = ink.bottom + 5
     }
   let creditY = sideTop
   const credits = [...content.credits, ...(score.arranger ? [`${score.arranger} 编曲`] : [])]
   for (const text of credits)
-    for (const line of wrap(text, 14)) {
-      const metrics = measure(line, 14),
+    for (const line of wrap(text, style.credit)) {
+      const metrics = measure(line, style.credit),
         left = width - metrics.width
       const candidate = { left, right: width, top: creditY, bottom: creditY + metrics.ascent + metrics.descent }
       for (const obstacle of bounds)
@@ -77,7 +79,7 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
           candidate.top = creditY
           candidate.bottom = creditY + metrics.ascent + metrics.descent
         }
-      const ink = put(line, width, creditY, 14, 'end')
+      const ink = put(line, width, creditY, style.credit, 'end')
       creditY = ink.bottom + 5
     }
   y = Math.max(y, creditY)
@@ -87,13 +89,13 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
     let x = 0,
       rowTop = y + 12,
       rowHeight = 0
-    const prefix = put('演奏顺序：', x, rowTop, 16)
+    const prefix = put('演奏顺序：', x, rowTop, style.text)
     x = prefix.right + 4
     rowHeight = prefix.bottom - rowTop
     for (const [index, label] of labels.entries()) {
       // Long labels wrap inside their own frame; arrows stay vector paths.
-      const lines = numberedHeadingLines(label, width - 28, 16, measurer, 700),
-        metrics = lines.map((line) => measure(line, 16, true))
+      const lines = numberedHeadingLines(label, width - 28, style.text, measurer, 700),
+        metrics = lines.map((line) => measure(line, style.text, true))
       const w = Math.max(...metrics.map((m) => m.width)) + 8,
         h = metrics.reduce((n, m) => n + m.ascent + m.descent + 4, 4)
       if (x + w + (index ? 20 : 0) > width && x > 0) {
@@ -128,7 +130,7 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
       )
       let top = rowTop + 4
       for (const line of lines) {
-        const ink = put(line, x + 4, top, 16, 'start', true)
+        const ink = put(line, x + 4, top, style.text, 'start', true)
         top = ink.bottom + 4
       }
       x += w + 4

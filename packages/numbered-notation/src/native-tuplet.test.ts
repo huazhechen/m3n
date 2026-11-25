@@ -18,14 +18,14 @@ describe('native tuplet brackets', () => {
     const high = score.projection.glyphs[1]!
     expect(geometry.segments[0]![3]).toBeLessThan(-high.top)
     expect(system.lanes[0]!.top).toBeCloseTo(geometry.top)
-    const halfBody = measurer.measureText('0', { fontSize: 22, fontFamily: 'M3N Numbers' }).w / 2
+    const halfBody = measurer.measureText('0', { fontSize: 24, fontFamily: 'M3N Numbers' }).w / 2
     expect(geometry.segments[0]![0]).toBeCloseTo(Math.max(system.measures[0]!.start + geometry.stroke / 2, relation.first.x - halfBody))
     expect(geometry.segments[1]![0]).toBeCloseTo(relation.last.x + halfBody)
   })
 
   it.each([320, 580, 720])('keeps the full stroke inside a zero-margin row at %spx', width => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ([1 2 3:2]) 4 5 6 |||'), {
-      width, paged: true, pageMargin: 0, minimumNoteGapEm: .4,
+      width, paged: true, pageMargin: 0, minimumNoteGap: 9,
     })
     for (const { geometry } of brackets(score)) {
       expect(geometry.left).toBeGreaterThanOrEqual(-.000001)
@@ -77,7 +77,7 @@ describe('native tuplet brackets', () => {
     const moved = nativeTupletGeometry(relation, system, measurer)
     const metrics = measurer.measureText('3', { fontSize: moved.fontSize, fontFamily: 'M3N Numbers' })
     const bottom = moved.baseline - metrics.baseline + (metrics.inkBottom ?? metrics.h)
-    expect(-80 - bottom).toBeCloseTo(22 * .14)
+    expect(-80 - bottom).toBeCloseTo(24 * .14)
   })
 
   it('draws separated strokes without painting a white mask over other content', () => {

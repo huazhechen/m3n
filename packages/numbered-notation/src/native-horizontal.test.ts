@@ -8,46 +8,46 @@ import { projectNativeScore } from './native-model.js';
 // Barlow advance widths with deterministic offline em-height estimates.
 // inkBottom distinguishes that estimate's blank tail from a real descender.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
-const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 22 && text === '0' ? 11.154037475585938 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 }; } };
+const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fontSize === 24 && text === '0' ? 11.154037475585938 * 24 / 22 : text.length * style.fontSize * 0.58, h: style.fontSize, baseline: style.fontSize * 0.8, inkBottom: style.fontSize * 0.8 }; } };
 // Coordinate regressions use explicit fixed spacing; adaptive selection is tested separately.
 // Deterministic coordinates below use a smaller minimum clearance.
-// Other geometry regressions fix the compact 0.4em spacing.
-const narrowSpacing = { minimumNoteGapEm: 0.3, minimumNoteGapFloorEm: 0.1 };
-const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4, ...spacing });
+// Other geometry regressions fix the compact 9px spacing.
+const narrowSpacing = { minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 };
+const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9, ...spacing });
 describe('native spacing and measured note envelopes', () => {
     it('matches all four note centres and the flush final bar of an unadorned system', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||', 800, narrowSpacing);
-        const expected = [37.57701873779297, 219.16389373779296, 400.75076873779295, 582.337643737793];
+        const expected = [38.084020441228695, 219.4515204412287, 400.8190204412287, 582.1865204412287];
         result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6));
-        expect(result.projection.measures[0]!.barX).toBeCloseTo(763.17375, 6);
-        expect(result.projection.glyphs[0]!.y).toBeCloseTo(106.36, 6);
+        expect(result.projection.measures[0]!.barX).toBeCloseTo(762.735, 6);
+        expect(result.projection.glyphs[0]!.y).toBeCloseTo(107.96, 6);
     });
     it('reserves dots for dotted values and gives a plain eighth no phantom dot space', () => {
         const result = layout('{4/4}\nN: (1 2) 3. (4) 5 |||');
         const [eighth, , dotted] = result.projection.glyphs;
-        expect(eighth!.right).toBeCloseTo(5.577018737793, 6);
-        expect(dotted!.right).toBeCloseTo(11.517018737793, 6);
+        expect(eighth!.right).toBeCloseTo(6.084020441229, 6);
+        expect(dotted!.right).toBeCloseTo(12.564020441229, 6);
     });
     it('reserves accidentals on the left of the number without widening its right edge', () => {
         const result = layout('{4/4}\nN: 1# 2 3 4 |||');
         const first = result.projection.glyphs[0]!;
-        expect(first.left).toBeGreaterThan(5.577018737793);
-        expect(first.right).toBeCloseTo(5.577018737793, 6);
+        expect(first.left).toBeGreaterThan(6.084020441229);
+        expect(first.right).toBeCloseTo(6.084020441229, 6);
     });
     it('fits stacked chord tones by their actual octave-dot envelopes', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||\nB: [1d3d5d:h]^^ |||');
         const bass = result.projection.glyphs.find(glyph => glyph.staff === 'bass')!;
-        bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -26.18, -52.36][index]!, 6));
+        bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -28.56, -57.12][index]!, 6));
         const lanes = result.systems[0]!.lanes;
-        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(97.735, 6);
+        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(104.12, 6);
     });
     it('weights cross-system tie coverage without cumulative row padding', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [47.85, 46.64, 43.69161].entries())
+        for (const [index, gap] of [50.9, 49.58, 46.86327].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(332.37743, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(344.10171, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -60,9 +60,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(source, 800, narrowSpacing);
         // The repeat opening is included once in the minimum-width chain.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(73.10901718258879, 5);
+        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(77.83102740320373, 5);
         const opening = result.projection.measures[9]!;
-        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(127.74208198726205, 5);
+        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(135.41860242849134, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
@@ -78,7 +78,7 @@ describe('native spacing and measured note envelopes', () => {
         const measure = (count: number) => {
             const document = parseM3NDocument(`{4/4}\nN: ${Array(count).fill('1').join(' ')} |||\nL: ${Array(count).fill('(春风)').join(' ')}`);
             const projection = projectNativeScore(document, { textMeasurer });
-            measureNativeHorizontal(projection.measures, { minimumNoteGapEm: 0.4 });
+            measureNativeHorizontal(projection.measures, { minimumNoteGap: 9 });
             return projection.measures[0]!;
         };
         const two = measure(2), three = measure(3);
@@ -93,7 +93,7 @@ describe('native spacing and measured note envelopes', () => {
             measures[1]!.breakBefore = true;
         else
             measures[0]!.breakAfter = true;
-        const combined = layoutNativeScore(document, { width: 800, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4 });
+        const combined = layoutNativeScore(document, { width: 800, paged: false, textMeasurer: measurer, minimumNoteGap: 9 });
         const isolated = layout(`{4/4}\nN: ${phrase}`);
         for (const [index, expected] of isolated.projection.measures.entries()) {
             const actual = combined.projection.measures[index + 1]!;

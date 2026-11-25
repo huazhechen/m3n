@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { scoreExportFooter } from './score-export-footer.js'
 /** Combine the unchanged SVG pages, with a width-relative frame around the image. */
 export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06, scoreUrl = 'https://score.cheesefans.com/'): SVGSVGElement {
@@ -34,7 +34,7 @@ export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .
   footer.setAttribute('y', String(height + margin * 1.55))
   footer.setAttribute('text-anchor', 'end')
   footer.setAttribute('font-family', SCORE_TEXT_FONT)
-  footer.setAttribute('font-size', String(Math.max(12, width * .02)))
+  footer.setAttribute('font-size', String(Math.max(scoreLayoutConfig.imageExport.footerMinimumFontSize, width * scoreLayoutConfig.imageExport.footerFontSizeWidthRatio)))
   footer.setAttribute('fill', '#666')
   root.append(footer)
   return root

@@ -1,5 +1,5 @@
 import { Glyph, StaveConnector, StaveTie, type StaveNote } from 'vexflow/bravura'
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffContext, createStaffDrawingScope, createStaffDrawingMeasure as createVexMeasure, drawVexMeasure, STAFF_SCALE, type VexMeasure, type StaffVexPreparation } from './vexflow-engine.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
@@ -8,6 +8,8 @@ import { captureStaffDrawing } from './staff-svg-context.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
 import { arrangeStaffSystem } from './system-layout.js'
 import { element, nodes, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
+
+const style = scoreLayoutConfig.staff
 
 // Projection identity and this map both belong to one measurement task.
 const relationPlans = new WeakMap<StaffVexPreparation, WeakMap<StaffDocument, ReturnType<typeof prepareSystemRelations>>>()
@@ -67,8 +69,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
-    const rows = numberedHeadingLines(value, rawWidth - 12 / scale, 16 / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? 700 : 400)
-    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * 20 / scale, 16, cls, bold ? { 'font-weight': 'bold' } : {}))[0]!))
+    const rows = numberedHeadingLines(value, rawWidth - 12 / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? 700 : 400)
+    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': 'bold' } : {}))[0]!))
   }
   let plans = preparation && relationPlans.get(preparation)
   if (preparation && !plans) { plans = new WeakMap(); relationPlans.set(preparation, plans) }
@@ -111,7 +113,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             tempo.children.push(...capture(() => Glyph.renderGlyph(context, tempoX + 9, -55, 28, flags[display.unit] ?? 'flag8thUp')))
           }
           if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + 16), cy: '-31', r: '1.8', fill: '#000' }))
-          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? 25 : 18), -28, 15, 'tempo-text')))
+          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? 25 : 18), -28, style.tempo, 'tempo-text')))
           parent.children.push(tempo)
       }
       const node = element('g', { class: 'system' })
@@ -155,11 +157,11 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               event.postfixes.some(value => /^f[1-5]$/.test(value)))) continue
             const cx = entry.notes[0]!.getNoteHeadBeginX()
             const top = Math.min(...entry.notes.flatMap(n => n.getYs())) - 40
-            if (item.chord) measureNode.children.push(text(item.chord, cx, top, 14, 'harm'))
+            if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, 6 / scale, top, 'reh', true))
-            if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.getYs())) + 35, 16, 'dynam', { 'font-style': 'italic' }))
-            for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, 13, 'fing'))
+            if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.getYs())) + 35, style.dynamic, 'dynam', { 'font-style': 'italic' }))
+            for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, style.fingering, 'fing'))
             for (const nav of event.navigation) addNavigation(nav, cx, top, measureNode)
           }
         }
@@ -174,18 +176,18 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if (member.measure.source.multiRest || member.measure.source.interlude) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = model.staves[0]!.getYForLine(2)
           const count = member.measure.source.interlude ? '' : String(member.measure.source.multiRest)
-          const countY = model.staves[0]!.getYForLine(0) - 0.5 - 2 / scale - measureText(count, 16 / scale, true).descent
-          measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...(count ? nodes(text(count, cx, countY, 16, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' })) : [])]))
+          const countY = model.staves[0]!.getYForLine(0) - 0.5 - 2 / scale - measureText(count, style.restCount / scale, true).descent
+          measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - 20} ${cy} h40 M${cx - 20} ${cy - 8} v16 M${cx + 20} ${cy - 8} v16`, stroke: '#000', 'stroke-width': '3', fill: 'none' }), ...(count ? nodes(text(count, cx, countY, style.restCount, 'rest', { 'text-anchor': 'middle', 'font-weight': 'bold' })) : [])]))
         }
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = model.staves[0]!.getYForLine(0), y2 = model.staves.at(-1)!.getYForLine(4)
         if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': '1', fill: 'none' })]))
-        if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - 10, 12, 'mNum', { 'text-anchor': 'end' }))
+        if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - 10, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
       }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {
         const glyph = nav === 'segno' || nav === 'coda' ? capture(() => Glyph.renderGlyph(context, x, y, 30, nav)) : []
-        parent.children.push(element('g', { class: 'repeatMark' }, glyph.length ? glyph : nodes(text(({ tocoda: 'To Coda', fine: 'Fine', ds: 'D.S.', dc: 'D.C.' } as Record<string, string>)[nav] ?? nav, x, y, 14, 'repeat-mark-text'))))
+        parent.children.push(element('g', { class: 'repeatMark' }, glyph.length ? glyph : nodes(text(({ tocoda: 'To Coda', fine: 'Fine', ds: 'D.S.', dc: 'D.C.' } as Record<string, string>)[nav] ?? nav, x, y, style.navigation, 'repeat-mark-text'))))
       }
       if (document.hasBass) {
         const first = models[0]!
@@ -208,7 +210,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} 17 V5`, stroke: '#000', 'stroke-width': '1', fill: 'none' })] : []),
           element('path', { d: `M${left} 5 H${right}`, stroke: '#000', 'stroke-width': '1', fill: 'none' }),
           element('path', { d: `M${right} 5 V17`, stroke: '#000', 'stroke-width': '1', fill: 'none' }),
-          ...nodes(text(first ? `${ending}.` : '', left + 4, 22, 12, 'ending')),
+          ...nodes(text(first ? `${ending}.` : '', left + 4, 22, style.volta, 'ending')),
         ]))
       }
       for (const tie of ties) {
@@ -251,7 +253,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           path.pathInk = { d: path.attributes.d!, boxes }
           node.children.push(element('g', { class: 'slur' }, [path]))
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
-          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + 30, 14, 'dynam'))
+          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + 30, style.expression, 'dynam'))
           else {
             const y = low + 25, cresc = interval.kind === 'cresc', endX = Math.max(left + 4, right)
             const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
@@ -260,14 +262,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         } else if (interval.kind === '8va' || interval.kind === '8vb') {
           const y = interval.kind === '8va' ? yTop - 40 : low + 35
           node.children.push(element('g', { class: 'octave', 'data-m3n-below': String(interval.kind === '8vb') }, [
-            ...(a ? nodes(text(interval.kind, left, y, 13, 'octave')) : []),
+            ...(a ? nodes(text(interval.kind, left, y, style.octave, 'octave')) : []),
             element('path', { d: `M${left + (a ? 25 : 0)} ${y - 4} H${right} v${interval.kind === '8va' ? 8 : -8}`, stroke: '#000', 'stroke-width': '1', 'stroke-dasharray': '4 3', fill: 'none' }),
           ]))
-        } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - 25, 14, 'dir', { 'font-style': 'italic' }))
+        } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - 25, style.expression, 'dir', { 'font-style': 'italic' }))
       }
       const headings = new Set(line.measures.filter(m => {
         const e = m.measure.melody[0]?.event
-        return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, 16, true).width + 21 > width / 2)
+        return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + 21 > width / 2)
       }).map(m => m.id))
       const geometry = new SvgGeometry(node, measureText, true)
       const system = arrangeStaffSystem(node, geometry, width, headings)

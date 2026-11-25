@@ -57,7 +57,7 @@ describe('measured arpeggio engraving', () => {
         const publicRoot = new DOMParser().parseFromString(NumberedNotationScore.create(document).render({ width, paged }).join(''), 'text/html');
         const chord = publicRoot.getElementById(glyph.id)!;
         expect(chord).not.toBeNull();
-        expect([...chord.querySelectorAll('text[font-size="22"]')].map(text => text.textContent)).toEqual(['1', '3', '5']);
+        expect([...chord.querySelectorAll('text[font-size="24"]')].map(text => text.textContent)).toEqual(['1', '3', '5']);
         expect(glyph.x - glyph.musicLeft!).toBeGreaterThanOrEqual(32 - 0.0001);
         const preceding = native.projection.glyphs[0]!;
         if (glyph.y === preceding.y)

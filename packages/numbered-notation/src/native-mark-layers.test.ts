@@ -10,7 +10,7 @@ import { DefaultTextMeasurer } from './native-measure.js'
 it.each(['fermata', 'tr', 'prall', 'f1', 'f5', 'breath'])('keeps %s with its host inside arcs and hairpins, including wrapped continuations', name => {
   for (const width of [320, 800]) for (const paged of [false, true]) {
     const document = parseM3NDocument(`{4/4}\nN: {lg}{cresc}{p}1{${name}} 2{${name}}~ 2 4 | {br} 5 6{${name}} 7 1e{${name}}{/}{/} |||`)
-    const layout = layoutNativeScore(document, { width, paged, minimumNoteGapEm: 0.4 })
+    const layout = layoutNativeScore(document, { width, paged, minimumNoteGap: 9 })
     expect(layout.systems.length).toBeGreaterThanOrEqual(2)
     let checked = 0
     for (const system of layout.systems) {
@@ -43,7 +43,7 @@ it.each(['fermata', 'tr', 'prall', 'f1', 'f5', 'breath'])('keeps %s with its hos
 it('reserves a wide local fingering at the line edge and before its next note', () => {
   const fallback = new DefaultTextMeasurer()
   const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1{f2} 2 3 4 |||'), {
-    width: 320, paged: false, minimumNoteGapEm: 0.4,
+    width: 320, paged: false, minimumNoteGap: 9,
     textMeasurer: { measureText(text, style) {
       const metrics = fallback.measureText(text, style)
       return text === '2' && style.fontFamily === SCORE_TEXT_FONT ? { ...metrics, w: 140 } : metrics

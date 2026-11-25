@@ -19,7 +19,7 @@ it.each([['tr', 12], ['prall', 6.6]] as const)('draws a centered %s silhouette a
     expect(svg).not.toMatch(/<path|stroke=/);
     expect(svg).toContain('fill="#000"');
     expect(ink.left + ink.right).toBeCloseTo(0, 3);
-    expect(ink.bottom - ink.top).toBeCloseTo(nativeStyle.music * height / 22, 3);
+    expect(ink.bottom - ink.top).toBeCloseTo(height, 3);
     expect(ink.right - ink.left).toBeGreaterThan(nativeStyle.music * .5);
 });
 it('leaves other marks to their own renderers', () => {

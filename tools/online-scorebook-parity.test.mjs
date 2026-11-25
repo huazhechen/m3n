@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
+import { browserTestFontAssets } from './lib/browser-test-font-assets.mjs'
 
 test('reader, online and local PDF paths share safe width selection; staff reader matches local measurement', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-pdf-parity-'))
@@ -13,6 +14,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
   const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowsPerColumn: 28, rowHeight: 35 },
     sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: false }],
     entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '红河谷'][index], section: 'basics' })) }
+  const fontAssets = browserTestFontAssets(root)
   let browser
   try {
     const entry = join(temp, 'entry.mjs')
@@ -25,7 +27,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
       export {optimizeScorebook, optimizeScorebookWithRefinement} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
     await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') },
-      plugins: [{ name: 'parity-fixtures', enforce: 'pre', resolveId(id) {
+      plugins: [fontAssets.plugin, { name: 'parity-fixtures', enforce: 'pre', resolveId(id) {
         if (id.endsWith('editorial-plan.json')) return '\0parity-plan'
         if (id === './samples' || id.endsWith('/samples') || id.endsWith('/samples.ts')) return '\0parity-samples'
       }, load(id) {
@@ -33,10 +35,10 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         if (id === '\0parity-samples') return `const sources = ${JSON.stringify(sources)};
           export const presetScores = ${JSON.stringify(files.map((sourcePath, index) => ({ slug: String(index), sourcePath })))};
           export async function loadPresetScore(slug) { return sources[Number(slug)] }`
-      } }], build: { outDir: join(temp, 'bundle'), lib: { entry, name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' } } })
-    browser = await chromium.launch({ executablePath: ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
+      } }], build: { minify: false, outDir: join(temp, 'bundle'), lib: { entry, name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' } } })
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
     const page = await browser.newPage()
-    await page.route('**/*', route => new URL(route.request().url()).pathname === '/bundle.js'
+    await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
       : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><div id="scratch"></div>' }))
     await page.goto('http://scorebook.local/')

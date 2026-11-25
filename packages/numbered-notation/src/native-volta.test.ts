@@ -22,7 +22,7 @@ describe('measured native volta fragments', () => {
     const hook = pieces[1]!, label = pieces[2]!
     expect((label.top + label.bottom) / 2).toBeCloseTo((hook.top + hook.bottom) / 2, 4)
     // The label's measured ink, rather than its nominal box, sets both hooks.
-    expect(hook.bottom - hook.top - 22 * .055).toBeCloseTo((label.bottom - label.top) * 1.2, 4)
+    expect(hook.bottom - hook.top - 24 * .055).toBeCloseTo((label.bottom - label.top) * 1.2, 4)
   })
 
   it.each([[true, true, 4], [true, false, 3], [false, true, 2], [false, false, 1]])(
@@ -36,7 +36,7 @@ describe('measured native volta fragments', () => {
         expect(svg).toContain('>1.2.3.</text>')
         const hook = pieces[1]!, text = pieces[2]!
         expect((text.top + text.bottom) / 2).toBeCloseTo((hook.top + hook.bottom) / 2, 4)
-      } else if (!last) expect(pieces[0]!.bottom - pieces[0]!.top).toBeCloseTo(1.21, 4)
+      } else if (!last) expect(pieces[0]!.bottom - pieces[0]!.top).toBeCloseTo(1.32, 4)
     })
 
   it.each([false, true])('keeps bar-owned counts below the ending and overlays measure numbers at the bar, numbers=%s', measureNumbers => {
@@ -105,16 +105,16 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
     expect(fragments.map(fragment => (fragment.svg.match(/<line/g) ?? []).length)).toEqual([2, 1, 2])
     expect(fragments.map(fragment => fragment.svg.includes('<text'))).toEqual([true, false, false])
     const middle = nativeSvgPieces(fragments[1]!.svg, measurer)
-    expect(middle[0]!.bottom - middle[0]!.top).toBeCloseTo(1.21, 4)
+    expect(middle[0]!.bottom - middle[0]!.top).toBeCloseTo(1.32, 4)
   })
 
   it('anchors continuation fragments to the music body independently of lyric width', () => {
-    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: 1 2 3 4 | {br}1 2 3 4 :||\nL: 春春春春 | 春春春春\n---V2\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer })
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: 1 2 3 4 | {br}1 2 3 4 :||\nL: (春春)春春春 | (春春)春春春\n---V2\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer })
     const system = score.systems.find(system => system.index > 0 && system.voltas?.some(fragment => fragment.ending === '1'))!
     const first = system.measures[0]!.columns[0]!.glyphs[0]!
     expect(first.left).toBeGreaterThan(first.musicLeft!)
     const fragment = system.voltas!.find(fragment => fragment.ending === '1')!
-    expect(first.x - fragment.left).toBeCloseTo(11 / 2, 4)
+    expect(first.x - fragment.left).toBeCloseTo(12 / 2, 4)
   })
 
   it('keeps adjacent ending tops aligned when one contains higher notes', () => {

@@ -3,7 +3,7 @@ import { SCORE_TEXT_FONT } from './font-family.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
@@ -45,7 +45,7 @@ export type NativeMeasure = {
   navigation?: NativeNavigation[]
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }
-export type NativeModelOptions = { includeBass?: boolean; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean; minimumNoteGapEm?: number }
+export type NativeModelOptions = { includeBass?: boolean; textMeasurer: TextMeasurer; fixedDo?: boolean; transpose?: number; tempoScale?: number; displayLyrics?: LyricsByEvent; expandedDisplay?: boolean; minimumNoteGap?: number }
 
 export function numberedPitch(token: string, shift = 0): NativePitch {
   const match = /^([0-7])([#b=]*)([ed]*)/.exec(token)
@@ -220,7 +220,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             const style = { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }
             const left = options.textMeasurer.measureText('(', style), right = options.textMeasurer.measureText(')', style)
             // Each side contributes the same half-gap as a quarter note.
-            glyph.parenthesisGap = nativeStyle.music * (options.minimumNoteGapEm ?? 0.4)
+            glyph.parenthesisGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap)
             glyph.parenthesisLeft = left.w - Math.min(0, left.inkLeft ?? 0) + glyph.parenthesisGap
             glyph.parenthesisRight = Math.max(right.w, right.inkRight ?? right.w) + glyph.parenthesisGap
           }
@@ -263,7 +263,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !source.interlude && !part.bass[index]?.events.length) continue
-      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? em(12) : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? nativeStyle.sectionGap : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = source.interlude ? measureNumber : ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]

@@ -10,7 +10,7 @@ import { nativeStyle } from './native-style.js'
 
 const measurer = new DefaultTextMeasurer()
 const painter = new NativeMusicPainter(measurer)
-const layoutRest = (count: number, width = 800) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1 2 3 4 | {rest=${count}} | 4 3 2 1 |||`), { width, paged: false, textMeasurer: measurer, minimumNoteGapEm: .4 })
+const layoutRest = (count: number, width = 800) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1 2 3 4 | {rest=${count}} | 4 3 2 1 |||`), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9 })
 
 describe('native multi-measure rests', () => {
   it('paints a beam with two caps and a full-size count, and reserves its actual ink', () => {

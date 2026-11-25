@@ -4,7 +4,7 @@ import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizon
 import { DefaultTextMeasurer } from './native-measure.js'
 import { projectNativeScore } from './native-model.js'
 
-const options = { minimumNoteGapEm: .4, minimumNoteGapFloorEm: 0}
+const options = { minimumNoteGap: 9, minimumNoteGapFloor: 0}
 const project = (source: string) => projectNativeScore(parseM3NDocument(source), { textMeasurer: new DefaultTextMeasurer() })
 
 describe('sustain group spacing', () => {
@@ -30,7 +30,7 @@ describe('sustain group spacing', () => {
     const roots = Math.sqrt(duration) + 1
     // The independent attack now reserves a fixed 0.4em, while the
     // sustain pair still uses its original duration-scaled half clearance.
-    expect(pair.minimum - groupedMinimum).toBeCloseTo(22 * .4 - 22 * .4 / 4 * roots, 8)
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 - 9 / 4 * roots, 8)
   })
 
   it.each([

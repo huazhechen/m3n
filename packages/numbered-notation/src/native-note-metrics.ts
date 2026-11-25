@@ -3,7 +3,7 @@ import { nativeNoteBody } from './native-note-body.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
-import { nativeStyle, nativeEm } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import type { NativeGlyph, NativePitch } from './native-model.js'
 import { nativeInnerMark } from './native-marks.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
@@ -16,7 +16,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   // Metrics need only vertical extrema. Evaluate the same text, accidental,
   // circle and beam primitives directly instead of serializing and parsing SVG.
   const sustainY = sustain && pitches.length ? n(nativeMusicAxis(measurer)) : 0
-  const sustainHalf = n(nativeEm(2.2)) / 2
+  const sustainHalf = n(2.2) / 2
   const bounds = pitches.map((pitch, index) => {
     if (sustain) return { top: -sustainY + sustainHalf, bottom: sustainY + sustainHalf }
     const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: 'M3N Numbers', fontWeight: 400, fontStyle: 'normal' })

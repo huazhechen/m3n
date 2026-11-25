@@ -5,7 +5,7 @@ import { NativeNumberedNotationScore, numberedLayoutQuality, PreparedNumberedNot
 describe('prepared export layouts', () => {
   it.each([
     '{title=旋律}{4/4}\nN: 1 2 3 4 |{br} (5 6) 7 1u |||\nL: 春天 来到 这里',
-    '{title=基本功}{leading=0.8}{equal-measures=true}{4/4}\nN: ' + '1 2 3 4 |{br} '.repeat(45),
+    '{title=基本功}{leading=18}{equal-measures=true}{4/4}\nN: ' + '1 2 3 4 |{br} '.repeat(45),
     '{title=低音}{3/4}\nN: ||: 1 2 3 |{br} 4 5 6 :||\nB: 1d 2d 3d | 4d 5d 6d |',
   ])('matches fresh paged and continuous renders across repeated mode changes', source => {
     const document = parseM3NDocument(source)
@@ -31,7 +31,7 @@ describe('prepared export layouts', () => {
   })
 
   it('fits the same shared pages and preserves standalone renders after sharing', () => {
-    const documents = [3, 4].map(rows => parseM3NDocument('{leading=0.8}{4/4}\nN: ' + '1 2 3 4 |{br} '.repeat(rows)))
+    const documents = [3, 4].map(rows => parseM3NDocument('{leading=18}{4/4}\nN: ' + '1 2 3 4 |{br} '.repeat(rows)))
     const options = { width: 640, pageMargin: 0 }
     const prepared = documents.map(document => new PreparedNumberedNotationScore(document, options))
     expect(renderSharedPreparedNumberedNotationScores(prepared, 32)).toEqual(renderSharedNumberedNotationScores(documents, options, 32))

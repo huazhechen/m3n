@@ -6,7 +6,7 @@ import { nativeMusicAxis } from './native-axis.js'
 import { nativeAccidentalGeometry } from './native-accidentals.js'
 import { type NativeInk } from './native-ink.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
-import { nativeStyle, nativeEm as em } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 
 /** The body's painted primitives, preserving SVG coordinate rounding and order.
  * Compute geometry directly; no SVG serialization, XML parsing or result cache. */
@@ -22,7 +22,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   if (glyph.sustain) {
     const axis = glyph.y + nativeMusicAxis(measurer)
-    line(glyph.x - em(4.62), axis, glyph.x + em(4.62), axis, em(2.2))
+    line(glyph.x - 4.62, axis, glyph.x + 4.62, axis, 2.2)
     return pieces
   }
   const body = nativeNoteBody(measurer), beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
@@ -41,7 +41,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
   const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65))
+  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + 4.29 + index * 5.94, glyph.y + body.dotY, 1.65)
   const beams = Math.max(0, Math.round(-Math.log2(base)))
   for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
   return pieces

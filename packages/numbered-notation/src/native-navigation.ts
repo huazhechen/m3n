@@ -12,7 +12,7 @@ export type NativeNavigation = {
 /** One measured fragment supplies both the reserved space and the painted mark. */
 export function measureNativeNavigation(name: 'fine' | 'dc' | 'ds' | 'tocoda', measurer: TextMeasurer): NativeNavigation {
   const text = name === 'tocoda' ? 'To Coda' : name === 'fine' ? 'Fine.' : name === 'dc' ? 'D.C.' : 'D.S.'
-  const size = nativeStyle.text * (name === 'fine' ? 1.05 : 1)
+  const size = name === 'fine' ? nativeStyle.fine : nativeStyle.navigation
   const family = SCORE_TEXT_FONT, painter = new NativeSymbols(measurer)
   const metrics = measurer.measureText(text, { fontSize: size, fontFamily: family, fontWeight: 500 })
   const raw = nativeSvgInk(painter.text(text, 0, 0, size, family, { 'font-weight': 500 }), measurer)

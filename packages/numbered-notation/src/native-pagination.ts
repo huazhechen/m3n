@@ -1,3 +1,4 @@
+import { nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
 export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
@@ -5,7 +6,7 @@ export type NativeBlockPosition = { page: number; top: number }
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
-  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; continuationTopInset?: number
+  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number
 }): { positions: NativeBlockPosition[]; heights: number[]; coreGaps?: number[] } {
   const { pageHeight, margin, gap } = options
   if (options.elastic) return paginateElasticBlocks(blocks, options)
@@ -35,7 +36,7 @@ export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options
 }
 
 /** Largest shared core parameter that fits; collisions may make height flat. */
-export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = 26.4, maximum = 32): number {
+export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = nativeStyle.minimumCoreGap, maximum = nativeStyle.maximumCoreGap): number {
   if (heightAt(minimum) > capacity + 1e-6) throw new Error('最小核心行距下的谱面超出页面。')
   if (heightAt(maximum) <= capacity) return maximum
   let low = minimum, high = maximum
@@ -47,8 +48,8 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
   return low
 }
 
-function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight, margin, gap, maxGap = gap, continuationTopInset = 0 }: {
-  pageHeight: number; margin: number; gap: number; maxGap?: number; continuationTopInset?: number
+function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight, margin, gap, maxGap = gap }: {
+  pageHeight: number; margin: number; gap: number; maxGap?: number
 }) {
   const normalized = blocks.map((block, index) => {
     const axis = block.baseline ?? 0
@@ -73,15 +74,15 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
     row.set(item.index, distance)
     return distance
   }
-  const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number, topInset = 0) => {
-    let baseline = margin + topInset - item.top
+  const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
+    let baseline = margin - item.top
     const previous = placed.at(-1)
     if (previous) {
       // Header separation stays fixed as the music's core parameter changes.
-      const separation = item.block.core && previous.block.core ? coreGap : 24
+      const separation = item.block.core && previous.block.core ? coreGap : nativeStyle.headerGap
       baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
       for (const prior of placed)
-        baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap / 2)
+        baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)
       baseline += item.block.gapBefore ?? 0
     }
     return baseline
@@ -91,10 +92,10 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
   const groups: { first: number; end: number }[] = []
   let first = 0, placed: Placed[] = []
   normalized.forEach((item, index) => {
-    let baseline = nextBaseline(item, placed, gap, first > 0 ? continuationTopInset : 0)
+    let baseline = nextBaseline(item, placed, gap)
     if (placed.length && baseline + item.lower > pageHeight - margin + 1e-6) {
       groups.push({ first, end: index }); first = index; placed = []
-      baseline = nextBaseline(item, placed, gap, first > 0 ? continuationTopInset : 0)
+      baseline = nextBaseline(item, placed, gap)
     }
     if (baseline + item.lower > pageHeight - margin + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     placed.push({ ...item, baseline })
@@ -106,7 +107,7 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
       const current: Placed[] = []
       let bottom = margin
       for (let index = group.first; index < group.end; index++) {
-        const item = normalized[index]!, baseline = nextBaseline(item, current, coreGap, page > 0 ? continuationTopInset : 0)
+        const item = normalized[index]!, baseline = nextBaseline(item, current, coreGap)
         current.push({ ...item, baseline }); bottom = Math.max(bottom, baseline + item.lower)
         if (publish) positions[index] = { page, top: baseline - item.axis }
       }

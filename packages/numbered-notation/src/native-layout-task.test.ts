@@ -17,7 +17,7 @@ it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('shares
     const actual = layoutNativeScore(document, { ...options, layoutTask, textMeasurementCache }, timings)
     const reference = layoutNativeScore(document, options)
     expect(renderNativePages(actual)).toEqual(renderNativePages(reference))
-    expect(actual.options.minimumNoteGapEm).toBe(reference.options.minimumNoteGapEm)
+    expect(actual.options.minimumNoteGap).toBe(reference.options.minimumNoteGap)
     if (width === 720) expect(timings.projectionBuilds).toBeUndefined()
     // Mutating one candidate must not modify the shared unplaced preparation.
     actual.projection.glyphs[0]!.x = -100000

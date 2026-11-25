@@ -5,7 +5,7 @@ import type { TextMeasurer } from './native-measure.js'
 /** Only the true endpoints have hooks; the label belongs to the first fragment. */
 export function nativeVoltaSvg(left: number, right: number, ending: string, measurer: TextMeasurer,
   first = true, last = true): string {
-  const size = nativeStyle.music, labelSize = size * 0.6, stroke = size * 0.055
+  const size = nativeStyle.music, labelSize = nativeStyle.volta, stroke = size * 0.055
   const text = [...new Set([...ending.matchAll(/\d+/g)].map(match => Number(match[0])))].sort((a, b) => a - b).map(pass => `${pass}.`).join('')
   const metrics = measurer.measureText(text, { fontSize: labelSize, fontFamily: 'M3N Numbers' })
   const height = metrics.inkBottom ?? metrics.h, hook = height * 1.2

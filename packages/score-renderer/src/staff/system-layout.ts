@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
@@ -56,14 +57,14 @@ export function arrangeStaffSystem(
     gap = 6 / scale
   for (const label of byClass('reh'))
     for (const text of findAll(label, (n) => n.tagName === 'text' || n.tagName === 'tspan'))
-      text.attributes['font-size'] = String(16 / scale)
+      text.attributes['font-size'] = String(scoreLayoutConfig.staff.annotation / scale)
   for (const attachment of [...new Set(['reh', 'dir', 'harm'].flatMap(byClass))]) {
     const ink = geometry.ink(attachment)
     if (ink.right - ink.left <= (width - 12) / scale) continue
     const text = findAll(attachment, (n) => n.tagName === 'text')[0]
     if (!text) continue
     const size = Math.max(
-      16 / scale,
+      scoreLayoutConfig.staff.text / scale,
       ...findAll(text, (n) => Boolean(n.attributes['font-size'])).map((n) => parseFloat(n.attributes['font-size']!)),
     )
     const bold = hasClass(attachment, 'reh')
@@ -316,7 +317,7 @@ export function arrangeStaffSystem(
     const content = textContent(label)
       .replace(/[\t\r\n]/g, '')
       .trim()
-    const inset = (geometry.measure(content, 16, true).width + 21) / scale
+    const inset = (geometry.measure(content, scoreLayoutConfig.staff.annotation, true).width + 21) / scale
     const staff = measures[0] && nodes(measures[0]).find((n) => hasClass(n, 'staff'))
     const lines = staff ? nodes(staff).filter((n) => hasClass(n, 'staff-line')) : []
     const center = lines.length
@@ -422,7 +423,7 @@ export function paginateStaff(
   }
   for (const [index, page] of pages.entries()) {
     let lo = minimum,
-      hi = Math.max(minimum, 32)
+      hi = Math.max(minimum, scoreLayoutConfig.staff.maximumCoreGap)
     for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2,
         ys = positions(page.systems, index === 0 ? headerHeight : pageInset, mid)
