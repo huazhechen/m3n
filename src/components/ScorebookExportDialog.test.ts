@@ -12,10 +12,11 @@ vi.mock('@m3n/score-renderer/view', () => ({
 }))
 const host = document.createElement('div')
 let root: ReturnType<typeof createRoot>
-afterEach(() => { act(() => root?.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); vi.resetAllMocks() })
+afterEach(() => { act(() => root?.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); vi.resetAllMocks(); vi.unstubAllGlobals() })
 
 it('shows advancing font preparation separately from layout progress', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  vi.stubGlobal('localStorage', { getItem: (key: string) => key === 'm3n:notation-mode' ? 'staff' : key === 'm3n:measure-numbers' ? '1' : null })
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
   let report!: (value: ScorebookProgress) => void
@@ -29,6 +30,8 @@ it('shows advancing font preparation separately from layout progress', async () 
     await new Promise(resolve => setTimeout(resolve, 80))
   })
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)) })
+  expect(mocks.build).toHaveBeenCalledWith(expect.any(AbortSignal), expect.any(Function), { notationMode: 'staff', measureNumbers: true })
+  expect(document.body.textContent).toContain('采用当前五线谱设置')
   act(() => report({ phase: 'preparing', completed: 0, total: 107, title: '第一曲' }))
   expect(document.body.textContent).toContain('正在准备乐谱与字体 0 / 107 首')
   act(() => report({ phase: 'preparing', completed: 1, total: 107, title: '第一曲' }))

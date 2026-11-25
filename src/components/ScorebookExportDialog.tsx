@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createScorePdf, downloadBlob, preloadScorePdf, scoreFileName } from '@m3n/score-renderer/view'
+import { readNotationMode, readRendererSetting } from '../lib/renderer-settings'
 import type { ScorebookProgress } from '../lib/online-scorebook'
 
 type ReadyBook = { blob: Blob; title: string; scoreCount: number; pageCount: number; sharedPages: number }
@@ -9,6 +10,8 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [attempt, setAttempt] = useState(0)
+  const [notationMode] = useState(readNotationMode)
+  const [measureNumbers] = useState(() => readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [progress, setProgress] = useState<ScorebookProgress>({ completed: 0, total: 0, title: '' })
   const [status, setStatus] = useState('正在准备谱集…')
   const [book, setBook] = useState<ReadyBook | null>(null)
@@ -33,7 +36,7 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
         check(); setProgress(value)
         const label = value.phase === 'preparing' ? '正在准备乐谱与字体' : value.phase === 'measuring' ? '正在计算排版' : '正在生成页面'
         setStatus(value.phase === 'packing' ? '正在安排章节与合页…' : `${label} ${Math.floor(value.completed)} / ${value.total} 首`)
-      })
+      }, { notationMode, measureNumbers })
       check(); setProgress({ completed: 0, total: result.pages.length, title: '' })
       const blob = await createScorePdf(result.pages, (done, total) => {
         check(); setProgress({ completed: done, total, title: '' }); setStatus(`正在生成 PDF：${done}/${total} 页…`)
@@ -48,11 +51,11 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : '谱集生成失败，请重试。')
     })
     return () => controller.abort()
-  }, [attempt])
+  }, [attempt, notationMode, measureNumbers])
   return createPortal(<dialog ref={dialogRef} className="pdf-export-dialog" aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); onClose() }}>
     <h2 id={titleId}>导出全量谱集</h2>
-    <p>全部内置乐谱按音乐类型编排，含封面与目录。</p>
+    <p>全部内置乐谱按音乐类型编排，采用当前{notationMode === 'staff' ? '五线谱' : notationMode === 'fixed' ? '固定调简谱' : '首调简谱'}设置，含封面与目录。</p>
     <div role="status" aria-live="polite">
       {book ? <p>PDF 已准备好：{book.scoreCount} 首，共 {book.pageCount} 页，含 {book.sharedPages} 个合页。</p>
         : <><p>{error ? '谱集生成已停止。' : status}</p><p className="scorebook-current-title">{progress.title}</p></>}

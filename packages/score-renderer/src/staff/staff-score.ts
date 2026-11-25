@@ -197,6 +197,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     })
   }
   return Object.assign(render, {
+    /** Continuous geometry without generating or mounting an SVG candidate. */
+    continuousHeight() {
+      return outputPages(layout(width), false)[0]!.height + 2 * margin
+    },
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {
       const result = layout(candidateWidth)

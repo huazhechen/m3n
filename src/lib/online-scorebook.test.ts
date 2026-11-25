@@ -107,6 +107,13 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(result.pages[1].textContent).toBe('目录第一章<第一曲>3第二曲4')
   })
 
+  it('applies fixed-do and measure-number preferences to every candidate and shared score', async () => {
+    layouts()
+    await buildOnlineScorebook(new AbortController().signal, () => {}, { notationMode: 'fixed', measureNumbers: true })
+    expect(mocks.prepared.mock.calls.every(([, options]) => options.fixedDo === true && options.measureNumbers === true)).toBe(true)
+    expect(mocks.shared).toHaveBeenCalledOnce()
+  })
+
   it('uses the same quality winner for solo and shared pages, and excludes unsafe candidates', async () => {
     layouts()
     mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1, lineDensityVariation: width === 600 ? 0 : 1, lastLineSlack: 0 }))
