@@ -10,7 +10,7 @@
       "fontSha256": "baea280eec694545d836e45959bb674e4b0a024fc7f1c973c59893d110e47dd0"
     },
     "src/scores/ai_de_li_zan_01.m3n": {
-      "sourceSha256": "556cdea41e8b6656705ef123c9e8b31aa65b5dee24a3b0b44ca0492cc72b71f0",
+      "sourceSha256": "2d3988cc9894fc253f1e78b3b7ae326c32c3fa0c9b60934015fb22d6505904e9",
       "font": "NotoSansSC-ca0432d08f84d00a.ttf",
       "fontSha256": "b21999e4581da004694cb5c3e8eb3adedee276fa546a007c3836d2dc83091317"
     },
@@ -110,7 +110,7 @@
       "fontSha256": "f4892545b2ed74735979ce9df8a40d90fcb69cdd084290d2670a3ab33e7c15b7"
     },
     "src/scores/flower_dance_01.m3n": {
-      "sourceSha256": "f0d5070a1dd0cc0c8dbb3f07190452788566e5f45338da153a4f8284744c095f",
+      "sourceSha256": "72c71520ef127faa87868fe30dd787ad286f343e64f1ae62fc7264055b21bd64",
       "font": "NotoSansSC-5536f5e7c5f7b076.ttf",
       "fontSha256": "cb8311ab9982d045e5a2d550e7656e8293543609dc451bcbad9590751d7c631e"
     },
@@ -475,7 +475,7 @@
       "fontSha256": "b23427e52fca485d5b5c0debb44a1ffc83c2bf168eacc5f7dfa915078c422653"
     },
     "src/scores/you_raise_me_up_01.m3n": {
-      "sourceSha256": "be147f3c66d357a9e5f8b89f17055f17d485d127972a13182d54f8901b86665d",
+      "sourceSha256": "ff4e7f19b2b88c6fcff1ef3e6b2b8e65f0d39a2c6db9ad82ab32361ae1db8927",
       "font": "NotoSansSC-6d6a9f12e82e3b8f.ttf",
       "fontSha256": "e81f3ae63dabcfa820c39405de1f19d16c39ccbcce45d2a38048b65d78ee143a"
     },
