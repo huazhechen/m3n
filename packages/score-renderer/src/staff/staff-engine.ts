@@ -3,7 +3,7 @@ import type { StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
 import { staffCommandPath } from './staff-glyph-primitive.js'
-import { staffMusicSize, staffGlyph, staffGlyphMetrics, type StaffGlyph } from './staff-music-font.js'
+import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
 
 const style = scoreLayoutConfig.staff
 const engine = style.engine
@@ -58,15 +58,24 @@ function keySignature(key: string, previous: string | undefined, bass: boolean):
   const flatYs = bass ? [7, 5.5, 7.5, 6, 8, 6.5, 8.5].map(y => y * (staffMusicSize() / 4)) : [6, 4.5, 6.5, 5, 7, 5.5, 7.5].map(y => y * (staffMusicSize() / 4))
   const add = (glyph: StaffGlyph, y: number) => {
     const m = staffGlyphMetrics(glyph)
-    symbols.push({ glyph, x: x - m.left, y }); x += m.right - m.left + (staffMusicSize() / 4 * 0.3)
+    let position = x - m.left
+    const previous = symbols.at(-1)
+    if (previous?.glyph === glyph) {
+      position = previous.x + staffSignatureAdvance(glyph, y - previous.y)
+      // Also protect earlier symbols when several staggered outlines interlock.
+      for (const symbol of symbols) if (symbol.glyph === glyph)
+        position = Math.max(position, symbol.x + staffSignatureAdvance(glyph, y - symbol.y))
+    }
+    symbols.push({ glyph, x: position, y })
+    x = Math.max(x, position + m.right)
   }
   if (old && (Math.sign(old) !== Math.sign(next) || Math.abs(next) < Math.abs(old))) {
     for (let i = Math.sign(old) === Math.sign(next) ? Math.abs(next) : 0; i < Math.abs(old); i++)
       add('accidentalNatural', (old > 0 ? sharpYs : flatYs)[i]!)
-    if (next) x += (staffMusicSize() / 4 * 0.3)
+    if (next) x += staffMusicSize() / 4 * 0.6
   }
   for (let i = 0; i < Math.abs(next); i++) add(next > 0 ? 'accidentalSharp' : 'accidentalFlat', (next > 0 ? sharpYs : flatYs)[i]!)
-  return { symbols, width: x }
+  return { symbols, width: x + (symbols.length ? staffMusicSize() / 4 * 0.3 : 0) }
 }
 function meterSignature(count: number, unit: number): Signature {
   const symbols: SymbolPlacement[] = []

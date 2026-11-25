@@ -8,6 +8,14 @@ export const staffGlyphMetrics = (name: StaffGlyph, size = staffMusicSize()) => 
   const g = glyphs[name]
   return { left: g.left * size, right: g.right * size, top: g.top * size, bottom: g.bottom * size, advance: g.advance * size }
 }
+/** Outline-derived separation for staggered key-signature accidentals. */
+export function staffSignatureAdvance(name: StaffGlyph, dy: number): number {
+  const glyph = glyphs[name]
+  const index = Math.round(dy / staffMusicSize() * 8) + 8
+  if (!('signatureAdvances' in glyph) || index < 0 || index >= glyph.signatureAdvances.length)
+    throw new Error(`五线谱调号缺少轮廓间距：${name}, ${dy}`)
+  return glyph.signatureAdvances[index]! * staffMusicSize()
+}
 const characters = new Map(Object.values(glyphs).map(g => [g.character, g]))
 /** Also used when reading back SVG, with the very same distributed font. */
 export function staffCharacterInk(value: string, size: number, x: number, y: number): Ink[] {
