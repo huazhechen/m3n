@@ -52,8 +52,8 @@ describe('native lyric and music lower envelopes', () => {
   it('uses beam and low-octave geometry when that body extends farther', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1d 2) 3 4 5 |||\nL: 春天在哪里'), options)
     const lane = score.systems[0]!.lanes[0]!
-    expect(lane.lyricBottom).toBeCloseTo(10.92)
-    expect(lane.bodyBottom).toBeCloseTo(10.92)
+    expect(lane.lyricBottom).toBeCloseTo(9.72)
+    expect(lane.bodyBottom).toBeCloseTo(9.72)
   })
 
   it('puts a lyric underline below the actual descenders, with measured clearance', () => {

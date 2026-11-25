@@ -22,13 +22,13 @@ describe('note decorations clear measured font edges', () => {
         expect(svg.querySelectorAll('circle[data-m3n-role="music-dot"]')).toHaveLength(Math.abs(octave))
         const dots = [...svg.querySelectorAll('[data-m3n-role="music-dot"]')].map(c => nativeSvgInk(c.outerHTML, measurer))
         for (const dot of dots) {
-          expect(dot.right - dot.left).toBeCloseTo(size * .2, 3)
-          expect(dot.bottom - dot.top).toBeCloseTo(size * .2, 3)
+          expect(dot.right - dot.left).toBeCloseTo(size * .15, 3)
+          expect(dot.bottom - dot.top).toBeCloseTo(size * .15, 3)
         }
         const text = nativeSvgInk(svg.querySelector('text')!.outerHTML, measurer)
         const clearance = octave > 0 ? text.top - dots[0]!.bottom : dots[0]!.top - text.bottom
         expect(clearance).toBeCloseTo(size * (octave > 0 ? .08 : .12), 3)
-        if (dots.length > 1) expect(Math.abs(dots[1]!.top - dots[0]!.top)).toBeCloseTo(size * .28, 3)
+        if (dots.length > 1) expect(Math.abs(dots[1]!.top - dots[0]!.top)).toBeCloseTo(size * .23, 3)
       }
     })
     it(`aligns attached dots and all beam levels with the measured body (${ascent}/${descent})`, () => {
@@ -54,8 +54,8 @@ describe('note decorations clear measured font edges', () => {
       const dotted = root(painter.body({ ...glyph, pitches: [pitch], writtenBeats: 1.5 }))
       const dot = nativeSvgInk(dotted.querySelector('[data-m3n-role="music-dot"]')!.outerHTML, measurer)
       const text = nativeSvgInk(dotted.querySelector('text')!.outerHTML, measurer)
-      expect(dot.right - dot.left).toBeCloseTo(4.8, 4)
-      expect(dot.bottom - dot.top).toBeCloseTo(4.8, 4)
+      expect(dot.right - dot.left).toBeCloseTo(4.32, 4)
+      expect(dot.bottom - dot.top).toBeCloseTo(4.32, 4)
       expect((dot.top + dot.bottom) / 2 - text.top).toBeCloseTo((ascent! + descent!) * .64, 4)
     })
   }

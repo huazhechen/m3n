@@ -12,6 +12,6 @@ export function nativeNoteBody(measurer: TextMeasurer, size = nativeStyle.music)
   return { top, bottom, width: zero.w, dotY: zero.h * .64 - zero.baseline,
     beamStroke, beamY,
     octaveY: (above: boolean, index: number, beams = 0) => above
-      ? top - size * (.08 + nativeStyle.dotRadiusEm + index * (2 * nativeStyle.dotRadiusEm + .08))
-      : (beams ? beamY(beams - 1) + beamStroke / 2 : bottom + size * .04) + size * (.08 + nativeStyle.dotRadiusEm + index * (2 * nativeStyle.dotRadiusEm + .08)) }
+      ? top - size * (.08 + nativeStyle.octaveDotRadiusEm + index * (2 * nativeStyle.octaveDotRadiusEm + .08))
+      : (beams ? beamY(beams - 1) + beamStroke / 2 : bottom + size * .04) + size * (.08 + nativeStyle.octaveDotRadiusEm + index * (2 * nativeStyle.octaveDotRadiusEm + .08)) }
 }
