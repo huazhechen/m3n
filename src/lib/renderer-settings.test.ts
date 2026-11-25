@@ -10,7 +10,7 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('manual widths use 20–40 multiples, independently from the nine search levels', () => {
+test('manual widths use 20–40 multiples, independently from the eleven search levels', () => {
   expect(stepScoreWidth(610, -1)).toBe(606)
   expect(stepScoreWidth(610, 1)).toBe(612)
   expect(stepScoreWidth(600, -1)).toBe(594)

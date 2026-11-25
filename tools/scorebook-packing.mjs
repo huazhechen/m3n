@@ -27,7 +27,7 @@ function soloOption(entry, index) {
   return { members: [index], width: solo.width, pageCount: solo.pageCount, fill, qualityScore: numberedLayoutScore(solo) }
 }
 
-function sharedOption(entries, members) {
+function sharedOption(entries, members, refine = true) {
   if (members.length < 2) return null
   if (members.some(index => entries[index].sharePage === false)) return null
   // Sharing eligibility is checked at the configured admission level, independently of the solo search. Once a group passes,
@@ -37,14 +37,82 @@ function sharedOption(entries, members) {
   const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
   if (eligibilityHeight > capacity(sharedWidthMaximum) + .001) return null
   const optionAt = width => {
-    const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width))
+    const candidates = members.map(index => entries[index].sharedCandidates?.find(candidate => candidate.width === width)
+      ?? entries[index].candidates.find(candidate => candidate.width === width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
     const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
     if (usedHeight > capacity(width) + .001) return null
     const qualityScore = candidates.reduce((sum, candidate) => sum + numberedLayoutScore(candidate), 0) / candidates.length
     return { members, width, pageCount: 1, fill: usedHeight / capacity(width), qualityScore, outside: [], overlaps: [] }
   }
-  return chooseBestWidth(sharedWidthCandidates.map(optionAt).filter(Boolean))
+  const coarse = chooseBestWidth(sharedWidthCandidates.map(optionAt).filter(Boolean))
+  if (!coarse || !refine) return coarse
+  const widths = sharedRefinementWidths(coarse.width)
+  return chooseBestWidth([coarse, ...widths.map(optionAt).filter(Boolean)])
+}
+
+const sharedRefinementWidths = width => {
+  const lower = Math.max(widthMinimum, width - scoreLayoutConfig.pageWidth.unit)
+  const upper = Math.min(sharedWidthMaximum, width + scoreLayoutConfig.pageWidth.unit)
+  return Array.from({ length: (upper - lower) / 6 + 1 }, (_, index) => lower + index * 6)
+}
+
+/** Measure the neighbors of every feasible group's coarse winner, before
+ * chapter packing. Supplemental candidates never change solo width selection. */
+export async function refineSharedWidths(entries, measure, { movableSections = new Set(), signal } = {}) {
+  const requests = new Map()
+  const visit = members => {
+    signal?.throwIfAborted()
+    const coarse = sharedOption(entries, members, false)
+    if (!coarse) return false
+    for (const index of members) for (const width of sharedRefinementWidths(coarse.width)) {
+      const entry = entries[index]
+      if (entry.candidates.some(candidate => candidate.width === width)
+        || entry.sharedCandidates?.some(candidate => candidate.width === width)) continue
+      const widths = requests.get(index) ?? new Set()
+      widths.add(width); requests.set(index, widths)
+    }
+    return true
+  }
+  for (let start = 0; start < entries.length;) {
+    signal?.throwIfAborted()
+    let end = start + 1
+    if (entries[start].sharePage !== false) {
+      while (end < entries.length && entries[end].section === entries[start].section
+        && !entries[end].breakBefore && entries[end].sharePage !== false) end++
+    }
+    if (movableSections.has(entries[start].section)) {
+      const eligible = Array.from({ length: end - start }, (_, offset) => start + offset).filter(index => {
+        const candidate = entries[index].candidates.find(candidate => candidate.width === sharedWidthMaximum)
+        return entries[index].sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1
+          && Number.isFinite(candidate.naturalHeight)
+      })
+      const enumerate = (members, from) => {
+        for (let index = from; index < eligible.length; index++) {
+          const next = [...members, eligible[index]]
+          if (next.length > 1 && !visit(next)) continue
+          enumerate(next, index + 1)
+        }
+      }
+      enumerate([], 0)
+    } else {
+      for (let first = start; first < end; first++) {
+        for (let last = first + 2; last <= end; last++) {
+          if (!visit(Array.from({ length: last - first }, (_, offset) => first + offset))) break
+        }
+      }
+    }
+    start = end
+  }
+  for (const [index, widths] of requests) for (const width of widths) {
+    signal?.throwIfAborted()
+    let candidate
+    try { candidate = { width, ...await measure(entries[index], width) } }
+    catch (error) { candidate = { width, error: error.message } }
+    signal?.throwIfAborted()
+    entries[index].sharedCandidates ??= []
+    entries[index].sharedCandidates.push(candidate)
+  }
 }
 
 const empty = () => ({ cost: 0, pages: 0, density: 0, qualityCost: 0, groups: [] })

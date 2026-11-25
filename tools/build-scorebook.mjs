@@ -10,7 +10,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy, widthMinimum, widthMaximum, widthStep } from './scorebook-width.mjs'
 import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
-import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
+import { optimizeScorebook, refineSharedWidths, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
 
 const runStarted = performance.now(), stages = {}
 let phaseStarted = runStarted
@@ -82,7 +82,16 @@ try {
   saveTimings('measured')
   if (!probeOnly) {
     const before = [...records]
-    optimizedPacking = optimizeScorebook(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    const movableSections = new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id))
+    await refineSharedWidths(records, async (entry, width) => {
+      const started = performance.now()
+      try {
+        return await page.evaluate(async ({ source, width, auditLayout }) =>
+          window.scorebook.measure(source, width, true, undefined, undefined, auditLayout),
+        { source: sources.get(entry.id), width, auditLayout })
+      } finally { entry.measurement.wallMs += performance.now() - started }
+    }, { movableSections })
+    optimizedPacking = optimizeScorebook(records, movableSections)
     const baseline = optimizeScorebook(before)
     records.splice(0, records.length, ...optimizedPacking.entries)
     orderOptimization = { pagesBefore: baseline.metrics.pages, pagesAfter: optimizedPacking.metrics.pages,

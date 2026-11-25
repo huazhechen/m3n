@@ -9,7 +9,7 @@ import { loadPresetScore, presetScores, preparePresetScores } from './samples'
 import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplaySettings } from './scorebook-renderer'
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
-import { optimizeScorebook, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+import { optimizeScorebook, refineSharedWidths, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 import { scorebookFrontPages } from './scorebook-front'
 
 
@@ -145,7 +145,24 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     onProgress({ completed: 0, total: entries.length, title: '正在安排章节与合页…', phase: 'packing' })
     await pause()
     signal.throwIfAborted()
-    const packed = optimizeScorebook(entries, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
+    const movableSections = new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id))
+    await refineSharedWidths(entries, async (entry, width) => {
+      await pause()
+      const started = performance.now()
+      const scoreTiming = measurementTimings.scores.find(score => score.file === entry.file)!
+      let timings: WidthTimings = {}
+      try {
+        const measured = await renderer.measure(documents.get(entry.file)!.document, width)
+        entry.prepared.set(width, measured.prepared)
+        timings = measured.candidate.timings
+        return measured.candidate
+      } finally {
+        timings.totalMs ??= performance.now() - started
+        scoreTiming.candidates.push({ width, timings })
+        scoreTiming.wallMs += performance.now() - started
+      }
+    }, { movableSections, signal })
+    const packed = optimizeScorebook(entries, movableSections)
     measurementTimings.stages.packingMs = performance.now() - packingStarted
     const renderingStarted = performance.now()
     let sharedPages = 0
