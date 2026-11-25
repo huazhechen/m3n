@@ -1,4 +1,5 @@
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { scoreExportFooter } from './score-export-footer.js'
 /** Combine the unchanged SVG pages, with a width-relative frame around the image. */
 export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .06, scoreUrl = 'https://score.cheesefans.com/'): SVGSVGElement {
   if (!pages.length) throw new Error('当前没有可导出的乐谱。')
@@ -28,7 +29,7 @@ export function frameScoreImage(pages: readonly SVGSVGElement[], marginRatio = .
     y += sizes[index]!.height
   }
   const footer = doc.createElementNS(ns, 'text')
-  footer.textContent = scoreUrl
+  footer.textContent = scoreExportFooter(scoreUrl).text
   footer.setAttribute('x', String(width + margin))
   footer.setAttribute('y', String(height + margin * 1.55))
   footer.setAttribute('text-anchor', 'end')

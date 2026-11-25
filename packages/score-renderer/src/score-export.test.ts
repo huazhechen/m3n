@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest' 
 import { a4ImagePlacement, a4SourcePageHeight } from './score-export'
 import { frameScoreImage } from './score-image-frame'
+import { scoreExportFooter } from './score-export-footer'
 
 describe('PDF export pagination', () => {
   it('keeps the A4 content ratio at every configured source width', () => {
@@ -29,14 +30,14 @@ describe('PDF export pagination', () => {
 })
 
 describe('image export footer', () => {
-  it('places the site address in the existing outer margin without changing score geometry', () => {
+  it.each(['https://score.cheesefans.com/scores/huan_le_song_01', 'https://score.cheesefans.com/works/my_song'])('places only the site address in the existing outer margin for %s', url => {
     const doc = document.implementation.createHTMLDocument()
     const page = doc.createElementNS('http://www.w3.org/2000/svg', 'svg')
     page.setAttribute('viewBox', '0 0 800 1200')
-    const url = 'https://score.cheesefans.com/scores/huan_le_song_01'
     const framed = frameScoreImage([page], .06, url)
     const footer = framed.querySelector('text')!
-    expect(footer.textContent).toBe(url)
+    expect(footer.textContent).toBe('https://score.cheesefans.com/')
+    expect(scoreExportFooter(url)).toEqual({ text: 'https://score.cheesefans.com/', href: url })
     expect(Number(footer.getAttribute('x'))).toBe(848)
     expect(Number(footer.getAttribute('font-size'))).toBe(16)
     expect(Number(footer.getAttribute('y'))).toBeLessThan(framed.viewBox.baseVal.height)

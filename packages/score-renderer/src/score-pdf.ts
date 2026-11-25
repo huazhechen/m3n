@@ -8,6 +8,7 @@ import {
 } from 'pdf-lib'
 import { a4ImagePlacement, type ScorePdfOptions } from './score-export.js'
 import { prepareScoreTextFonts } from './score-fonts.js'
+import { scoreExportFooter } from './score-export-footer.js'
 
 const ns = 'http://www.w3.org/2000/svg'
 
@@ -134,7 +135,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
           A: { Type: 'Action', S: 'URI', URI: PDFString.of(href) },
         })))
       }
-      const footer = options.scoreUrl ?? 'https://score.cheesefans.com/'
+      const { text: footer, href: footerHref } = scoreExportFooter(options.scoreUrl)
       const footerSize = 10
       const footerRight = options.fullPage ? 210 - 12 : placement.x + placement.width
       page.drawText(footer, { x: footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), y: 6 * pt, size: footerSize, font: footerFont, color: rgb(.4, .4, .4) })
@@ -142,7 +143,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         Type: 'Annot', Subtype: 'Link', Border: [0, 0, 0],
         Rect: [footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), 6 * pt,
           footerRight * pt, 6 * pt + footerSize],
-        A: { Type: 'Action', S: 'URI', URI: PDFString.of(footer) },
+        A: { Type: 'Action', S: 'URI', URI: PDFString.of(footerHref) },
       })))
       onProgress?.(index + 1, pages.length)
       await new Promise<void>(resolve => setTimeout(resolve, 0))
