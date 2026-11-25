@@ -25,7 +25,7 @@ describe('three scores transcribed from the November 26 uploads', () => {
   it.each([
     ['badinerie_bwv1067', badinerie, 'Bm', 42, 160, 'instrumental'],
     ['yang_cong', onion, 'C', 28, 180, 'pop'],
-    ['tu_ran_hao_xiang_ni', sudden, 'D', 69, 304, 'pop'],
+    ['tu_ran_hao_xiang_ni', sudden, 'D', 52, 231, 'pop'],
   ] as const)('validates, formats and catalogs %s with melody only', (id, source, key, count, beats, category) => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(formatM3N(source)).toBe(source)
@@ -121,12 +121,13 @@ describe('three scores transcribed from the November 26 uploads', () => {
     }
   })
 
-  it('matches the complete Suddenly Missing You lyrics and preserves its 71 qpm intro and coda', () => {
+  it('matches the complete Suddenly Missing You lyrics and keeps only its 71 qpm vocal line with an interlude sign', () => {
     const document = parseM3NDocument(sudden)
     expect(document.tempo).toBe(71)
     expect(document.composer).toBe('陈信宏')
     expect(performedWords(sudden)).toBe(reference.suddenPerformedLyrics)
     expect(sudden).not.toContain('眼晴')
-    expect(document.intervals.some(interval => interval.kind === 'rit' && interval.tempoTarget === 48)).toBe(true)
+    expect(document.parts.get('score')!.melody.filter(bar => bar.interlude)).toHaveLength(1)
+    expect(document.intervals.some(interval => interval.kind === 'inst' || interval.kind === 'rit')).toBe(false)
   })
 })
