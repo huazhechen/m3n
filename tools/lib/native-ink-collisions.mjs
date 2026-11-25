@@ -86,7 +86,9 @@ export function auditNativeInkCollisions(system, { groupSelector, independentMus
     const a = objects[i], b = objects[j]
     const separateMusic = independentMusic && [a, b].every(item =>
       ['music', 'control'].includes(item.kind) && item.label !== 'beam')
-    if (a.kind !== 'label' && b.kind !== 'label' && !separateMusic) continue
+    const barMusic = independentMusic && [a, b].some(item => item.kind === 'bar')
+      && [a, b].some(item => ['music', 'control'].includes(item.kind) && item.label !== 'beam')
+    if (a.kind !== 'label' && b.kind !== 'label' && !separateMusic && !barMusic) continue
     const left = Math.max(a.left, b.left), right = Math.min(a.right, b.right), top = Math.max(a.top, b.top), bottom = Math.min(a.bottom, b.bottom)
     if (right <= left || bottom <= top) continue
     candidates++

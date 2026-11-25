@@ -37,9 +37,9 @@ describe('one staff measurement task', () => {
 it.each([
   '5^^ | '.repeat(16),
   '((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) | '.repeat(8),
-])('keeps the same-width reading rows close for extended sounds and rapid groups', async music => {
+])('allows fewer staff rows for extended sounds and rapid groups without changing music size', async music => {
   const score = analyzeM3N(`{4/4}\nN: ${music}`).score
   const numbered = new PreparedNumberedNotationScore(score, { width: 640, pageMargin: 0 })
   const staff = await prepareStaffScore(score, { width: 640 })
-  expect(Math.abs(staff.layoutInfo().lines.length - numbered.systemCount)).toBeLessThanOrEqual(1)
+  expect(staff.layoutInfo().lines.length).toBeLessThan(numbered.systemCount)
 })

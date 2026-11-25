@@ -5,28 +5,30 @@ for (const { collection, slug } of [{ collection: 'scores', slug: 'huan_le_song_
 test(`${collection} fonts download before the source finishes and are reused by rendering`, async ({ page, request }) => {
   const catalog = await (await request.get(collection === 'scores' ? '/score-catalog.json' : '/works-catalog.json')).json()
   const score = (collection === 'scores' ? catalog.scores : catalog).find((score: { slug: string }) => score.slug === slug)
-  const fontUrls = score.fontPreloads.map((font: { url: string }) => font.url)
+  const fontUrls = collection === 'scores' ? [catalog.bundles.fonts.url] : score.fontPreloads.map((font: { url: string }) => font.url)
+  const sourceUrl = collection === 'scores' ? catalog.bundles.sources.url : score.sourceUrl
   const fontRequests: string[] = []
   page.on('request', request => {
     if (fontUrls.includes(new URL(request.url()).pathname)) fontRequests.push(new URL(request.url()).pathname)
   })
   let release!: () => void
   const gate = new Promise<void>(resolve => { release = resolve })
-  await page.route(`**/${score.sourceUrl}`, async route => {
+  await page.route(`**/${sourceUrl.replace(/^\//, '')}`, async route => {
     await gate
     await route.continue()
   })
   // Keep the source blocked: no source parsing or rendering can initiate these fonts.
   await page.goto(`/${collection}/${slug}`, { waitUntil: 'domcontentloaded' })
   try {
-    await expect.poll(() => new Set(fontRequests).size).toBe(score.fontPreloads.length)
+    await expect.poll(() => new Set(fontRequests).size).toBe(fontUrls.length)
     await expect(page.locator('.score-paper svg')).toHaveCount(0)
   } finally { release() }
   await expect(page.locator('.score-paper svg').first()).toBeVisible()
   for (const url of fontUrls) expect(fontRequests.filter(request => request === url)).toHaveLength(1)
   const downloadedCjk = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(url => /NotoSansSC-.*\.woff2$/.test(url)))
-  expect(downloadedCjk).toHaveLength(1)
-  // Reopening the score within the same document must reuse the preload links.
+  expect(downloadedCjk).toHaveLength(collection === 'scores' ? 0 : 1)
+  if (collection === 'scores') expect(await page.evaluate(() => [...document.fonts].some(font => font.family === 'Noto Sans SC' && font.status === 'loaded'))).toBe(true)
+  // Reopening the score within the same document must reuse the font downloads.
   await page.getByRole('link', { name: collection === 'scores' ? '乐谱库' : '独立作品', exact: true }).click()
   await page.locator(`a[href="/${collection}/${score.slug}"]`).click()
   await expect(page.locator('.score-paper svg').first()).toBeVisible()
@@ -34,7 +36,7 @@ test(`${collection} fonts download before the source finishes and are reused by 
 })
 }
 
-test('numbered display ignores old staff preference and loads only the selected score without external resources', async ({ page, baseURL }) => {
+test('numbered display ignores old staff preference and reuses shared packages without external resources', async ({ page, baseURL }) => {
   const external: string[] = [], requests: string[] = []
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation','0'))
   await page.route('**/*', async route => {
@@ -58,8 +60,9 @@ test('numbered display ignores old staff preference and loads only the selected 
   await page.getByRole('button',{name:'暂停',exact:true}).click()
   expect(external).toEqual([])
   const catalog = await (await page.request.get('/score-catalog.json')).json()
-  const selected = catalog.scores.find((score: { slug: string }) => score.slug === 'huan_le_song_01')
-  expect(requests.filter(path => path.endsWith('.m3n'))).toEqual(['/' + selected.sourceUrl])
+  expect(requests.filter(path => path.endsWith('.m3n'))).toEqual([])
+  expect(requests.filter(path => path === catalog.bundles.sources.url)).toHaveLength(1)
+  expect(requests.filter(path => path === catalog.bundles.fonts.url)).toHaveLength(1)
   expect(requests.filter(path => path === '/score-catalog.json')).toHaveLength(1)
   expect(requests.filter(path=>/\.wasm$/.test(path))).toHaveLength(0)
 })
@@ -78,7 +81,7 @@ test('editing and changing width refresh numbered layout',async({page})=>{
  await expect(paper).toContainText('改谱')
  await expect(paper.locator('[data-m3n-id="m3n-e-10"]')).toHaveCount(0)
  await openScoreSettings(page)
- await page.getByRole('slider',{name:'乐谱宽度'}).fill('600')
+ await page.getByRole('slider',{name:'乐谱宽度'}).fill('25')
  await expect(paper.locator('svg[data-engine="m3n"]')).toHaveAttribute('viewBox',/^0 0 600 /)
 })
 

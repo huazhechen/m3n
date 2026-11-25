@@ -87,8 +87,14 @@ test('staff equal-measure mode changes positions without changing notehead sizes
   // aria-busy=false before the next render begins; wait for the new geometry.
   await expect.poll(async () => {
     const rows = await measureWidths()
-    return rows.length ? Math.max(...rows.map(row => Math.max(...row) - Math.min(...row))) : Infinity
+    // The first measure includes the row's clef/key/meter before its equal
+    // music cell. Compare the following cells, which have no opening signature.
+    const cells = rows.filter(row => row.length >= 3).map(row => row.slice(1))
+    return cells.length ? Math.max(...cells.map(row => Math.max(...row) - Math.min(...row))) : Infinity
   }).toBeLessThanOrEqual(3)
+  for (const row of await measureWidths()) {
+    if (row.length > 1) expect(row[0]!).toBeGreaterThanOrEqual(row[1]!)
+  }
   const after = await sizes()
   expect(after).toHaveLength(before.length)
   for (const [i, size] of after.entries()) expect(size).toBeCloseTo(before[i]!, 3)

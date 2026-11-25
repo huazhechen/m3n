@@ -33,7 +33,7 @@ test('staff loading dialog spans the module download and stays silent after init
   await selectNotationMode(page, '五线谱')
   await expect(page.locator('.score-paper g.staff').first()).toBeVisible()
   await openScoreSettings(page)
-  await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+  await page.getByRole('slider', { name: '乐谱宽度' }).fill('25')
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   expect(await page.evaluate(() => (window as Window & { resourceDialogs: number }).resourceDialogs)).toBe(0)
 })

@@ -91,19 +91,20 @@ test('does not substitute a default score for a missing local work', async ({ pa
   await expect(page.getByLabel('M3N source')).toHaveCount(0)
 })
 
-test('loads only the selected built-in score body', async ({ page }) => {
+test('reuses the shared source package when opening a built-in score', async ({ page }) => {
   const bodies: string[] = []
   page.on('request', request => {
-    if (/\/assets\/v2\/[^/]+\.m3n$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
+    if (/\.(m3n|json\.gz)$/.test(new URL(request.url()).pathname)) bodies.push(request.url())
   })
   await page.goto('/scores')
   await expect(page.getByRole('heading', { name: '乐谱库', exact: true })).toBeVisible()
-  expect(bodies).toEqual([])
-  await page.goto('/scores/xiao_xing_xing_01')
-  await expect(page.locator('.score-reader svg').first()).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: '导出全量谱集' })).toBeEnabled()
   const catalog = await (await page.request.get('/score-catalog.json')).json()
-  const selected = catalog.scores.find((score: { slug: string }) => score.slug === 'xiao_xing_xing_01')
-  expect(bodies).toEqual([new URL('/' + selected.sourceUrl, page.url()).href])
+  const sourceUrl = new URL(catalog.bundles.sources.url, page.url()).href
+  expect(bodies).toEqual([sourceUrl])
+  await page.locator('a.score-card[href="/scores/xiao_xing_xing_01"]').click()
+  await expect(page.locator('.score-reader svg').first()).toBeVisible({ timeout: 30_000 })
+  expect(bodies).toEqual([sourceUrl])
 })
 
 test('submit is simulated locally and opens the reader', async ({ page }) => {

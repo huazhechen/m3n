@@ -111,6 +111,17 @@ describe('staff layout contract', () => {
       expect(systemDistance(upper, lower, 12)).toBe(Math.max(-188, collision + 6))
     }
   })
+  it('uses half of the local lyric core gap for collisions and retains the shared stretch ceiling', () => {
+    const make = (bottom: number, hasLyrics: boolean): StaffSystem => {
+      const ink = { left: 0, right: 100, top: 0, bottom }
+      return { node: element('g'), pieces: [ink], spacingPieces: [ink], edgePieces: [], ink,
+        core: { ...ink, bottom: 0 }, section: false, staffSpacing: 0, hasLyrics }
+    }
+    const lyrics = make(40, true), plain = make(40, false), next = make(20, false)
+    expect(systemDistance(lyrics, next, 28.8)).toBeCloseTo(49.6)
+    expect(systemDistance(plain, next, 28.8)).toBeCloseTo(54.4)
+    expect(systemDistance(lyrics, next, 31.68, 28.8, 31.68)).toBeCloseTo(55.84)
+  })
   it('leaves a short final named section open instead of stretching it across the page', async () => {
     const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e | 1 2 3 4 | 5 6 7 1e ||\n===Coda\nN: 1^^ |||', 600)
     const lines = render.layoutInfo().lines

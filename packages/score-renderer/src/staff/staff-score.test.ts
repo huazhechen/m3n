@@ -13,14 +13,14 @@ import { textMeasurer, xml } from './layout-svg.js'
 describe('staff page packing', () => {
   it('prefers more even line density over the widest spacing at equal page count', async () => {
     const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
-    const info = (await prepareStaffScore(score, { width: 640 })).layoutInfo()
-    const widest = planStaffLines(projectStaffDocument(score), 638, false, textMeasurer(), 0.375)
+    const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
+    const widest = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), 0.375)
     const available = info.availableWidth
-    const quality = scoreLineQuality(widest.map(line => line.minimum * STAFF_SCALE / available),
+    const quality = scoreLineQuality(widest.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
       Math.max(0, 1 - widest.at(-1)!.target * STAFF_SCALE / available))
     expect(info.pageCount).toBe(1)
     expect(info.spacing).toBeLessThan(0.375)
-    expect(scoreHorizontalQuality(640, info.quality)).toBeGreaterThan(scoreHorizontalQuality(640, quality))
+    expect(scoreHorizontalQuality(768, info.quality)).toBeGreaterThan(scoreHorizontalQuality(768, quality))
   })
 
   it('uses compact spacing when every candidate has the same horizontal quality', async () => {

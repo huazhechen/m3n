@@ -85,8 +85,10 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
       const musicGap = interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
       const separation = item.block.core && previous.block.core ? musicGap : headerGap
       baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
-      for (const prior of placed)
-        baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)
+      for (const prior of placed) {
+        const localGap = interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
+        baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + localGap * nativeStyle.collisionGapRatio)
+      }
       baseline += item.block.gapBefore ?? 0
     }
     return baseline

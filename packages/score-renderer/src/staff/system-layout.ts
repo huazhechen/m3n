@@ -418,7 +418,7 @@ function systemInkDistance(previous: StaffSystem, next: StaffSystem, gap: number
 }
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number, minimum = gap, maximum = gap): number {
   const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
-  return Math.max(previous.core.bottom + coreGap - next.core.top, systemInkDistance(previous, next, gap)) + (next.section ? style.sectionGap : 0)
+  return Math.max(previous.core.bottom + coreGap - next.core.top, systemInkDistance(previous, next, coreGap)) + (next.section ? style.sectionGap : 0)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
 function positions(systems: StaffSystem[], start: number, gap: number, minimum = gap, maximum = gap) {
@@ -426,7 +426,10 @@ function positions(systems: StaffSystem[], start: number, gap: number, minimum =
   const ys = [start - systems[0]!.ink.top]
   for (let i = 1; i < systems.length; i++) {
     let y = ys[i - 1]! + systemDistance(systems[i - 1]!, systems[i]!, gap, minimum, maximum)
-    for (let prior = 0; prior < i - 1; prior++) y = Math.max(y, ys[prior]! + systemInkDistance(systems[prior]!, systems[i]!, gap))
+    for (let prior = 0; prior < i - 1; prior++) {
+      const localGap = interpolateScoreCoreGap(minimum, maximum, gap, systems[prior]!.hasLyrics ? scoreLyricGapScale(minimum) : 1)
+      y = Math.max(y, ys[prior]! + systemInkDistance(systems[prior]!, systems[i]!, localGap))
+    }
     ys.push(y)
   }
   return ys

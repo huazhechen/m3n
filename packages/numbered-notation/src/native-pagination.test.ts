@@ -109,5 +109,7 @@ it('fits lyric gaps between 0.8em and the unchanged maximum while preserving col
     expect(result.positions[2]!.top + 20).toBeCloseTo(110);
     const ornament = { ...block, core: { top: 0, bottom: 0 }, ink: [{ left: 0, right: 10, top: 0, bottom: 40 }] };
     const collision = paginateNativeBlocks([ornament, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
-    expect(collision.positions[1]!.top - collision.positions[0]!.top).toBeCloseTo(54.4);
+    expect(collision.positions[1]!.top - collision.positions[0]!.top).toBeCloseTo(49.6);
+    const ordinary = paginateNativeBlocks([{ ...ornament, coreGapScale: 1 }, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
+    expect(ordinary.positions[1]!.top - ordinary.positions[0]!.top).toBeCloseTo(54.4);
 });

@@ -6,9 +6,8 @@ import { openScoreSettings, selectNotationMode } from './score-settings'
 import { staffInkBounds } from '../../tools/lib/staff-ink-collisions.mjs'
 
 const widthConfig = scoreLayoutConfig.pageWidth
-const selectedWidthPattern = new RegExp(`^(?:${Array.from({ length: widthConfig.maximumMultiple - widthConfig.minimumMultiple + 1 }, (_, index) => (index + widthConfig.minimumMultiple) * widthConfig.unit).join('|')})$`)
 
-test('staff mode automatically selects width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
+test('staff editor preserves width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
   const wasm: string[] = []
   page.on('request', request => { if (request.url().includes('.wasm')) wasm.push(request.url()) })
   await page.goto('/editor')
@@ -18,14 +17,14 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   expect(wasm).toHaveLength(0)
   await openScoreSettings(page)
-  await expect(paper).toHaveAttribute('data-selected-width', selectedWidthPattern, { timeout: 30_000 })
-  await expect.poll(async () => Number(await page.getByRole('slider', { name: '乐谱宽度' }).inputValue()) * widthConfig.unit).toBe(Number(await paper.getAttribute('data-selected-width')))
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('30')
+  await expect(paper.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '720')
   await selectNotationMode(page, '五线谱')
   await expect(paper).toHaveAttribute('data-notation', 'staff')
   await expect(paper.locator('g.staff').first()).toBeVisible()
   await expect(paper.locator('svg svg, use, polygon, polyline, ellipse')).toHaveCount(0)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', (await paper.getAttribute('data-selected-width'))!)
+  await expect(paper.locator(':scope > .score-page-sheet > svg, :scope > svg').first()).toHaveAttribute('width', '720')
   expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
@@ -52,8 +51,8 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
-  await expect(paper).toHaveAttribute('data-selected-width', selectedWidthPattern, { timeout: 30_000 })
-  await expect.poll(async () => Number(await page.getByRole('slider', { name: '乐谱宽度' }).inputValue()) * widthConfig.unit).toBe(Number(await paper.getAttribute('data-selected-width')))
+  await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('30')
+  await expect(paper.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '720')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -341,6 +340,7 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
   await page.goto('/scores/fly_me_to_the_moon_01')
   await selectNotationMode(page, '五线谱')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await page.addScriptTag({ content: staffInkBounds.toString() })
   const gaps = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
     const ending = system.querySelector('g.ending.voltaBracket, g.ending .voltaBracket')
     const staff = system.querySelector('g.staff')
@@ -349,12 +349,18 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
     const lines = [...staff.querySelectorAll('path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
       .filter(box => box.width > staffBox.width * .7 && box.height < 2)
     if (!lines.length) return []
-    const house = (ending.closest('g.m3n-ending-row') ?? ending).getBoundingClientRect()
+    const svg = system.ownerSVGElement!
+    const ink = (group: Element) => {
+      const bounds = (window as unknown as { staffInkBounds: (svg: Element, scope: Element) => DOMRect }).staffInkBounds(svg, group)
+      const top = new DOMPoint(bounds.x, bounds.y).matrixTransform(svg.getScreenCTM()!)
+      const bottom = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(svg.getScreenCTM()!)
+      return { top: top.y, bottom: bottom.y }
+    }
+    const house = ink(ending.closest('g.m3n-ending-row') ?? ending)
     const staffTop = Math.min(...lines.map(line => line.top))
     // Endings share a baseline across measures; use the complete row's music.
-    const music = [...system.querySelectorAll('g.note,g.chord,g.rest,g.beam,g.tie,g.slur,g.tupletNum')].map(n => n.getBoundingClientRect())
+    const music = [...system.querySelectorAll('g.note,g.chord,g.rest,g.beam,g.tie,g.slur,g.tupletNum')].map(ink)
     const protrusion = Math.max(0, staffTop - Math.min(...music.map(b => b.top)))
-    const svg = system.ownerSVGElement!
     const scale = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width
     return [{ gap: (staffTop - house.bottom) * scale, protrusion: protrusion * scale }]
   }))

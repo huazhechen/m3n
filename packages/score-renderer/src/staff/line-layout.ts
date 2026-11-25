@@ -1,25 +1,14 @@
-import { lastLineWidth, scoreLayoutConfig, createScoreHorizontalReference } from '@m3n/numbered-notation'
+import { lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
 import { createStaffPreparation, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 
-/** One notation-independent reading chain per task; physical staff ink remains a separate floor. */
-export function createStaffHorizontalReference(document: StaffDocument, settings: { transpose?: number; includeBass?: boolean; tempoScale?: number } = {}) {
-  const reference = createScoreHorizontalReference(document.score, { includeBass: document.hasBass, ...settings })
-  const offsets = new Map(document.measures.map(measure => [measure.id, measure.beatOffset ?? 0]))
-  return (members: StaffMeasure[], spacing: number, equal: boolean) => reference(members.map(member => {
-    const id = member.id.replace(/-fragment-.*/, '')
-    const start = member.fragment ? (member.beatOffset ?? 0) - (offsets.get(id) ?? 0) : 0
-    return { id, start, end: member.fragment ? start + Math.max(0,
-      ...[member.melody, member.bass].flatMap(lane => lane.map(event => event.onset + event.beats))) : undefined }
-  }), scoreLayoutConfig.numbered.minimumNoteGap + (spacing - .25) * 48, equal)
-}
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
 export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; target: number; weight: number }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { reference?: (measures: StaffMeasure[], spacing: number, equal: boolean) => number | undefined; preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -70,13 +59,8 @@ function describeStaffMeasure(measure: StaffMeasure, measureText: MeasureText): 
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
   suppliedMinimum?: StaffMeasureMinimum): StaffLine[] {
   const minimum = suppliedMinimum ?? createStaffMeasureMinimum(document.hasBass, measureText)
-  if (!suppliedMinimum) minimum.reference = createStaffHorizontalReference(document)
   const available = (width - scoreLayoutConfig.staff.contentEdgeInset) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
-  const sharedWidth = (members: MeasuredStaffMeasure[]) => {
-    const width = minimum.reference?.(members.map(member => member.measure), spacing, equal)
-    return width === undefined ? undefined : width / STAFF_SCALE
-  }
   const measureOne = (measure: StaffMeasure): MeasuredStaffMeasure => {
     const body = minimum(measure, false, spacing)
     const solo = minimum(measure, true, spacing)
@@ -87,7 +71,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
   }
   const visit = (measure: StaffMeasure, depth = 0) => {
     const item = measureOne(measure)
-    const occupied = Math.max(item.body + item.head, sharedWidth([item]) ?? 0)
+    const occupied = item.body + item.head
     if (occupied > available && depth < 10) {
       const { beats } = minimum.describe?.(measure) ?? describeStaffMeasure(measure, measureText)
       const fragments = (minimum.split ?? splitStaffMeasure)(measure, beats * Math.max(0.1, (available - item.head - scoreLayoutConfig.staff.engine.fragmentSafetyInset) / Math.max(item.body, occupied - item.head)) * 0.85)
@@ -107,25 +91,26 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
       : members.reduce((n, m) => n + m.body, 0) + members[0]!.head
     const candidates: LineCandidate[][] = group.map((_, start) => {
       const result: LineCandidate[] = []
-      let sum = 0, reading = 0, widest = -Infinity
+      let sum = 0, reading = 0, widest = -Infinity, widestReading = -Infinity
       for (let stop = start + 1; stop <= group.length; stop++) {
         const member = group[stop - 1]!
         sum += member.body
         reading += member.reading
         widest = Math.max(widest, member.body)
+        widestReading = Math.max(widestReading, member.reading)
         const minimum = equal ? widest * (stop - start) + group[start]!.head : sum + group[start]!.head
-        const reference = sharedWidth(group.slice(start, stop))
-        const occupied = Math.max(minimum, reference ?? 0)
-        if (occupied > available && stop > start + 1) break
-        result.push({ end: stop, density: occupied / available,
-          readingDensity: reference === undefined ? Math.max(minimum, reading + group[start]!.head) / available : occupied / available })
+        if (minimum > available && stop > start + 1) break
+        result.push({ end: stop, density: minimum / available,
+          readingDensity: Math.max(minimum, (equal ? widestReading * (stop - start) : reading) + group[start]!.head) / available })
       }
       return result
     })
     let start = 0
     for (const stop of planScoreLines(candidates)) {
       const members = group.slice(start, stop), minimum = minimumFor(members)
-      lines.push({ measures: members, minimum, reading: Math.max(minimum, sharedWidth(members) ?? 0), target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
+      const reading = equal ? Math.max(...members.map(member => member.reading)) * members.length + members[0]!.head
+        : members.reduce((sum, member) => sum + member.reading, 0) + members[0]!.head
+      lines.push({ measures: members, minimum, reading: Math.max(minimum, reading), target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
       start = stop
     }
     begin = end
@@ -134,7 +119,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
   if (last && previous) {
     const inherited = equal ? Math.max(last.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * last.measures.length + last.measures[0]!.head)
       : last.minimum + (previous.weight > 0 ? Math.max(0, previous.target - previous.minimum) / previous.weight : 0) * last.weight
-    last.target = lastLineWidth(Math.max(last.minimum, last.reading ?? 0), inherited, available, equal ? 0 : last.minimum)
+    last.target = lastLineWidth(last.minimum, Math.max(inherited, Math.min(available, last.reading ?? 0)), available, equal ? 0 : last.minimum)
   }
   return lines
 }

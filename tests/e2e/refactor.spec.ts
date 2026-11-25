@@ -88,7 +88,7 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
   let expectedPages = 0
   for (const paged of [false, true]) {
     await openScoreSettings(page)
-    await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+    await page.getByRole('slider', { name: '乐谱宽度' }).fill('25')
     if (paged) await page.getByRole('switch', { name: '分页', exact: true }).click()
     await page.keyboard.press('Escape')
     await page.getByRole('button', { name: '打印', exact: true }).click()

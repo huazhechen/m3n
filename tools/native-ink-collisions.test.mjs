@@ -24,6 +24,24 @@ test('detects real painted text overlap with music', async () => {
   assert.equal(result.collisions.length, 1)
   assert.ok(result.collisions[0].opaquePixelsAt2x > 0)
 })
+test('staff audit detects repeat dots against notes and rests using the current bar class', async () => {
+  for (const kind of ['note', 'rest']) {
+    const result = await page.evaluate(kind => {
+      document.querySelector('main').innerHTML = `<svg width="120" height="100"><g class="system">
+        <line class="staff-line" x1="0" y1="45" x2="100" y2="45" stroke="black"/>
+        <g class="${kind}" id="music"><rect x="30" y="40" width="10" height="10"/></g>
+        <g class="staff-bar" id="repeat"><circle cx="35" cy="45" r="2"/></g>
+        </g></svg>`
+      const system = document.querySelector('g.system'), failed = auditStaffInkCollisions(system)
+      system.querySelector('circle').setAttribute('cx', '20')
+      return { failed, clear: auditStaffInkCollisions(system), restored: !system.querySelector('[data-m3n-role]') }
+    }, kind)
+    assert.equal(result.failed.collisions.length, 1)
+    assert.ok([result.failed.collisions[0].a, result.failed.collisions[0].b].some(side => side.kind === 'bar'))
+    assert.equal(result.clear.collisions.length, 0)
+    assert.equal(result.restored, true)
+  }
+})
 test('staff audit checks independent music and ending hooks but permits beam joins', async () => {
   const audit = svg => page.evaluate(svg => {
     document.querySelector('main').innerHTML = `<svg width="120" height="100"><g class="system">${svg}</g></svg>`

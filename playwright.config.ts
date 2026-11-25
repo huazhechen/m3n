@@ -7,6 +7,7 @@ const systemChromium = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/
 const previewPort = Number(process.env.M3N_E2E_PORT ?? 4173)
 const previewOutput = `.tmp/playwright-dist-${previewPort}`
 const browserName = process.env.M3N_E2E_BROWSER === 'webkit' ? 'webkit' : 'chromium'
+const lowMemory = process.env.M3N_E2E_LOW_MEMORY === '1'
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -20,7 +21,8 @@ export default defineConfig({
     channel: browserName === 'chromium' && !systemChromium ? 'msedge' : undefined,
     launchOptions: browserName === 'chromium' ? {
       ...(systemChromium ? { executablePath: systemChromium } : {}),
-      args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=384'],
+      args: ['--disable-gpu', '--renderer-process-limit=1', `--js-flags=--max-old-space-size=${lowMemory ? 256 : 384}`,
+        ...(lowMemory ? ['--disable-features=SpareRendererForSitePerProcess'] : [])],
     } : undefined,
     headless: true,
   },

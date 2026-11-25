@@ -18,7 +18,7 @@ export function auditStaffInkCollisions(system) {
   }
   mark('g.syl,g.reh,g.dir,g.dynam,g.tempo,g.harm,g.fing,g.mNum,g.repeatMark,g.ending.voltaBracket,g.inline-signature', 'data-m3n-role', 'annotation')
   mark('g.slur,g.tie,g.hairpin,g.octave,g.tupletBracket', 'data-m3n-relation', 'staff-relation')
-  mark('g.barLine', 'data-m3n-role', 'bar')
+  mark('g.staff-bar,g.barLine', 'data-m3n-role', 'bar')
   mark('g.beam', 'data-m3n-role', 'beam')
   mark('g.rest,g.chord', 'data-m3n-role', 'control')
   mark('g.fermata,g.breath,g.trill,g.mordent,g.tupletNum', 'data-m3n-role', 'annotation')

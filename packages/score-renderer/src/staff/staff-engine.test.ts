@@ -16,6 +16,62 @@ function model(source: string) {
 }
 
 describe('staff rhythm engraving', () => {
+  it('keeps a start repeat clear of the first note, including after a row signature', () => {
+    const score = projectStaffDocument(analyzeM3N(readFileSync(resolve('../../src/scores/butter_fly_01.m3n'), 'utf8')).score)
+    for (const first of [false, true]) {
+      const result = createStaffMeasure(score.measures[1]!, first, false, measureText, .25)
+      const drawing = drawStaffMeasure(result, result.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
+      const bar = findAll(drawing, node => node.attributes.class === 'staff-bar')[0]!
+      const note = result.entries[0]![0]!.notes[0]!
+      expect(note.x - note.prepared.left - geometry.ink(bar).right).toBeGreaterThanOrEqual(staffMusicSize() / 8 - 1e-7)
+      const clef = findAll(drawing, node => node.attributes.class === 'staff-clef')[0]
+      if (clef) expect(geometry.ink(bar).left).toBeGreaterThan(geometry.ink(clef).right)
+    }
+  })
+  it('constrains music and each lyric row separately instead of adding unrelated envelopes', () => {
+    const measure = projectStaffDocument(analyzeM3N('{4/4}\nN: 5 6# 7 1e |\nL: abcdefghij i x y').score).measures[0]!
+    const text = (value: string, size: number) => ({ width: value.length * size / 2, left: 0, right: value.length * size / 2, ascent: size * .8, descent: size * .2 })
+    const result = createStaffMeasure(measure, false, false, text, .25)
+    drawStaffMeasure(result, result.minimum, 0)
+    const [first, second] = result.entries[0]!.map(entry => entry.notes[0]!)
+    const gap = .25 * scoreLayoutConfig.staff.engine.spacingUnit / scoreLayoutConfig.staff.engine.scale
+    expect(second!.x - second!.prepared.left - (first!.x + first!.prepared.after)).toBeGreaterThanOrEqual(gap - 1e-7)
+    const centers = [first!, second!].map(note => (note.headLeft + note.headRight) / 2)
+    const size = scoreLayoutConfig.lyrics.fontSize / scoreLayoutConfig.staff.engine.scale
+    const widths = ['abcdefghij', 'i'].map(value => text(value, size).width)
+    const lyricGap = centers[1]! - widths[1]! / 2 - (centers[0]! + widths[0]! / 2)
+    expect(lyricGap).toBeGreaterThanOrEqual(2 * scoreLayoutConfig.lyrics.horizontalPadding / scoreLayoutConfig.staff.engine.scale - 1e-7)
+    const columns = result.metrics.columns
+    const unrelatedSum = Math.max(columns[0]!.after + gap / 2, columns[0]!.lyricAfter)
+      + Math.max(columns[1]!.left + gap / 2, columns[1]!.lyricLeft)
+    expect(second!.x - first!.x).toBeLessThan(unrelatedSum - 1)
+  })
+  it('keeps ordinary bar clearance without reserving an empty signature at every measure', () => {
+    const score = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 | 5 6 7 1e |').score)
+    const ordinary = createStaffMeasure(score.measures[1]!, false, false, measureText, .25)
+    expect(ordinary.prepared.signatures[0]!.symbols).toHaveLength(0)
+    expect(ordinary.prepared.signatures[0]!.width).toBe(0)
+    const drawing = drawStaffMeasure(ordinary, ordinary.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
+    const first = ordinary.entries[0]![0]!.notes[0]!, last = ordinary.entries[0]!.at(-1)!.notes[0]!
+    const space = staffMusicSize() / 4
+    expect(first.headLeft).toBeGreaterThanOrEqual(space / 2)
+    const bar = drawStaffBar(ordinary.measure.source.right, ordinary.minimum, 0)
+    expect(geometry.ink(bar).left - last.headRight).toBeGreaterThanOrEqual(space / 2 - space * .05)
+  })
+  it('keeps staff reading space independent of digit size and proportional to its own music frame', () => {
+    const numberedSize = scoreLayoutConfig.numbered.music, staffSize = scoreLayoutConfig.staff.music
+    const reading = () => model('{4/4}\nN: 5 6 7 1e |').metrics.columns[0]!.rhythmAfter
+    try {
+      const original = reading()
+      scoreLayoutConfig.numbered.music = numberedSize * 1.5
+      expect(reading()).toBeCloseTo(original)
+      scoreLayoutConfig.staff.music = staffSize * 1.25
+      expect(reading()).toBeCloseTo(original * 1.25)
+    } finally {
+      scoreLayoutConfig.numbered.music = numberedSize
+      scoreLayoutConfig.staff.music = staffSize
+    }
+  })
   it('reserves flag width only for independently flagged notes', () => {
     const beamed = model('{4/4}\nN: (1 2) 3 4 5 |')
     const independent = model('{4/4}\nN: (1 0) 3 4 5 |')

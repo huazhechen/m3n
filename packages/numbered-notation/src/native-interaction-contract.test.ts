@@ -48,6 +48,17 @@ it.each([
   expect(high.querySelector('text[font-family="Barlow Semi Condensed"]')?.textContent).toBe(options.high)
   expect(low.querySelectorAll('[data-m3n-role="music-dot"]')).toHaveLength(1)
   expect(high.querySelectorAll('[data-m3n-role="music-dot"]')).toHaveLength(options.dots)
+  const bodyDot = root.querySelector('g.note circle[data-m3n-role="music-dot"]')!
+  const bodyDigit = bodyDot.parentElement!.querySelector('text[font-family="Barlow Semi Condensed"]')!
+  const bodyRatio = Number(bodyDot.getAttribute('r')) / Number(bodyDigit.getAttribute('font-size'))
+  for (const endpoint of [low, high]) {
+    const digit = endpoint.querySelector('text[font-family="Barlow Semi Condensed"]')!
+    for (const dot of endpoint.querySelectorAll('[data-m3n-role="music-dot"]')) {
+      expect(dot.tagName.toLowerCase()).toBe('circle')
+      expect(Number(dot.getAttribute('r')) / Number(digit.getAttribute('font-size'))).toBeCloseTo(bodyRatio)
+      expect(Number(dot.getAttribute('r')) * 2 / Number(digit.getAttribute('font-size'))).toBeCloseTo(.15)
+    }
+  }
 })
 
 it('omits range endpoints for a score containing only rests', () => {

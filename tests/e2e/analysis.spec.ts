@@ -10,8 +10,8 @@ test('analyzes edits in a worker and waits for composition to finish', async ({ 
   const worker = await workerCreated
   expect(worker.url()).toMatch(/^blob:/)
   await expect(paper).toContainText('后台分析')
-  // Wait for automatic width refinement before checking composition preserves the SVG.
-  await expect(paper.locator('svg').first()).toHaveAttribute('width', '480')
+  // The editor keeps its initial width while source edits are analyzed.
+  await expect(paper.locator('svg').first()).toHaveAttribute('width', '720')
   await paper.locator('svg').first().evaluate(svg => svg.setAttribute('data-composition-preserved', 'true'))
 
   await input.dispatchEvent('compositionstart')

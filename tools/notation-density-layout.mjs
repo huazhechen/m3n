@@ -64,6 +64,7 @@ async function compareAtSize(source, width, auditLayout, includeSvg, profile, in
       staffSpaceMm: scoreLayoutConfig.staff.music / 4 * mmPerPx },
     numbered: { ...summary(numbered.candidate, numbered.prepared.quality.meanLineDensity, numbered.prepared.continuousHeight()), spacing: numberedInfo.spacing, measureRows: numberedInfo.measureRows, ...geometry(numberedInfo) },
     staff: { ...summary(staff, info.quality.meanLineDensity, render.continuousHeight()),
+      collisionDensity: info.lines.reduce((sum, line) => sum + line.minimum / info.availableWidth, 0) / Math.max(1, info.lines.length),
       spacing: info.spacing, measureRows: info.lines.map(line => line.measures), ...geometry(info), ...(profile ? { profile: staffProfile(render(false)) } : {}) },
   }
 }

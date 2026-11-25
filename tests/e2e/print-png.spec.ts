@@ -3,11 +3,6 @@ import { readFile } from 'node:fs/promises'
 import { openScoreSettings } from './score-settings'
 
 test('continuous preview has the image frame and PNG preserves the same score fonts', async ({ page }, info) => {
-  const fontRequests: string[] = []
-  await page.route(/\.(?:otf|ttf|woff2?)(?:$|\?)/, route => {
-    fontRequests.push(route.request().url())
-    return route.continue()
-  })
   await page.addInitScript(() => { localStorage.setItem('m3n:render-mode', 'continuous') })
   await page.goto('/editor')
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=中文打印验证}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
@@ -16,9 +11,9 @@ test('continuous preview has the image frame and PNG preserves the same score fo
     if (paged) {
       await openScoreSettings(page)
       await page.getByRole('switch', { name: '分页', exact: true }).click()
-      // This one-line fixture settles at the unified search minimum, 480px.
-      await expect(page.getByRole('slider', { name: '乐谱宽度', exact: true })).toHaveValue('480')
-      await expect(page.locator('.score-paper .score-page-sheet svg').first()).toHaveAttribute('width', '480')
+      // This one-line fixture settles at the unified search minimum, 528px.
+      await expect(page.getByRole('slider', { name: '乐谱宽度', exact: true })).toHaveValue('22')
+      await expect(page.locator('.score-paper .score-page-sheet svg').first()).toHaveAttribute('width', '528')
       await page.keyboard.press('Escape')
     }
     await page.getByRole('button', { name: '打印', exact: true }).click()
@@ -55,7 +50,7 @@ test('continuous preview has the image frame and PNG preserves the same score fo
     expect(bytes.readUInt32BE(16)).toBe(Math.ceil(geometry.width * 1.12 * 4))
     expect(bytes.readUInt32BE(20)).toBeGreaterThan(0)
     expect(bytes.length).toBeGreaterThan(3000)
-    expect(fontRequests.some(url => /NotoSansSC/.test(url))).toBe(true)
+    expect(await page.evaluate(() => [...document.fonts].some(font => font.family === 'Noto Sans SC' && font.status === 'loaded'))).toBe(true)
     await expect(dialog).not.toBeVisible()
   }
 })

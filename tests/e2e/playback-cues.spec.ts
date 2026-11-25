@@ -47,7 +47,18 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
     const geometry = await measure.evaluate(measure => {
       const background = measure.querySelector<SVGRectElement>(':scope > rect.startup-beat-highlight')!
       const rect = background.getBoundingClientRect()
-      const notes = [...measure.querySelectorAll<SVGGElement>('g.note, g.rest')].map(note => note.getBoundingClientRect())
+      const music = measure.hasAttribute('data-m3n-ink-bounds')
+        ? [measure as SVGGElement] : [...measure.querySelectorAll<SVGGElement>('g.note, g.rest')]
+      const notes = music.map(note => {
+        // Bravura text line boxes extend beyond the painted glyphs. Staff
+        // publishes measure ink bounds; transform those into viewport coordinates.
+        const ink = note.getAttribute('data-m3n-ink-bounds')?.split(' ').map(Number)
+        if (!ink) return note.getBoundingClientRect()
+        const matrix = note.getScreenCTM()!
+        const top = new DOMPoint(ink[0], ink[1]).matrixTransform(matrix)
+        const bottom = new DOMPoint(ink[0]! + ink[2]!, ink[1]! + ink[3]!).matrixTransform(matrix)
+        return { left: top.x, top: top.y, right: bottom.x, bottom: bottom.y }
+      })
       return { width: rect.width, height: rect.height,
         containsNotes: notes.every(note => rect.left <= note.left + 1 && rect.right >= note.right - 1
           && rect.top <= note.top + 1 && rect.bottom >= note.bottom - 1),

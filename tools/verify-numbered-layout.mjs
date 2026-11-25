@@ -2,8 +2,8 @@ import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
 import { chromium } from '@playwright/test'
-import { build } from 'vite'
 
 // Validate real font geometry without starting a development server.
 const root = resolve(import.meta.dirname, '..')
@@ -19,18 +19,10 @@ try {
     `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export * from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};`,
   ].join('\n'))
-  await build({
-    configFile: false,
-    logLevel: 'error',
-    // The inline IIFE runs on about:blank; font URLs still need a valid base.
-    define: { 'import.meta.url': JSON.stringify('http://numbered-audit.local/bundle.js') },
-    build: {
-      outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
-      lib: { entry, name: 'm3n', formats: ['iife'], fileName: () => 'bundle.js' },
-    },
-  })
+  execFileSync(process.execPath, [join(root, 'tools/build-numbered-audit-bundle.mjs'), temp], { stdio: 'inherit' })
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
-  browser = await chromium.launch({ executablePath, headless: true })
+  browser = await chromium.launch({ executablePath, headless: true,
+    args: ['--disable-gpu', '--single-process', '--no-zygote', '--js-flags=--max-old-space-size=256'] })
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } })
   page.on('pageerror', error => console.error('Browser startup:', error))
   await page.setContent('<main></main>')
@@ -114,7 +106,7 @@ try {
           const host = label && label.ownerSVGElement.querySelector(`g.note[data-m3n-id="${label.getAttribute('data-m3n-id')}"] text`)
           const top = inkBounds(label), bottom = inkBounds(host)
           const numbers = top && bottom ? texts.filter(node => node.ownerSVGElement === label.ownerSVGElement && node.textContent === '3'
-            && node.getAttribute('font-size') === String(22 * 0.72) && inkBounds(node).y >= top.y + top.height && inkBounds(node).y + inkBounds(node).height <= bottom.y) : []
+            && node.closest('[data-m3n-relation="tuplet"]') && inkBounds(node).y >= top.y + top.height && inkBounds(node).y + inkBounds(node).height <= bottom.y) : []
           const ys = numbers.map(node => Number(node.getAttribute('y')))
           if (ys.length < 2 || Math.max(...ys) - Math.min(...ys) > 0.5) issues.push({ file, width, paged, instruction, tupletBaselines: ys })
         }

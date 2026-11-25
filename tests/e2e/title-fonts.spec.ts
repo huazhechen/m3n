@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 
-for (const mode of ['首调', '五线谱'] as const) test(`normal-width Chinese and Latin titles stay consistent in ${mode} and exports`, async ({ page }, info) => {
+for (const mode of ['首调', '五线谱'] as const) test(`Chinese and Latin title typography stays consistent in ${mode} and exports`, async ({ page }, info) => {
   await page.goto('/editor')
   await page.getByLabel('M3N source').fill('{title=月亮代表我的心 Moon River}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
@@ -27,18 +27,21 @@ for (const mode of ['首调', '五线谱'] as const) test(`normal-width Chinese 
   }))
   expect(typography.map(item => item.text).join('')).toContain('Moon')
   for (const item of typography) {
-    expect(item.family).toMatch(/^"?Noto Sans SC/)
+    expect(item.family).toMatch(/^"?Barlow Semi Condensed/)
+    expect(item.family).toContain('Noto Sans SC')
     expect(item.weight).toBe('500')
     expect(item.stretch).toBe(false)
   }
   const widths = await page.evaluate(() => {
     const ctx = document.createElement('canvas').getContext('2d')!
-    ctx.font = '500 32px "Noto Sans SC"'
-    const title = ctx.measureText('Moon River').width
+    const title = document.querySelector('[data-m3n-role="title"]')!
+    const text = title.tagName.toLowerCase() === 'text' ? title : title.querySelector('text')!
+    ctx.font = `500 32px ${getComputedStyle(text).fontFamily}`
+    const titleWidth = ctx.measureText('Moon River').width
     ctx.font = '500 32px "Barlow Semi Condensed"'
-    return { title, condensed: ctx.measureText('Moon River').width }
+    return { title: titleWidth, condensed: ctx.measureText('Moon River').width }
   })
-  expect(widths.title).toBeGreaterThan(widths.condensed)
+  expect(widths.title).toBeCloseTo(widths.condensed, 5)
   await paper.screenshot({ path: info.outputPath('title.png') })
   for (const format of ['PNG', 'PDF']) {
     await page.getByRole('button', { name: '打印', exact: true }).click()

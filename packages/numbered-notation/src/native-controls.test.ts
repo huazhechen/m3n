@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
+import { nativeHorizontalSpacing } from './native-horizontal.js'
 
 const changes = '{key=C} {4/4} {90qpm}\nN: 1 2 3 4 | {key=G} {3/4} {120qpm} 5 6 7 |||'
 
@@ -56,6 +57,14 @@ describe('native inline control occupancy', () => {
 })
 
 describe('native instrumental parentheses', () => {
+  it.each([9, 12, 15])('reserves enclosure clearance only at the passage endpoints at gap %s', minimumNoteGap => {
+    const width = (music: string) => {
+      const layout = layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |`), { width: 2000, paged: false, pageMargin: 0, minimumNoteGap })
+      return nativeHorizontalSpacing(layout.projection.measures, { minimumNoteGap }).minimumWidth
+    }
+    const short = '(5 6 5 6)', long = '(5 6 5 6 5 6 5 6)'
+    expect(width(`{inst}${short}{/}`) - width(short)).toBeCloseTo(width(`{inst}${long}{/}`) - width(long))
+  })
   it('uses one pair for adjacent instrumental declarations', () => {
     const source = '{4/4}\nN: {inst}1 2{/} {inst}3 4{/} |||'
     const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 800, paged: false })

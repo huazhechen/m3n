@@ -91,7 +91,7 @@ const staff = {
   engine: {
     scale: staffScale,
     bassY: 140, initialBassY: 130,
-    fragmentSafetyInset: 20, spacingUnit: 22, minimumMeasureWidth: 40, measureEndGap: 8,
+    fragmentSafetyInset: 20, spacingUnit: 22, minimumMeasureWidth: 40,
     lyricInitialOffset: 30, lyricUnderlineOffset: 4, attachmentTopGap: 40, dynamicBottomGap: 35,
     navigationBarInset: 15, navigationY: -10,
     restCountGap: 2, measureNumberOffset: 10,
