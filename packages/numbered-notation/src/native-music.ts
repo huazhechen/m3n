@@ -26,7 +26,8 @@ export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextM
       const first = i
       while (i + 1 < counts.length && counts[i + 1]! > level) i++
       const a = glyphs[first]!, b = glyphs[i + 1]!
-      const left = a.x - body.width / 2, right = b.x + body.width / 2, y = a.y + body.beamY(level)
+      // The outside of each round cap ends at the reserved numeric body edge.
+      const left = a.x - body.width / 2 + body.beamStroke / 2, right = b.x + body.width / 2 - body.beamStroke / 2, y = a.y + body.beamY(level)
       if (paint) svg += line(left, y, right, y, body.beamStroke)
       const half = n(body.beamStroke)/2, x1 = n(left), x2 = n(right), baseline = n(y)
       pieces.push({left:Math.min(x1,x2)-half,right:Math.max(x1,x2)+half,top:baseline-half,bottom:baseline+half})
@@ -107,7 +108,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
       for (let index = 0; index < dots; index++) music += circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65), this.measurer)
       const beams = Math.max(0, Math.round(-Math.log2(base)))
-      for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) music += line(glyph.x - body.width / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2, glyph.y + body.beamY(index), body.beamStroke)
+      for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) music += line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
     }
     return music
   }

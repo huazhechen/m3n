@@ -133,7 +133,7 @@ try {
           if (element.closest('defs') || element.parentNode === svg && element.tagName === 'rect') continue
           const box = inkBounds(element)
           if (box.width === 0 || box.height === 0) continue
-          if (box.x < view.x - 1 || box.x + box.width > view.x + view.width + 1 || box.y < view.y - 1 || box.y + box.height > view.y + view.height + 1) {
+          if (box.x < view.x - 1e-4 || box.x + box.width > view.x + view.width + 1e-4 || box.y < view.y - 1e-4 || box.y + box.height > view.y + view.height + 1e-4) {
             outside.push({ tag: element.tagName, text: element.textContent, id: element.closest('[data-m3n-id]')?.getAttribute('data-m3n-id'), box: [box.x, box.y, box.width, box.height] })
           }
         }

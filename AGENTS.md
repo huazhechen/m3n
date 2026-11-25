@@ -21,3 +21,9 @@
 - After editing a score or engraving dependencies, run `npm run prepare:scores` before committing. It updates the numbered width and per-score font subsets (staff width generation is deferred until the renderer rewrite); see `docs/SCORE_ARTIFACTS.md`.
 - Keep `.githooks/pre-commit` enabled (`npm run prepare` installs it). Stage complete score and engraving inputs before committing; do not bypass a failed generation hook.
 - CI uses `npm run check:score-artifacts` to reject stale generated results.
+
+## Memory Limit
+
+- All project build, generation, test, and browser processes together must stay below 2 GB of memory.
+- Run memory-intensive checks serially, including automatic hosted builds; do not overlap font generation, full tests, browser audits, or builds.
+- Use one test worker and bounded Node heaps for verification. Monitor aggregate process memory and stop work before the limit is reached.

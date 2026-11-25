@@ -499,14 +499,20 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     if (timings) timings.coreInkMs = (timings.coreInkMs ?? 0) + performance.now() - geometryStarted
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
-    return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, gapBefore: system.measures[0]?.extraGap ?? 0 }
+    const boundaryInk = (system.decorationLayout ?? []).filter(decoration => decoration.svg.includes('data-m3n-role="measure-number"'))
+      .flatMap(decoration => {
+        const y = system.lanes.find(lane => lane.id === decoration.lane)!.y
+        return nativeSvgPieces(decoration.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
+      })
+    return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
   const gap = options.coreGap ?? (document.minimumCoreGapEm !== undefined ? document.minimumCoreGapEm * nativeStyle.music : nativeStyle.minimumCoreGap)
   const pageFitStarted = timings ? performance.now() : 0
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true })
+    margin, gap, maxGap: options.coreGap ?? (options.paged ? Math.max(32, gap) : gap), elastic: true,
+    continuationTopInset: options.paged ? nativeStyle.music * 0.5 : 0 })
   positionNativeLayout(layout, pagination)
   if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
   record('verticalPaginationMs')
@@ -545,6 +551,7 @@ export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, cor
   const pagination = paginateNativeBlocks(layout.verticalBlocks, {
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
     margin: layout.margin, gap, maxGap: coreGap ?? (paged ? Math.max(32, gap) : gap), elastic: true,
+    continuationTopInset: paged ? nativeStyle.music * 0.5 : 0,
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

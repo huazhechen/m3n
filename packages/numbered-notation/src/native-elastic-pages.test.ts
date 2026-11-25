@@ -15,6 +15,22 @@ describe('elastic page core parameter', () => {
     expect(result.coreGaps![1]).toBe(32)
     expect(result.positions.map(p => p.top)).toEqual([0, 35, 70, 0, 42])
   })
+  it('reserves overlay label page bounds without adding inter-row collision spacing', () => {
+    const overlay = { ...row(), boundaryInk: [{ left: 0, right: 10, top: -15, bottom: -5 }] }
+    const first = paginateNativeBlocks([overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
+    expect(first.positions[0]!.top).toBe(15)
+    const following = paginateNativeBlocks([row(), overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
+    expect(following.positions.map(position => position.top)).toEqual([0, 26])
+  })
+
+  it('reserves extra top space only on continuation pages before fitting their gaps', () => {
+    const result = paginateNativeBlocks(Array.from({ length: 5 }, () => row()), {
+      pageHeight: 40, margin: 0, gap: 16, maxGap: 32, elastic: true, continuationTopInset: 11,
+    })
+    expect(result.positions.map(position => position.page)).toEqual([0, 0, 1, 2, 3])
+    expect(result.positions.map(position => position.top)).toEqual([0, 30, 11, 11, 11])
+  })
+
   it('scales collision clearance with half the core parameter instead of adding the full increase', () => {
     const blocks = [row(0, 0, 38), row(0, -12, 10), row(100)]
     const fitted = fit(blocks, 110)

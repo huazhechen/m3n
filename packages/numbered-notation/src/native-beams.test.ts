@@ -46,11 +46,11 @@ describe('measured reduction lines', () => {
         expect(lines).toHaveLength(deeper.length ? 2 : 1);
         // A shared first level spans the whole first beat. The extra level
         // belongs only to the ordinary sixteenths, not the written eighths.
-        expect(Number(lines[0]!.getAttribute('x1'))).toBeCloseTo(short[0]!.x - 19 / 2, 3);
-        expect(Number(lines[0]!.getAttribute('x2'))).toBeCloseTo(short.at(-1)!.x + 19 / 2, 3);
+        expect((Number(lines[0]!.getAttribute('x1')) - Number(lines[0]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(short[0]!.x - 19 / 2, 3);
+        expect((Number(lines[0]!.getAttribute('x2')) + Number(lines[0]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(short.at(-1)!.x + 19 / 2, 3);
         if (deeper.length) {
-            expect(Number(lines[1]!.getAttribute('x1'))).toBeCloseTo(notes[deeper[0]!]!.x - 19 / 2, 3);
-            expect(Number(lines[1]!.getAttribute('x2'))).toBeCloseTo(notes[deeper[1]!]!.x + 19 / 2, 3);
+            expect((Number(lines[1]!.getAttribute('x1')) - Number(lines[1]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(notes[deeper[0]!]!.x - 19 / 2, 3);
+            expect((Number(lines[1]!.getAttribute('x2')) + Number(lines[1]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(notes[deeper[1]!]!.x + 19 / 2, 3);
         }
         expect(short.every(note => beams.claimed.get(note)?.has(0))).toBe(true);
         expect(beams.claimed.has(notes.at(-1)!)).toBe(false);
@@ -59,15 +59,15 @@ describe('measured reduction lines', () => {
         const notes = glyphs('([1 2 3:2]) ([4 5 6:2])', '2/4');
         const lines = [...root(nativeBeamLayout(notes, measurer).svg).querySelectorAll('line')];
         expect(lines).toHaveLength(2);
-        expect(Number(lines[0]!.getAttribute('x2'))).toBeCloseTo(notes[2]!.x + 19 / 2, 3);
-        expect(Number(lines[1]!.getAttribute('x1'))).toBeCloseTo(notes[3]!.x - 19 / 2, 3);
+        expect((Number(lines[0]!.getAttribute('x2')) + Number(lines[0]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(notes[2]!.x + 19 / 2, 3);
+        expect((Number(lines[1]!.getAttribute('x1')) - Number(lines[1]!.getAttribute('stroke-width')) / 2)).toBeCloseTo(notes[3]!.x - 19 / 2, 3);
     });
-    it('centers standalone lines on measured body width', () => {
+    it('fits the full standalone stroke, including round caps, to measured body width', () => {
         const glyph = { ...glyphs()[0]!, x: 40, y: 0 };
         const lines = root(new NativeMusicPainter(measurer).body(glyph)).querySelectorAll('line');
         expect(lines.length).toBe(1);
-        expect(Number(lines[0]!.getAttribute('x1'))).toBe(30.5);
-        expect(Number(lines[0]!.getAttribute('x2'))).toBe(49.5);
+        expect((Number(lines[0]!.getAttribute('x1')) - Number(lines[0]!.getAttribute('stroke-width')) / 2)).toBe(30.5);
+        expect((Number(lines[0]!.getAttribute('x2')) + Number(lines[0]!.getAttribute('stroke-width')) / 2)).toBe(49.5);
     });
     it('paints each connected level once and leaves isolated levels local', () => {
         const notes = glyphs().slice(0, 3).map((g, i) => ({ ...g, x: 40 + i * 50, y: 0 }));
@@ -76,7 +76,7 @@ describe('measured reduction lines', () => {
         const local = notes.map(g => root(painter.music(g, beams.claimed.get(g))).querySelectorAll('line').length);
         expect(local).toEqual([0, 0, 0]);
         const lines = [...root(beams.svg).querySelectorAll('line')];
-        expect(lines.map(l => [Number(l.getAttribute('x1')), Number(l.getAttribute('x2'))])).toEqual([[30.5, 149.5], [80.5, 149.5]]);
+        expect(lines.map(l => [Number(l.getAttribute('x1')) - Number(l.getAttribute('stroke-width')) / 2, Number(l.getAttribute('x2')) + Number(l.getAttribute('stroke-width')) / 2])).toEqual([[30.5, 149.5], [80.5, 149.5]]);
         const isolated = nativeBeamLayout([notes[1]!], measurer);
         expect(isolated.svg).toBe('');
         expect(root(painter.music(notes[1]!, isolated.claimed.get(notes[1]!))).querySelectorAll('line').length).toBe(2);

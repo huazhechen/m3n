@@ -43,6 +43,6 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
   for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + em(4.29) + index * em(5.94), glyph.y + body.dotY, em(1.65))
   const beams = Math.max(0, Math.round(-Math.log2(base)))
-  for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2, glyph.y + body.beamY(index), body.beamStroke)
+  for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
   return pieces
 }

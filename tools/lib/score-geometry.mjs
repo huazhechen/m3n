@@ -9,11 +9,12 @@ export function inspectScorePages(pages, timings = {}) {
     const view = svg.viewBox.baseVal
     const paper = { left: view.x, top: view.y, right: view.x + view.width, bottom: view.y + view.height }
     let started = performance.now()
-    for (const node of svg.querySelectorAll('text,path,line,circle,rect,polygon,ellipse')) {
+    for (const node of svg.querySelectorAll('text,path,line,circle,rect,polygon,polyline,ellipse')) {
       if (node.closest('defs')) continue
       const box = ink(node)
-      if (box.y >= paper.bottom || box.y + box.height <= paper.top) continue
-      if (box.width && box.height && (box.x < paper.left - .75 || box.x + box.width > paper.right + .75 || box.y < paper.top - .75 || box.y + box.height > paper.bottom + .75)) {
+      // Allow floating-point coordinate noise only, never visible clipping.
+      const tolerance = 1e-4
+      if (box.width && box.height && (box.x < paper.left - tolerance || box.x + box.width > paper.right + tolerance || box.y < paper.top - tolerance || box.y + box.height > paper.bottom + tolerance)) {
         outside.push({ page: index + 1, tag: node.tagName, text: node.textContent, markup: node.outerHTML, box: [box.x - paper.left, box.y - paper.top, box.width, box.height] })
       }
     }

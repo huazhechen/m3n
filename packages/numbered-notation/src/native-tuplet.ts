@@ -20,7 +20,9 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: 'M3N Numbers' }).w / 2
   const shape = (peer: NativeRelation) => {
     const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: 'M3N Numbers', textAlign: 'center' })
-    const left = peer.first.x - halfBody, right = peer.last.x + halfBody, center = (left + right) / 2
+    // Stroke caps belong inside the row, even when the first head is flush.
+    const left = Math.max(system.measures[0]!.start + halfStroke, peer.first.x - halfBody)
+    const right = Math.min(system.measures.at(-1)!.end - halfStroke, peer.last.x + halfBody), center = (left + right) / 2
     const textLeft = center - text.w / 2 - size * 0.12, textRight = center + text.w / 2 + size * 0.12
     const segments: [number, number, number, number][] = [[left, 0, left, hook], [right, 0, right, hook]]
     if (textLeft > left) segments.push([left, 0, textLeft, 0])

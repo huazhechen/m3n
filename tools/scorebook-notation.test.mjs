@@ -179,19 +179,34 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       const transparent = inspect('<rect x="-2" y="-2" width="104" height="104" fill="transparent"/>')
       const horizontal = inspect('<rect x="-2" y="10" width="20" height="20" fill="black"/>')
       const vertical = inspect('<g class="system"><rect x="10" y="-2" width="20" height="20" fill="black"/></g>')
+      const strokeEdge = inspect('<line x1="0" y1="10" x2="0" y2="20" stroke="black" stroke-width="1.21"/>')
+      const above = inspect('<text x="10" y="-20" data-m3n-role="measure-number">82</text>')
+      const tiny = inspect('<rect x="-0.001" y="10" width="10" height="10" fill="black"/>')
+      const below = inspect('<rect x="10" y="110" width="10" height="10" fill="black"/>')
       const collision = inspect('<g class="system"><g class="note"><text x="20" y="40">1</text></g><text data-m3n-role="lyric" x="20" y="40">甲</text></g>')
       host.remove()
-      return { transparent, horizontal, vertical, collision }
+      return { transparent, horizontal, vertical, collision, strokeEdge, above, below, tiny }
     })
     assert.deepEqual(geometry.transparent, { outside: [], overlaps: [] })
     assert.equal(geometry.horizontal.outside.length, 1)
     assert.equal(geometry.vertical.outside.length, 1)
     assert.equal(geometry.collision.overlaps.length, 1)
+    for (const key of ['strokeEdge', 'above', 'below', 'tiny']) assert.equal(geometry[key].outside.length, 1, key)
     const basics = readFileSync(join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
     const basicsLayout = await page.evaluate(source => window.scorebook.auditWidth(source, 590), basics)
     assert.equal(basicsLayout.pageCount, 3)
     assert.deepEqual(basicsLayout.outside, [])
     assert.deepEqual(basicsLayout.overlaps, [])
+    for (const width of [580, 720]) {
+      const numbered = await page.evaluate(async ({ source, width }) => {
+        await window.scorebook.auditWidth(source, width)
+        const host = document.querySelector('#scratch')
+        host.innerHTML = window.scorebook.NumberedNotationScore.create(window.scorebook.parseM3NDocument(source))
+          .render({ width, paged: true, pageMargin: 0, measureNumbers: true }).join('')
+        return window.scorebook.inspectScorePages([...host.querySelectorAll(':scope > svg')])
+      }, { source: basics, width })
+      assert.deepEqual(numbered.outside, [], `${width}px: tuplets and page-opening measure numbers must stay inside the page`)
+    }
     const longSource = '{title=多页测试}{4/4}\nN: ' + Array.from({ length: 100 }, () => '1 2 3 4 |{br}').join(' ')
     const long = await page.evaluate(async source => {
       const summary = await window.scorebook.auditWidth(source, 640)

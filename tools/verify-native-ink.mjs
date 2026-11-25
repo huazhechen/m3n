@@ -53,7 +53,7 @@ try {
   await page.addScriptTag({ url: 'http://native-ink.local/bundle.js' })
   await page.evaluate(async () => { await audit.prepareNumberedNotationFonts(); await document.fonts.ready })
   for (const [file, source] of Object.entries(sources).filter(([f]) => !filter || f.includes(filter))) {
-    for (const width of [320, 600, 800, 1000]) for (const paged of [false, true]) {
+    for (const width of [320, 580, 600, 720, 800, 1000]) for (const paged of [false, true]) {
       const result = await page.evaluate(async ({ source, width, paged, collisionAudit, renderOptions }) => {
         try {
           const documentScore = audit.parseM3NDocument(source)
@@ -77,10 +77,13 @@ try {
               const half = style.stroke !== 'none' ? parseFloat(style.strokeWidth) / 2 : 0
               const a = new DOMPoint(box.x - half, box.y - half).matrixTransform(matrix), b = new DOMPoint(box.x + box.width + half, box.y + box.height + half).matrixTransform(matrix)
               top = Math.min(top, a.y, b.y); bottom = Math.max(bottom, a.y, b.y)
-              const pageWidth = node.ownerSVGElement.viewBox.baseVal.width
-              if (a.x < -0.01 || b.x > pageWidth + 0.01) clipping.push({ system: system.id, tag: node.tagName, role: node.closest('[data-m3n-role]')?.getAttribute('data-m3n-role'), text: node.textContent, actual: [a.x, b.x], pageWidth })
+              const pageWidth = node.ownerSVGElement.viewBox.baseVal.width, pageHeight = node.ownerSVGElement.viewBox.baseVal.height
+              if (a.x < -1e-4 || b.x > pageWidth + 1e-4 || a.y < -1e-4 || b.y > pageHeight + 1e-4)
+                clipping.push({ system: system.id, tag: node.tagName, role: node.closest('[data-m3n-role]')?.getAttribute('data-m3n-role'), text: node.textContent, actual: [a.x, a.y, b.x, b.y], pageWidth, pageHeight })
               const reservedTop = Number(system.getAttribute('data-m3n-top')), reservedBottom = Number(system.getAttribute('data-m3n-bottom'))
-              if (a.y < reservedTop - 0.01 || b.y > reservedBottom + 0.01) violations.push({ system: system.id, tag: node.tagName, role: node.closest('[data-m3n-role]')?.getAttribute('data-m3n-role'), text: node.textContent, actual: [a.y, b.y], reserved: [reservedTop, reservedBottom] })
+              // Browser CTMs round large continuous-page coordinates to float32.
+              const coordinateNoise = Math.max(1e-4, Math.max(Math.abs(a.y), Math.abs(b.y), Math.abs(reservedTop), Math.abs(reservedBottom)) * 2 ** -22)
+              if (a.y < reservedTop - coordinateNoise || b.y > reservedBottom + coordinateNoise) violations.push({ system: system.id, tag: node.tagName, role: node.closest('[data-m3n-role]')?.getAttribute('data-m3n-role'), text: node.textContent, actual: [a.y, b.y], reserved: [reservedTop, reservedBottom] })
             }
           }
           if (collisionAudit) for (const system of document.querySelectorAll('g.system')) {
