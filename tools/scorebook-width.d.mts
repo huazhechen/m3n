@@ -8,14 +8,13 @@ export type WidthMeasurement = {
   naturalHeight?: number
   lineDensityVariation?: number
   lastLineSlack?: number
-  pageBottomSlack?: number
   qualityScore?: number
 }
 export const widthMinimum: number, widthMaximum: number, widthStep: number
 export const widthCandidates: number[]
 export const widthSearchStrategy: string
 export function chooseBestWidth(candidates: WidthMeasurement[]): WidthMeasurement | null
-export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 'lineDensityVariation' | 'lastLineSlack' | 'pageBottomSlack' | 'qualityScore'>): number
+export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 'lineDensityVariation' | 'lastLineSlack' | 'qualityScore'>): number
 export function probeWidthCandidates(measure: (width: number) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
   candidates: WidthMeasurement[]
   renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number }
