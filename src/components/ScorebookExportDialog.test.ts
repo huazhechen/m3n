@@ -66,10 +66,15 @@ it('finishes PDF generation before enabling a synchronous download', async () =>
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
-  const pages = [document.createElementNS('http://www.w3.org/2000/svg', 'svg')]
+  const pages = Array.from({ length: 2 }, () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.innerHTML = '<text>Page</text>'
+    return svg
+  })
   mocks.build.mockResolvedValue({ pages, scoreCount: 102, sharedPages: 2 })
   let finishPdf!: (blob: Blob) => void
-  mocks.pdf.mockImplementation(() => new Promise<Blob>(resolve => { finishPdf = resolve }))
+  let reportPage!: (done: number, total: number) => void
+  mocks.pdf.mockImplementation((_pages, progress) => { reportPage = progress; return new Promise<Blob>(resolve => { finishPdf = resolve }) })
   document.body.append(host); root = createRoot(host)
   await act(async () => {
     root.render(createElement(ScorebookExportDialog, { onClose: vi.fn() }))
@@ -80,6 +85,11 @@ it('finishes PDF generation before enabling a synchronous download', async () =>
   expect(mocks.pdf).toHaveBeenCalledOnce()
   expect(document.body.textContent).toContain('第 3/3 阶段：生成 PDF')
   expect(document.body.textContent).not.toContain('下载 PDF')
+  act(() => reportPage(1, 2))
+  expect(pages[0].childElementCount).toBe(0)
+  expect(pages[1].querySelector('text')?.textContent).toBe('Page')
+  act(() => reportPage(2, 2))
+  expect(pages[1].childElementCount).toBe(0)
   const blob = new Blob(['PDF'])
   await act(async () => finishPdf(blob))
   const download = [...document.querySelectorAll('button')].find(button => button.textContent === '下载 PDF')!

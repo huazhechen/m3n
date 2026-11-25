@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@m3n/notation'
-import { scoreCoreGap, scoreMaximumCoreGap, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, type PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { scoreCoreGap, scoreMaximumCoreGap, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
@@ -28,6 +28,20 @@ function deferredStaffScore(staff: typeof import('@m3n/score-renderer/staff'), d
   }
 }
 
+// Retain the immutable inputs, not every candidate's placed rows. Rebuild only
+// the widths selected by chapter packing, using the same task/font preparation.
+function deferredNumberedScore(document: ScoreDocument,
+  settings: ConstructorParameters<typeof PreparedNumberedNotationScore>[1], signal: AbortSignal): PreparedBookScore {
+  const prepare = () => {
+    signal.throwIfAborted()
+    return new PreparedNumberedNotationScore(document, settings)
+  }
+  return {
+    get numbered() { return prepare() },
+    renderPaged: () => prepare().renderPaged(),
+  }
+}
+
 /** Both book formats use the reader's measurement adapters and export primitives. */
 export async function prepareScorebookRenderer(settings: ScorebookDisplaySettings, signal: AbortSignal, auditLayout: boolean) {
   const numberedSettings = { fixedDo: settings.notationMode === 'fixed', measureNumbers: settings.measureNumbers,
@@ -40,7 +54,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       signal.throwIfAborted()
       if (!staff || !staffMeasure) {
         const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: numberedSettings })
-        return { candidate: measured.candidate, prepared: { numbered: measured.prepared, renderPaged: () => measured.prepared.renderPaged() } }
+        return { candidate: measured.candidate, prepared: deferredNumberedScore(document, { ...numberedSettings, width, pageMargin: 0 }, signal) }
       }
       let task = tasks.get(document)
       if (!task) { task = await staff.prepareStaffMeasurementTask(document, {}, signal); tasks.set(document, task) }
@@ -53,24 +67,24 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
       const minimum = Math.max(...scores.map(score => scoreCoreGap(score.staff!.document)))
       const capacity = a4SourcePageHeight(width)
-      const renderAt = async (coreGap: number) => Promise.all(scores.map(async score => {
+      // Row engraving does not depend on the shared page's vertical gap.
+      // Keep only this group's prepared rows while fitting scalar pagination.
+      const pages = await Promise.all(scores.map(async score => {
         signal.throwIfAborted()
         const input = score.staff!
-        const render = await staff.prepareStaffScore(input.document, { ...settings, width, coreGap }, signal, input.task)
-        return render
+        return staff.prepareStaffScore(input.document, { ...settings, width, coreGap: minimum }, signal, input.task)
       }))
-      const height = (pages: StaffRender[]) => pages.reduce((sum, render) => sum + render.continuousHeight(), scoreGap * (pages.length - 1))
-      let pages = await renderAt(minimum)
-      if (height(pages) > capacity) throw new Error('五线谱合页内容超出页面。')
+      const height = (gap: number) => pages.reduce((sum, render) => sum + render.continuousHeight(gap), scoreGap * (pages.length - 1))
+      if (height(minimum) > capacity) throw new Error('五线谱合页内容超出页面。')
       let lower = minimum, upper = scoreMaximumCoreGap(minimum)
       for (let i = 0; i < 8 && upper - lower > .1; i++) {
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await (globalThis.scheduler?.postTask?.(() => {}) ?? new Promise(resolve => setTimeout(resolve, 0)))
+        signal.throwIfAborted()
         const gap = i === 0 ? upper : (lower + upper) / 2
-        const candidate = await renderAt(gap)
-        if (height(candidate) <= capacity) { lower = gap; pages = candidate; if (gap === upper) break }
+        if (height(gap) <= capacity) { lower = gap; if (gap === upper) break }
         else upper = gap
       }
-      return { markup: pages.map(render => render(false)[0]!.outerHTML), scoreGap: scoreGap + Math.max(0, capacity - height(pages)) / pages.length }
+      return { markup: pages.map(render => render(false, lower)[0]!.outerHTML), scoreGap: scoreGap + Math.max(0, capacity - height(lower)) / pages.length }
     },
   }
 }

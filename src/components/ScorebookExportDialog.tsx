@@ -57,7 +57,11 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
       }, { notationMode, measureNumbers })
       check(); setStage(3); setProgress({ completed: 0, total: result.pages.length, title: '' })
       const blob = await createScorePdf(result.pages, (done, total) => {
-        check(); setProgress({ completed: done, total, title: '' }); setStatus(`正在生成 PDF：${done}/${total} 页…`)
+        check()
+        // The vector exporter has copied this page's operators and links. Book
+        // pages have no preview consumer; release their DOM before packaging.
+        result.pages[done - 1]?.replaceChildren()
+        setProgress({ completed: done, total, title: '' }); setStatus(`正在生成 PDF：${done}/${total} 页…`)
       }, { fullPage: true, signal: controller.signal, onPhase(phase) {
         check()
         if (phase === 'saving' || phase === 'fonts' || phase === 'loading') {

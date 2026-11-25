@@ -15,6 +15,7 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
       for (const number of system.querySelectorAll('g.mNum'))
         if (!measureNumbers || number.closest('g.measure') !== last) number.remove()
     }
+    const replacements: Array<{ text: SVGTextElement; group: SVGGElement }> = []
     for (const text of svg.querySelectorAll('text')) {
       const characters: Array<{ char: string; element: Element }> = []
       const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT)
@@ -41,8 +42,11 @@ export function resolveStaffText(svg: SVGSVGElement, measureNumbers = false) {
         for (const [name, value] of Object.entries({ x: position.x, y: position.y, 'font-size': size, 'font-family': style.fontFamily, 'font-weight': style.fontWeight, 'font-style': style.fontStyle, 'text-anchor': 'start' })) glyph.setAttribute(name, String(value))
         group.append(glyph)
       }
-      text.replaceWith(group)
+      // Read every character position before changing the mounted SVG. Replacing
+      // each text immediately invalidates layout for the next position query.
+      replacements.push({ text, group })
     }
+    for (const { text, group } of replacements) text.replaceWith(group)
     for (const number of svg.querySelectorAll('g.mNum')) {
       const transforms: string[] = []
       for (let parent: Element | null = number.parentElement; parent && parent !== svg; parent = parent.parentElement)

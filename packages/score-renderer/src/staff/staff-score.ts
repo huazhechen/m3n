@@ -43,7 +43,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     quality: ReturnType<typeof scoreLineQuality>
   }
   const layouts = new Map<number, Layout>()
-  const cache = new Map<boolean, string[]>()
+  const cache = new Map<boolean, { coreGap?: number; markup: string[] }>()
   const layout = (candidateWidth: number): Layout => {
     validate(candidateWidth)
     const saved = layouts.get(candidateWidth)
@@ -54,9 +54,22 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const attempt = (spacing: number): Layout => {
+    const attempt = (spacing: number, selected?: Layout): Layout => {
       signal?.throwIfAborted()
       const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
+      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
+        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
+      // Vertical engraving cannot improve this horizontal ranking. Complete
+      // the baseline and every possible replacement, but discard losing gaps
+      // before constructing their glyph nodes and collision geometry.
+      if (selected) {
+        const candidateScore = scoreHorizontalQuality(candidateWidth, quality)
+        const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
+        const wins = lines.length < selected.lines.length || lines.length === selected.lines.length
+          && (candidateScore > selectedScore || candidateScore === selectedScore && spacing < selected.spacing)
+        if (!wins) return selected
+      }
       const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale, measurements.preparation)
       for (const system of systems) {
         translate(system.node, gutter / STAFF_SCALE, 0)
@@ -72,14 +85,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (!(error instanceof Error) || !error.message.includes('单个五线谱谱行')) throw error
         paginationError = error
       }
-      const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
-      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
-        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
       return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
     if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
-      const candidate = attempt(spacing)
+      const candidate = attempt(spacing, selected)
       if (candidate.paginationError) continue
       const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
       const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
@@ -89,17 +99,20 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     layouts.set(candidateWidth, selected)
     return selected
   }
-  const outputPages = (result: Layout, paged: boolean, candidateWidth = width) => {
-    if (paged && settings.coreGap === undefined) {
+  const outputPages = (result: Layout, paged: boolean, candidateWidth = width, coreGap = settings.coreGap) => {
+    const gap = coreGap ?? minimumGap
+    if (!Number.isFinite(gap) || gap < 0) throw new Error('五线谱行距无效。')
+    if (paged && coreGap === undefined) {
       if (result.paginationError) throw result.paginationError
       return result.pages
     }
-    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, outputGap, paged, settings.coreGap === undefined ? scoreMaximumCoreGap(outputGap) : outputGap)
+    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, paged, coreGap === undefined ? scoreMaximumCoreGap(gap) : gap)
   }
-  const engrave = (paged: boolean) => {
-    if (cache.has(paged)) return
+  const engrave = (paged: boolean, coreGap = settings.coreGap) => {
+    const saved = cache.get(paged)
+    if (saved && saved.coreGap === coreGap) return
     const result = layout(width)
-    const pages = outputPages(result, paged)
+    const pages = outputPages(result, paged, width, coreGap)
     // Publish local painted bounds for interaction; SVG font line boxes can
     // extend far beyond the actual music glyphs.
     for (const system of result.systems) {
@@ -111,9 +124,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         group.attributes['data-m3n-ink-bounds'] = [box.left, box.top, box.right - box.left, box.bottom - box.top].join(' ')
       }
     }
-    cache.set(
-      paged,
-      pages.map((page, index) => {
+    cache.set(paged, { coreGap, markup: pages.map((page, index) => {
         const content: XmlNode[] = [...result.furniture]
         if (index === 0)
           content.push(element('g', { transform: `translate(${margin} ${margin})` }, [result.header.node]))
@@ -144,11 +155,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           ),
         )
       }),
-    )
+    })
   }
-  const render = (paged: boolean): SVGSVGElement[] => {
-    engrave(paged)
-    const markup = cache.get(paged)!
+  const render = (paged: boolean, coreGap = settings.coreGap): SVGSVGElement[] => {
+    engrave(paged, coreGap)
+    const markup = cache.get(paged)!.markup
     return markup.map((text) => {
       const host = document.createElement('div')
       host.innerHTML = text
@@ -172,8 +183,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   }
   return Object.assign(render, {
     /** Continuous geometry without generating or mounting an SVG candidate. */
-    continuousHeight() {
-      return outputPages(layout(width), false)[0]!.height + 2 * margin
+    continuousHeight(coreGap = settings.coreGap) {
+      return outputPages(layout(width), false, width, coreGap)[0]!.height + 2 * margin
     },
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {

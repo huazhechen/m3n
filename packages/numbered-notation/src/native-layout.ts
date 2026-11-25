@@ -15,7 +15,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
-import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
+import { paginateNativeBlocks, prepareNativePagination, type NativePageBlock } from './native-pagination.js'
 import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
@@ -44,7 +44,7 @@ export type NativePage = { coreGap?: number; header?: string; index: number; wid
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
-  verticalBlocks: NativePageBlock[]; headerBlocks: { height: number; svg: string }[]
+  pagination: ReturnType<typeof prepareNativePagination>; verticalBlocks: NativePageBlock[]; headerBlocks: { height: number; svg: string }[]
 }
 
 function validate(options: NativeRenderOptions) {
@@ -247,7 +247,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     let candidate: NativeLayout
     try {
       candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation)
+        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation, { layout: selected, score: selectedScore })
     } catch (error) {
       // Wider spacing can make a decorated row too tall for one A4 page.
       // Other layout failures remain visible instead of becoming fallbacks.
@@ -267,7 +267,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   return selected
 }
 
-function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, selection?: { layout: NativeLayout; score: number }): NativeLayout {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -393,6 +393,20 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     }
   }
   record('horizontalPlacementMs')
+  // Gap ranking uses only horizontal rows and quality. A losing trial cannot
+  // become the winner through vertical fitting, so do not build its curves,
+  // lyric envelopes and page collision geometry. The baseline still receives
+  // full validation, and every replacement must complete the same engraving.
+  if (selection) {
+    const score = nativeLayoutScore({ options, margin, systems, pages: [] })
+    const previous = selection.layout
+    const wins = systems.length < previous.systems.length || systems.length === previous.systems.length
+      && (score > selection.score || score === selection.score && minimumNoteGap < previous.options.minimumNoteGap!)
+    if (!wins) {
+      if (timings) timings.horizontalRejectedTrials = (timings.horizontalRejectedTrials ?? 0) + 1
+      return previous
+    }
+  }
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions: NativeRegion[] = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -511,11 +525,11 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
-    verticalBlocks: blocks, headerBlocks: header.blocks }
+    pagination: prepareNativePagination(blocks), verticalBlocks: blocks, headerBlocks: header.blocks }
   const gap = options.coreGap ?? (nativeCoreGap(document))
   const pageFitStarted = timings ? performance.now() : 0
-  const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap), elastic: true })
+  const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
+    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
   positionNativeLayout(layout, pagination)
   if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
   record('verticalPaginationMs')
@@ -545,15 +559,15 @@ function positionNativeLayout(layout: NativeLayout, pagination: ReturnType<typeo
 }
 
 export function nativeContinuousPagination(layout: NativeLayout, coreGap: number) {
-  return paginateNativeBlocks(layout.verticalBlocks, { pageHeight: Infinity, margin: layout.margin, gap: coreGap, headerGap: nativeCoreGap(layout.document) * .8, elastic: true })
+  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, headerGap: nativeCoreGap(layout.document) * .8 })
 }
 
 /** Change page membership and vertical spacing without repeating horizontal layout. */
 export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, coreGap?: number) {
   const gap = coreGap ?? (nativeCoreGap(layout.document))
-  const pagination = paginateNativeBlocks(layout.verticalBlocks, {
+  const pagination = layout.pagination({
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap), elastic: true,
+    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap),
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

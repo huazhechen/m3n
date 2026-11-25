@@ -210,15 +210,30 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   const items = itemsFor(measures, options)
   const result = solveNativeSpacing(items)
+  type Selection = { item: HorizontalItem; index: number }
+  const byMeasure = new Map<NativeMeasure, Selection[]>()
+  const byColumn = new Map<NativeColumn, Selection[]>()
+  for (const [index, item] of items.entries()) {
+    const selection = { item, index }
+    const selected = byMeasure.get(item.measure)
+    if (selected) selected.push(selection)
+    else byMeasure.set(item.measure, [selection])
+    for (const column of item.controlColumn && item.controlColumn !== item.column ? [item.column, item.controlColumn] : [item.column ?? item.controlColumn]) {
+      if (!column) continue
+      const owned = byColumn.get(column)
+      if (owned) owned.push(selection)
+      else byColumn.set(column, [selection])
+    }
+  }
   for (const measure of measures) {
-    const selected = items.map((item, index) => ({ item, index })).filter(({ item }) => item.measure === measure)
+    const selected = byMeasure.get(measure) ?? []
     const first = selected[0], last = selected.at(-1)
     if (!first || !last) continue
     const left = result.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
     const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
     measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left
     measure.columns.forEach((column, index) => {
-      const owned = selected.filter(({ item }) => item.column === column || item.controlColumn === column)
+      const owned = byColumn.get(column) ?? []
       column.minimumStart = index === 0 ? measure.minimumStart! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
       column.minimumEnd = index === measure.columns.length - 1 ? measure.minimumEnd! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
     })

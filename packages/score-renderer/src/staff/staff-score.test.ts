@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+// jsdom has no SVG character-position API; compare engraving before browser
+// text resolution here. Full PDF parity covers real browser text placement.
+vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
 import { scoreHorizontalQuality, scoreLineQuality } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
@@ -11,6 +14,22 @@ import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
 describe('staff page packing', () => {
+  it('reuses engraving across gap fits with the same geometry and SVG as fresh layouts', async () => {
+    const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+    const shared = await prepareStaffScore(score, { width: 550, coreGap: 20 })
+    for (const gap of [20, 48, 32, 20]) {
+      const fresh = await prepareStaffScore(score, { width: 550, coreGap: gap })
+      expect(shared.continuousHeight(gap)).toBe(fresh.continuousHeight())
+      for (const paged of [false, true]) {
+        expect(shared(paged, gap).map(svg => svg.outerHTML)).toEqual(fresh(paged).map(svg => svg.outerHTML))
+      }
+    }
+    for (const gap of [-1, NaN, Infinity]) {
+      expect(() => shared.continuousHeight(gap)).toThrow('行距无效')
+      expect(() => shared(false, gap)).toThrow('行距无效')
+    }
+  })
+
   it('prefers more even line density over the widest spacing at equal page count', async () => {
     const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 640 })).layoutInfo()

@@ -69,7 +69,12 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
   }
   const entries: BookEntry[] = [], music: SVGSVGElement[] = []
-  const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
+  // A real task boundary preserves progress/cancellation without the 4ms
+  // minimum delay imposed on repeatedly nested timers.
+  const pause = async () => {
+    await (globalThis.scheduler?.postTask?.(() => {}) ?? new Promise(resolve => setTimeout(resolve, 0)))
+    signal.throwIfAborted()
+  }
   try {
     signal.throwIfAborted()
     await preparePresetScores({ signal, onProgress: value => {
@@ -106,7 +111,15 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     const renderer = await prepareScorebookRenderer({ notationMode, measureNumbers }, signal, auditLayout)
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
-      const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      let lastProgress = -Infinity
+      const progress = (fraction = 0) => {
+        const now = performance.now()
+        // Publish at most 20 intermediate updates/second; every candidate still
+        // yields and checks cancellation, and each score publishes both ends.
+        if (fraction > 0 && fraction < 1 && now - lastProgress < 50) return
+        lastProgress = now
+        onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      }
       progress()
       try {
         const scoreStarted = performance.now()

@@ -12,12 +12,14 @@ import { prepareScoreTextFonts } from './score-fonts.js'
 import { scoreExportFooter } from './score-export-footer.js'
 
 const ns = 'http://www.w3.org/2000/svg'
+// Keep rendering interruptible without accumulating nested timer delays.
+const pause = () => globalThis.scheduler?.postTask?.(() => {}) ?? new Promise<void>(resolve => setTimeout(resolve, 0))
 
 /** Converts only the native engine's primitives; never rasterizes a score. */
 export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress?: (done: number, total: number) => void, options: ScorePdfOptions = {}) {
   options.signal?.throwIfAborted()
   options.onPhase?.('fonts')
-  await new Promise<void>(resolve => setTimeout(resolve, 0))
+  await pause()
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
   const fonts = await prepareScoreTextFonts(pages, options.textFont)
@@ -55,7 +57,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
       let elementCount = 0
       for (const element of svg.querySelectorAll<SVGGraphicsElement>('*')) {
         if (++elementCount % 128 === 0) {
-          await new Promise<void>(resolve => setTimeout(resolve, 0))
+          await pause()
           options.signal?.throwIfAborted()
         }
         if (element.namespaceURI !== ns || element.closest('defs')) continue
@@ -149,11 +151,11 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         })))
       }
       onProgress?.(index + 1, pages.length)
-      await new Promise<void>(resolve => setTimeout(resolve, 0))
+      await pause()
     }
     options.signal?.throwIfAborted()
     options.onPhase?.('saving')
-    await new Promise<void>(resolve => setTimeout(resolve, 0))
+    await pause()
     const bytes = await pdf.save()
     options.signal?.throwIfAborted()
     return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' })

@@ -4,13 +4,14 @@ import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
 export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
 export type NativeBlockPosition = { page: number; top: number }
+type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
   pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; headerGap?: number
 }): { positions: NativeBlockPosition[]; heights: number[]; coreGaps?: number[] } {
   const { pageHeight, margin, gap } = options
-  if (options.elastic) return paginateElasticBlocks(blocks, options)
+  if (options.elastic) return prepareNativePagination(blocks)(options)
   const capacity = pageHeight - margin * 2
   const groups: { first: number; end: number }[] = []
   let first = 0, occupied = 0
@@ -49,16 +50,15 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
   return low
 }
 
-function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight, margin, gap, maxGap = gap, headerGap = nativeCoreGap() * .8 }: {
-  pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number
-}) {
+/** One immutable horizontal layout: reuse normalized ink and pair constraints
+ * across its spacing fit, paged output and continuous/shared-page probes. */
+export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
   const normalized = blocks.map((block, index) => {
     const axis = block.baseline ?? 0
     const ink = (block.ink ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })).sort((a, b) => a.left - b.left)
     // Overlay labels affect page edges without becoming inter-row obstacles.
     const boundaryInk = [...ink, ...(block.boundaryInk ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis }))]
     const top = Math.min(0, ...boundaryInk.map(piece => piece.top)), lower = Math.max(0, ...boundaryInk.map(piece => piece.bottom))
-    if (lower - top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     const core = block.core ? { top: block.core.top - axis, bottom: block.core.bottom - axis } : { top, bottom: lower }
     return { block, index, axis, ink, top, lower, core }
   })
@@ -75,51 +75,55 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
     row.set(item.index, distance)
     return distance
   }
-  const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
-    let baseline = margin - item.top
-    const previous = placed.at(-1)
-    if (previous) {
-      // Header separation stays fixed as the music's core parameter changes.
-      // Lyrics reduce the starting clearance, while retaining the same page
-      // stretch ceiling. Interpolate each gap using the shared fit parameter.
-      const musicGap = interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
-      const separation = item.block.core && previous.block.core ? musicGap : headerGap
-      baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
-      for (const prior of placed)
-        baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)
-      baseline += item.block.gapBefore ?? 0
-    }
-    return baseline
-  }
-  // Determine membership once using the minimum; fitting never moves a block
-  // to another page or changes a line's horizontal layout.
-  const groups: { first: number; end: number }[] = []
-  let first = 0, placed: Placed[] = []
-  normalized.forEach((item, index) => {
-    let baseline = nextBaseline(item, placed, gap)
-    if (placed.length && baseline + item.lower > pageHeight - margin + 1e-6) {
-      groups.push({ first, end: index }); first = index; placed = []
-      baseline = nextBaseline(item, placed, gap)
-    }
-    if (baseline + item.lower > pageHeight - margin + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
-    placed.push({ ...item, baseline })
-  })
-  if (placed.length) groups.push({ first, end: blocks.length })
-  const positions: NativeBlockPosition[] = [], heights: number[] = [], coreGaps: number[] = []
-  for (const [page, group] of groups.entries()) {
-    const arrange = (coreGap: number, publish = false) => {
-      const current: Placed[] = []
-      let bottom = margin
-      for (let index = group.first; index < group.end; index++) {
-        const item = normalized[index]!, baseline = nextBaseline(item, current, coreGap)
-        current.push({ ...item, baseline }); bottom = Math.max(bottom, baseline + item.lower)
-        if (publish) positions[index] = { page, top: baseline - item.axis }
+  return ({ pageHeight, margin, gap, maxGap = gap, headerGap = nativeCoreGap() * .8 }: ElasticOptions) => {
+    for (const item of normalized)
+      if (item.lower - item.top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
+    const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
+      let baseline = margin - item.top
+      const previous = placed.at(-1)
+      if (previous) {
+        // Header separation stays fixed as the music's core parameter changes.
+        // Lyrics reduce the starting clearance, while retaining the same page
+        // stretch ceiling. Interpolate each gap using the shared fit parameter.
+        const musicGap = interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
+        const separation = item.block.core && previous.block.core ? musicGap : headerGap
+        baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
+        for (const prior of placed)
+          baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)
+        baseline += item.block.gapBefore ?? 0
       }
-      return bottom + margin
+      return baseline
     }
-    const coreGap = Number.isFinite(pageHeight) && maxGap > gap ? fitNativeCoreGap(arrange, pageHeight, gap, maxGap) : gap
-    const height = arrange(coreGap, true)
-    coreGaps.push(coreGap); heights.push(Number.isFinite(pageHeight) ? pageHeight : height)
+    // Determine membership once using the minimum; fitting never moves a block
+    // to another page or changes a line's horizontal layout.
+    const groups: { first: number; end: number }[] = []
+    let first = 0, placed: Placed[] = []
+    normalized.forEach((item, index) => {
+      let baseline = nextBaseline(item, placed, gap)
+      if (placed.length && baseline + item.lower > pageHeight - margin + 1e-6) {
+        groups.push({ first, end: index }); first = index; placed = []
+        baseline = nextBaseline(item, placed, gap)
+      }
+      if (baseline + item.lower > pageHeight - margin + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
+      placed.push({ ...item, baseline })
+    })
+    if (placed.length) groups.push({ first, end: normalized.length })
+    const positions: NativeBlockPosition[] = [], heights: number[] = [], coreGaps: number[] = []
+    for (const [page, group] of groups.entries()) {
+      const arrange = (coreGap: number, publish = false) => {
+        const current: Placed[] = []
+        let bottom = margin
+        for (let index = group.first; index < group.end; index++) {
+          const item = normalized[index]!, baseline = nextBaseline(item, current, coreGap)
+          current.push({ ...item, baseline }); bottom = Math.max(bottom, baseline + item.lower)
+          if (publish) positions[index] = { page, top: baseline - item.axis }
+        }
+        return bottom + margin
+      }
+      const coreGap = Number.isFinite(pageHeight) && maxGap > gap ? fitNativeCoreGap(arrange, pageHeight, gap, maxGap) : gap
+      const height = arrange(coreGap, true)
+      coreGaps.push(coreGap); heights.push(Number.isFinite(pageHeight) ? pageHeight : height)
+    }
+    return { positions, heights, coreGaps }
   }
-  return { positions, heights, coreGaps }
 }

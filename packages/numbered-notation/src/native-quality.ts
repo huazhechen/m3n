@@ -1,7 +1,7 @@
 import { scoreLineQuality, scoreHorizontalQuality } from './layout-quality.js'
 import type { NativeLayout } from './native-layout.js'
 
-export function nativeLayoutQuality(layout: NativeLayout) {
+export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
   const width = layout.options.width
   const available = Math.max(1, width - layout.margin * 2)
   const densities = layout.systems.map(system => system.measures.reduce((sum, measure) => sum + measure.minimum, 0) / available)
@@ -14,7 +14,7 @@ export function nativeLayoutQuality(layout: NativeLayout) {
 
 
 /** Same font-size, density and final-line weighting as width selection. */
-export function nativeLayoutScore(layout: NativeLayout) {
+export function nativeLayoutScore(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
   const quality = nativeLayoutQuality(layout)
   return scoreHorizontalQuality(layout.options.width, quality)
 }

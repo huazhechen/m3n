@@ -57,6 +57,7 @@ test('library, reader and cancelled export share two packages and three TTFs', a
   await page.goBack()
   await expect(page.getByRole('button', { name: '导出全量谱集' })).toBeVisible()
   await page.getByRole('button', { name: '导出全量谱集' }).click()
+  await page.getByRole('button', { name: '简谱', exact: true }).click()
   await expect(page.getByText('第 2/3 阶段：排版乐谱', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '取消', exact: true }).click()
   await expect(page.locator('dialog')).toHaveCount(0)
