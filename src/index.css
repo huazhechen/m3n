@@ -44,6 +44,9 @@
 }
 
 .top-nav svg { flex: 0 0 auto; width: var(--ui-icon-size); height: var(--ui-icon-size); }
+.nav-loading-icon { animation: nav-loading-spin 1s linear infinite; }
+@keyframes nav-loading-spin { to { transform: rotate(360deg); } }
+.top-nav .action-button:disabled { cursor: wait; }
 .top-nav .action-button.is-disabled {
   color: #9aa2a6;
   background: #f4f5f1;

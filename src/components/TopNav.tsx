@@ -2,6 +2,8 @@ import { NavLink } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 const navActions = {
+  loading: { label: '加载中', path: 'M12 3a9 9 0 1 1-9 9' },
+  retry: { label: '重新加载', path: 'M20 7v5h-5M20 12a8 8 0 1 0-2 5' },
   tools: { label: '练琴工具', path: 'M9 7V4h6v3M4 7h16v13H4ZM4 12h6m4 0h6M10 11h4v3h-4Z' },
   sort: { label: '排序', path: 'M4 6h12M4 12h8M4 18h4M18 10v10m-3-3 3 3 3-3' },
   previous: { label: '上一曲', path: 'm14 6-6 6 6 6M5 6v12' },
@@ -14,7 +16,7 @@ const navActions = {
 }
 
 export function NavActionIcon({ action }: { action: keyof typeof navActions }) {
-  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={navActions[action].path} /></svg>
+  return <svg className={action === 'loading' ? 'nav-loading-icon' : undefined} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={navActions[action].path} /></svg>
 }
 
 export function NavActionContent({ action }: { action: keyof typeof navActions }) {

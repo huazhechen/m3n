@@ -158,6 +158,8 @@ function localCardData(score: LocalScore, onDelete: () => void): ScoreCardData {
 
 export function ScoresPage() {
   const [exportingBook, setExportingBook] = useState(false)
+  const [resourceState, setResourceState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [resourceAttempt, setResourceAttempt] = useState(0)
   const [query, setQuery] = useState('')
   const [view, setView] = useState<LibraryView>(() => {
     try {
@@ -205,12 +207,34 @@ export function ScoresPage() {
   const showIndex = view === 'alphabetical' && groups.length >= 3 && scores.length >= 12
   useEffect(() => {
     setLocalScores(listLocalScores())
-    // Warm both shared packages on library entry; readers and exports retry failures.
-    void preparePresetScores().catch(() => {})
   }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    // Only cancel this page's wait; readers and exports share the downloads.
+    void preparePresetScores({ signal: controller.signal }).then(() => {
+      if (!controller.signal.aborted) setResourceState('ready')
+    }).catch(() => {
+      if (!controller.signal.aborted) setResourceState('error')
+    })
+    return () => controller.abort()
+  }, [resourceAttempt])
+  const resourceLabel = resourceState === 'loading' ? '正在加载乐谱和字体' : resourceState === 'error' ? '加载失败，点击重试' : '导出全量谱集'
   return (
     <main>
-      <TopNav actions={<button type="button" className="action-button" aria-label="导出全量谱集" title="导出全量谱集" onClick={() => setExportingBook(true)}><NavActionIcon action="print" /><span className="nav-action-label">导出谱集</span></button>} />
+      <TopNav actions={<button
+        type="button"
+        className="action-button"
+        aria-label={resourceLabel}
+        title={resourceLabel}
+        aria-busy={resourceState === 'loading'}
+        disabled={resourceState === 'loading'}
+        onClick={() => {
+          if (resourceState === 'error') {
+            setResourceState('loading')
+            setResourceAttempt(attempt => attempt + 1)
+          } else setExportingBook(true)
+        }}
+      ><NavActionIcon action={resourceState === 'loading' ? 'loading' : resourceState === 'error' ? 'retry' : 'print'} /><span className="nav-action-label">{resourceState === 'loading' ? '加载中' : resourceState === 'error' ? '重试加载' : '导出谱集'}</span></button>} />
       {exportingBook && <Suspense fallback={<p role="status">正在加载谱集导出…</p>}><ScorebookExportDialog onClose={() => setExportingBook(false)} /></Suspense>}
       <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
