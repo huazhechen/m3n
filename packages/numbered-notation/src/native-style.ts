@@ -1,3 +1,4 @@
+import { lyricSpacing } from './lyric-spacing.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 /** One engraving scale. Ratios below are design choices, never occupied bounds.
  * Text and symbol ink is measured separately. Page dimensions are independent.
@@ -7,9 +8,9 @@ export const nativeStyle = {
   music,
   text: music * (16 / 22),
   annotation: music * (14 / 22),
-  lyric: music * (16 / 22),
-  lyricTopGap: music * (6 / 22),
-  lyricGap: music * (4 / 22),
+  lyric: music * (lyricSpacing.fontSize / 22),
+  lyricTopGap: music * (lyricSpacing.musicGap / 22),
+  lyricGap: music * (lyricSpacing.rowGap / 22),
   grace: music * (13 / 22),
   graceNote: music * 0.7,
   meter: music * (18 / 22),

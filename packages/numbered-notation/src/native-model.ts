@@ -1,3 +1,4 @@
+import { lyricSpacing } from './lyric-spacing.js'
 import { SCORE_TEXT_FONT } from './font-family.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
@@ -174,8 +175,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           let lyricLeft = 0, lyricRight = 0
           for (const row of rows.values()) {
             const ink = nativeLyricInk(row, options.textMeasurer)
-            lyricLeft = Math.max(lyricLeft, -ink.left + 1)
-            lyricRight = Math.max(lyricRight, ink.right + 1)
+            lyricLeft = Math.max(lyricLeft, -ink.left + lyricSpacing.horizontalPadding)
+            lyricRight = Math.max(lyricRight, ink.right + lyricSpacing.horizontalPadding)
             left = Math.max(left, -ink.left)
             right = Math.max(right, ink.right)
           }

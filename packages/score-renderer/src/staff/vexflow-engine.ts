@@ -1,3 +1,4 @@
+import { lyricSpacing } from '@m3n/numbered-notation'
 import {
   Accidental, Articulation, Beam, Dot, Flow, Formatter, Fraction, GraceNote, GraceNoteGroup,
   KeySigNote, TimeSigNote, Modifier, Ornament, Stave, StaveModifierPosition, StaveNote, Stroke, SVGContext, Tuplet, Voice,
@@ -84,15 +85,23 @@ export type VexMeasure = { staves: Stave[]; entries: VexEntry[][]; controls: Not
 const barTypes: Record<string, number> = { single: 1, dbl: 2, end: 3, rptstart: 4, rptend: 5, rptboth: 6, invis: 7 }
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
-  columns: ReadonlyArray<{ left: number; after: number }>
+  columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number }>
 }
-/** Preserve the original addition order, including the trailing column gap. */
-export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number): number {
-  let right = 0
-  for (const column of metrics.columns) {
-    const x = right + column.left
-    right = x + column.after + (spacing * 22 / STAFF_SCALE)
+/** Music clearance and padded lyric bounds share space, as in numbered notation. */
+function staffColumnInsets(column: StaffMeasureMetrics['columns'][number], first: boolean, gap: number) {
+  return {
+    left: Math.max(column.left + (first ? 0 : gap / 2), column.lyricLeft),
+    after: Math.max(column.after + gap / 2, column.lyricAfter),
   }
+}
+export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number): number {
+  const gap = spacing * 22 / STAFF_SCALE
+  let right = 0
+  for (const [index, column] of metrics.columns.entries()) {
+    const insets = staffColumnInsets(column, index === 0, gap)
+    right += insets.left + insets.after
+  }
+  if (metrics.columns.length) right += gap / 2
   return Math.max(40, metrics.start + right + 8 + metrics.endInset,
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
 }
@@ -222,25 +231,41 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
   staves.forEach(s => s.setNoteStartX(start))
   if (voices.length) formatter.format(voices, 0)
   const contexts = formatter.getTickContexts()?.array ?? []
-  const textWidths = new Map<Note, number>()
+  const lyricBounds = new Map<Note, { left: number; after: number }>()
+  const chordWidths = new Map<Note, number>()
   for (const lane of entries) for (const entry of lane) for (const [i, note] of entry.notes.entries()) {
     const item = entry.item.children?.[i] ?? entry.item
-    const widths = item.lyrics.filter(l => l.kind === 'text').map(l => measureText(l.text.replaceAll('~', ' '), 16 / STAFF_SCALE).width)
-    if (item.chord) widths.push(measureText(item.chord, 14 / STAFF_SCALE).width)
-    textWidths.set(note, Math.max(0, ...widths))
+    const center = (note.getNoteHeadBeginX() + note.getNoteHeadEndX()) / 2 - note.getAbsoluteX()
+    let left = 0, after = 0
+    for (const lyric of item.lyrics) {
+      if (lyric.kind !== 'text' || !lyric.text.replace(/[\s\u200B\u2800]/g, '')) continue
+      const ink = measureText(lyric.text.replaceAll('~', ' '), lyricSpacing.fontSize / STAFF_SCALE)
+      const half = ink.width / 2, padding = lyricSpacing.horizontalPadding / STAFF_SCALE
+      const underline = lyric.underlined ? 0.5 / STAFF_SCALE : 0
+      left = Math.max(left, half - Math.min(0, ink.left, -underline) - center + padding)
+      after = Math.max(after, Math.max(half + underline, ink.right - half) + center + padding)
+    }
+    lyricBounds.set(note, { left, after })
+    if (item.chord) chordWidths.set(note, measureText(item.chord, 14 / STAFF_SCALE).width)
   }
   let right = 0
-  const columnInk: Array<{ left: number; after: number }> = []
-  const columns = contexts.map(context => {
+  const columnInk: StaffMeasureMetrics['columns'][number][] = []
+  const gap = spacing * 22 / STAFF_SCALE
+  const columns = contexts.map((context, index) => {
     const tickables = context.getTickables()
     const metrics = tickables.map(t => t.getMetrics())
-    const lyricWidth = Math.max(0, ...tickables.map(t => textWidths.get(t as Note) ?? 0))
-    const left = Math.max(lyricWidth / 2, ...metrics.map(m => m.modLeftPx + m.leftDisplacedHeadPx), 0)
-    const after = Math.max(lyricWidth / 2, ...metrics.map(m => m.notePx + m.modRightPx + m.rightDisplacedHeadPx), 0)
-    const x = right + left
-    columnInk.push({ left, after })
-    right = x + after + (spacing * 22 / STAFF_SCALE)
-    return { context, x, after, weight: Math.sqrt(Math.max(0.125, context.getMinTicks()?.value() ?? 4096) / 4096) }
+    const chordWidth = Math.max(0, ...tickables.map(t => chordWidths.get(t as Note) ?? 0))
+    const fixed = {
+      left: Math.max(chordWidth / 2, ...metrics.map(m => m.modLeftPx + m.leftDisplacedHeadPx), 0),
+      after: Math.max(chordWidth / 2, ...metrics.map(m => m.notePx + m.modRightPx + m.rightDisplacedHeadPx), 0),
+      lyricLeft: Math.max(0, ...tickables.map(t => lyricBounds.get(t as Note)?.left ?? 0)),
+      lyricAfter: Math.max(0, ...tickables.map(t => lyricBounds.get(t as Note)?.after ?? 0)),
+    }
+    columnInk.push(fixed)
+    const insets = staffColumnInsets(fixed, index === 0, gap)
+    const x = right + insets.left
+    right = x + insets.after
+    return { context, x, after: insets.after, weight: Math.sqrt(Math.max(0.125, context.getMinTicks()?.value() ?? 4096) / 4096) }
   })
   // Multi-rests have no tickables, but their fixed bar and count still need
   // a full body after the clef/key/meter, with padding at both barlines.
@@ -249,8 +274,8 @@ export function createVexMeasure(measure: StaffMeasure, first: boolean, hasBass:
     : 0
   const endInset = Math.max(0, ...staves.flatMap(stave => stave.getModifiers(StaveModifierPosition.END)
     .map(modifier => -(modifier.getLayoutMetrics()?.xMin ?? 0))))
-  const minimum = Math.max(40, start + right + 8 + endInset, start + multiRestWidth + (multiRestWidth ? endInset : 0))
   const metrics: StaffMeasureMetrics = { start, multiRestWidth, endInset, columns: columnInk }
+  const minimum = staffMinimumAtSpacing(metrics, spacing)
   return { staves, entries, controls, voices, beams, tuplets, columns, minimum, metrics, start, endInset, measure, bassY }
 }
 
@@ -281,8 +306,10 @@ export function createStaffDrawingMeasure(measure: StaffMeasure, first: boolean,
   let right = 0
   for (let i = 0; i < model.columns.length; i++) {
     const fixed = model.metrics.columns[i]!, column = model.columns[i]!
-    column.x = right + fixed.left
-    right = column.x + fixed.after + (spacing * 22 / STAFF_SCALE)
+    const insets = staffColumnInsets(fixed, i === 0, spacing * 22 / STAFF_SCALE)
+    column.x = right + insets.left
+    column.after = insets.after
+    right = column.x + insets.after
   }
   model.minimum = staffMinimumAtSpacing(model.metrics, spacing)
   for (const [lane, stave] of model.staves.entries()) {

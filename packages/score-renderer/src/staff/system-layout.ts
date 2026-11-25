@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, sortedInkSeparation } from '@m3n/numbered-notation'
+import { lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry,
@@ -145,7 +145,7 @@ export function arrangeStaffSystem(
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
         bounds = union(members.flatMap((v) => geometry.pieces(v)))
-      const dy = bottom + (bottom === body.bottom ? 6 : 4) / scale - bounds.top
+      const dy = bottom + (bottom === body.bottom ? lyricSpacing.musicGap : lyricSpacing.rowGap) / scale - bounds.top
       members.forEach((v) => translate(v, 0, dy))
       bottom = bounds.bottom + dy
     }

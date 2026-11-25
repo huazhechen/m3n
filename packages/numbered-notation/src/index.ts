@@ -12,3 +12,5 @@ export type { ScoreFontResource } from './fonts.js'
 export { NumberedTextMeasurementCache } from './native-measure.js'
 
 export { sortedNativeInkSeparation as sortedInkSeparation } from './native-ink-separation.js'
+
+export { lyricSpacing } from './lyric-spacing.js'
