@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 109,
+  "sourceCount": 112,
   "sections": [
     {
       "id": "basics",
@@ -912,6 +912,30 @@
       "section": "pop",
       "group": "三连音与进阶抒情",
       "reason": "连续八分三连音、低音区旋律、弱起、两遍反复与展开副歌尾句"
+    },
+    {
+      "id": "badinerie_bwv1067",
+      "file": "badinerie_bwv1067_01.m3n",
+      "title": "谐谑曲 BWV 1067",
+      "section": "instrumental",
+      "group": "巴洛克快板与装饰音",
+      "reason": "b小调高音旋律、十六分及三十二分音符、跨小节延音与两段反复"
+    },
+    {
+      "id": "yang_cong",
+      "file": "yang_cong_01.m3n",
+      "title": "洋葱",
+      "section": "pop",
+      "group": "三连音与进阶抒情",
+      "reason": "三段歌词、十六分切分、八分三连音与高音区副歌"
+    },
+    {
+      "id": "tu_ran_hao_xiang_ni",
+      "file": "tu_ran_hao_xiang_ni_01.m3n",
+      "title": "突然好想你",
+      "section": "pop",
+      "group": "切分与延音",
+      "reason": "双段主歌反复、密集切分、同音延音、间奏与渐慢尾声"
     }
   ],
   "edition": "第七十五版",
