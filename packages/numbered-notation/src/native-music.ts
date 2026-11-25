@@ -75,7 +75,7 @@ export class NativeMusicPainter extends NativeSymbols {
       const size = nativeStyle.music, text = glyph.interlude ? '' : String(glyph.multiRest)
       const font = SCORE_NUMBER_FONT
       const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: font })
-      const width = Math.max(size * 3, metrics.w + size * 0.5), left = glyph.x - size * 0.4, right = left + width
+      const width = Math.max(size * 2, metrics.w + size * 0.5), left = glyph.x - size * 0.4, right = left + width
       const axis = glyph.y + nativeMusicAxis(this.measurer), stroke = size * 0.12, halfCap = (size * 0.65 - stroke) / 2
       return `<g data-m3n-role="${glyph.interlude ? 'interlude' : 'multi-rest'}">`
         + line(left + stroke, axis, right - stroke, axis, stroke * 2)
