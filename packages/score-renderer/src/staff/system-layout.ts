@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry,
@@ -16,7 +16,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number }
+export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -39,8 +39,8 @@ export function arrangeStaffSystem(
   sectionHeadings: Set<string>,
 ): StaffSystem {
   const classes = new Map<string, XmlNode[]>()
-  const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending', 'mNum'])
-  const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending|mNum)(?:\s|$)/
+  const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending', 'mNum', 'staff-clef'])
+  const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending|mNum|staff-clef)(?:\s|$)/
   const index = (child: XmlNode) => {
     const raw = child.attributes.class
     if (raw && interesting.test(raw)) for (const name of raw.split(/\s+/)) if (wanted.has(name)) {
@@ -158,12 +158,20 @@ export function arrangeStaffSystem(
         else rows.set(row, [verse])
       }
     if (!rows.size) continue
-    const body = union(staffs.flatMap((staff) => geometry.withoutClasses(staff, ['verse'])))
-    let bottom = body.bottom
+    const music = staffs.flatMap(staff => geometry.withoutClasses(staff, ['verse']))
+    const lyricPieces = [...rows.values()].flatMap(row => row.flatMap(verse => geometry.pieces(verse)))
+    // A clef tail or isolated low note outside the lyric columns must not
+    // lower the whole verse. Staff rules preserve the common reading baseline.
+    const rules = staffs.flatMap(staff => findAll(staff, child => hasClass(child, 'staff-line')).flatMap(rule => geometry.pieces(rule)))
+    const musicBottom = Math.max(...rules.map(piece => piece.bottom),
+      ...music.filter(piece => lyricPieces.some(lyric => overlapsX(piece, lyric, lyricSpacing.musicGap / scale / 2))).map(piece => piece.bottom))
+    let bottom = Number.isFinite(musicBottom) ? musicBottom : union(music).bottom
+    let first = true
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
         bounds = union(members.flatMap((v) => geometry.pieces(v)))
-      const dy = bottom + (bottom === body.bottom ? lyricSpacing.musicGap : lyricSpacing.rowGap) / scale - bounds.top
+      const dy = bottom + (first ? lyricSpacing.musicGap : lyricSpacing.rowGap) / scale - bounds.top
+      first = false
       members.forEach((v) => translate(v, 0, dy))
       bottom = bounds.bottom + dy
     }
@@ -331,7 +339,7 @@ export function arrangeStaffSystem(
     detach(node)
     node.children = [element('g', { transform: `translate(${inset} 0)` }, node.children), label]
   }
-  const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum'])
+  const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum', 'staff-clef'])
   const pieces: Ink[] = [], spacingPieces: Ink[] = []
   let spacingIndex = 0
   for (const p of partition.all) {
@@ -343,10 +351,10 @@ export function arrangeStaffSystem(
   // enlarge a particular row gap when their actual ink requires clearance.
   const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
-  const edgePieces = (byClass('ending').length ? ['ending'] : []).flatMap(kind =>
+  const edgePieces = ['ending', 'staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
     (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
-      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: style.edgeGap })))
-  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(byClass('reh').length), staffSpacing }
+      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'staff-clef' ? style.music * .1 : style.edgeGap })))
+  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
 const orderedInk = new WeakMap<StaffSystem, Ink[]>()
@@ -355,7 +363,7 @@ function sortedSpacing(system: StaffSystem): Ink[] {
   if (!sorted) { sorted = system.spacingPieces.slice().sort((a, b) => a.left - b.left); orderedInk.set(system, sorted) }
   return sorted
 }
-export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
+function systemInkDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
   let following = distances.get(previous)
   if (!following) {
     following = new WeakMap()
@@ -376,13 +384,21 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   let edgeCollision = -Infinity
   for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + b.gap)
   for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + a.gap)
-  return Math.max(previous.core.bottom + gap - next.core.top, collision + gap / 2, edgeCollision) + (next.section ? style.sectionGap : 0)
+  return Math.max(collision + gap / 2, edgeCollision)
+}
+export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number, minimum = gap, maximum = gap): number {
+  const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
+  return Math.max(previous.core.bottom + coreGap - next.core.top, systemInkDistance(previous, next, gap)) + (next.section ? style.sectionGap : 0)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
-function positions(systems: StaffSystem[], start: number, gap: number) {
+function positions(systems: StaffSystem[], start: number, gap: number, minimum = gap, maximum = gap) {
   if (!systems.length) return []
   const ys = [start - systems[0]!.ink.top]
-  for (let i = 1; i < systems.length; i++) ys.push(ys[i - 1]! + systemDistance(systems[i - 1]!, systems[i]!, gap))
+  for (let i = 1; i < systems.length; i++) {
+    let y = ys[i - 1]! + systemDistance(systems[i - 1]!, systems[i]!, gap, minimum, maximum)
+    for (let prior = 0; prior < i - 1; prior++) y = Math.max(y, ys[prior]! + systemInkDistance(systems[prior]!, systems[i]!, gap))
+    ys.push(y)
+  }
   return ys
 }
 export function paginateStaff(
@@ -391,6 +407,7 @@ export function paginateStaff(
   headerHeight: number,
   minimum: number,
   paged: boolean,
+  maximum = scoreMaximumCoreGap(minimum),
 ): StaffPage[] {
   if (!paged) {
     const ys = positions(systems, headerHeight, minimum)
@@ -423,15 +440,15 @@ export function paginateStaff(
   }
   for (const [index, page] of pages.entries()) {
     let lo = minimum,
-      hi = Math.max(minimum, scoreLayoutConfig.staff.maximumCoreGap)
+      hi = Math.max(minimum, maximum)
     for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2,
-        ys = positions(page.systems, index === 0 ? headerHeight : pageInset, mid)
-      if (page.systems.at(-1)!.ink.bottom + ys.at(-1)! <= height - pageInset) lo = mid
+        ys = positions(page.systems, index === 0 ? headerHeight : pageInset, mid, minimum, maximum)
+      if (page.systems.every((system, i) => system.ink.bottom + ys[i]! <= height - pageInset)) lo = mid
       else hi = mid
     }
     page.gap = lo
-    page.ys = positions(page.systems, index === 0 ? headerHeight : pageInset, lo)
+    page.ys = positions(page.systems, index === 0 ? headerHeight : pageInset, lo, minimum, maximum)
   }
   return pages
 }

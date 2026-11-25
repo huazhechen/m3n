@@ -65,7 +65,31 @@ describe('staff layout contract', () => {
     expect(plain.core.bottom - plain.core.top).toBeCloseTo(41 * STAFF_SCALE)
     const base = systemDistance(plain, plain, 26.4)
     expect(systemDistance(lyrics, plain, 26.4)).toBeGreaterThan(base)
-    expect(systemDistance(outside, plain, 26.4)).toBeCloseTo(base)
+    expect(systemDistance({ ...outside, hasLyrics: false }, plain, 26.4)).toBeCloseTo(base)
+  })
+  it('does not lower lyrics for nonoverlapping clef tails or isolated low notes', () => {
+    const place = (obstacleX: number, obstacleBottom: number) => {
+      const rules = [40, 50, 60, 70, 80].map(y => element('path', { class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1' }))
+      const lyric = element('g', { class: 'verse' }, [element('text', { x: '80', y: '200', 'font-size': '16' }, ['春'])])
+      const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [element('g', { class: 'staff' }, [
+        ...rules, element('rect', { x: String(obstacleX), y: '60', width: '10', height: String(obstacleBottom - 60) }), lyric,
+      ])])])
+      const geometry = new SvgGeometry(node, textMeasurer())
+      arrangeStaffSystem(node, geometry, 320, new Set())
+      return geometry.ink(lyric).top
+    }
+    expect(place(0, 160)).toBeCloseTo(place(0, 80))
+    expect(place(80, 160)).toBeGreaterThan(place(0, 160) + 70)
+  })
+  it('clears structural clefs without adding the full musical collision gap twice', async () => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 | {br} 1 2 3 4 |||').score)
+    const measure = textMeasurer(), lines = planStaffLines(document, 600, false, measure, .25)
+    const systems = engraveStaffSystems(document, lines, 600, measure, .25, false)
+    const [a, b] = systems as [StaffSystem, StaffSystem]
+    expect(a.edgePieces.length).toBeGreaterThan(0)
+    const distance = systemDistance(a, b, 28.8)
+    for (const upper of a.pieces) for (const lower of b.edgePieces) if (overlapsX(upper, lower))
+      expect(distance + lower.top - upper.bottom).toBeGreaterThanOrEqual(lower.gap - 1e-6)
   })
   it('preserves strict point and touching-edge overlap in the row sweep', () => {
     const system = (spacingPieces: StaffSystem['pieces']): StaffSystem => ({
@@ -244,8 +268,8 @@ describe('staff layout contract', () => {
     expect(info.headerHeight).toBeGreaterThan(32)
     expect(info.spacing).toBeGreaterThanOrEqual(0.25)
     for (const page of info.pages) {
-      expect(page.gap).toBeGreaterThanOrEqual(22.4)
-      expect(page.gap).toBeLessThanOrEqual(32)
+      expect(page.gap).toBeGreaterThanOrEqual(19.2)
+      expect(page.gap).toBeLessThanOrEqual(21.12)
       for (const system of page.systems) {
         expect(system.ink.top + system.y).toBeGreaterThanOrEqual(-1e-6)
         expect(system.ink.bottom + system.y).toBeLessThanOrEqual(page.height + 1e-6)
@@ -278,6 +302,13 @@ describe('staff layout contract', () => {
     for (const page of render.layoutInfo().pages)
       for (const system of page.systems) expect(system.ink.right).toBeLessThanOrEqual(701)
   }, 30_000)
+  it('keeps an explicit output core gap fixed rather than stretching it to a staff-only ceiling', async () => {
+    const score = analyzeM3N('{4/4}\nN: 1 2 3 4 | {br} 1 2 3 4 |||').score
+    for (const coreGap of [12, 28.8]) {
+      const info = (await prepareStaffScore(score, { width: 640, coreGap })).layoutInfo()
+      expect(info.pages.every(page => page.gap === coreGap)).toBe(true)
+    }
+  })
   it('keeps custom output gaps out of the shared horizontal spacing decision', async () => {
     const score = analyzeM3N('{4/4}\nN: ' + Array.from({ length: 16 }, () => '1 2 3 4').join(' | ') + ' |||').score
     const compact = (await prepareStaffScore(score, { width: 540, coreGap: 0 })).layoutInfo()

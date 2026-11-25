@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, lyricSpacing, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, lyricSpacing, scoreLayoutConfig, scoreAttachmentHeight } from '@m3n/numbered-notation'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -169,8 +169,11 @@ function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<strin
   if (!grace) {
     let markTop = Math.min(staffMusicSize(), ...ys) - (staffMusicSize() / 4 * 1)
     for (const value of item.event.postfixes) if (marks[value]) {
-      const glyph = marks[value]!, m = staffGlyphMetrics(glyph)
-      symbols.push({ glyph, x: headWidth / 2 - (m.left + m.right) / 2, y: markTop - m.bottom })
+      const glyph = marks[value]!, base = staffGlyphMetrics(glyph)
+      const height = scoreAttachmentHeight(value)
+      const size = height === undefined ? staffMusicSize() : staffMusicSize() * height / STAFF_SCALE / (base.bottom - base.top)
+      const m = staffGlyphMetrics(glyph, size)
+      symbols.push({ glyph, size, x: headWidth / 2 - (m.left + m.right) / 2, y: markTop - m.bottom })
       markTop -= m.bottom - m.top + (staffMusicSize() / 4 * 0.5)
       left = Math.max(left, (m.right - m.left - headWidth) / 2)
       after = Math.max(after, (m.right - m.left + headWidth) / 2)
@@ -316,7 +319,10 @@ export function staffLine(x1: number, y1: number, x2: number, y2: number, width 
   return node
 }
 function drawSignature(signature: Signature, x: number, y: number): XmlNode[] {
-  return signature.symbols.map(s => staffGlyph(s.glyph, x + s.x, y + s.y, s.size))
+  return signature.symbols.map(s => {
+    const glyph = staffGlyph(s.glyph, x + s.x, y + s.y, s.size)
+    return s.glyph === 'gClef' || s.glyph === 'fClef' ? element('g', { class: 'staff-clef' }, [glyph]) : glyph
+  })
 }
 export function drawStaffBar(type: string | undefined, x: number, y: number, left = false): XmlNode {
   const lines: XmlNode[] = [], bar = type ?? (left ? 'invis' : 'single')

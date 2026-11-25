@@ -1,3 +1,4 @@
+import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeLayoutScore } from './native-quality.js'
 import { hasPassKeys } from '@m3n/notation'
@@ -506,7 +507,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
         return nativeSvgPieces(decoration.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
       })
     const hasLyrics = system.lanes.some(lane => lane.rows.length > 0)
-    const coreGapScale = hasLyrics ? Math.min(1, nativeStyle.music * .8 / nativeCoreGap(document)) : 1
+    const coreGapScale = hasLyrics ? scoreLyricGapScale(nativeCoreGap(document)) : 1
     return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
@@ -514,7 +515,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   const gap = options.coreGap ?? (nativeCoreGap(document))
   const pageFitStarted = timings ? performance.now() : 0
   const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(nativeCoreGap(document) * 1.1, gap) : gap), elastic: true })
+    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap), elastic: true })
   positionNativeLayout(layout, pagination)
   if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
   record('verticalPaginationMs')
@@ -552,7 +553,7 @@ export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, cor
   const gap = coreGap ?? (nativeCoreGap(layout.document))
   const pagination = paginateNativeBlocks(layout.verticalBlocks, {
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(nativeCoreGap(layout.document) * 1.1, gap) : gap), elastic: true,
+    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap), elastic: true,
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

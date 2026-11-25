@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@m3n/notation'
-import { scoreLayoutConfig, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, type PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { scoreCoreGap, scoreMaximumCoreGap, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, type PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
@@ -51,7 +51,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
-      const minimum = Math.max(...scores.map(score => (score.staff!.document.coreGapEm === undefined ? scoreLayoutConfig.staff.minimumCoreGap : score.staff!.document.coreGapEm * scoreLayoutConfig.staff.music)))
+      const minimum = Math.max(...scores.map(score => scoreCoreGap(score.staff!.document)))
       const capacity = a4SourcePageHeight(width)
       const renderAt = async (coreGap: number) => Promise.all(scores.map(async score => {
         signal.throwIfAborted()
@@ -62,7 +62,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       const height = (pages: StaffRender[]) => pages.reduce((sum, render) => sum + render.continuousHeight(), scoreGap * (pages.length - 1))
       let pages = await renderAt(minimum)
       if (height(pages) > capacity) throw new Error('五线谱合页内容超出页面。')
-      let lower = minimum, upper = Math.max(32, minimum)
+      let lower = minimum, upper = scoreMaximumCoreGap(minimum)
       for (let i = 0; i < 8 && upper - lower > .1; i++) {
         await new Promise(resolve => setTimeout(resolve, 0))
         const gap = i === 0 ? upper : (lower + upper) / 2

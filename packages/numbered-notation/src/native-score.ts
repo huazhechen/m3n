@@ -46,6 +46,14 @@ export class PreparedNumberedNotationScore {
     this.width = this.layout.options.width
     this.minimumCoreGap = nativeCoreGap(document)
   }
+  /** Detached logical geometry for cross-notation density diagnostics. */
+  layoutInfo() {
+    const blocks = this.layout.verticalBlocks.slice(this.layout.headerBlocks.length)
+    const events = new Set(this.layout.projection.glyphs.map(glyph => glyph.id.replace(/-(?:sustain|rest)\d+$/, '')))
+    return { displayedEvents: events.size, hasBass: this.layout.projection.hasBass,
+      lines: blocks.map(block => ({ core: block.core ? { ...block.core } : undefined,
+        inkHeight: block.height, lyricGapScale: block.coreGapScale ?? 1 })) }
+  }
   continuousHeight(coreGap = this.minimumCoreGap) {
     return Math.ceil(nativeSvgNumber(nativeContinuousPagination(this.layout, coreGap).heights[0] ?? 0))
   }

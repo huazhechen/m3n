@@ -40,6 +40,7 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
           y: String(top + metrics.ascent),
           'font-size': String(size),
           'font-family': family,
+          'font-weight': String(scoreLayoutConfig.fonts.textWeight),
           ...(family === SCORE_TITLE_FONT ? { 'font-weight': String(SCORE_TITLE_WEIGHT), 'font-synthesis': 'none', 'data-m3n-role': 'title' } : {}),
           'text-anchor': anchor,
           ...(bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}),

@@ -283,12 +283,16 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       const arrow = document.querySelector('#scratch text[data-m3n-role="order-arrow"]')?.textContent
       const framed = api.frameScoreImage([...document.querySelectorAll('#scratch > svg')])
       const image = await api.renderScoreCanvas(framed,framed.viewBox.baseVal.width,1)
-      return {layout,characters,arrow,png:image.toDataURL().length}
+      const dotDiameters = [...document.querySelectorAll('#scratch circle[data-m3n-role="music-dot"]')].map(node => 2 * Number(node.getAttribute('r')))
+      return {layout,characters,arrow,dotDiameters,png:image.toDataURL().length}
     },symbolSource)
     assert.deepEqual(symbols.layout.outside,[])
     assert.deepEqual(symbols.layout.overlaps,[])
-    for (const {character} of Object.values(JSON.parse(readFileSync(join(root,'packages/numbered-notation/src/bravura-symbols.json'),'utf8'))))
-      assert(symbols.characters.includes(character),`The browser must render music character ${character.codePointAt(0).toString(16)}`)
+    for (const [name, {character}] of Object.entries(JSON.parse(readFileSync(join(root,'packages/numbered-notation/src/bravura-symbols.json'),'utf8')))) {
+      // Numbered octave and duration dots deliberately use native circles.
+      if (name !== 'augmentationDot') assert(symbols.characters.includes(character),`The browser must render music character ${character.codePointAt(0).toString(16)}`)
+    }
+    for (const diameter of [3.6, 4.32]) assert(symbols.dotDiameters.some(value => Math.abs(value - diameter) < 1e-6), `Music dots must retain their ${diameter}px circle diameter`)
     assert.equal(symbols.arrow,'→')
     assert(symbols.png > 1000,'All transformed music characters must export to PNG')
     const paperInk = await page.evaluate(() => {

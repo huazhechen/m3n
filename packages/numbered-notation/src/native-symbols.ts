@@ -1,3 +1,4 @@
+import { scoreNavigationGlyphHeight, scoreAttachmentHeight } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT, SCORE_MUSIC_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { bravuraSvg, nativeDotSvg } from './bravura.js'
@@ -76,12 +77,12 @@ export class NativeSymbols {
   }
 
   segno(x: number, y: number): string {
-    const glyph = nativeNavigationGlyph('segno', (nativeStyle.music * .8), this.measurer)
+    const glyph = nativeNavigationGlyph('segno', scoreNavigationGlyphHeight(), this.measurer)
     return `<g transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})">${glyph.svg}</g>`
   }
 
   coda(x: number, y: number): string {
-    const glyph = nativeNavigationGlyph('coda', (nativeStyle.music * .8), this.measurer)
+    const glyph = nativeNavigationGlyph('coda', scoreNavigationGlyphHeight(), this.measurer)
     const text = this.measurer.measureText('Coda', { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT })
     return `<g data-m3n-role="coda" transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})">${glyph.svg}</g>`
       + this.text('Coda', x + glyph.width + nativeStyle.text * .3, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.text, SCORE_TEXT_FONT)
@@ -95,7 +96,7 @@ export class NativeSymbols {
     if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
     const articulation = nativeArticulationSvg(mark, undefined, this.measurer)
     if (articulation !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${articulation}</g>`
-    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? (nativeStyle.music * .5) : nativeStyle.grace, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-style': /^f[1-5]$/.test(mark) ? 'normal' : 'italic' })
+    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.fingering : nativeStyle.grace, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-style': /^f[1-5]$/.test(mark) ? 'normal' : 'italic' })
   }
 
   control(control: NativeControl, x = 0, y = 0): string {
@@ -125,8 +126,8 @@ export class NativeSymbols {
 
   rawMark(mark: string): string {
     if (mark === 'tip') return bravuraSvg('articStaccatissimoAboveSmall', (nativeStyle.music * .3), this.measurer)
-    if (mark === 'brk') return bravuraSvg('articStaccatissimoAbove', (nativeStyle.music * .3), this.measurer)
-    if (mark === 'hold') return bravuraSvg('articTenutoAbove', (nativeStyle.music * .05), this.measurer)
+    if (mark === 'brk') return bravuraSvg('articStaccatissimoAbove', scoreAttachmentHeight('brk')!, this.measurer)
+    if (mark === 'hold') return bravuraSvg('articTenutoAbove', scoreAttachmentHeight('hold')!, this.measurer)
     return this.mark(mark, 0, 0)
   }
 }

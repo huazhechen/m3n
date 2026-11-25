@@ -11,13 +11,13 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
   const info = render.layoutInfo()
-  const { lineDensityVariation, lastLineSlack } = info.quality
+  const { lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity } = info.quality
   const pageCount = render.pageCount(true)
   timings.layoutMs = performance.now() - started
-  const qualityScore = numberedLayoutScore({ width, lineDensityVariation, lastLineSlack })
+  const qualityScore = numberedLayoutScore({ width, ...info.quality })
   if (!auditLayout) {
     timings.totalMs = performance.now() - started
-    return { width, pageCount, rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation, lastLineSlack, qualityScore, timings }
+    return { width, pageCount, rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }
   }
   let stage = performance.now()
   const pages = render(true)
@@ -46,7 +46,7 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
     })
     timings.geometryMs = performance.now() - stage
     timings.totalMs = performance.now() - started
-    return { width, pageCount, rows: info.lines.length, outside, overlaps, lineDensityVariation, lastLineSlack,
+    return { width, pageCount, rows: info.lines.length, outside, overlaps, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity,
       qualityScore, timings }
   } finally { host.remove() }
 }

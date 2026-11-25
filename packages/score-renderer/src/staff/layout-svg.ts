@@ -95,7 +95,7 @@ export function textMeasurer(): MeasureText {
     if (saved) return saved
     let result: FontInk
     if (context) {
-      context.font = `${italic ? 'italic' : 'normal'} ${bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight} ${size}px ${family}`
+      context.font = `${italic ? 'italic' : 'normal'} ${bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.textWeight} ${size}px ${family}`
       const m = context.measureText(text)
       result = {
         width: m.width,
@@ -311,7 +311,7 @@ export class SvgGeometry {
     const style = shape ? inherited : {
       size: a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size,
       bold: a['font-weight'] === 'bold' || a['font-weight'] === String(scoreLayoutConfig.fonts.boldWeight) || inherited.bold ||
-        hasClass(node, 'reh') || hasClass(node, 'tempo') || hasClass(node, 'ending'),
+        hasClass(node, 'reh'),
       italic: a['font-style'] === 'italic' || inherited.italic || hasClass(node, 'dynam'),
     }
     if (node.tagName === 'use') {

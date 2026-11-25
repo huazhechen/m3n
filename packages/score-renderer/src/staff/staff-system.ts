@@ -1,12 +1,12 @@
-import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
-import { staffMusicSize, staffGlyph, type StaffGlyph } from './staff-music-font.js'
+import { staffMusicSize, staffGlyph, staffNavigationGlyph, type StaffGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
 import { arrangeStaffSystem } from './system-layout.js'
-import { element, nodes, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
+import { element, nodes, readXml, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
 const style = scoreLayoutConfig.staff
 const engine = style.engine
@@ -67,7 +67,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
   preparation?: StaffPreparation) {
   const scale = STAFF_SCALE, rawWidth = width / scale
-  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, ...attrs }, [value])])
+  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, 'font-weight': String(scoreLayoutConfig.fonts.textWeight), ...attrs }, [value])])
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
     const rows = numberedHeadingLines(value, rawWidth - style.attachmentWrapInset / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight)
     return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}))[0]!))
@@ -146,8 +146,16 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
-            if (event.dynamic || event.prefix) measureNode.children.push(text(event.dynamic ?? event.prefix!, cx, Math.max(...entry.notes.flatMap(n => n.ys)) + engine.dynamicBottomGap, style.dynamic, 'dynam', { 'font-style': 'italic' }))
-            for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, (style.music * .5), 'fing'))
+            if (event.dynamic || event.prefix) {
+              const value = event.dynamic ?? event.prefix!
+              const shape = scoreDynamicGlyph(value)
+              const y = Math.max(...entry.notes.flatMap(n => n.ys)) + engine.dynamicBottomGap
+              if (shape) measureNode.children.push(element('g', { class: 'dynam', transform: `translate(${cx} ${y}) scale(${1 / scale})` }, [{
+                tagName: 'g', attributes: {}, children: [], numericInk: [shape.ink], renderNodes: () => [readXml(shape.svg)],
+              }]))
+              else measureNode.children.push(text(value, cx, y, style.dynamic, 'dynam', { 'font-style': 'italic' }))
+            }
+            for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, style.fingering, 'fing'))
             for (const nav of event.navigation) addNavigation(nav, cx, top, measureNode)
           }
         }
@@ -168,12 +176,13 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = (model.staves[0]!.y + staffMusicSize()), y2 = (model.staves.at(-1)!.y + (staffMusicSize() * 2))
         if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
+        if ((member.measure.source.repeatCount ?? 2) > 2) measureNode.children.push(text(`×${member.measure.source.repeatCount}`, x + target - engine.navigationBarInset, engine.navigationY, style.repeatCount, 'repeatMark'))
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
       }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {
-        const glyph = nav === 'segno' || nav === 'coda' ? [staffGlyph(nav, x, y)] : []
-        parent.children.push(element('g', { class: 'repeatMark' }, glyph.length ? glyph : nodes(text(({ tocoda: 'To Coda', fine: 'Fine', ds: 'D.S.', dc: 'D.C.' } as Record<string, string>)[nav] ?? nav, x, y, style.navigation, 'repeat-mark-text'))))
+        const glyph = nav === 'segno' || nav === 'coda' ? [staffNavigationGlyph(nav, x, y)] : []
+        parent.children.push(element('g', { class: 'repeatMark' }, glyph.length ? glyph : nodes(text(({ tocoda: 'To Coda', fine: 'Fine.', ds: 'D.S.', dc: 'D.C.' } as Record<string, string>)[nav] ?? nav, x, y, nav === 'fine' ? style.fine : style.navigation, 'repeat-mark-text'))))
       }
       if (document.hasBass) {
         const first = models[0]!
@@ -198,7 +207,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${(staffMusicSize() / 4 * 1.7)} V${(staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })] : []),
           element('path', { d: `M${left} ${(staffMusicSize() / 4 * 0.5)} H${right}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' }),
           element('path', { d: `M${right} ${(staffMusicSize() / 4 * 0.5)} V${(staffMusicSize() / 4 * 1.7)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' }),
-          ...nodes(text(first ? `${ending}.` : '', left + engine.endingTextInset, engine.endingTextY, (style.music * .4), 'ending')),
+          ...nodes(text(first ? `${ending}.` : '', left + engine.endingTextInset, engine.endingTextY, style.voltaLabel, 'ending')),
         ]))
       }
       for (const tie of ties) {

@@ -20,3 +20,7 @@ export { scoreLayoutConfig } from './score-layout-config.js'
 export { lastLineWidth } from './last-line-width.js'
 
 export { scoreLineQuality, scoreHorizontalQuality } from './layout-quality.js'
+
+export { scoreAttachmentHeight, scoreNavigationGlyphHeight, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from './score-layout-policy.js'
+
+export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'

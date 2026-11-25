@@ -1,3 +1,4 @@
+import { interpolateScoreCoreGap } from './score-layout-policy.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
@@ -81,10 +82,7 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
       // Header separation stays fixed as the music's core parameter changes.
       // Lyrics reduce the starting clearance, while retaining the same page
       // stretch ceiling. Interpolate each gap using the shared fit parameter.
-      const minimum = gap * (previous.block.coreGapScale ?? 1)
-      const musicGap = minimum === gap ? coreGap : maxGap > gap
-        ? minimum + (coreGap - gap) / (maxGap - gap) * (maxGap - minimum)
-        : minimum
+      const musicGap = interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
       const separation = item.block.core && previous.block.core ? musicGap : headerGap
       baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
       for (const prior of placed)

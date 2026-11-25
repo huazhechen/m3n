@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation'
 import glyphs from './staff-glyphs.json' with { type: 'json' }
 import { element, type Ink, type XmlNode } from './layout-svg.js'
 
@@ -47,4 +47,11 @@ class MusicCharacter implements XmlNode {
       'font-family': scoreLayoutConfig.fonts.music, 'font-weight': String(scoreLayoutConfig.fonts.regularWeight), 'font-style': 'normal', 'aria-hidden': 'true',
       'data-m3n-glyph': this.name }, [glyphs[this.name].character])])]
   }
+}
+
+/** Normalize navigation ink, rather than inheriting the SMuFL staff em. */
+export function staffNavigationGlyph(name: 'segno' | 'coda', x: number, y: number): XmlNode {
+  const g = glyphs[name]
+  const size = scoreNavigationGlyphHeight() / scoreLayoutConfig.staff.engine.scale / (g.bottom - g.top)
+  return staffGlyph(name, x, y, size)
 }

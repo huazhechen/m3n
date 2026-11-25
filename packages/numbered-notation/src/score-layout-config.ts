@@ -24,7 +24,11 @@ const numberedCoreGapEm = 1.2
 const sharedScoreGapCoreRatio = 1.25
 const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRatio
 
+const typography = { title: 32, subtitle: 16, credit: 14, text: 16, annotation: 14,
+  navigation: 16, fine: 16.8, measureNumber: 10, fingering: 12, expression: 13, voltaLabel: 14.4, repeatCount: 13 }
+
 const numbered = {
+  ...typography,
   // 独立文字字号（px）；音符附属字形在实现中按 music 的 em 比例计算。
   music: numberedMusic,
   // 正圆直径：八度点0.15em、时值附点0.18em；倚音同比缩放。
@@ -33,19 +37,10 @@ const numbered = {
   accidentalScale: 1.15,
   // 核心上下间距，以 music 为1em；外层净空在使用处乘系数。
   coreGapEm: numberedCoreGapEm, // 谱源 leading 以em覆盖，作用于全部派生上下间距。
-  text: 16,
-  annotation: 14,
   lyric: lyrics.fontSize,
   grace: 13,
-  title: 32,
-  subtitle: 16,
-  credit: 14,
 
   // 外层表情与导航文字保持独立字号。
-  navigation: 16,
-  fine: 16.8,
-  repeatCount: 13,
-  measureNumber: 10,
   // 自动选距按候选进行整曲评分；minimumNoteGap 是基础候选。
   minimumNoteGap: 9,
   noteGapCandidates: [9, 12, 15] as readonly number[],
@@ -75,15 +70,13 @@ const numbered = {
 /** Native staff music and text share the same typography policy. */
 const staffScale = 0.7
 const staff = {
-  title: 32, subtitle: 16, credit: 14, text: 16,
-  annotation: 16, annotationLineHeight: 20,
-  tempo: 15, chord: 14, dynamic: 16,
-  restCount: 16, measureNumber: 12, navigation: 14,
-  expression: 14, octave: 13,
+  ...typography,
+  annotationLineHeight: 20,
+  tempo: typography.text, chord: typography.annotation, dynamic: typography.expression,
+  restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
   music: 40 * staffScale,
 
-  minimumCoreGap: 28, maximumCoreGap: 32,
   headerRowGap: 5, headerSideGap: 14, headerBottomGap: 7,
   headerWrapInset: 2, orderTopGap: 12, orderItemGap: 4,
   orderArrowWidth: 14, orderArrowHeight: 10, orderArrowTip: 4, orderArrowAdvance: 20,

@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -24,7 +24,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
-  const minimumGap = score.coreGapEm === undefined ? scoreLayoutConfig.staff.minimumCoreGap : score.coreGapEm * scoreLayoutConfig.staff.music
+  const minimumGap = scoreCoreGap(score)
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {
@@ -33,6 +33,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   }
   validate(width)
   const projected = measurements.document
+  const displayedEvents = new Set(projected.measures.flatMap(measure => [measure.melody, measure.bass]
+    .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
   type Layout = {
@@ -88,11 +90,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     return selected
   }
   const outputPages = (result: Layout, paged: boolean, candidateWidth = width) => {
-    if (paged && outputGap === minimumGap) {
+    if (paged && settings.coreGap === undefined) {
       if (result.paginationError) throw result.paginationError
       return result.pages
     }
-    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, outputGap, paged)
+    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, outputGap, paged, settings.coreGap === undefined ? scoreMaximumCoreGap(outputGap) : outputGap)
   }
   const engrave = (paged: boolean) => {
     if (cache.has(paged)) return
@@ -132,7 +134,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
               width: String(width),
               height: String(page.height + 2 * margin),
               'font-family': SCORE_TEXT_FONT,
-              'font-weight': String(scoreLayoutConfig.fonts.regularWeight),
+              'font-weight': String(scoreLayoutConfig.fonts.textWeight),
               color: '#000',
               'data-notation': 'staff',
               'data-m3n-note-spacing': String(result.spacing),
@@ -177,12 +179,16 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     layoutInfo(candidateWidth = width) {
       const result = layout(candidateWidth)
       return {
+        displayedEvents,
+        hasBass: projected.hasBass,
         spacing: result.spacing,
         quality: { ...result.quality },
         headerHeight: result.header.height,
         availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter) - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset,
         pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,
-        lines: result.lines.map((line) => ({
+        lines: result.lines.map((line, index) => ({
+          core: { ...result.systems[index]!.core },
+          inkHeight: result.systems[index]!.ink.bottom - result.systems[index]!.ink.top,
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,
           measures: line.measures.map((m) => m.id),

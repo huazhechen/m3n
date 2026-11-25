@@ -6,7 +6,7 @@ import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasure, drawStaffMeasure, STAFF_SCALE } from './staff-engine.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
 import { createStaffPreparation } from './staff-engine.js'
-import { SvgGeometry, findAll, hasClass, type MeasureText } from './layout-svg.js'
+import { SvgGeometry, findAll, hasClass, overlapsX, type MeasureText } from './layout-svg.js'
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 
@@ -38,11 +38,12 @@ it('uses the numbered lyric font size and 6px/4px vertical gaps', () => {
   const verses = findAll(system.node, node => hasClass(node, 'verse'))
   const first = verses.filter(node => node.attributes.id?.endsWith('-v1'))
   const second = verses.filter(node => node.attributes.id?.endsWith('-v2'))
-  const firstTop = Math.min(...first.map(node => geometry.ink(node).top))
   const firstBottom = Math.max(...first.map(node => geometry.ink(node).bottom))
   const secondTop = Math.min(...second.map(node => geometry.ink(node).top))
   const music = findAll(system.node, node => hasClass(node, 'staff')).flatMap(staff => geometry.withoutClasses(staff, ['verse']))
-  expect((firstTop - Math.max(...music.map(piece => piece.bottom))) * STAFF_SCALE).toBeCloseTo(lyricSpacing.musicGap)
+  const lyricPieces = first.flatMap(verse => geometry.pieces(verse))
+  const clearances = lyricPieces.flatMap(lyric => music.filter(piece => overlapsX(piece, lyric)).map(piece => (lyric.top - piece.bottom) * STAFF_SCALE))
+  expect(Math.min(...clearances)).toBeCloseTo(lyricSpacing.musicGap)
   expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(lyricSpacing.rowGap)
 })
 

@@ -1,8 +1,8 @@
+import { scoreAttachmentHeight } from './score-layout-policy.js'
 import type { TextMeasurer } from './native-measure.js'
 import { bravuraSvg } from './bravura.js'
-import { nativeStyle } from './native-style.js'
-export function nativeOrnamentSvg(name: string, size = (nativeStyle.music * .5), measurer?: TextMeasurer): string | undefined {
-  if (name === 'tr') return bravuraSvg('ornamentTrill', size, measurer)
-  if (name === 'prall') return bravuraSvg('ornamentShortTrill', size * .55, measurer)
+export function nativeOrnamentSvg(name: string, size?: number, measurer?: TextMeasurer): string | undefined {
+  if (name === 'tr') return bravuraSvg('ornamentTrill', size ?? scoreAttachmentHeight('tr')!, measurer)
+  if (name === 'prall') return bravuraSvg('ornamentShortTrill', size === undefined ? scoreAttachmentHeight('prall')! : size * .55, measurer)
   return undefined
 }
