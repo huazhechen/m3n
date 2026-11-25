@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 107,
+  "sourceCount": 108,
   "sections": [
     {
       "id": "basics",
@@ -864,6 +864,14 @@
       "section": "pop",
       "group": "快速音型与装饰",
       "reason": "快速节奏与高音区"
+    },
+    {
+      "id": "butter_fly",
+      "file": "butter_fly_01.m3n",
+      "title": "Butter Fly",
+      "section": "pop",
+      "group": "快速音型与装饰",
+      "reason": "E调、切分节奏、跨小节延音与整段反复"
     },
     {
       "id": "zui_chang_de_dian_ying",

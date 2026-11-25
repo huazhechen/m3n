@@ -1,8 +1,8 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "59b21817662997c7246d925e08790117e39cf7791e677af281e87d12170e4435",
-  "fontManifestSha256": "f552a65b590192af38b92511533e6d5bc3cfbc331e3e7a78f361eb927ff9a2e9",
+  "rendererSha256": "4badf33d759fbe23af441a8248abb849221cacc6db5624deb76cb2d02cc5638a",
+  "fontManifestSha256": "d73fa868fe1ba0242aea2092f404321159c221f1a7c289d06ded2c78b98732cd",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -548,6 +548,11 @@
       "sourceSha256": "82c9b13972dcf0ce64eed4f57e0a2e40fcd5ba2beb53cb07748795def4120304",
       "font": "NotoSansSC-a7c7c070dcc58456.ttf",
       "fontSha256": "809b68cfcd2c7eb249dbc5af0d2efdec4a074664e155d2bbfe337748c503b74b"
+    },
+    "src/scores/butter_fly_01.m3n": {
+      "sourceSha256": "7d87acb92433b35794e2caf4f7cb640903b5e63f1f38bd6f508ccdace294f5cd",
+      "font": "NotoSansSC-d940f80f42647334.ttf",
+      "fontSha256": "99025480a90ff47e6c6edfbaa9b20c8932279fb27f4c9fe766062d54f846ce85"
     }
   }
 }
