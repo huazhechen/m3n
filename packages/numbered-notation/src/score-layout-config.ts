@@ -18,11 +18,17 @@ const fonts = {
   measurementSize: 1000,
 } as const
 
+const numberedMusic = 24
+const numberedCoreGapEm = 1.2
+// 曲间最小留白为默认核心间距的1.25倍（当前36px）。
+const sharedScoreGapCoreRatio = 1.25
+const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRatio
+
 const numbered = {
   // 独立文字字号（px）；音符附属字形在实现中按 music 的 em 比例计算。
-  music: 24,
+  music: numberedMusic,
   // 核心上下间距，以 music 为1em；外层净空在使用处乘系数。
-  coreGapEm: 1.2, // 谱源 leading 以em覆盖，作用于全部派生上下间距。
+  coreGapEm: numberedCoreGapEm, // 谱源 leading 以em覆盖，作用于全部派生上下间距。
   text: 16,
   annotation: 14,
   lyric: lyrics.fontSize,
@@ -59,7 +65,7 @@ const numbered = {
   frameStroke: 1,
   navigationGap: 4.4,
   openingBarFallbackInset: 2, closingBarFallbackInset: 3,
-  sharedScoreGap: 24,
+  sharedScoreGap,
 }
 
 /** Native staff music and text share the same typography policy. */
@@ -105,7 +111,7 @@ const staff = {
 const imageExport = { footerMinimumFontSize: 12, footerFontSizeWidthRatio: 0.02, marginRatio: 0.06, footerMarginRatio: 1.55 } as const
 const rendering = { offscreenPosition: -20000, auditOffscreenPosition: -100000, previewPageGap: 16 } as const
 const scorebook = {
-  sharedScoreGap: 24,
+  sharedScoreGapCoreRatio, sharedScoreGap,
   coverTitle: 40, coverWebsite: 18, contentsTitle: 30, sectionTitle: 16, entryTitle: 16, pageNumber: 14,
   coverTitleY: 350, coverWebsiteY: 410, contentsLeft: 40, contentsTop: 65,
   columnStep: 377, contentsRowsTop: 120, pageNumberOffset: 337,

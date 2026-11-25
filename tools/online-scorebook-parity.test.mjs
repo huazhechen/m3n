@@ -11,7 +11,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-pdf-parity-'))
   const files = ['xiao_xing_xing_01.m3n', 'hong_he_gu_01.m3n']
   const sources = files.map(file => readFileSync(join(root, 'src/scores', file), 'utf8'))
-  const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowsPerColumn: 28, rowHeight: 35 },
+  const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowsPerColumn: 28, rowHeightEm: 1.25 },
     sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: false }],
     entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '红河谷'][index], section: 'basics' })) }
   const fontAssets = browserTestFontAssets(root, { fontFile: join(temp, 'bundle/fixture-font.ttf') })

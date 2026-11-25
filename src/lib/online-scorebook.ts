@@ -50,7 +50,8 @@ function text(svg: SVGSVGElement, value: string, x: number, y: number, size: num
 
 function frontPages(entries: BookEntry[]) {
   // Share the publishing script's compact grid and keep chapter headings with a song.
-  const { rowsPerColumn, rowHeight } = plan.contents
+  const { rowsPerColumn, rowHeightEm } = plan.contents
+  const rowHeight = bookStyle.entryTitle * rowHeightEm
   type Row = { section: typeof plan.sections[number] } | { entry: BookEntry }
   const columns: Row[][] = []
   for (const section of plan.sections) {

@@ -904,7 +904,7 @@
   "outputKey": "scorebook-v75-web",
   "contents": {
     "rowsPerColumn": 28,
-    "rowHeight": 35
+    "rowHeightEm": 1.25
   },
   "page": {
     "width": 793.7007874015749,
