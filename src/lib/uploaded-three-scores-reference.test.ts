@@ -24,7 +24,7 @@ function performedWords(source: string) {
 describe('three scores transcribed from the November 26 uploads', () => {
   it.each([
     ['badinerie_bwv1067', badinerie, 'Bm', 42, 160, 'instrumental'],
-    ['yang_cong', onion, 'C', 28, 180, 'pop'],
+    ['yang_cong', onion, 'C', 29, 176, 'pop'],
     ['tu_ran_hao_xiang_ni', sudden, 'D', 52, 231, 'pop'],
   ] as const)('validates, formats and catalogs %s with melody only', (id, source, key, count, beats, category) => {
     expect(validateM3NDiagnostics(source)).toEqual([])
@@ -73,20 +73,32 @@ describe('three scores transcribed from the November 26 uploads', () => {
     expect(actual).toEqual(reference.badinerieSoloReference.notes)
   })
 
-  it('keeps all Onion chorus high A notes and the deliberately lower passing G notes', () => {
+  it('uses the replacement Onion PDF melody, rests and syncopated durations', () => {
     const document = parseM3NDocument(onion)
     const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
     const pitches = resolveScorePitches(bars)
-    const notes = (index: number) => bars[index]!.events.map(event => pitches.get(event)![0])
-    // Both chorus lines: “你会发／你会鼻” rise to A5 on “会”.
-    for (const index of [19, 23]) expect(notes(index).slice(-4)).toEqual(['c:5:', 'c:5:', 'a:5:', 'g:5:'])
-    // “现／酸” and its tied continuation stay at A5; the short G4 passing notes have no octave dot in the upload.
-    for (const index of [20, 24]) {
-      expect(notes(index)).toEqual(['a:5:', 'a:5:', 'g:4:', 'g:5:', 'f:5:s', 'g:5:', 'g:5:', 'g:4:', 'f:5:n', 'e:5:'])
-      expect(bars[index]!.events[0]!.tie).toBe(true)
-    }
-    // The verse's “听到／的我” really ends on a low A3 in the uploaded score.
-    for (const index of [3, 11]) expect(notes(index).at(-1)).toBe('a:3:')
+    const notes = (index: number) => bars[index]!.events.map(event => [pitches.get(event)?.[0] ?? 'rest', event.beats])
+    // PDF bars 6/14/35: sixteenth-note ties sustain the syncopations without extra attacks.
+    expect(notes(1)).toEqual([
+      ['g:3:', .5], ['c:4:', .25], ['c:4:', .25], ['c:4:', .25], ['e:4:', .5],
+      ['e:4:', .25], ['e:4:', .25], ['g:4:', .5], ['g:4:', .25], ['g:4:', .25], ['g:3:', .75],
+    ])
+    expect(bars[1]!.events.map(event => event.tie)).toEqual([false, false, true, false, false, true, false, false, true, false, false])
+    // PDF bars 25/29: “现/酸” is a quarter note; the next beat begins with a rest.
+    // “你会发/鼻”的“你” is high C, and the old F-sharp is now F-natural.
+    for (const index of [19, 23]) expect(notes(index).slice(-4)).toEqual([
+      ['rest', .25], ['c:5:', .25], ['a:5:', .25], ['g:5:', .25],
+    ])
+    for (const index of [20, 24]) expect(notes(index)).toEqual([
+      ['a:5:', 1], ['rest', .25], ['c:5:', .25], ['g:5:', .25], ['f:5:', .25],
+      ['g:5:', 1], ['rest', .25], ['g:4:', .25], ['f:5:', .25], ['e:5:', .25],
+    ])
+    expect(bars[17]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(2)
+    expect(document.tempo).toBe(68)
+    // PDF bars 30 and 51 differ at ‘心全’; keep the two rhythms in the existing endings.
+    expect(notes(25).slice(-2)).toEqual([['d:5:', .5], ['b:4:', .5]])
+    expect(notes(27).slice(-2)).toEqual([['d:5:', .75], ['b:4:', .25]])
+    for (const index of [3, 11]) expect(notes(index).at(-1)![0]).toBe('a:3:')
   })
 
   it('sings Onion verses 1–2, chorus, verse 3, chorus with the original lyric wording', () => {

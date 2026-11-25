@@ -2,7 +2,7 @@
   "version": 1,
   "staffGeneration": "deferred",
   "rendererSha256": "b2a08bee6d2a03867ff91ff315bef3a4b390f6e7095eb738b57d12fcafd55ccb",
-  "fontManifestSha256": "5ffee52a8d62fe2b2ac598dafa3e31736c2cdce9c84ecefa7b15cb42f566b534",
+  "fontManifestSha256": "026224a740e7df654f3e6166cbc6eb78958a054c0043a4cdd61085aee758eebb",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -570,9 +570,9 @@
       "fontSha256": "886f2e1d9da28f561a9edc0e86c12a7a12a3cab4993c4d33288a01cc3e0f1063"
     },
     "src/scores/yang_cong_01.m3n": {
-      "sourceSha256": "44dd1b3d3bbaed5e306f69df04cbd9a1378011151c0197eea34be31e3b35908f",
-      "font": "NotoSansSC-67d904c853015850.ttf",
-      "fontSha256": "5fb6c0d3f6781f54f750bd6b285485b4bd537b1d98f6a08dc7f2bd13c2e70d38"
+      "sourceSha256": "c3a4cce8163a92e4a56235db0cfe26d715e6a91ef380b7789069051d90a5bbc2",
+      "font": "NotoSansSC-0a8b010581d629e1.ttf",
+      "fontSha256": "443d5c8861a68e8b6491dc5a508b3ad3ca0aa1b260dbab4b7d0ae6037bae4aaf"
     }
   }
 }
