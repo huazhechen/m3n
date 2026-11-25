@@ -103,8 +103,8 @@ export function arrangeStaffSystem(
   }
   for (const label of tuplets) {
     const below = label.attributes['data-m3n-below'] === 'true', clearance = 3 / scale
-    // VexFlow leaves a fixed margin outside the stave. Re-anchor the actual
-    // bracket strokes and numeral to this staff before resolving collisions.
+    // Re-anchor bracket strokes and numeral to this staff before
+    // resolving collisions with the actual local music.
     const localMusic = tupletMusic.get(label)!
     const pieces = geometry.pieces(label)
     const offsets = pieces.flatMap(piece => localMusic

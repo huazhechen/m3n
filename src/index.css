@@ -966,16 +966,16 @@ textarea::selection {
 }
 
 /* Preserve music glyph open paths and stroke widths when recoloring symbols. */
-.score-paper[data-notation="numbered"] :is(.is-playing, .is-cursor-active) text,
-.score-paper[data-notation="numbered"] text:is(.is-playing, .is-cursor-active) {
+.score-paper:is([data-notation="numbered"], [data-notation="staff"]) :is(.is-playing, .is-cursor-active) text,
+.score-paper:is([data-notation="numbered"], [data-notation="staff"]) text:is(.is-playing, .is-cursor-active) {
   stroke: none;
 }
 
-.score-paper[data-notation="numbered"] :is(.is-playing, .is-cursor-active) [fill="none"] {
+.score-paper:is([data-notation="numbered"], [data-notation="staff"]) :is(.is-playing, .is-cursor-active) [fill="none"] {
   fill: none;
 }
 
-.score-paper[data-notation="numbered"] :is(.is-playing, .is-cursor-active) [stroke="none"] {
+.score-paper:is([data-notation="numbered"], [data-notation="staff"]) :is(.is-playing, .is-cursor-active) [stroke="none"] {
   stroke: none;
 }
 

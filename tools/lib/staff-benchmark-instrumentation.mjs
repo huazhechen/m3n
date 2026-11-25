@@ -5,11 +5,9 @@ const stages = {
   'staff-measurement-task.js': { prepareNumberedNotationFonts: ['fontPreparation', true], projectStaffDocument: ['projection'], textMeasurer: ['textMeasurerFactory', false, true] },
   'staff-score.js': { staffHeader: ['header'],
     planStaffLines: ['linePlanning'], engraveStaffSystems: ['engraving'], paginateStaff: ['pagination'] },
-  'line-layout.js': { createVexMeasure: ['vexMeasureForPlanning'] },
-  'staff-system.js': { createVexMeasure: ['vexMeasureForDrawing'], drawVexMeasure: ['vexDrawing'], createStaffContext: ['systemDrawPass'],
-    arrangeStaffSystem: ['systemArrangement'], captureStaffDrawing: ['systemDrawingCapture'], staffLyricDrawing: ['lyricDrawing'] },
-  'vexflow-engine.js': { captureStaffDrawing: ['vexDrawingCapture'], prepareStaffNoteDrawing: ['noteDrawingPreparation'], staffModelState: ['drawingStatePreparation'], prepareStaffNoteMetrics: ['noteMetricsPreparation'], drawStaffStave: ['staveDrawing'], drawStaffBeam: ['beamDrawing'] },
-  'staff-svg-context.js': { readXml: ['compatibilityXmlParse'], staffCommandPath: ['numericPathPreparation'], staffGlyphPrimitive: ['glyphPlacement'] },
+  'staff-system.js': { createStaffMeasure: ['nativeMeasureForDrawing'], drawStaffMeasure: ['nativeDrawing'],
+    arrangeStaffSystem: ['systemArrangement'], staffLyricDrawing: ['lyricDrawing'] },
+  'staff-engine.js': { staffCommandPath: ['numericPathPreparation'], staffGlyph: ['glyphPlacement'] },
 }
 
 export function staffBenchmarkInstrumentation() {

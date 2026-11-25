@@ -1,33 +1,9 @@
 import { svgPathBbox } from 'svg-path-bbox'
-import { Flow } from 'vexflow/bravura'
 import { StaffPathAxis } from './staff-path-ink.js'
 import type { Ink } from './layout-svg.js'
 
 export type StaffNumericPath = { boxes: readonly Ink[]; text(): string; end: { x: number; y: number }; place(x: number, y: number): StaffNumericPath }
 export type StaffPathCommand = { kind: number; values: number[] }
-export type StaffGlyphTemplates = WeakMap<number[], Map<number, readonly StaffPathCommand[]>>
-
-/** The glyph is fixed, but rounding follows the final absolute coordinates.
- * Translating pre-rounded local bounds changes threshold pagination decisions. */
-export function staffGlyphPrimitive(templates: StaffGlyphTemplates, outline: number[], scale: number, x: number, y: number): StaffNumericPath {
-  let sizes = templates.get(outline)
-  if (!sizes) { sizes = new Map(); templates.set(outline, sizes) }
-  let commands = sizes.get(scale)
-  if (!commands) {
-    const prepared: StaffPathCommand[] = []
-    for (let i = 0; i < outline.length;) {
-      const kind = outline[i++]!, count = kind <= 1 ? 2 : kind === 2 ? 4 : kind === 3 ? 6 : 0
-      if (!count) throw new Error('五线谱字形使用了未知的轮廓指令。')
-      const values = outline.slice(i, i + count).map((value, index) => value * (index % 2 ? -scale : scale))
-      // VexFlow outlines put the endpoint before quadratic/cubic controls.
-      if (kind >= 2) values.push(...values.splice(0, 2))
-      prepared.push({ kind, values }); i += count
-    }
-    commands = prepared; sizes.set(scale, commands)
-  }
-  return staffCommandPath(commands, x, y)
-}
-
 export function staffCommandPath(commands: readonly StaffPathCommand[], x = 0, y = 0): StaffNumericPath {
   return new CommandPath(commands, x, y)
 }
@@ -51,7 +27,7 @@ class CommandPath implements StaffNumericPath {
   readonly end: { x: number; y: number }
   private serialized?: string
   private verticalAxis?: StaffPathAxis
-  private readonly precision = 10 ** Flow.RENDER_PRECISION_PLACES
+  private readonly precision = 1000
   constructor(private readonly commands: readonly StaffPathCommand[], private readonly x: number, private readonly y: number, private vertical?: Map<number, StaffPathAxis>,
     private readonly linear = commands.every(command => command.kind === 0 || command.kind === 1 || command.kind === 4)) {
     const precision = this.precision

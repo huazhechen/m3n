@@ -1,3 +1,4 @@
+import { scoreInkBounds } from '../lib/score-ink-bounds'
 import { queryPlaybackElements } from '../lib/score-playback-elements'
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
 import type { PlaybackScore, SpessaPlayer } from '@m3n/score-renderer'
@@ -78,10 +79,10 @@ function drawStartupBeat(paper: HTMLElement | null, score: PlaybackScore | null,
 function addMeasureHighlight(measure: SVGGElement, className: string) {
   if (measure.querySelector(`:scope > .${className}`)) return
   const system = measure.closest<SVGGElement>('g.system')
-  const measureBounds = measure.getBBox()
-  const systemBounds = system?.getBBox() ?? measureBounds
+  const measureBounds = scoreInkBounds(measure) ?? measure.getBBox()
+  const systemBounds = system ? scoreInkBounds(system) ?? system.getBBox() : measureBounds
   // Music-font getBBox() includes em-box whitespace well outside the engraved
-  // row. Use the numbered layout's measured vertical bounds for every band.
+  // row. Prefer renderer ink bounds, or numbered measured row bounds.
   const numberedSystemTop = Number(system?.dataset.m3nTop)
   const numberedSystemBottom = Number(system?.dataset.m3nBottom)
   const hasNumberedSystemBounds = Number.isFinite(numberedSystemTop)

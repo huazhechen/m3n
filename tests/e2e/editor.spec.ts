@@ -129,7 +129,7 @@ test('all embedded documentation scores use numbered notation', async ({ page })
 test('renders numbered scores and their embedded fonts without loading the staff engine', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:numbered-notation', '1'))
   const engineRequests: string[] = []
-  await page.route(url => /\/(?:staff-score|vexflow)[^/]*\.js$|\.wasm$/.test(url.pathname), route => {
+  await page.route(url => /\/(?:staff-score|staff-engine)[^/]*\.js$|\.wasm$/.test(url.pathname), route => {
     engineRequests.push(route.request().url())
     return route.abort()
   })

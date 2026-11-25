@@ -109,6 +109,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
       expect(bytes.subarray(0, 4).toString()).toBe('%PDF')
       const pdf = await PDFDocument.load(bytes)
       expect(pdf.getPageCount()).toBe(readerPageCount)
+      expect(pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFDict && /Bravura/.test(object.get(PDFName.of('BaseFont'))?.toString() ?? ''))).toBe(true)
       expect(pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFDict && object.get(PDFName.of('Subtype')) === PDFName.of('Image'))).toBe(false)
     } else expect(bytes.subarray(1, 4).toString()).toBe('PNG')
   }
@@ -156,7 +157,7 @@ test('staff lyrics highlight the matching verse during a written repeat', async 
 
 test('a failed optional staff download leaves the notation selector available', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:notation-mode', 'staff'))
-  await page.route(/\/(?:staff-score|vexflow)[^/]*\.js$/, route => route.abort())
+  await page.route(/\/(?:staff-score|staff-engine)[^/]*\.js$/, route => route.abort())
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.render-message')).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -189,12 +190,14 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
       if (!heading) return []
       const directions = [...system.querySelectorAll('g.dir')]
       const tempos = [...system.querySelectorAll('g.tempo')]
+      const ink = (group: Element) => (window as unknown as { staffInkBounds: (svg: Element, scope: Element) => DOMRect }).staffInkBounds(system.ownerSVGElement!, group)
+      const headingInk = ink(heading)
       return [{
         label: heading.textContent,
-        top: heading.getBoundingClientRect().top,
-        bottom: heading.getBoundingClientRect().bottom,
-        directionTop: Math.min(...directions.map(direction => direction.getBoundingClientRect().top)),
-        tempoBottom: Math.max(...tempos.map(tempo => tempo.getBoundingClientRect().bottom)),
+        top: headingInk.y,
+        bottom: headingInk.y + headingInk.height,
+        directionTop: Math.min(...directions.map(direction => ink(direction).y)),
+        tempoBottom: Math.max(...tempos.map(tempo => { const box = ink(tempo); return box.y + box.height })),
       }]
     }))
     expect(headings).toHaveLength(2)

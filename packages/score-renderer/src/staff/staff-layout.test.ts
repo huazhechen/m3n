@@ -7,7 +7,7 @@ import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { readXml, findAll, nodes, hasClass, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
 import { arrangeStaffSystem, systemDistance, type StaffSystem } from './system-layout.js'
-import { createStaffContext, createVexMeasure, drawVexMeasure, STAFF_SCALE } from './vexflow-engine.js'
+import { createStaffMeasure, drawStaffMeasure, STAFF_SCALE } from './staff-engine.js'
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { staffHeader } from './staff-header.js'
@@ -123,8 +123,8 @@ describe('staff layout contract', () => {
     expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])
     const score = analysis.score
     const measure = projectStaffDocument(score).measures[0]!
-    const model = createVexMeasure(measure, true, false, textMeasurer(), 0.25)
-    const drawing = drawVexMeasure(model, model.minimum, 0, createStaffContext())
+    const model = createStaffMeasure(measure, true, false, textMeasurer(), 0.25)
+    const drawing = drawStaffMeasure(model, model.minimum, 0)
     const rules = findAll(drawing, n => n.attributes.class === 'staff-line')
     expect(rules).toHaveLength(5)
     const geometry = new SvgGeometry(drawing, textMeasurer())
@@ -137,7 +137,7 @@ describe('staff layout contract', () => {
     const signatures = findAll(drawing, n => n.attributes.class === 'inline-signature')
     expect(signatures).toHaveLength(1)
     for (const signature of signatures)
-      expect(findAll(signature, n => n.tagName === 'path' && Boolean(n.attributes.d)).length).toBeGreaterThan(0)
+      expect(findAll(signature, n => n.numericInk !== undefined || n.tagName === 'text').length).toBeGreaterThan(0)
   })
   it('respects short explicit lines, section entries and standalone section headings', async () => {
     const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | {br}5 6 7 1e |\n===B{br}\nN: 1 2 3 4 |||')
@@ -296,9 +296,9 @@ it('retains beat phase when an oversized measure is split off the beat', () => {
   const score = analyzeM3N('{4/4}\nN: (1) 2 (3 4 5) 6 |').score
   const original = projectStaffDocument(score).measures[0]!
   const fragment = splitStaffMeasure(original, 1.5)[1]!
-  const model = createVexMeasure(fragment, true, false, textMeasurer(), 0.25)
+  const model = createStaffMeasure(fragment, true, false, textMeasurer(), 0.25)
   expect(fragment.beatOffset).toBe(1.5)
-  expect(model.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
+  expect(model.entries[0]![0]!.notes[0]!.beam).toBeUndefined()
   expect(model.beams[0]!.notes).toEqual(model.entries[0]!.slice(1).flatMap(entry => entry.notes))
 })
 

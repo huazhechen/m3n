@@ -3,16 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
 import { analyzeM3N } from '@m3n/notation'
-import { element, findAll, SvgGeometry } from './layout-svg.js'
+import { findAll, SvgGeometry } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
-import { captureStaffDrawing } from './staff-svg-context.js'
-import { StaveModifierPosition } from 'vexflow/bravura'
-import { createStaffContext, createVexMeasure, drawVexMeasure } from './vexflow-engine.js'
+import { createStaffMeasure, drawStaffMeasure, drawStaffBar } from './staff-engine.js'
 
 const measureText = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 function model(source: string) {
   const measure = projectStaffDocument(analyzeM3N(source).score).measures[0]!
-  return createVexMeasure(measure, true, false, measureText, 0.25)
+  return createStaffMeasure(measure, true, false, measureText, 0.25)
 }
 
 describe('staff rhythm engraving', () => {
@@ -20,7 +18,7 @@ describe('staff rhythm engraving', () => {
     const result = model('{4/4}\nN: ([3 3 3:2]) ([1 1 1:2]) ([6d 6d 6d:2]) ([3d 3d 3d:2]) |')
     expect(result.beams.map(beam => beam.notes.length)).toEqual([3, 3, 3, 3])
     for (const entry of result.entries[0]!) {
-      expect(entry.notes.every(note => note.getBeam() === entry.notes[0]!.getBeam())).toBe(true)
+      expect(entry.notes.every(note => note.beam === entry.notes[0]!.beam)).toBe(true)
     }
   })
   it('beams ordinary eighth notes by beat, retaining dotted beats in compound time', () => {
@@ -31,13 +29,13 @@ describe('staff rhythm engraving', () => {
     for (const source of ['([0 0 3d:2])', '([0 7 7:2])']) {
       const result = model(`{4/4}\nN: 1 2 3 ${source} |`)
       const entry = result.entries[0]!.at(-1)!
-      const pitched = entry.notes.find(note => !note.isRest())!
-      const markup = drawVexMeasure(result, result.minimum, 0, createStaffContext())
-      const y = entry.tuplet!.getYPosition()
-      if (pitched.getStemDirection() === 1) expect(y).toBeLessThan(result.staves[0]!.getYForLine(0))
-      else expect(y).toBeGreaterThan(result.staves[0]!.getYForLine(4))
-      const label = findAll(markup, node => node.attributes.class === 'tupletNum')[0]!
-      expect(findAll(label, node => node.tagName === 'rect')).toHaveLength(4)
+      const pitched = entry.notes.find(note => !note.prepared.rest)!
+      const markup = drawStaffMeasure(result, result.minimum, 0)
+      const label = findAll(markup, node => node.attributes.class === 'm3n-tuplet-label')[0]!
+      const y = new SvgGeometry(markup, measureText).ink(label).top
+      if (pitched.direction === 1) expect(y).toBeLessThan((result.staves[0]!.y + 40))
+      else expect(y).toBeGreaterThan((result.staves[0]!.y + 80))
+      expect(findAll(label, node => node.tagName === 'path')).toHaveLength(4)
     }
   })
 })
@@ -56,20 +54,19 @@ it('keeps short tuplets separate and beams a longer tuplet as a complete unit', 
 
 it('shows the occupied-note ratio for unusual tuplets and brackets unbeamed groups', () => {
   const result = model('{4/4}\nN: ([1 2 3 4 5:3]) 1 2 (3) |')
-  const drawing = drawVexMeasure(result, result.minimum, 0, createStaffContext())
+  const drawing = drawStaffMeasure(result, result.minimum, 0)
   const label = findAll(drawing, node => node.attributes.class === 'tupletNum')[0]!
-  // Numerator, denominator, and the two colon dots are separate paths.
-  expect(findAll(label, node => node.tagName === 'path')).toHaveLength(4)
+  expect(findAll(label, node => node.tagName === 'text')[0]!.children).toEqual(['5:3'])
   const unbeamed = model('{4/4}\nN: [1 2 3:2] 4 5 |')
-  const bracket = drawVexMeasure(unbeamed, unbeamed.minimum, 0, createStaffContext())
-  expect(findAll(findAll(bracket, n => n.attributes.class === 'tupletNum')[0]!, n => n.tagName === 'rect')).toHaveLength(4)
+  const bracket = drawStaffMeasure(unbeamed, unbeamed.minimum, 0)
+  expect(findAll(findAll(bracket, n => n.attributes.class === 'tupletNum')[0]!, n => n.tagName === 'path')).toHaveLength(4)
 })
 
 it('breaks beams at an inline key signature without shifting the following beat grid', () => {
   const result = model('{4/4}\nN: (1 {key=G} 2 3 4 5 6 7 1e) |')
   expect(result.beams.map(beam => beam.notes.length)).toEqual([2, 2, 2])
-  expect(result.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
-  expect(result.entries[0]![1]!.notes[0]!.getBeam()).toBeUndefined()
+  expect(result.entries[0]![0]!.notes[0]!.beam).toBeUndefined()
+  expect(result.entries[0]![1]!.notes[0]!.beam).toBeUndefined()
 })
 
 it('reserves arpeggio width along with accidentals and grace notes', () => {
@@ -78,7 +75,7 @@ it('reserves arpeggio width along with accidentals and grace notes', () => {
   const grace = model('{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |')
   expect(rolled.minimum).toBeGreaterThan(plain.minimum)
   expect(grace.minimum).toBeGreaterThan(rolled.minimum)
-  const drawing = drawVexMeasure(grace, grace.minimum, 0, createStaffContext())
+  const drawing = drawStaffMeasure(grace, grace.minimum, 0)
   expect(findAll(drawing, n => n.attributes.class === 'arpeg')).toHaveLength(1)
 })
 
@@ -86,12 +83,12 @@ it('aligns pickup beaming with the end of the bar while the complementary final 
   const analysis = analyzeM3N('{4/4}\nN: (1 2 3) | (1 2 3 4 5 6 7 1e) | (1 2 3 4 5) |||')
   expect(analysis.diagnostics.filter(d => d.severity === 'error')).toEqual([])
   const document = projectStaffDocument(analysis.score)
-  const pickup = createVexMeasure(document.measures[0]!, true, false, measureText, 0.25)
-  expect(pickup.entries[0]![0]!.notes[0]!.getBeam()).toBeUndefined()
+  const pickup = createStaffMeasure(document.measures[0]!, true, false, measureText, 0.25)
+  expect(pickup.entries[0]![0]!.notes[0]!.beam).toBeUndefined()
   expect(pickup.beams[0]!.notes).toEqual(pickup.entries[0]!.slice(1).flatMap(entry => entry.notes))
-  const final = createVexMeasure(document.measures.at(-1)!, true, false, measureText, 0.25)
+  const final = createStaffMeasure(document.measures.at(-1)!, true, false, measureText, 0.25)
   expect(final.beams.map(beam => beam.notes.length)).toEqual([2, 2])
-  expect(final.entries[0]!.at(-1)!.notes[0]!.getBeam()).toBeUndefined()
+  expect(final.entries[0]!.at(-1)!.notes[0]!.beam).toBeUndefined()
 })
 
 it('keeps measure 32 of Do-Re-Mi clear of its ending repeat at compact and stretched widths', () => {
@@ -99,16 +96,48 @@ it('keeps measure 32 of Do-Re-Mi clear of its ending repeat at compact and stret
   const measure = projectStaffDocument(analyzeM3N(source).score).measures[31]!
   expect(measure.source.right).toBe('rptend')
   for (const first of [false, true]) for (const extra of [0, 80]) {
-    const result = createVexMeasure(measure, first, false, measureText, 0.25)
-    const drawing = drawVexMeasure(result, result.minimum + extra, 20, createStaffContext())
+    const result = createStaffMeasure(measure, first, false, measureText, 0.25)
+    const drawing = drawStaffMeasure(result, result.minimum + extra, 20)
     const geometry = new SvgGeometry(drawing, measureText)
     const stave = result.staves[0]!
-    const context = createStaffContext()
-    const repeat = element('g', {}, captureStaffDrawing(context, () => {
-      stave.setContext(context)
-      stave.getModifiers(StaveModifierPosition.END).forEach(modifier => modifier.draw(stave))
-    }))
+    const repeat = drawStaffBar(measure.source.right, stave.x + stave.width, stave.y)
     const note = findAll(drawing, node => node.attributes.id === measure.melody.at(-1)!.id)[0]!
     expect(geometry.ink(repeat).left - geometry.ink(note).right).toBeGreaterThanOrEqual(3)
+  }
+})
+
+it('joins grace stems to the smaller heads and recomputes beams after width changes', () => {
+  const grace = model('{4/4}\nN: 1{ac(6 7)} 2 3 4 |||')
+  const drawing = drawStaffMeasure(grace, grace.minimum, 0)
+  const graces = findAll(drawing, n => n.attributes.class === 'grace')
+  expect(graces).toHaveLength(2)
+  for (const group of graces) {
+    const stem = findAll(group, n => n.attributes.class === 'stem')[0]!
+    const head = findAll(group, n => n.numericInk !== undefined)[0]!
+    const geometry = new SvgGeometry(group, measureText)
+    expect(geometry.ink(stem).left).toBeLessThan(geometry.ink(head).right)
+    expect(geometry.ink(stem).right).toBeGreaterThan(geometry.ink(head).left)
+  }
+  const result = model('{4/4}\nN: (1 5 6 2) 3 4 |||')
+  for (const extra of [0, 200, 0]) {
+    drawStaffMeasure(result, result.minimum + extra, 17)
+    for (const beam of result.beams) {
+      const first = beam.notes[0]!, last = beam.notes.at(-1)!
+      const slope = (last.stemEnd - first.stemEnd) / (last.stemX - first.stemX)
+      expect(Math.abs(slope)).toBeLessThanOrEqual(0.200001)
+      for (const note of beam.notes) expect(note.stemEnd).toBeCloseTo(first.stemEnd + slope * (note.stemX - first.stemX), 10)
+    }
+  }
+})
+
+it('keeps above-staff articulations clear of upward stems and beams', () => {
+  const result = model('{4/4}\nN: (5{str} 1e{str}) 2 3 4 |||')
+  const drawing = drawStaffMeasure(result, result.minimum, 0)
+  const geometry = new SvgGeometry(drawing, measureText)
+  for (const entry of result.entries[0]!) for (const note of entry.notes) {
+    if (!note.prepared.item.event.postfixes.includes('str')) continue
+    const event = findAll(drawing, n => n.attributes.id === note.prepared.item.id)[0]!
+    const mark = findAll(event, n => n.numericInk !== undefined).at(-1)!
+    expect(geometry.ink(mark).bottom).toBeLessThan(Math.min(...note.ys, note.stemEnd))
   }
 })

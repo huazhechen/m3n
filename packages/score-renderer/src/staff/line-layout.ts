@@ -1,5 +1,5 @@
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
-import { createStaffDrawingMeasure as createVexMeasure, createStaffDrawingScope, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffVexPreparation } from './vexflow-engine.js'
+import { createStaffPreparation, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 export { STAFF_SCALE }
@@ -8,7 +8,7 @@ export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; tar
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
 export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
-export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation?: StaffVexPreparation): StaffMeasureMinimum {
+export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
   const minimum: StaffMeasureMinimum = (measure, first, spacing) => {
     let pair = metrics.get(measure)
@@ -16,9 +16,7 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
     const index = first ? 1 : 0
     let fixed = pair[index]
     if (!fixed) {
-      const scope = createStaffDrawingScope()
-      try { fixed = pair[index] = createVexMeasure(measure, first, hasBass, measureText, spacing, 140, preparation, scope).metrics }
-      finally { scope.close() }
+      fixed = pair[index] = preparation.measure(measure, first, hasBass, measureText).metrics
     }
     return staffMinimumAtSpacing(fixed, spacing)
   }

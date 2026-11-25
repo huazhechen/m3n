@@ -1,23 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { Glyph } from 'vexflow/bravura'
 import { element, nodes, readXml, setNumericPath, SvgGeometry, xml } from './layout-svg.js'
-import { StaffSvgContext, captureStaffDrawing } from './staff-svg-context.js'
 import { staffCommandPath } from './staff-glyph-primitive.js'
 const measure = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 describe('numeric music primitives', () => {
-  it('matches native absolute rounding across positive and negative fractional origins', () => {
-    const templates = new WeakMap()
-    for (const code of ['noteheadBlack', 'accidentalSharp', 'gClef', 'rest8th']) {
-      for (const [x, y] of [[0, 0], [17.12345, 130], [-4.50005, -11.12345], [387.999995, 223.45678]]) {
-        const native = new StaffSvgContext(), numeric = new StaffSvgContext(templates)
-        const a = element('g', {}, captureStaffDrawing(native, () => Glyph.renderGlyph(native, x!, y!, 28, code)))
-        const b = element('g', {}, captureStaffDrawing(numeric, () => Glyph.renderGlyph(numeric, x!, y!, 28, code)))
-        expect(xml(b)).toBe(xml(a))
-        expect(new SvgGeometry(b, measure).pieces(b)).toEqual(new SvgGeometry(a, measure).pieces(a))
-      }
-    }
-  })
   it('reuses only an identical absolute axis across repeated placements', () => {
     const primitive = staffCommandPath([
       { kind: 0, values: [-1.333333, 2.666666] },
