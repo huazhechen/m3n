@@ -121,6 +121,30 @@ describe('three scores transcribed from the November 26 uploads', () => {
     }
   })
 
+  it('aligns every repeated rolling-pain phrase without consuming a lyric slot on tied notes', () => {
+    const document = parseM3NDocument(sudden)
+    const lyrics = deriveScoreInteraction(document).lyricsByEvent
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.some(event =>
+      lyrics.get(event)?.some(lyric => lyric.text === '翻' || lyric.text === '走' || lyric.text === '决')))
+    expect(bars).toHaveLength(4)
+    const expected = [
+      ['突然翻滚绞痛', '终于让自己属'],
+      ['带我走过最难'],
+      ['突然翻滚绞痛'],
+      ['已经决心自己'],
+    ]
+    for (const [index, bar] of bars.entries()) {
+      const sung = bar.events.filter(event => lyrics.get(event)?.some(lyric => lyric.kind === 'text'))
+      expect(sung.map(event => [event.pitches[0], event.beats])).toEqual([
+        ['6', .5], ['7', .25], ['2e', .25], ['1e', .5], ['7', .25], ['6', .75],
+      ])
+      for (const [verse, text] of expected[index]!.entries()) {
+        expect(sung.map(event => lyrics.get(event)!.find(lyric => lyric.kind === 'text'
+          && (!lyric.passes || lyric.passes.has(verse + 1)))!.text).join('')).toBe(text)
+      }
+    }
+  })
+
   it('matches the complete Suddenly Missing You lyrics and keeps only its 71 qpm vocal line with an interlude sign', () => {
     const document = parseM3NDocument(sudden)
     expect(document.tempo).toBe(71)
