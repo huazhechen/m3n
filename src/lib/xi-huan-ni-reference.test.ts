@@ -38,8 +38,9 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
     return { pitch: `${letter!.toUpperCase()}${octave}`, beats: event.beats }
   }))
   expect(actual).toEqual(chorus)
-  expect(bars[0]!.events.map(event => event.beats)).toEqual([1, 0.5])
-  expect(bars.at(-1)!.events.map(event => event.beats)).toEqual([1.5])
+  expect(bars[0]!.events.map(event => event.beats)).toEqual([1.5, 1, 0.5])
+  expect(source).toContain('1e~ 1e. {fine} |')
+  expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
 })
 
 it('sings both complete verses and three choruses without the prelude or instrumental rests', () => {
@@ -59,7 +60,7 @@ it('sings both complete verses and three choruses without the prelude or instrum
     `喜欢你给我你的笑容让我像沐浴在春风里喜欢你借我你的镜子让我能更多注视着你${verseTail}${chorus2}我喜欢${chorus2}`,
   )
   expect(performance.beats).toBe(336)
-  expect(performance.notes[0]).toMatchObject({ start: 0, pitch: 64 })
+  expect(performance.notes[0]).toMatchObject({ start: 1.5, pitch: 64 })
   expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
   expect(document.parts.get('score')!.melody.flatMap(bar => bar.events).filter(event => event.kind === 'rest').every(event => event.beats <= 1.5)).toBe(true)
   expect(plan.sourceCount).toBe(plan.entries.length)
