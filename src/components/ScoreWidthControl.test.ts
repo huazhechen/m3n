@@ -35,20 +35,21 @@ function pointer(slider: HTMLInputElement, type: string) {
   act(() => slider.dispatchEvent(new Event(type, { bubbles: true })))
 }
 
-it('shows each drag value immediately, throttles previews, and commits the final value on release', () => {
+it('shows each drag value immediately, defers score updates, and commits the final value on release', () => {
   const { slider, onChange } = render()
   pointer(slider, 'pointerdown')
   for (const level of [21, 22, 23]) input(slider, level)
   expect(host.querySelector('output')!.textContent).toBe('552px')
   expect(onChange).not.toHaveBeenCalled()
-  act(() => vi.advanceTimersByTime(150))
-  expect(onChange.mock.calls).toEqual([[552]])
-  render(552, onChange)
+  act(() => vi.advanceTimersByTime(5000))
+  expect(onChange).not.toHaveBeenCalled()
+  render(480, onChange)
+  expect(slider.value).toBe('23')
   input(slider, 25)
   pointer(slider, 'pointerup')
-  expect(onChange.mock.calls).toEqual([[552], [600]])
+  expect(onChange.mock.calls).toEqual([[600]])
   act(() => vi.runAllTimers())
-  expect(onChange).toHaveBeenCalledTimes(2)
+  expect(onChange).toHaveBeenCalledTimes(1)
 })
 
 it.each(['pointercancel', 'lostpointercapture', 'focusout'])('flushes the last width on %s', event => {
@@ -61,7 +62,7 @@ it.each(['pointercancel', 'lostpointercapture', 'focusout'])('flushes the last w
   expect(onChange).toHaveBeenCalledTimes(1)
 })
 
-it('applies keyboard changes immediately and discards scheduled work on unmount', () => {
+it('applies keyboard changes immediately and discards uncommitted changes on unmount', () => {
   const { slider, onChange } = render()
   input(slider, 21)
   expect(onChange.mock.calls).toEqual([[504]])

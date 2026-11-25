@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { SCORE_WIDTH_MIN, SCORE_WIDTH_MAX, SCORE_WIDTH_MULTIPLE_MIN, SCORE_WIDTH_MULTIPLE_MAX, scoreWidthMultiple, scoreWidthAtMultiple, stepScoreWidth } from '../lib/renderer-settings'
 import { ScoreControlIcon } from './ScoreControlIcon'
 
@@ -9,21 +9,12 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
   const [draft, setDraft] = useState<number | null>(null)
   const dragging = useRef(false)
   const pending = useRef<number | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const change = useRef(onChange)
-  useEffect(() => { change.current = onChange }, [onChange])
-  useEffect(() => () => { if (timer.current !== null) clearTimeout(timer.current) }, [])
 
-  const flush = () => {
-    if (timer.current !== null) clearTimeout(timer.current)
-    timer.current = null
-    const next = pending.current
-    pending.current = null
-    if (next !== null) change.current(next)
-  }
   const finish = () => {
     dragging.current = false
-    flush()
+    const next = pending.current
+    pending.current = null
+    if (next !== null) onChange(next)
     setDraft(null)
   }
 
@@ -42,9 +33,7 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
           if (!dragging.current) { onChange(next); return }
           setDraft(next)
           pending.current = next
-          // Trailing throttle: keep the latest width, without postponing every
-          // preview until dragging stops. Pointer release always flushes it.
-          timer.current ??= setTimeout(flush, 150)
+          // Score layout is synchronous; commit only after the drag finishes.
         }}
         onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onBlur={finish} />
       <button type="button" className="control-button" aria-label="增大乐谱宽度" title="增至下一档" disabled={width >= SCORE_WIDTH_MAX}

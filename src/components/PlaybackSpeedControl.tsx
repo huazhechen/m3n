@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { PLAYBACK_BPM_MAX, PLAYBACK_BPM_MIN } from '../lib/renderer-settings'
 import { ScoreControlIcon } from './ScoreControlIcon'
 
@@ -13,21 +13,12 @@ export function PlaybackSpeedControl({ bpm, onChange, onReset }: Props) {
   const [draft, setDraft] = useState<number | null>(null)
   const dragging = useRef(false)
   const pending = useRef<number | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const change = useRef(onChange)
-  useEffect(() => { change.current = onChange }, [onChange])
-  useEffect(() => () => { if (timer.current !== null) clearTimeout(timer.current) }, [])
 
-  const flush = () => {
-    if (timer.current !== null) clearTimeout(timer.current)
-    timer.current = null
-    const next = pending.current
-    pending.current = null
-    if (next !== null) change.current(next)
-  }
   const finish = () => {
     dragging.current = false
-    flush()
+    const next = pending.current
+    pending.current = null
+    if (next !== null) onChange(next)
     setDraft(null)
   }
 
@@ -46,7 +37,7 @@ export function PlaybackSpeedControl({ bpm, onChange, onReset }: Props) {
           if (!dragging.current) { onChange(next); return }
           setDraft(next)
           pending.current = next
-          timer.current ??= setTimeout(flush, 150)
+          // Score layout is synchronous; commit only after the drag finishes.
         }}
         onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onBlur={finish} />
       <button type="button" className="control-button" aria-label="提高播放速度" title="增至下一个偶数 BPM 档位" disabled={bpm >= PLAYBACK_BPM_MAX}

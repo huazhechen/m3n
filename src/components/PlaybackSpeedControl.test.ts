@@ -35,24 +35,34 @@ function pointer(slider: HTMLInputElement, type: string) {
   act(() => slider.dispatchEvent(new Event(type, { bubbles: true })))
 }
 
-it('shows drag values immediately, throttles playback updates, and flushes the final value', () => {
+it('shows drag values immediately, defers score updates until release, and commits the final value', () => {
   const { slider, onChange } = render()
   pointer(slider, 'pointerdown')
   for (const bpm of [121, 126, 133]) input(slider, bpm)
   expect(host.querySelector('output')!.textContent).toBe('133 BPM')
   expect(onChange).not.toHaveBeenCalled()
-  act(() => vi.advanceTimersByTime(150))
-  expect(onChange.mock.calls).toEqual([[133]])
-  render(133, onChange)
-  pointer(slider, 'pointerdown')
+  act(() => vi.advanceTimersByTime(5000))
+  expect(onChange).not.toHaveBeenCalled()
+  render(120, onChange)
+  expect(slider.value).toBe('133')
   input(slider, 137)
   pointer(slider, 'pointerup')
-  expect(onChange.mock.calls).toEqual([[133], [137]])
+  expect(onChange.mock.calls).toEqual([[137]])
   act(() => vi.runAllTimers())
-  expect(onChange).toHaveBeenCalledTimes(2)
+  expect(onChange).toHaveBeenCalledTimes(1)
 })
 
-it('updates keyboard changes immediately and cancels pending work on unmount', () => {
+it.each(['pointercancel', 'lostpointercapture', 'focusout'])('commits the last speed exactly once on %s', event => {
+  const { slider, onChange } = render()
+  pointer(slider, 'pointerdown')
+  input(slider, 137)
+  pointer(slider, event)
+  pointer(slider, 'lostpointercapture')
+  act(() => vi.runAllTimers())
+  expect(onChange.mock.calls).toEqual([[137]])
+})
+
+it('updates keyboard changes immediately and discards uncommitted changes on unmount', () => {
   const { slider, onChange } = render()
   input(slider, 121)
   expect(onChange.mock.calls).toEqual([[121]])
