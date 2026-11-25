@@ -59,12 +59,13 @@ function keySignature(key: string, previous: string | undefined, bass: boolean):
   const add = (glyph: StaffGlyph, y: number) => {
     const m = staffGlyphMetrics(glyph)
     let position = x - m.left
-    const previous = symbols.at(-1)
-    if (previous?.glyph === glyph) {
-      position = previous.x + staffSignatureAdvance(glyph, y - previous.y)
-      // Also protect earlier symbols when several staggered outlines interlock.
-      for (const symbol of symbols) if (symbol.glyph === glyph)
-        position = Math.max(position, symbol.x + staffSignatureAdvance(glyph, y - symbol.y))
+    if (symbols.at(-1)?.glyph === glyph) {
+      const ys = glyph === 'accidentalSharp' || (glyph === 'accidentalNatural' && old > 0) ? sharpYs : flatYs
+      // One step for the whole group: allow only slight ink-box overlap,
+      // and keep the outline clearance for every vertical transition.
+      const step = Math.max(m.right - m.left - staffMusicSize() / 4 * 0.08,
+        ...ys.slice(1).map((y, i) => staffSignatureAdvance(glyph, y - ys[i]!)))
+      position = symbols.at(-1)!.x + step
     }
     symbols.push({ glyph, x: position, y })
     x = Math.max(x, position + m.right)
