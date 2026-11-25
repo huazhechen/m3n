@@ -11,8 +11,10 @@ afterAll(() => { if (descriptor) Object.defineProperty(SVGElement.prototype, 'ge
 
 it('balances the complete catalogue across two pages and measures leaders around long titles and page ranges', () => {
   const entries = plan.entries.map((entry, index) => ({ ...entry, musicStart: index * 3, pageCount: index % 3 === 0 ? 3 : 1 }))
-  const pages = scorebookFrontPages(plan, entries)
+  const pages = scorebookFrontPages({ ...plan, version: 'a1b2c3d' }, entries)
   expect(pages).toHaveLength(3)
+  expect(pages[0].textContent).toContain('a1b2c3d')
+  expect(pages.every(page => page.getAttribute('data-score-export-footer') === 'none')).toBe(true)
   const counts = pages.slice(1).map(svg => svg.querySelectorAll('[data-scorebook-leader]').length)
   expect(counts.reduce((a, b) => a + b)).toBe(entries.length)
   expect(Math.abs(counts[0] - counts[1])).toBeLessThanOrEqual(3)

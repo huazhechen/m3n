@@ -3,6 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ScorebookExportDialog } from './ScorebookExportDialog'
+import { buildVersion } from '../lib/build-version'
 import type { ScorebookProgress } from '../lib/online-scorebook'
 
 const mocks = vi.hoisted(() => ({ build: vi.fn(), pdf: vi.fn(), download: vi.fn(), preload: vi.fn(async () => {}) }))
@@ -84,7 +85,7 @@ it('finishes PDF generation before enabling a synchronous download', async () =>
   const download = [...document.querySelectorAll('button')].find(button => button.textContent === '下载 PDF')!
   expect(download).toBeDefined()
   act(() => download.click())
-  expect(mocks.download).toHaveBeenCalledWith(blob, '测试谱集.pdf')
+  expect(mocks.download).toHaveBeenCalledWith(blob, `测试谱集-${buildVersion}.pdf`)
   expect(mocks.pdf).toHaveBeenCalledOnce()
   expect(mocks.build).toHaveBeenCalledOnce()
 })

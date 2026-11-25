@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createScorePdf, downloadBlob, preloadScorePdf, scoreFileName } from '@m3n/score-renderer/view'
+import { buildVersion } from '../lib/build-version'
 import { readRendererSetting } from '../lib/renderer-settings'
 import type { ScorebookProgress } from '../lib/online-scorebook'
 
@@ -96,7 +97,7 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
       <div className="pdf-export-actions">
         <button type="button" onClick={onClose}>{book || error ? '关闭' : '取消'}</button>
         {error && <button type="button" onClick={() => setAttempt(value => value + 1)}>重试</button>}
-        {book && <button type="button" onClick={() => downloadBlob(book.blob, `${scoreFileName(book.title)}.pdf`)}>下载 PDF</button>}
+        {book && <button type="button" onClick={() => downloadBlob(book.blob, `${scoreFileName(book.title)}-${buildVersion}.pdf`)}>下载 PDF</button>}
       </div>
     </>}
   </dialog>, document.body)

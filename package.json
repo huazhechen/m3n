@@ -15,7 +15,7 @@
     "test:hosting": "node --import tsx --test tools/hosting-build.test.mjs",
     "test": "npm run build:packages && npm run test:packages && npm run test:scorebook && npm run test:pdf-font && npm run test:hosting && vitest run",
     "test:scorebook": "node --test --test-concurrency=1 tools/scorebook-width.test.mjs tools/ink-overlap-pairs.test.mjs tools/scorebook-measurement.test.mjs tools/scorebook-front-font.test.mjs",
-    "test:scorebook:browser": "node --test --test-concurrency=1 tools/scorebook-notation.test.mjs tools/online-scorebook-parity.test.mjs",
+    "test:scorebook:browser": "node --test --test-concurrency=1 tools/scorebook-notation.test.mjs tools/online-scorebook-parity.test.mjs tools/scorebook-pdf.test.mjs",
     "test:e2e": "playwright test",
     "typecheck:packages": "npm run typecheck -w @m3n/notation && npm run typecheck -w @m3n/numbered-notation && npm run typecheck -w @m3n/score-renderer",
     "check": "npm run check:boundaries && npm run lint && npm run typecheck:packages && npm run test && npm run build && npm run test:numbered-layout && npm run test:scorebook:browser && npm run test:pdf-font:full && npm run test:e2e",

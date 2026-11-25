@@ -20,6 +20,8 @@ const planFile = resolve(process.argv.find(arg => arg.startsWith('--plan='))?.sl
 const probeOnly = process.argv.includes('--probe-only')
 const auditLayout = process.argv.includes('--audit-layout')
 const plan = JSON.parse(readFileSync(planFile, 'utf8'))
+plan.version = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()
+plan.outputPdf = plan.outputPdf.replace(/(?:-v\d+)?\.pdf$/i, `-${plan.version}.pdf`)
 assert(!process.argv.includes('--retain-unchanged-sizes'), 'Every build now selects widths from the web renderer; remove --retain-unchanged-sizes')
 const temp = join(root, '.tmp', plan.outputKey), profile = plan.page
 const hash = data => createHash('sha256').update(data).digest('hex')
@@ -151,7 +153,7 @@ const pages = front.map((svg, index) => ({ kind: index === 0 ? 'cover' : 'conten
 pages.push(...music)
 for (const [index, page] of pages.entries()) writeFileSync(join(temp, 'pages', `${String(index + 1).padStart(3, '0')}.svg`), page.svg)
 writeFileSync(join(temp, 'unoutlined-pages.json'), JSON.stringify(pages))
-const report = { title: plan.title, edition: plan.edition, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
+const report = { title: plan.title, edition: plan.edition, version: plan.version, outputPdf: plan.outputPdf, renderer: 'web', rendererSha256, baseWidth: plan.baseWidth, sourceCount: sourceFiles.length,
   entryCount: records.length, pageCount: pages.length, frontPages: frontCount, page: profile, orderOptimization,
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: widthMinimum, maximum: widthMaximum, step: widthStep, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginPx: 0, a4MarginMm: 12, coreSpacing: { continuous: 28, pagedMinimum: 28, defaultLeadingPx: 28, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },

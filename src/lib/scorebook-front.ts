@@ -4,13 +4,14 @@ const style = scoreLayoutConfig.scorebook
 const ns = 'http://www.w3.org/2000/svg'
 const website = 'https://score.cheesefans.com/'
 type Entry = { title: string; section: string; file?: string; slug?: string; musicStart: number; pageCount: number }
-type Plan = { title: string; page: { width: number; height: number }; contents: { rowHeightEm: number; pages?: number }; sections: { id: string; title: string }[] }
+type Plan = { title: string; version?: string; page: { width: number; height: number }; contents: { rowHeightEm: number; pages?: number }; sections: { id: string; title: string }[] }
 
 /** Online and local exports share measured typography, balanced columns and vector leaders. */
 export function scorebookFrontPages(plan: Plan, entries: Entry[]) {
   const page = () => {
     const svg = document.createElementNS(ns, 'svg')
     svg.setAttribute('xmlns', ns)
+    svg.setAttribute('data-score-export-footer', 'none')
     svg.setAttribute('viewBox', `0 0 ${plan.page.width} ${plan.page.height}`)
     svg.setAttribute('width', String(plan.page.width)); svg.setAttribute('height', String(plan.page.height))
     svg.innerHTML = '<rect width="100%" height="100%" fill="white"/>'
@@ -63,6 +64,7 @@ export function scorebookFrontPages(plan: Plan, entries: Entry[]) {
   const cover = page()
   text(cover, plan.title, plan.page.width / 2, style.coverTitleY, style.coverTitle, website).setAttribute('text-anchor', 'middle')
   text(cover, website, plan.page.width / 2, style.coverWebsiteY, style.coverWebsite, website).setAttribute('text-anchor', 'middle')
+  if (plan.version) text(cover, plan.version, plan.page.width / 2, style.coverWebsiteY + style.coverWebsite * 2, style.coverWebsite).setAttribute('text-anchor', 'middle')
   const contents = Array.from({ length: pageCount }, (_, index) => {
     const svg = page()
     svg.dataset.scorebookContents = String(index + 1)

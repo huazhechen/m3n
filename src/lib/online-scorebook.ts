@@ -10,6 +10,7 @@ import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplay
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, refineSharedWidths, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+import { buildVersion } from './build-version'
 import { scorebookFrontPages } from './scorebook-front'
 
 
@@ -200,7 +201,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
     }
     signal.throwIfAborted()
-    const pages = [...scorebookFrontPages(plan, packed.entries), ...music]
+    const pages = [...scorebookFrontPages({ ...plan, version: buildVersion }, packed.entries), ...music]
     measurementTimings.stages.renderingMs = performance.now() - renderingStarted
     measurementTimings.totalMs = performance.now() - started
     return { pages, scoreCount: entries.length, sharedPages, measurementTimings }

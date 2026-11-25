@@ -136,16 +136,18 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
           A: { Type: 'Action', S: 'URI', URI: PDFString.of(href) },
         })))
       }
-      const { text: footer, href: footerHref } = scoreExportFooter(options.scoreUrl)
-      const footerSize = 10
-      const footerRight = options.fullPage ? 210 - 12 : placement.x + placement.width
-      page.drawText(footer, { x: footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), y: 6 * pt, size: footerSize, font: footerFont, color: rgb(.4, .4, .4) })
-      page.node.addAnnot(pdf.context.register(pdf.context.obj({
-        Type: 'Annot', Subtype: 'Link', Border: [0, 0, 0],
-        Rect: [footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), 6 * pt,
-          footerRight * pt, 6 * pt + footerSize],
-        A: { Type: 'Action', S: 'URI', URI: PDFString.of(footerHref) },
-      })))
+      if (svg.getAttribute('data-score-export-footer') !== 'none') {
+        const { text: footer, href: footerHref } = scoreExportFooter(options.scoreUrl)
+        const footerSize = 10
+        const footerRight = options.fullPage ? 210 - 12 : placement.x + placement.width
+        page.drawText(footer, { x: footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), y: 6 * pt, size: footerSize, font: footerFont, color: rgb(.4, .4, .4) })
+        page.node.addAnnot(pdf.context.register(pdf.context.obj({
+          Type: 'Annot', Subtype: 'Link', Border: [0, 0, 0],
+          Rect: [footerRight * pt - footerFont.widthOfTextAtSize(footer, footerSize), 6 * pt,
+            footerRight * pt, 6 * pt + footerSize],
+          A: { Type: 'Action', S: 'URI', URI: PDFString.of(footerHref) },
+        })))
+      }
       onProgress?.(index + 1, pages.length)
       await new Promise<void>(resolve => setTimeout(resolve, 0))
     }
