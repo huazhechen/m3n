@@ -9,7 +9,7 @@ N: {text=长音} 1^^~ | 1^^~ | 1^^~ | 1^^ | 2^^~ | 2^^~ | 2^^~ | 2^^ ||{br}
 ---
 N: {text=渐强渐弱} {cresc}1^^{/} | {decres}2^^{/} | {cresc}4^^{/} | {decres}3^^{/} | {cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} | {cresc}1^{/} {decres}2^{/} | {cresc}4^{/} {decres}3^{/} ||{br}
 ---
-N: {text=震音} 1~1~ 1^{tr} | 2^^{tr} | 1^^{tr} | 2^^{tr} | {decres}1^^{tr}{/} | {decres}2^^{tr}{/} | {decres}1^^{tr}{/} | {decres}2^^{tr}{/} ||{br}
+N: {text=震音} 1~1~ 1^{tr} | 2~2~ 2^{tr} | 1^^{tr} | 2^^{tr} | {decres}1^^{tr}{/} | {decres}2^^{tr}{/} | {decres}1^^{tr}{/} | {decres}2^^{tr}{/} ||{br}
 ---
 N: {text=断音} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} ((1)){tip} (1){tip} | ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} ((2)){tip} (2){tip} ||{br}
 ---
