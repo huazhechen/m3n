@@ -1,3 +1,4 @@
+import { scoreHorizontalQuality } from '@m3n/numbered-notation/layout-quality'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
 const config = scoreLayoutConfig.pageWidth
@@ -11,7 +12,7 @@ export function numberedLayoutScore(candidate) {
   if (candidate.qualityScore !== undefined) return candidate.qualityScore
   const variation = candidate.lineDensityVariation ?? 0
   const slack = candidate.lastLineSlack ?? 0
-  return (widthMinimum / candidate.width) ** 2 / (1 + variation + .5 * slack)
+  return scoreHorizontalQuality(candidate.width, { lineDensityVariation: variation, lastLineSlack: slack })
 }
 const rank = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
 

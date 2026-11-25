@@ -155,7 +155,8 @@ function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<strin
   for (let dot = 0; dot < dots; dot++) for (const y of [...new Set(ys.map(y => y % (staffMusicSize() / 4) === 0 ? y - (staffMusicSize() / 8) : y))])
     symbols.push({ glyph: 'augmentationDot', x: after + (staffMusicSize() / 4 * 0.3) + dot * (staffMusicSize() / 4 * 0.5), y, size })
   if (dots) after += (staffMusicSize() / 4 * 0.3) + dots * (staffMusicSize() / 4 * 0.5)
-  if (!rest && dur >= 8) after = Math.max(after, headWidth + staffGlyphMetrics(`flag${dur}Up` as StaffGlyph, size).right)
+  // Host flags are measured after beam membership is known. Grace flags remain independent.
+  if (grace && !rest && dur >= 8) after = Math.max(after, headWidth + staffGlyphMetrics(`flag${dur}Up` as StaffGlyph, size).right)
   if (!grace) {
     let markTop = Math.min(staffMusicSize(), ...ys) - (staffMusicSize() / 4 * 1)
     for (const value of item.event.postfixes) if (marks[value]) {
@@ -241,6 +242,11 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
         for (const symbol of note.symbols) if (symbol.glyph.startsWith('accidental')) symbol.x -= shift
         note.after = Math.max(note.after, Math.max(...heads.map(h => h.x)) + headWidth)
       }
+    }
+    const beamed = new Set(beams.filter(beam => beam.lane === lane).flatMap(beam => beam.indices))
+    for (const [i, note] of flat.entries()) if (!note.rest && note.dur >= 8 && !beamed.has(i)) {
+      const head = staffGlyphMetrics(note.head, note.size)
+      note.after = Math.max(note.after, head.right - head.left + staffGlyphMetrics(`flag${note.dur}Up` as StaffGlyph, note.size).right)
     }
     return laneEntries
   })

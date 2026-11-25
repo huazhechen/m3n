@@ -18,3 +18,5 @@ export { lyricSpacing } from './lyric-spacing.js'
 
 export { scoreLayoutConfig } from './score-layout-config.js'
 export { lastLineWidth } from './last-line-width.js'
+
+export { scoreLineQuality, scoreHorizontalQuality } from './layout-quality.js'

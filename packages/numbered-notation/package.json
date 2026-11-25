@@ -15,6 +15,10 @@
       "types": "./dist/score-layout-config.d.ts",
       "import": "./dist/score-layout-config.js"
     },
+    "./layout-quality": {
+      "types": "./dist/layout-quality.d.ts",
+      "import": "./dist/layout-quality.js"
+    },
     "./fonts": {
       "types": "./dist/fonts.d.ts",
       "import": "./dist/fonts.js"

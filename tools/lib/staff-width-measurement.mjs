@@ -11,10 +11,7 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
   const info = render.layoutInfo()
-  const densities = info.lines.map(line => line.minimum / info.availableWidth)
-  const mean = densities.reduce((sum, density) => sum + density, 0) / Math.max(1, densities.length)
-  const lineDensityVariation = Math.sqrt(densities.reduce((sum, density) => sum + (density - mean) ** 2, 0) / Math.max(1, densities.length)) / Math.max(mean, Number.EPSILON)
-  const lastLineSlack = info.lines.length ? Math.max(0, Math.min(1, 1 - info.lines.at(-1).target / info.availableWidth)) : 0
+  const { lineDensityVariation, lastLineSlack } = info.quality
   const pageCount = render.pageCount(true)
   timings.layoutMs = performance.now() - started
   const qualityScore = numberedLayoutScore({ width, lineDensityVariation, lastLineSlack })

@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -38,6 +38,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   type Layout = {
     systems: StaffSystem[]; pages: StaffPage[]; furniture: XmlNode[]
     header: ReturnType<typeof staffHeader>; lines: StaffLine[]; spacing: number; paginationError?: Error
+    quality: ReturnType<typeof scoreLineQuality>
   }
   const layouts = new Map<number, Layout>()
   const cache = new Map<boolean, string[]>()
@@ -69,12 +70,19 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (!(error instanceof Error) || !error.message.includes('单个五线谱谱行')) throw error
         paginationError = error
       }
-      return { systems, pages, furniture: [], header, lines, spacing, paginationError }
+      const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
+      const quality = scoreLineQuality(lines.map(line => line.minimum * STAFF_SCALE / available),
+        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
+      return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
     if (!selected.paginationError) for (const spacing of [0.375, 0.34375, 0.3125, 0.28125]) {
       const candidate = attempt(spacing)
-      if (!candidate.paginationError && candidate.pages.length <= selected.pages.length) { selected = candidate; break }
+      if (candidate.paginationError) continue
+      const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
+      const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
+      if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing)) selected = candidate
     }
     layouts.set(candidateWidth, selected)
     return selected
@@ -170,6 +178,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const result = layout(candidateWidth)
       return {
         spacing: result.spacing,
+        quality: { ...result.quality },
         headerHeight: result.header.height,
         availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter) - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset,
         pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,

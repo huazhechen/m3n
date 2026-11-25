@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { staffMusicSize } from './staff-music-font.js'
+import { staffGlyphMetrics, staffMusicSize } from './staff-music-font.js'
 import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
 import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
-import { findAll, SvgGeometry } from './layout-svg.js'
+import { findAll, SvgGeometry, xml } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasure, drawStaffMeasure, drawStaffBar } from './staff-engine.js'
 
@@ -16,6 +16,20 @@ function model(source: string) {
 }
 
 describe('staff rhythm engraving', () => {
+  it('reserves flag width only for independently flagged notes', () => {
+    const beamed = model('{4/4}\nN: (1 2) 3 4 5 |')
+    const independent = model('{4/4}\nN: (1 0) 3 4 5 |')
+    const together = beamed.entries[0]![0]!.notes[0]!
+    const alone = independent.entries[0]![0]!.notes[0]!
+    expect(together.beam).toBeDefined()
+    expect(alone.beam).toBeUndefined()
+    const head = staffGlyphMetrics(together.prepared.head, together.prepared.size)
+    expect(together.prepared.after).toBeCloseTo(head.right - head.left)
+    expect(alone.prepared.after).toBeGreaterThan(together.prepared.after)
+    const drawing = drawStaffMeasure(beamed, beamed.minimum, 0)
+    expect(xml(drawing)).not.toContain('data-m3n-glyph="flag')
+  })
+
   it('beams eighth-note triplets by quarter-note beat in 4/4', () => {
     const result = model('{4/4}\nN: ([3 3 3:2]) ([1 1 1:2]) ([6d 6d 6d:2]) ([3d 3d 3d:2]) |')
     expect(result.beams.map(beam => beam.notes.length)).toEqual([3, 3, 3, 3])

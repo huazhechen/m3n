@@ -2,14 +2,39 @@ import { readFileSync } from 'node:fs'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+import { scoreHorizontalQuality, scoreLineQuality } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
-import { planStaffLines } from './line-layout.js'
+import { planStaffLines, STAFF_SCALE } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
 describe('staff page packing', () => {
+  it('prefers more even line density over the widest spacing at equal page count', async () => {
+    const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+    const info = (await prepareStaffScore(score, { width: 640 })).layoutInfo()
+    const widest = planStaffLines(projectStaffDocument(score), 638, false, textMeasurer(), 0.375)
+    const available = info.availableWidth
+    const quality = scoreLineQuality(widest.map(line => line.minimum * STAFF_SCALE / available),
+      Math.max(0, 1 - widest.at(-1)!.target * STAFF_SCALE / available))
+    expect(info.pageCount).toBe(1)
+    expect(info.spacing).toBeLessThan(0.375)
+    expect(scoreHorizontalQuality(640, info.quality)).toBeGreaterThan(scoreHorizontalQuality(640, quality))
+  })
+
+  it('uses compact spacing when every candidate has the same horizontal quality', async () => {
+    const render = await prepareStaffScore(analyzeM3N('{4/4}\nN: 1 2 3 4 |||').score, { width: 640 })
+    const info = render.layoutInfo()
+    expect(info.pageCount).toBe(1)
+    expect(info.lines).toHaveLength(1)
+    expect(info.quality.lineDensityVariation).toBe(0)
+    expect(info.quality.lastLineSlack).toBe(0)
+    expect(info.spacing).toBe(0.25)
+    expect(render.pageCount(false)).toBe(1)
+    expect(render.pageCount(true)).toBe(1)
+  })
+
   it('engraves internal tuplet ties with lyrics on their starting notes', async () => {
     const score = analyzeM3N('{2/4}\nN: ([3~ 3 3:2]) ([5 5~ 5:2]) |||\nL: 春夏秋冬').score
     const projected = projectStaffDocument(score), measure = textMeasurer()
