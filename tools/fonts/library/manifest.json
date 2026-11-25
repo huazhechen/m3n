@@ -1,7 +1,7 @@
 {
   "version": 1,
   "inputs": {
-    "config/scorebook/editorial-plan.json": "27fecf049997bd90afe18713634d71af8084620fcefe68d9556ad018c8ffd606",
+    "config/scorebook/editorial-plan.json": "356fd39452772a047aab9826e6655790ea0ba6db930caa9a848ac307b9b6d5f4",
     "packages/numbered-notation/src/font-assets/Bravura.woff2": "ed50c84185424bccbbd9eef660bc8d57ba37e40ddf38a19fc40434682000bad8",
     "packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf": "f76b49fecdb49994687e7a141e320e8956fc7cf6b814420ce2c305230dee305d",
     "packages/numbered-notation/src/font-data.ts": "a81446924435b4cc1b430b354a704b3c772561401ce98dfc92bb061c15f36a84",

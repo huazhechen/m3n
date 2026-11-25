@@ -134,8 +134,9 @@ if (probeOnly) { saveTimings(); console.log(`Width probes complete: ${records.le
 // Book furniture does not alter the engraved score pages.
 const tocRows = plan.sections.flatMap(section => [{ section }, ...records.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
 const tocColumns = []
-const { rowsPerColumn, rowHeightEm } = plan.contents
+const { rowHeightEm } = plan.contents
 const rowHeight = bookStyle.entryTitle * rowHeightEm
+const rowsPerColumn = Math.floor((plan.page.height - bookStyle.contentsRowsTop - bookStyle.contentsBottomInset) / rowHeight) + 1
 for (const row of tocRows) {
   let column = tocColumns.at(-1)
   if (!column || column.length >= rowsPerColumn || row.section && column.length === rowsPerColumn - 1) {

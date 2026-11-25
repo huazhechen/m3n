@@ -114,7 +114,7 @@ const scorebook = {
   sharedScoreGapCoreRatio, sharedScoreGap,
   coverTitle: 40, coverWebsite: 18, contentsTitle: 30, sectionTitle: 16, entryTitle: 16, pageNumber: 14,
   coverTitleY: 350, coverWebsiteY: 410, contentsLeft: 40, contentsTop: 65,
-  columnStep: 377, contentsRowsTop: 120, pageNumberOffset: 337,
+  columnStep: 377, contentsRowsTop: 120, contentsBottomInset: 40, pageNumberOffset: 337,
 } as const
 
 // 页面宽度 1–9 档：24px 的 24–32 倍；合页在 28 倍（第 5 档）检查准入。
