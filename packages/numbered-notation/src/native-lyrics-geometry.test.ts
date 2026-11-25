@@ -43,7 +43,10 @@ describe('native lyric and music lower envelopes', () => {
     const firstCore = nativeSystemCore(score.systems[0]!, score.measurer)!
     const secondCore = nativeSystemCore(score.systems[1]!, score.measurer)!
     expect(firstCore.bottom).toBeCloseTo(first.y + first.bottom)
-    expect(secondCore.top - firstCore.bottom).toBeCloseTo(28.8)
+    // The lyric gap starts at 0.8em; the high note's full ink can still
+    // require slightly more space than its weighted core boundary.
+    expect(secondCore.top - firstCore.bottom).toBeGreaterThanOrEqual(19.2 - 1e-6)
+    expect(secondCore.top - firstCore.bottom).toBeLessThan(28.8)
   })
 
   it('uses beam and low-octave geometry when that body extends farther', () => {

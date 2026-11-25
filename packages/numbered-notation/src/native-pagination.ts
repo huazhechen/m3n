@@ -1,7 +1,7 @@
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
-export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
+export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
 export type NativeBlockPosition = { page: number; top: number }
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
@@ -79,7 +79,13 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
     const previous = placed.at(-1)
     if (previous) {
       // Header separation stays fixed as the music's core parameter changes.
-      const separation = item.block.core && previous.block.core ? coreGap : headerGap
+      // Lyrics reduce the starting clearance, while retaining the same page
+      // stretch ceiling. Interpolate each gap using the shared fit parameter.
+      const minimum = gap * (previous.block.coreGapScale ?? 1)
+      const musicGap = minimum === gap ? coreGap : maxGap > gap
+        ? minimum + (coreGap - gap) / (maxGap - gap) * (maxGap - minimum)
+        : minimum
+      const separation = item.block.core && previous.block.core ? musicGap : headerGap
       baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
       for (const prior of placed)
         baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)

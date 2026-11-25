@@ -505,7 +505,9 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
         const y = system.lanes.find(lane => lane.id === decoration.lane)!.y
         return nativeSvgPieces(decoration.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
       })
-    return { height, baseline: system.lanes[0]?.y ?? 0, core, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
+    const hasLyrics = system.lanes.some(lane => lane.rows.length > 0)
+    const coreGapScale = hasLyrics ? Math.min(1, nativeStyle.music * .8 / nativeCoreGap(document)) : 1
+    return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     verticalBlocks: blocks, headerBlocks: header.blocks }
