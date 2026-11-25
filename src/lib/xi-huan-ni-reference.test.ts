@@ -33,7 +33,7 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
   expect(document).toMatchObject({ title: '喜欢你', composer: '梁文福', lyricist: '梁文福', key: 'C', meterCount: 6, meterUnit: 8 })
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
-  const actual = bars.slice(34, 48).map(bar => bar.events.map(event => {
+  const actual = bars.slice(33, 47).map(bar => bar.events.map(event => {
     const [letter, octave] = pitches.get(event)![0]!.split(':')
     return { pitch: `${letter!.toUpperCase()}${octave}`, beats: event.beats }
   }))
@@ -43,7 +43,7 @@ it('preserves the photographed chorus pitches, octaves and compound-meter rhythm
   expect(source).not.toMatch(/\{(?:tocoda|coda)\}/)
 })
 
-it('sings both complete verses and three choruses without the prelude or instrumental rests', () => {
+it('reuses only the first lyrics and first verse melody throughout the repeats', () => {
   const document = parseM3NDocument(source)
   const performance = compileScorePerformance(document)
   const { lyricsByEvent } = deriveScoreInteraction(document)
@@ -54,11 +54,13 @@ it('sings both complete verses and three choruses without the prelude or instrum
   const verseTail = '喜欢你车窗上的雾气仿佛是你的爱在呼吸喜欢你那微笑的眼睛连日落也看作唇印我喜欢'
   const chorusTail = '你的脸慢慢贴近明天也慢慢地慢慢清晰我喜欢你爱我的心轻触我每根手指感应我知道它在诉说着你承诺言语'
   const chorus1 = `这样跟着你随便你带我到哪里${chorusTail}`
-  const chorus2 = `这样陪着你随便你想要到哪里${chorusTail}`
   expect(lyrics).toBe(
     `喜欢你给我你的外衣让我像躲在你身体里喜欢你借我你的梳子让我用柔软头发吻你${verseTail}${chorus1}` +
-    `喜欢你给我你的笑容让我像沐浴在春风里喜欢你借我你的镜子让我能更多注视着你${verseTail}${chorus2}我喜欢${chorus2}`,
+    `喜欢你给我你的外衣让我像躲在你身体里喜欢你借我你的梳子让我用柔软头发吻你${verseTail}${chorus1}我喜欢${chorus1}`,
   )
+  expect(source).not.toMatch(/^L\d+:/m)
+  expect(source.match(/^---V[12]$/gm)).toHaveLength(2)
+  expect(source).not.toContain('N: 3e 1e (6~ 6)')
   expect(performance.beats).toBe(336)
   expect(performance.notes[0]).toMatchObject({ start: 1.5, pitch: 64 })
   expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
