@@ -27,7 +27,7 @@ it.each([
         for (const obstacle of ink) {
             if (obstacle.right <= mark.left || obstacle.left >= mark.right)
                 continue;
-            expect(mark.bottom).toBeLessThanOrEqual(obstacle.top - 2 + .001);
+            expect(mark.bottom).toBeLessThanOrEqual(obstacle.top - 2.016 + .001);
             checked++;
         }
     }

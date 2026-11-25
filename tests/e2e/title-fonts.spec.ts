@@ -28,12 +28,12 @@ for (const mode of ['首调', '五线谱'] as const) test(`normal-width Chinese 
   expect(typography.map(item => item.text).join('')).toContain('Moon')
   for (const item of typography) {
     expect(item.family).toMatch(/^"?Noto Sans SC/)
-    expect(item.weight).toBe('400')
+    expect(item.weight).toBe('500')
     expect(item.stretch).toBe(false)
   }
   const widths = await page.evaluate(() => {
     const ctx = document.createElement('canvas').getContext('2d')!
-    ctx.font = '400 32px "Noto Sans SC"'
+    ctx.font = '500 32px "Noto Sans SC"'
     const title = ctx.measureText('Moon River').width
     ctx.font = '500 32px "Barlow Semi Condensed"'
     return { title, condensed: ctx.measureText('Moon River').width }

@@ -6,5 +6,5 @@ it.each([false, true])('adds section space only for inline headings, standalone=
     const native = projectNativeScore(document, { textMeasurer: { measureText(text, style) {
                 return { w: text.length * style.fontSize / 2, h: style.fontSize, baseline: style.fontSize * .8 };
             } } });
-    expect(native.measures[1]!.extraGap).toBe(standalone ? 0 : 12);
+    expect(native.measures[1]!.extraGap).toBe(standalone ? 0 : 11.52);
 });

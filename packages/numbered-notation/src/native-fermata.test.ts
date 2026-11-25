@@ -27,5 +27,5 @@ it.each(['1{fermata}', '[1e3e5e:h]{fermata}', '1{ac(2e3e)}{fermata}'])('places t
     expect(mark.top).toBeCloseTo(mark.y + ink.top, 4);
     expect(mark.height).toBeCloseTo(ink.bottom - ink.top, 4);
     const hostTop = nativeSvgInk(new NativeMusicPainter(layout.measurer).body({ ...glyph, x: 0, y: 0 }), layout.measurer).top;
-    expect(mark.top + mark.height).toBeCloseTo(hostTop - nativeStyle.markGap, 4);
+    expect(mark.top + mark.height).toBeCloseTo(hostTop - (nativeStyle.music * .12), 4);
 });

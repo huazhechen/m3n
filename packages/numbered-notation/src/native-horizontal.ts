@@ -49,7 +49,7 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
-  const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / nativeStyle.spacingReference
+  const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / (nativeStyle.music * .5)
   const items: HorizontalItem[] = []
   const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
@@ -60,7 +60,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
     items.push({ measure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
       // A bar has no musical duration; only its clearance matches a quarter note.
-      cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, nativeStyle.quarterClearance, scale)) })
+      cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, (nativeStyle.music * .25), scale)) })
   }
   for (const measure of measures) {
     const marks = nativeMeasureBars(surrounding, surrounding.indexOf(measure))
@@ -70,7 +70,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       // Entry navigation consumes no musical time, but reserves quarter-note
       // clearance on both sides, with the same elastic weight as a barline.
       const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor,
-        control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, nativeStyle.quarterClearance, scale))
+        control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, (nativeStyle.music * .25), scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A section heading introduces the repeat, rather than belonging inside it.
@@ -83,7 +83,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
       }
       const cells = column.glyphs.map(glyph => {
-        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, nativeStyle.quarterClearance, scale)
+        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, (nativeStyle.music * .25), scale)
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }

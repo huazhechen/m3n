@@ -1,7 +1,7 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum } from './scorebook-width.mjs'
 
-// Keep at least 32 logical px between scores; never compress this to fit more works.
+// Keep at least 24 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = scoreLayoutConfig.scorebook.sharedScoreGap
 export const sharedPreferredWidth = widthMinimum
 export const sharedWidthMaximum = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.sharedMaximumMultiple

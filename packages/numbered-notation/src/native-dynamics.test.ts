@@ -56,7 +56,7 @@ describe('native dynamic characters', () => {
                 const ink = nativeSvgInk(new NativeSymbols(measurer).rawMark(name), measurer);
                 expect(mark.height).toBeCloseTo(ink.bottom - ink.top, 4);
                 expect(mark.top).toBeCloseTo(mark.y + ink.top, 4);
-                expect(mark.top + mark.height).toBeLessThanOrEqual(system.relationLayout!.get(relation)!.ink.top - nativeStyle.markGap + .0001);
+                expect(mark.top + mark.height).toBeLessThanOrEqual(system.relationLayout!.get(relation)!.ink.top - (nativeStyle.music * .12) + .0001);
                 expect(system.lanes[0]!.top).toBeGreaterThanOrEqual(-mark.top - .0001);
             }
     });

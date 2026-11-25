@@ -91,7 +91,7 @@ describe('native painted geometry', () => {
     const dynamic = glyph.markLayout!.find(m => m.name === 'p')!
     const curves = relations.flatMap(r => nativeRibbonRange(r.arc!, glyph.x + dynamic.left, glyph.x + dynamic.right) ?? [])
     expect(curves.length).toBeGreaterThan(0)
-    expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(Math.min(...curves.map(range => range.top)) - nativeStyle.markGap + 0.001)
+    expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(Math.min(...curves.map(range => range.top)) - (nativeStyle.music * .12) + 0.001)
     expect(glyph.musicTop).toBeCloseTo(-mark.top)
   })
 })

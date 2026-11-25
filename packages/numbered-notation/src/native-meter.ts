@@ -12,9 +12,9 @@ export type NativeMeterGeometry = {
  * rule by a design gap, independently of their actual ascent and descent. */
 export function nativeMeterGeometry(text: string, measurer: TextMeasurer): NativeMeterGeometry {
   const [numerator = '', denominator = ''] = text.split('/')
-  const size = nativeStyle.meter, style = { fontSize: size, fontFamily: SCORE_NUMBER_FONT }
+  const size = (nativeStyle.music * .75), style = { fontSize: size, fontFamily: SCORE_NUMBER_FONT }
   const num = measurer.measureText(numerator, style), den = measurer.measureText(denominator, style)
-  const gap = size * 0.08, lineHeight = Math.max(nativeStyle.minimumMeterStroke, size * 0.06)
+  const gap = size * 0.08, lineHeight = Math.max((nativeStyle.music * .04), size * 0.06)
   const lineY = nativeMusicAxis(measurer) - lineHeight / 2
   return { numerator, denominator, width: Math.max(num.w, den.w) + size * 0.16, lineY, lineHeight,
     numeratorBaseline: lineY - gap - (num.inkBottom ?? num.h) + num.baseline,

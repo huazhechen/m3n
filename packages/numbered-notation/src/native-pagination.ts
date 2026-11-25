@@ -1,4 +1,4 @@
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
 export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
@@ -6,7 +6,7 @@ export type NativeBlockPosition = { page: number; top: number }
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
-  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number
+  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; headerGap?: number
 }): { positions: NativeBlockPosition[]; heights: number[]; coreGaps?: number[] } {
   const { pageHeight, margin, gap } = options
   if (options.elastic) return paginateElasticBlocks(blocks, options)
@@ -36,7 +36,7 @@ export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options
 }
 
 /** Largest shared core parameter that fits; collisions may make height flat. */
-export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = nativeStyle.minimumCoreGap, maximum = nativeStyle.maximumCoreGap): number {
+export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = nativeCoreGap(), maximum = minimum * 1.1): number {
   if (heightAt(minimum) > capacity + 1e-6) throw new Error('最小核心行距下的谱面超出页面。')
   if (heightAt(maximum) <= capacity) return maximum
   let low = minimum, high = maximum
@@ -48,8 +48,8 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
   return low
 }
 
-function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight, margin, gap, maxGap = gap }: {
-  pageHeight: number; margin: number; gap: number; maxGap?: number
+function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight, margin, gap, maxGap = gap, headerGap = nativeCoreGap() * .8 }: {
+  pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number
 }) {
   const normalized = blocks.map((block, index) => {
     const axis = block.baseline ?? 0
@@ -79,7 +79,7 @@ function paginateElasticBlocks(blocks: readonly NativePageBlock[], { pageHeight,
     const previous = placed.at(-1)
     if (previous) {
       // Header separation stays fixed as the music's core parameter changes.
-      const separation = item.block.core && previous.block.core ? coreGap : nativeStyle.headerGap
+      const separation = item.block.core && previous.block.core ? coreGap : headerGap
       baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
       for (const prior of placed)
         baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + coreGap * nativeStyle.collisionGapRatio)

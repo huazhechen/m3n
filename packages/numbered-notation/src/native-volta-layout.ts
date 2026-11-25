@@ -1,7 +1,7 @@
 import type { NativeSystem } from './native-layout.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { nativeNoteBody } from './native-note-body.js'
 import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoltaSvg } from './native-volta.js'
@@ -61,21 +61,21 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
       const left = Math.max(halfStroke, Math.min(rawLeft, rawRight))
       const right = Math.min(canvasWidth - halfStroke, Math.max(rawLeft, rawRight))
       const raw = nativeVoltaSvg(left, right, span.ending, measurer, first, last), ink = nativeSvgInk(raw, measurer)
-      let y = nativeMusicAxis(measurer) - nativeStyle.music / 2 - nativeStyle.voltaClearance - nativeStyle.music * 0.055 / 2
+      let y = nativeMusicAxis(measurer) - nativeStyle.music / 2 - ((system.coreGap ?? nativeCoreGap()) * .07) - nativeStyle.music * 0.055 / 2
       const pieces = nativeSvgPieces(raw, measurer)
       for (const bar of [first ? precedingBar : undefined, last ? followingBar : undefined]) {
         if (!bar) continue
         const barTop = nativeBarInk(bar.kind, bar.x, 0, measurer).top
         const hookBottom = Math.max(...pieces.filter(mark => mark.right - mark.left <= nativeStyle.music * .055 + .001).map(mark => mark.bottom))
-        y = Math.min(y, barTop - nativeStyle.voltaClearance - hookBottom)
+        y = Math.min(y, barTop - ((system.coreGap ?? nativeCoreGap()) * .07) - hookBottom)
       }
       for (const mark of pieces) {
         const overlaps = obstacles.filter(bound => bound.right > mark.left && bound.left < mark.right)
-        for (const bound of overlaps) y = Math.min(y, bound.top - nativeStyle.voltaClearance - mark.bottom)
+        for (const bound of overlaps) y = Math.min(y, bound.top - ((system.coreGap ?? nativeCoreGap()) * .07) - mark.bottom)
         for (const [, relation] of relations) {
           const pieces = relation.arc ? [nativeRibbonRange(relation.arc, mark.left, mark.right)].filter(bound => bound !== undefined)
             : nativeSvgPieces(relation.svg, measurer).filter(bound => bound.right > mark.left && bound.left < mark.right)
-          for (const bound of pieces) y = Math.min(y, bound.top - nativeStyle.voltaClearance - mark.bottom)
+          for (const bound of pieces) y = Math.min(y, bound.top - ((system.coreGap ?? nativeCoreGap()) * .07) - mark.bottom)
         }
       }
       return [{ left, right, ending: span.ending, group: span.group, raw, ink, y }]

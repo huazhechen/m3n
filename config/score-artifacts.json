@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "08a158173b5b7c7cdfb273e68da0e5420725b3915239583e56ac48560de88583",
+  "rendererSha256": "df037d9929d7df2b4973c82fae7480f85dff2eed2471050934fc1094cabf4568",
   "fontManifestSha256": "f552a65b590192af38b92511533e6d5bc3cfbc331e3e7a78f361eb927ff9a2e9",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -50,7 +50,7 @@
       "fontSha256": "e463f001a63ccd5e840a00df5d2f179d73173f5dc29875c4f5980f6af048ef45"
     },
     "src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n": {
-      "sourceSha256": "44f5b298561d1a3ff05b772ec89dc7f212f10c2b92f5eb69cdc028fca70bb744",
+      "sourceSha256": "f38e2d03c2d080fa910d8ab55ded259658f0344047dbe90984ce197b097276c8",
       "font": "NotoSansSC-bfc7b1bfc7abc0d9.ttf",
       "fontSha256": "c6e13bdda9a71da285f0537be8d64df49a828a3e66af23780990a147ec3a2b8e"
     },

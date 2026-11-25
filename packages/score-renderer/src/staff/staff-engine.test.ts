@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { staffMusicSize } from './staff-music-font.js'
 import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
@@ -143,9 +144,9 @@ it('keeps above-staff articulations clear of upward stems and beams', () => {
   }
 })
 
-it.each([12, 18])('measures tuplet bracket clearance with the configured %spx label', size => {
-  const previous = scoreLayoutConfig.staff.tuplet;
-  scoreLayoutConfig.staff.tuplet = size;
+it.each([28, 35])('measures proportional tuplet bracket clearance at music size %s', size => {
+  const previous = scoreLayoutConfig.staff.music;
+  scoreLayoutConfig.staff.music = size;
   try {
     const measure = projectStaffDocument(analyzeM3N('{4/4}\nN: [1 2 3:2] 4 5 |').score).measures[0]!;
     const measured = (_text: string, fontSize: number) => ({ width: fontSize * 0.6, left: 0, right: fontSize * 0.6, ascent: fontSize, descent: 0 });
@@ -155,10 +156,10 @@ it.each([12, 18])('measures tuplet bracket clearance with the configured %spx la
     const text = findAll(label, n => n.tagName === 'text')[0]!;
     const geometry = new SvgGeometry(label, measured);
     const paths = findAll(label, n => n.tagName === 'path');
-    const center = Number(text.attributes.x), width = measured('3', size / scoreLayoutConfig.staff.engine.scale).width;
-    expect(Number(text.attributes['font-size'])).toBe(size / scoreLayoutConfig.staff.engine.scale);
+    const center = Number(text.attributes.x), width = measured('3', size * .4 / scoreLayoutConfig.staff.engine.scale).width;
+    expect(Number(text.attributes['font-size'])).toBe(size * .4 / scoreLayoutConfig.staff.engine.scale);
     expect(text.attributes['font-family']).toBe(scoreLayoutConfig.fonts.text);
-    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - scoreLayoutConfig.staff.engine.tupletTextGap + scoreLayoutConfig.staff.engine.lineStroke / 2);
-    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + scoreLayoutConfig.staff.engine.tupletTextGap - scoreLayoutConfig.staff.engine.lineStroke / 2);
-  } finally { scoreLayoutConfig.staff.tuplet = previous; }
+    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - (staffMusicSize() / 4 * 0.3) + (staffMusicSize() / 4 * 0.1) / 2);
+    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + (staffMusicSize() / 4 * 0.3) - (staffMusicSize() / 4 * 0.1) / 2);
+  } finally { scoreLayoutConfig.staff.music = previous; }
 });

@@ -24,7 +24,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   if (glyph.sustain) {
     const axis = glyph.y + nativeMusicAxis(measurer)
-    line(glyph.x - nativeStyle.sustainHalfWidth, axis, glyph.x + nativeStyle.sustainHalfWidth, axis, nativeStyle.sustainStroke)
+    line(glyph.x - (nativeStyle.music * .2), axis, glyph.x + (nativeStyle.music * .2), axis, (nativeStyle.music * .09))
     return pieces
   }
   const body = nativeNoteBody(measurer), beamCount = Math.max(0, -Math.floor(Math.log2(glyph.writtenBeats)))
@@ -43,7 +43,7 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
   }
   const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
   const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + nativeStyle.dotFirstOffset + index * nativeStyle.dotStep, glyph.y + body.dotY, nativeStyle.dotRadius)
+  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + (nativeStyle.music * .18) + index * (nativeStyle.music * .25), glyph.y + body.dotY, (nativeStyle.music * .07))
   const beams = Math.max(0, Math.round(-Math.log2(base)))
   for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
   return pieces

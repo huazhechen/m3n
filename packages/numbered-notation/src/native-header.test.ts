@@ -22,10 +22,10 @@ describe('header text blocks in the native implementation', () => {
 
     it('keeps the configured title gap to side information and the smaller gap to a subtitle', () => {
         const withoutSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(18, 8);
+        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(17.28, 8);
         const withSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{subtitle=副标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(18, 8);
-        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(8, 8);
+        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(17.28, 8);
+        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(8.64, 8);
     });
 
     it('accounts for measured order rows and configured gaps exactly once', () => {
@@ -77,7 +77,7 @@ describe('header text blocks in the native implementation', () => {
         const plain = layout('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||');
         const sections = layout('{4/4}\n===A\nN: 1 2 3 4 |\n===B\nN: 5 6 7 1e |||');
         const stride = (score: ReturnType<typeof layout>) => score.systems[1]!.lanes[0]!.y - score.systems[0]!.lanes[0]!.y;
-        expect(stride(sections) - stride(plain)).toBeCloseTo(12);
+        expect(stride(sections) - stride(plain)).toBeCloseTo(11.52);
         // The first section has no extra 12px gap below the header. Its frame
         // changes the local ink clearance by only half a pixel.
         expect(Math.abs(sections.systems[0]!.lanes[0]!.y - plain.systems[0]!.lanes[0]!.y)).toBeLessThan(1);
@@ -93,7 +93,7 @@ describe('header text blocks in the native implementation', () => {
         expect(item.x + item.width - ink.right).toBeCloseTo(3.5, 4);
     });
 });
-it('places each right credit row with the shared five-design-pixel ink clearance', () => {
+it('places each right credit row with the shared core-derived ink clearance', () => {
     const doc = { ...parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), lyricist: '甲', composer: '乙', origin: '来源' };
     const varied = { measureText(text: string, style: {
             fontSize: number;
@@ -109,7 +109,7 @@ it('places each right credit row with the shared five-design-pixel ink clearance
     });
     expect(credits).toHaveLength(3);
     for (let i = 1; i < credits.length; i++)
-        expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(5, 4);
+        expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(5.76, 4);
 });
 it('aligns range numerals and separator to the measured music axis', () => {
     const doc = parseM3NDocument('{4/4}\nN: 1 2 3 5 |||');
@@ -156,5 +156,5 @@ it('uses independent 36px title and 18px subtitle baseline advances', () => {
         expect(rows).toHaveLength(2);
         expect(Number(rows[1]!.getAttribute('y')) - Number(rows[0]!.getAttribute('y'))).toBeCloseTo(advance);
     }
-    expect(header.subtitleTop - header.titleBottom).toBe(8);
+    expect(header.subtitleTop - header.titleBottom).toBeCloseTo(8.64);
 });

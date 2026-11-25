@@ -18,7 +18,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
   // Metrics need only vertical extrema. Evaluate the same text, accidental,
   // circle and beam primitives directly instead of serializing and parsing SVG.
   const sustainY = sustain && pitches.length ? n(nativeMusicAxis(measurer)) : 0
-  const sustainHalf = n(nativeStyle.sustainStroke) / 2
+  const sustainHalf = n((nativeStyle.music * .09)) / 2
   const bounds = pitches.map((pitch, index) => {
     if (sustain) return { top: -sustainY + sustainHalf, bottom: sustainY + sustainHalf }
     const text = measurer.measureText(pitch.degree, { fontSize: n(size), fontFamily: SCORE_NUMBER_FONT, fontWeight: scoreLayoutConfig.fonts.regularWeight, fontStyle: 'normal' })

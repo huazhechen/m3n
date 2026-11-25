@@ -37,7 +37,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
-      const minimum = Math.max(...scores.map(score => (score.staff!.document.minimumCoreGap ?? scoreLayoutConfig.staff.minimumCoreGap)))
+      const minimum = Math.max(...scores.map(score => (score.staff!.document.coreGapEm === undefined ? scoreLayoutConfig.staff.minimumCoreGap : score.staff!.document.coreGapEm * scoreLayoutConfig.staff.music)))
       const capacity = a4SourcePageHeight(width)
       const renderAt = async (coreGap: number) => Promise.all(scores.map(async score => {
         signal.throwIfAborted()

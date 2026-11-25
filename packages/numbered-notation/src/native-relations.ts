@@ -1,5 +1,5 @@
 import { SCORE_NUMBER_FONT } from './font-family.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
@@ -92,7 +92,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
-      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-nativeStyle.markGap-ink.bottom))
+      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-((system.coreGap ?? nativeCoreGap()) * .1)-ink.bottom))
     }
     if (isArc) {
       const arc = initialArc!
@@ -110,12 +110,12 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
         if (placed.arc) {
           // A shared endpoint alone is adjacency, not an outer musical layer.
           if (compare(peer.last, relation.first) <= 0 || compare(peer.first, relation.last) >= 0) continue
-          lift = Math.max(lift, nativeRibbonClearance(arc, placed.arc, nativeStyle.music * .15, nativeStyle.music * 1e-6))
+          lift = Math.max(lift, nativeRibbonClearance(arc, placed.arc, (system.coreGap ?? nativeCoreGap()) * .12, nativeStyle.music * 1e-6))
         } else {
           const piece = placed.ink
           if (piece.right <= arc.left || piece.left >= arc.right) continue
           const edge = nativeRibbonRange(arc, piece.left, piece.right)
-          if (edge) lift = Math.max(lift, edge.bottom - piece.top + nativeStyle.music * .15)
+          if (edge) lift = Math.max(lift, edge.bottom - piece.top + (system.coreGap ?? nativeCoreGap()) * .12)
         }
       }
       dy = -nativeArcInkLift(arc.commands, arc.left, arc.right, [...pieces, ...labels, ...bars], lift, arc.slicer)

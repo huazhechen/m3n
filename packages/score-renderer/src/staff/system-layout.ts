@@ -103,7 +103,7 @@ export function arrangeStaffSystem(
     for (const label of labels) tupletMusic.set(label, music)
   }
   for (const label of tuplets) {
-    const below = label.attributes['data-m3n-below'] === 'true', clearance = style.tupletClearance / scale
+    const below = label.attributes['data-m3n-below'] === 'true', clearance = (style.music * .1) / scale
     // Re-anchor bracket strokes and numeral to this staff before
     // resolving collisions with the actual local music.
     const localMusic = tupletMusic.get(label)!
@@ -273,7 +273,7 @@ export function arrangeStaffSystem(
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
-    const clearance = ending ? style.endingClearance / scale : localGap
+    const clearance = ending ? (style.music * .07) / scale : localGap
     if (ending) {
       // Empty space underneath a volta's horizontal rule is not ink. Let
       // high notes and slurs fit there when they clear the hooks and number.

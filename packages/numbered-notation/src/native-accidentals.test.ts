@@ -68,7 +68,7 @@ describe('native accidental geometry', () => {
         expect(symbols.map(node => node.getAttribute('data-m3n-symbol'))).toEqual(['♯', '♭', '♮', '♯', '♯', '♭', '♭']);
         expect(symbols[0]!.getAttribute('fill')).toBe('#000');
         expect(symbols[1]!.getAttribute('fill')).toBe('#000');
-        expect(root.querySelector('[data-m3n-role="grace"] text')!.getAttribute('font-size')).toBe('15');
+        expect(root.querySelector('[data-m3n-role="grace"] text')!.getAttribute('font-size')).toBe('14.4');
     });
     it('omits repeated explicit accidentals and resets display state at a barline', () => {
         const score = layout('1# 1# 1= 1= | 1# 2 3 4');

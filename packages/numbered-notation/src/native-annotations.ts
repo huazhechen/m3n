@@ -1,6 +1,6 @@
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs } from './native-symbols.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeAnnotation } from './native-model.js'
@@ -44,7 +44,7 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       const right = left + w
       // A standalone heading clears the whole lane's core, then only those
       // decorations its frame actually covers; the first note is not its footprint.
-      const gap = framed ? nativeStyle.sectionHeadingGap : local ? nativeStyle.annotationGap : nativeStyle.chordGap
+      const gap = framed ? ((system.coreGap ?? nativeCoreGap()) * .2) : local ? ((system.coreGap ?? nativeCoreGap()) * .2) : ((system.coreGap ?? nativeCoreGap()) * .25)
       const bottom = Math.max((framed ? coreTops?.get(glyph.lane) ?? 0 : 0) + gap,
         ...regions.filter(region => region.lane === glyph.lane && region.right >= left && region.left <= right)
           .map(region => nativeRegionTop(region, left, right) + (framed ? region.headingClearance ?? gap : gap)))

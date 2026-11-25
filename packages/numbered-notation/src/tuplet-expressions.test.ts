@@ -17,7 +17,7 @@ describe('tuplet expressions remain outside rhythm brackets in the native render
                 const glyph = relation.first;
                 for (const mark of glyph.markLayout?.filter(m => /^(p{1,3}|f{1,3}|mp|mf)$/.test(m.name)) ?? []) {
                     checked++;
-                    expect(mark.top + mark.height).toBeLessThanOrEqual(system.relationLayout!.get(relation)!.ink.top - nativeStyle.markGap + .001);
+                    expect(mark.top + mark.height).toBeLessThanOrEqual(system.relationLayout!.get(relation)!.ink.top - (nativeStyle.music * .12) + .001);
                 }
             }
         expect(checked).toBeGreaterThan(0);

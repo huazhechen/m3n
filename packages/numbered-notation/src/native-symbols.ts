@@ -30,9 +30,9 @@ export function attrs(values: Record<string, string | number | undefined>) {
   }
   return result
 }
-export const line = (x1: number, y1: number, x2: number, y2: number, width = nativeStyle.stroke) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
-export const circle = (x: number, y: number, radius = nativeStyle.defaultDotRadius, measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
-export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${n(nativeStyle.symbolStroke)}" stroke-linejoin="round"${extra}/>`
+export const line = (x1: number, y1: number, x2: number, y2: number, width = (nativeStyle.music * .06)) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
+export const circle = (x: number, y: number, radius = (nativeStyle.music * .07), measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
+export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${n((nativeStyle.music * .05))}" stroke-linejoin="round"${extra}/>`
 
 export class NativeSymbols {
   constructor(readonly measurer: TextMeasurer) {}
@@ -46,7 +46,7 @@ export class NativeSymbols {
 
   sustain(x: number, y: number): string {
     const axis = y + nativeMusicAxis(this.measurer)
-    return line(x - nativeStyle.sustainHalfWidth, axis, x + nativeStyle.sustainHalfWidth, axis, nativeStyle.sustainStroke)
+    return line(x - (nativeStyle.music * .2), axis, x + (nativeStyle.music * .2), axis, (nativeStyle.music * .09))
   }
 
   pitch(pitch: NativePitch, x: number, y: number, size = nativeStyle.music, beams = 0): string {
@@ -76,12 +76,12 @@ export class NativeSymbols {
   }
 
   segno(x: number, y: number): string {
-    const glyph = nativeNavigationGlyph('segno', nativeStyle.navigationSymbol, this.measurer)
+    const glyph = nativeNavigationGlyph('segno', (nativeStyle.music * .8), this.measurer)
     return `<g transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})">${glyph.svg}</g>`
   }
 
   coda(x: number, y: number): string {
-    const glyph = nativeNavigationGlyph('coda', nativeStyle.navigationSymbol, this.measurer)
+    const glyph = nativeNavigationGlyph('coda', (nativeStyle.music * .8), this.measurer)
     const text = this.measurer.measureText('Coda', { fontSize: nativeStyle.text, fontFamily: SCORE_TEXT_FONT })
     return `<g data-m3n-role="coda" transform="translate(${n(x)} ${n(y + nativeMusicAxis(this.measurer) - glyph.height / 2)})">${glyph.svg}</g>`
       + this.text('Coda', x + glyph.width + nativeStyle.text * .3, y + nativeMusicAxis(this.measurer) + text.baseline - text.h / 2, nativeStyle.text, SCORE_TEXT_FONT)
@@ -95,7 +95,7 @@ export class NativeSymbols {
     if (ornament !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${ornament}</g>`
     const articulation = nativeArticulationSvg(mark, undefined, this.measurer)
     if (articulation !== undefined) return `<g transform="translate(${n(x)} ${n(y)})">${articulation}</g>`
-    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? nativeStyle.fingering : nativeStyle.grace, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-style': /^f[1-5]$/.test(mark) ? 'normal' : 'italic' })
+    return this.text(/^f[1-5]$/.test(mark) ? mark.slice(1) : mark, x, y, /^f[1-5]$/.test(mark) ? (nativeStyle.music * .5) : nativeStyle.grace, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'font-style': /^f[1-5]$/.test(mark) ? 'normal' : 'italic' })
   }
 
   control(control: NativeControl, x = 0, y = 0): string {
@@ -108,9 +108,9 @@ export class NativeSymbols {
     if (control.kind === 'coda') return this.coda(x, y)
     if (control.kind === 'meter') {
       const meter = control.meterGeometry ?? nativeMeterGeometry(control.text, this.measurer)
-      return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, nativeStyle.meter, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
+      return this.text(meter.numerator, x + control.width / 2, y + meter.numeratorBaseline, (nativeStyle.music * .75), SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
         + `<rect${attrs({ x, y: y + meter.lineY, width: control.width, height: meter.lineHeight, fill: '#000' })}/>`
-        + this.text(meter.denominator, x + control.width / 2, y + meter.denominatorBaseline, nativeStyle.meter, SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
+        + this.text(meter.denominator, x + control.width / 2, y + meter.denominatorBaseline, (nativeStyle.music * .75), SCORE_NUMBER_FONT, { 'text-anchor': 'middle' })
     }
     const geometry = nativeKeyGeometry(control.keyRows ?? [{key:control.text}],this.measurer)
     const axis = nativeMusicAxis(this.measurer)
@@ -124,9 +124,9 @@ export class NativeSymbols {
   }
 
   rawMark(mark: string): string {
-    if (mark === 'tip') return bravuraSvg('articStaccatissimoAboveSmall', nativeStyle.staccatissimo, this.measurer)
-    if (mark === 'brk') return bravuraSvg('articStaccatissimoAbove', nativeStyle.staccatissimo, this.measurer)
-    if (mark === 'hold') return bravuraSvg('articTenutoAbove', nativeStyle.tenuto, this.measurer)
+    if (mark === 'tip') return bravuraSvg('articStaccatissimoAboveSmall', (nativeStyle.music * .3), this.measurer)
+    if (mark === 'brk') return bravuraSvg('articStaccatissimoAbove', (nativeStyle.music * .3), this.measurer)
+    if (mark === 'hold') return bravuraSvg('articTenutoAbove', (nativeStyle.music * .05), this.measurer)
     return this.mark(mark, 0, 0)
   }
 }

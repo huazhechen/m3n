@@ -5,7 +5,7 @@ import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeLyricPieces } from './native-lyrics.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap } from './native-style.js'
 
 /** Final painted primitives in each lane's baseline coordinates. Keep separate
  * objects separate: a remote verse or the empty span between parentheses must
@@ -42,7 +42,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
 export function placeNativeLanes(system: NativeSystem): number {
   let bottom = 0
   for (const [index, lane] of system.lanes.entries()) {
-    lane.y = bottom + (index ? nativeStyle.laneGap : 0) + lane.top
+    lane.y = bottom + (index ? ((system.coreGap ?? nativeCoreGap()) * .7) : 0) + lane.top
     bottom = lane.y + lane.bottom
   }
   return bottom

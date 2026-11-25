@@ -13,7 +13,7 @@ export type NativeGracePitch = NativePitch & { writtenBeats?: number }
  * Subdivision belongs to each note, so mixed-depth groups retain their beams.
  */
 export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLeft: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
-  const size = nativeStyle.graceNote, painter = new NativeSymbols(measurer)
+  const size = (nativeStyle.music * .6), painter = new NativeSymbols(measurer)
   const number = measurer.measureText('0', {fontSize: size, fontFamily: SCORE_NUMBER_FONT})
   const { beamStroke: stroke } = nativeNoteBody(measurer, size)
   const half = number.w / 2, beamStep = size * 0.14

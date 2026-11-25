@@ -3,8 +3,8 @@ import glyphs from './staff-glyphs.json' with { type: 'json' }
 import { element, type Ink, type XmlNode } from './layout-svg.js'
 
 export type StaffGlyph = keyof typeof glyphs
-export const STAFF_MUSIC_SIZE = scoreLayoutConfig.staff.music / scoreLayoutConfig.staff.engine.scale // SMuFL: one em = four staff spaces.
-export const staffGlyphMetrics = (name: StaffGlyph, size = STAFF_MUSIC_SIZE) => {
+export const staffMusicSize = () => scoreLayoutConfig.staff.music / scoreLayoutConfig.staff.engine.scale // SMuFL: one em = four staff spaces.
+export const staffGlyphMetrics = (name: StaffGlyph, size = staffMusicSize()) => {
   const g = glyphs[name]
   return { left: g.left * size, right: g.right * size, top: g.top * size, bottom: g.bottom * size, advance: g.advance * size }
 }
@@ -22,7 +22,7 @@ export function staffCharacterInk(value: string, size: number, x: number, y: num
   return result
 }
 /** Candidates allocate numeric ink only. Text attributes are created at output. */
-export function staffGlyph(name: StaffGlyph, x: number, y: number, size = STAFF_MUSIC_SIZE): XmlNode {
+export function staffGlyph(name: StaffGlyph, x: number, y: number, size = staffMusicSize()): XmlNode {
   return new MusicCharacter(name, x, y, size)
 }
 class MusicCharacter implements XmlNode {

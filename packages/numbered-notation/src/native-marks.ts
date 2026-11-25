@@ -1,4 +1,4 @@
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap } from './native-style.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk } from './native-ink.js'
@@ -12,12 +12,12 @@ export const nativeMarkRank = (name: string) => nativeArticulation(name) ? 0
 /** Single-note marks sit inside relations, with articulations nearest the note.
  * Dynamics and expression text remain outside the enclosing relations.
  * Placement and SVG use the very same shapes, including italic text metrics. */
-export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer()) {
+export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer(), coreGap = nativeCoreGap()) {
   const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b)), painter = new NativeSymbols(measurer)
   let top = bodyTop
   const items: NativeMarkPlacement[] = ordered.map(name => {
     const ink = nativeSvgInk(painter.rawMark(name), measurer), height = ink.bottom - ink.top
-    const y = -top - nativeStyle.markGap - ink.bottom
+    const y = -top - (coreGap * .1) - ink.bottom
     top = height - (y + ink.bottom)
     return { name, top: -top, height, y, left: ink.left, right: ink.right }
   })

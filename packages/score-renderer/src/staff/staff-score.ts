@@ -24,7 +24,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
-  const minimumGap = score.minimumCoreGap ?? scoreLayoutConfig.staff.minimumCoreGap
+  const minimumGap = score.coreGapEm === undefined ? scoreLayoutConfig.staff.minimumCoreGap : score.coreGapEm * scoreLayoutConfig.staff.music
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {

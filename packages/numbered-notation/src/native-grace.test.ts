@@ -12,7 +12,7 @@ import { nativeStyle } from './native-style.js'
 
 const normal = new DefaultTextMeasurer()
 const unusual: TextMeasurer = { measureText(text, style) {
-  const advance = text.length * style.fontSize * (style.fontSize === nativeStyle.graceNote ? 1.3 : 0.58)
+  const advance = text.length * style.fontSize * (style.fontSize === (nativeStyle.music * .6) ? 1.3 : 0.58)
   const overhang = style.fontSize * 0.15
   return {w: advance + overhang, h:style.fontSize * 1.1, baseline:style.fontSize * 0.85, advance, inkLeft:-overhang, inkRight:advance, centerOffset:-overhang / 2}
 } }
@@ -89,7 +89,7 @@ describe('measured native grace blocks', () => {
     expect(notes.map(n => n.getAttribute('data-m3n-beams'))).toEqual(['2','3','3'])
     expect(notes.map(n => n.querySelectorAll('line').length)).toEqual([0,0,0])
     expect(grace.querySelectorAll(':scope > line')).toHaveLength(3)
-    expect([...grace.querySelectorAll('text')].map(n => n.getAttribute('font-size'))).toEqual(['15','15','15'])
+    expect([...grace.querySelectorAll('text')].map(n => n.getAttribute('font-size'))).toEqual(['14.4','14.4','14.4'])
     expect(grace.querySelector('path:not([data-m3n-symbol])')!.getAttribute('d')).toContain(' C')
   })
 
@@ -123,7 +123,7 @@ describe('measured native grace blocks', () => {
     const note = root.querySelector('[data-m3n-role="grace-note"]')!
     const digit = nativeSvgInk(note.querySelector('text')!.outerHTML,noDescent)
     const beam = nativeSvgInk(note.querySelector('line')!.outerHTML,noDescent)
-    expect(beam.top - digit.bottom).toBeCloseTo(nativeStyle.graceNote * 0.12, 3)
+    expect(beam.top - digit.bottom).toBeCloseTo((nativeStyle.music * .6) * 0.12, 3)
   })
 
   it('aligns connected beams below the deepest actual digit in a mixed group', () => {

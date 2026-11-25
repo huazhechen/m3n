@@ -1,5 +1,5 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -120,7 +120,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:SCORE_TEXT_FONT})
     const top = fallback ? -fallback.baseline : Math.min(...boxes.map(b => b.top))
     const lower = fallback ? fallback.h-fallback.baseline : Math.max(...boxes.map(b => b.bottom))
-    const y = bottom + (index ? nativeStyle.lyricGap : nativeStyle.lyricTopGap) - top
+    const y = bottom + (index ? ((system.coreGap ?? nativeCoreGap()) * .15) : ((system.coreGap ?? nativeCoreGap()) * .2)) - top
     baselines.push(y); bottom = y+lower
   }
   // Empty slots retain their rendition metadata even when the whole system

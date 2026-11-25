@@ -1,6 +1,6 @@
 import { renderNativePages } from './native-svg.js'
 import { nativeLayoutScore } from './native-quality.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap } from './native-style.js'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -67,7 +67,7 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)
   const candidates = [9,12,15].map(minimumNoteGap => layoutNativeScore(document, {
-    ...settings, coreGap:nativeStyle.minimumCoreGap, minimumNoteGap,
+    ...settings, coreGap:nativeCoreGap(), minimumNoteGap,
   }))
   candidates.sort((a,b) => a.pages.length-b.pages.length || nativeLayoutScore(b)-nativeLayoutScore(a)
     || a.options.minimumNoteGap!-b.options.minimumNoteGap!)

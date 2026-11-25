@@ -4,8 +4,8 @@ import { nativeArticulationSvg } from './native-articulations.js';
 import { nativeSvgInk } from './native-ink.js';
 import { DefaultTextMeasurer } from './native-measure.js';
 import { NativeSymbols } from './native-symbols.js';
-it.each([['str', 'accent', 6], ['str', 'accent', 12], ['str', 'accent', 24], ['breath', 'breath', 5], ['breath', 'breath', 10], ['breath', 'breath', 20]] as const)('uses the complete Bravura %s outline', (mark, _name, size) => {
-    const svg = (mark === 'str' && size === 12) || (mark === 'breath' && size === 10)
+it.each([['str', 'accent', 6], ['str', 'accent', 12], ['str', 'accent', 24], ['breath', 'breath', 5], ['breath', 'breath', 9.6], ['breath', 'breath', 20]] as const)('uses the complete Bravura %s outline', (mark, _name, size) => {
+    const svg = (mark === 'str' && size === 12) || (mark === 'breath' && size === 9.6)
         ? new NativeSymbols(new DefaultTextMeasurer()).rawMark(mark) : nativeArticulationSvg(mark, size)!;
     const path = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml').querySelector('text');
     expect(path).not.toBeNull();

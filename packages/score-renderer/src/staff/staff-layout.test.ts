@@ -218,7 +218,7 @@ describe('staff layout contract', () => {
   })
   it('fits measured header text, supports leading, and stretches gaps within fixed pages', async () => {
     const render = await prepare(
-      '{title=长标题测试长标题测试长标题测试长标题测试}{leading=18}{4/4}\nN: ' +
+      '{title=长标题测试长标题测试长标题测试长标题测试}{leading=0.8}{4/4}\nN: ' +
         Array.from({ length: 12 }, () => '1 2 3 4 | {br}').join(' ') +
         '1 2 3 4 |||',
       540,
@@ -227,7 +227,7 @@ describe('staff layout contract', () => {
     expect(info.headerHeight).toBeGreaterThan(32)
     expect(info.spacing).toBeGreaterThanOrEqual(0.25)
     for (const page of info.pages) {
-      expect(page.gap).toBeGreaterThanOrEqual(17.6)
+      expect(page.gap).toBeGreaterThanOrEqual(22.4)
       expect(page.gap).toBeLessThanOrEqual(32)
       for (const system of page.systems) {
         expect(system.ink.top + system.y).toBeGreaterThanOrEqual(-1e-6)
@@ -361,7 +361,7 @@ it('fits a volta around high central music using its strokes instead of its empt
   arrangeStaffSystem(node, geometry, 320, new Set())
   const strokes = geometry.pieces(ending)
   const horizontal = strokes.find(piece => piece.right - piece.left > 100)!
-  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(2)
+  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(1.96)
   expect(Math.max(...strokes.map(piece => piece.bottom))).toBeGreaterThan(geometry.ink(highNote).top)
 })
 
@@ -379,7 +379,7 @@ it('pulls triplet brackets toward local music on both sides of the staff', () =>
     const gaps = geometry.pieces(label).flatMap(piece => music
       .filter(other => overlapsX(piece, other, 1.5 / STAFF_SCALE))
       .map(other => (below ? piece.top - other.bottom : other.top - piece.bottom) * STAFF_SCALE))
-    expect(Math.min(...gaps)).toBeCloseTo(3)
+    expect(Math.min(...gaps)).toBeCloseTo(2.8)
   }
 })
 

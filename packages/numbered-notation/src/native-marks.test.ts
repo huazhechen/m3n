@@ -7,16 +7,16 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap } from './native-style.js'
 import { nativeSystemCore } from './native-core.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
 describe('native articulation occupancy', () => {
-  it.each([['tip', 7], ['brk', 7], ['hold', 1.26], ['str', 6]] as const)('measures %s by its own height', (name, height) => {
+  it.each([['tip', 7.2], ['brk', 7.2], ['hold', 1.2], ['str', 6]] as const)('measures %s by its own height', (name, height) => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1{${name}} 2 3 4 |||`), options)
     const glyph = score.projection.glyphs[0]!
-    expect(glyph.top).toBeCloseTo(19.2 + 2.8 + height)
+    expect(glyph.top).toBeCloseTo(19.2 + 2.88 + height)
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(glyph.top)
   })
 
@@ -32,7 +32,7 @@ describe('native articulation occupancy', () => {
     expect(stack.items.map(item => item.name)).toEqual(['tip', 'hold', 'f1', 'tr', 'mf'])
     let bottom = -17.6
     for (const mark of stack.items) {
-      expect(bottom - mark.top - mark.height).toBeCloseTo(2.8)
+      expect(bottom - mark.top - mark.height).toBeCloseTo(2.88)
       bottom = mark.top
     }
     expect(stack.top).toBeCloseTo(-bottom)
@@ -52,7 +52,7 @@ describe('native articulation occupancy', () => {
     const ornament = ornamentGlyph.markLayout!.find(m => m.name === 'f1')!
     expect(ornamentGlyph.x+ornament.left).toBeLessThan(dynamicGlyph.x+dynamic.right)
     expect(ornamentGlyph.x+ornament.right).toBeGreaterThan(dynamicGlyph.x+dynamic.left)
-    expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-nativeStyle.markGap+.001)
+    expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-(nativeCoreGap() * .1)+.001)
   })
 
   it('paints the triangle inside its measured box above a high stacked chord', () => {
@@ -78,8 +78,8 @@ describe('native articulation occupancy', () => {
     for (let index = 1; index < score.systems.length; index++) {
       const upper = nativeSystemCore(score.systems[index - 1]!, score.measurer)!
       const lower = nativeSystemCore(score.systems[index]!, score.measurer)!
-      expect(lower.top - upper.bottom).toBeCloseTo(28)
+      expect(lower.top - upper.bottom).toBeCloseTo(28.8)
     }
-    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(29)
+    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(29.28)
   })
 })

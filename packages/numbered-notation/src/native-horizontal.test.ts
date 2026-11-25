@@ -20,7 +20,7 @@ describe('native spacing and measured note envelopes', () => {
         const expected = [38.084020441228695, 219.4515204412287, 400.8190204412287, 582.1865204412287];
         result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6));
         expect(result.projection.measures[0]!.barX).toBeCloseTo(762.735, 6);
-        expect(result.projection.glyphs[0]!.y).toBeCloseTo(107.96, 6);
+        expect(result.projection.glyphs[0]!.y).toBeCloseTo(107, 6);
     });
     it('reserves dots for dotted values and gives a plain eighth no phantom dot space', () => {
         const result = layout('{4/4}\nN: (1 2) 3. (4) 5 |||');
@@ -39,15 +39,15 @@ describe('native spacing and measured note envelopes', () => {
         const bass = result.projection.glyphs.find(glyph => glyph.staff === 'bass')!;
         bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -28.56, -57.12][index]!, 6));
         const lanes = result.systems[0]!.lanes;
-        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(104.12, 6);
+        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(104.28, 6);
     });
     it('weights cross-system tie coverage without cumulative row padding', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [47.63508, 48.01119, 46.78912].entries())
+        for (const [index, gap] of [48.02737, 48.79284, 47.56453].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(339.17616, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(339.43639, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -60,7 +60,7 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(source, 800, narrowSpacing);
         // The repeat opening is included once; sustain widths include both round caps.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(80.55102740320353, 5);
+        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(81.1910274032034, 5);
         const opening = result.projection.measures[9]!;
         expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(135.41860242849134, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);

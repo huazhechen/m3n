@@ -3,7 +3,7 @@ import { lyricSpacing } from './lyric-spacing.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
-import { nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
@@ -164,7 +164,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphMarks = segment === 0 && slot === 0 ? marks : []
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
           const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
-          const pitchWidth = sustain ? 2 * nativeStyle.sustainHalfWidth + nativeStyle.sustainStroke : textWidth('0', nativeStyle.music, SCORE_NUMBER_FONT)
+          const pitchWidth = sustain ? 2 * (nativeStyle.music * .2) + (nativeStyle.music * .09) : textWidth('0', nativeStyle.music, SCORE_NUMBER_FONT)
           const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, nativeStyle.music, options.textMeasurer)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))
           const dotCount = Math.max(0, [1, 1.5, 1.75, 1.875].findIndex(ratio => Math.abs(writtenBeats / durationBase - ratio) < 1e-7))
@@ -197,7 +197,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             glyph.left = Math.max(glyph.musicLeft, lyricLeft)
             glyph.right = Math.max(glyph.musicRight, lyricRight)
           }
-          glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer).items
+          glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer, nativeCoreGap(document)).items
           // Local marks remain centered on their host, so reserve their full
           // width before wrapping instead of shifting them outside relations.
           glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))
@@ -263,7 +263,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !source.interlude && !part.bass[index]?.events.length) continue
-      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? nativeStyle.sectionGap : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? (nativeCoreGap(document) * .4) : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = source.interlude ? measureNumber : ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]

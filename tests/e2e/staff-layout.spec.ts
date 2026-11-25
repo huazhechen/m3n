@@ -13,16 +13,8 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg[data-notation="staff"]').first()).toBeVisible()
-  // Pagination must be compared at the same width, after background selection.
-  const settledWidth = async () => {
-    await expect.poll(async () => paper.evaluate(element => {
-      const selected = (element as HTMLElement).dataset.selectedWidth
-      return Boolean(selected && element.querySelector('svg[data-notation="staff"]')?.getAttribute('width') === selected)
-    }), { timeout: 30_000 }).toBe(true)
-  }
-  await settledWidth()
-  const selected = await paper.getAttribute('data-selected-width')
-  await expect(paper.locator('svg[data-notation="staff"]').first()).toHaveAttribute('width', selected!)
+  // The editor keeps its fixed initial width across pagination changes.
+  await expect(paper.locator('svg[data-notation="staff"]').first()).toHaveAttribute('width', '720')
   await expect(paper.locator('g.system')).toHaveCount(3)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const horizontal = () =>
@@ -52,8 +44,7 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   await page.getByRole('switch', { name: '分页', exact: true }).click()
   await expect(paper).toHaveAttribute('data-render-mode', 'continuous')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  await settledWidth()
-  await expect(paper).toHaveAttribute('data-selected-width', selected!)
+  await expect(paper.locator('svg[data-notation="staff"]').first()).toHaveAttribute('width', '720')
   const after = await horizontal()
   expect(after.map(n => n.id)).toEqual(before.map(n => n.id))
   for (const [i, note] of after.entries()) {
