@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { lyricSpacing, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { STAFF_SCALE } from './vexflow-engine.js'
 import { element, type Ink, type FontInk, type MeasureText, type XmlNode } from './layout-svg.js'
 
@@ -8,10 +8,10 @@ export function staffLyricDrawing(value: string, x: number, y: number, underline
   let text = templates?.get(value)
   if (!text) {
     const content = value.replace(/[\t\r\n]/g, '').trim()
-    text = { ink: content.replace(/[\u200B\u2800]/g, '') ? measure(content, 16 / STAFF_SCALE) : undefined }
+    text = { ink: content.replace(/[\u200B\u2800]/g, '') ? measure(content, lyricSpacing.fontSize / STAFF_SCALE) : undefined }
     templates?.set(value, text)
   }
-  if (underlined) text.underlineWidth ??= measure(value, 16 / STAFF_SCALE).width
+  if (underlined) text.underlineWidth ??= measure(value, lyricSpacing.fontSize / STAFF_SCALE).width
   return new LyricDrawing(value, x, y, underlined ? text.underlineWidth : undefined, text.ink)
 }
 /** Lyrics expose their real text for verse packing and exact numeric ink for
@@ -35,7 +35,7 @@ class LyricDrawing implements XmlNode {
     }
   }
   renderNodes(): Array<XmlNode | string> {
-    const text = element('text', { x: String(this.x), y: String(this.y), 'font-size': String(16 / STAFF_SCALE), 'font-family': SCORE_TEXT_FONT, 'text-anchor': 'middle' }, [this.textValue])
+    const text = element('text', { x: String(this.x), y: String(this.y), 'font-size': String(lyricSpacing.fontSize / STAFF_SCALE), 'font-family': SCORE_TEXT_FONT, 'text-anchor': 'middle' }, [this.textValue])
     const children = [text]
     if (this.underlineWidth !== undefined) children.push(element('path', { d: `M${this.x - this.underlineWidth / 2} ${this.y + 4} h${this.underlineWidth}`, stroke: '#000', 'stroke-width': String(1 / STAFF_SCALE), fill: 'none' }))
     return [element('g', { class: 'syl' }, children)]
