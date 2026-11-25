@@ -10,9 +10,8 @@ export default defineConfig({
   base: process.env.VITE_BASE_URL ?? '/',
   plugins: [react(), scoreCatalogPlugin(), worksCatalogPlugin()],
   build: {
-    // Move the module graph away from URLs previously cached as SPA HTML.
-    // Keep this namespace stable; Vite still hashes individual asset contents.
-    assetsDir: 'assets/v2',
+    // Content hashes in filenames version assets independently of Git commits.
+    assetsDir: 'assets',
     chunkSizeWarningLimit: 800,
   },
 })

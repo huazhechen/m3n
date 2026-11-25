@@ -50,7 +50,7 @@ export function scoreCatalogPlugin(): Plugin {
       if (id !== resolvedId) return
       const asset = (name: string, source: string | Buffer) => {
         const hash = createHash('sha256').update(source).digest('hex').slice(0, 16)
-        const file = `assets/v2/${hash}-${name}`
+        const file = `assets/${hash}-${name}`
         assets.set(file, source)
         return file
       }

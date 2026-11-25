@@ -33,7 +33,7 @@ export function worksCatalogPlugin(): Plugin {
         const slug = file.slice(0, -4)
         if (!/^[a-z0-9]+(?:[_-][a-z0-9]+)*$/.test(slug)) throw new Error(`独立作品文件名无效：${file}`)
         const hash = createHash('sha256').update(source).digest('hex').slice(0, 16)
-        const sourceUrl = `assets/v2/${hash}-work.m3n`
+        const sourceUrl = `assets/${hash}-work.m3n`
         if (production) this.emitFile({ type: 'asset', fileName: sourceUrl, source })
         const fontPreloads = await scoreFontPreloads(source, (name, source) => this.emitFile({ type: 'asset', name, source }), path => this.addWatchFile(path), production)
         return { ...scoreMetadataFromSource(slug, source), sourceUrl, fontPreloads, sourcePath: file, modifiedAt: (await stat(path)).mtimeMs }

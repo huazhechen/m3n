@@ -4,7 +4,7 @@ import { scoreMetadataFromSource } from '@m3n/notation'
 const source = '{title=独立测试作品}{key=C#}{4/4}\nN: 1 2 3 4 |||'
 const works = ['work-one', 'work-two'].map((slug, index) => ({
   ...scoreMetadataFromSource(slug, source.replace('独立测试作品', `独立测试作品${index + 1}`)),
-  sourceUrl: `assets/v2/${slug}.m3n`, sourcePath: `${slug}.m3n`, modifiedAt: index,
+  sourceUrl: `assets/${slug}.m3n`, sourcePath: `${slug}.m3n`, modifiedAt: index,
 }))
 
 test('unlisted collection has no public entry and an empty initial archive', async ({ page }) => {
@@ -27,7 +27,7 @@ test('unlisted collection has no public entry and an empty initial archive', asy
 
 test('works support search, isolated navigation, direct reading, export and editing', async ({ page }) => {
   await page.route('**/works-catalog.json', route => route.fulfill({ json: works }))
-  await page.route('**/assets/v2/work-*.m3n', route => route.fulfill({ contentType: 'text/plain', body: source }))
+  await page.route('**/assets/work-*.m3n', route => route.fulfill({ contentType: 'text/plain', body: source }))
   await page.goto('/works')
   await expect(page.locator('.score-card')).toHaveCount(2)
   await page.getByRole('searchbox').fill('作品2')

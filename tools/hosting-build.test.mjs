@@ -41,11 +41,11 @@ test('unlisted works stay outside the public catalog and book and preserve code 
     await writeFile(join(root, 'config/scorebook/editorial-plan.json'), '{"entries":[]}')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font')
     const compile = async () => {
-      await build({ root, configFile: false, base: '/score/', plugins: [scoreCatalogPlugin(), worksCatalogPlugin()], logLevel: 'silent', build: { assetsDir: 'assets/v2' } })
+      await build({ root, configFile: false, base: '/score/', plugins: [scoreCatalogPlugin(), worksCatalogPlugin()], logLevel: 'silent', build: { assetsDir: 'assets' } })
       const output = join(root, 'dist')
-      const files = (await readdir(join(output, 'assets/v2'))).filter(file => file.endsWith('.js'))
+      const files = (await readdir(join(output, 'assets'))).filter(file => file.endsWith('.js'))
       return {
-        js: await Promise.all(files.sort().map(file => readFile(join(output, 'assets/v2', file), 'utf8'))),
+        js: await Promise.all(files.sort().map(file => readFile(join(output, 'assets', file), 'utf8'))),
         works: JSON.parse(await readFile(join(output, 'works-catalog.json'), 'utf8')),
         public: JSON.parse(await readFile(join(output, 'score-catalog.json'), 'utf8')),
       }
@@ -78,9 +78,9 @@ test('score edits, additions, book metadata and font updates preserve every Java
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font one')
     await writeFile(join(root, 'src/scores/one.m3n'), '{title=One}\n{1=C}\n{4/4}\n1 2 3 4 |||\n')
     const compile = async () => {
-      await build({ root, configFile: false, base: '/score/', plugins: [scoreCatalogPlugin()], logLevel: 'silent', build: { assetsDir: 'assets/v2' } })
-      const files = await readdir(join(root, 'dist/assets/v2'))
-      const js = Object.fromEntries(await Promise.all(files.filter(file => file.endsWith('.js')).map(async file => [file, await readFile(join(root, 'dist/assets/v2', file), 'utf8')])))
+      await build({ root, configFile: false, base: '/score/', plugins: [scoreCatalogPlugin()], logLevel: 'silent', build: { assetsDir: 'assets' } })
+      const files = await readdir(join(root, 'dist/assets'))
+      const js = Object.fromEntries(await Promise.all(files.filter(file => file.endsWith('.js')).map(async file => [file, await readFile(join(root, 'dist/assets', file), 'utf8')])))
       const catalog = JSON.parse(await readFile(join(root, 'dist/score-catalog.json'), 'utf8'))
       const packedSources = await readFile(join(root, 'dist', catalog.bundles.sources.url.slice('/score/'.length)))
       assert.equal(packedSources.length, catalog.bundles.sources.bytes)
@@ -121,11 +121,11 @@ test('publication retains retired dependencies for 72 hours and resets retiremen
   const destination = join(root, 'dist')
   const publish = async (files, now) => {
     const staging = await mkdtemp(join(root, 'stage-'))
-    await mkdir(join(staging, 'assets/v2'), { recursive: true })
+    await mkdir(join(staging, 'assets'), { recursive: true })
     await writeFile(join(staging, 'index.html'), 'current html')
-    for (const file of files) await writeFile(join(staging, 'assets/v2', file), file)
+    for (const file of files) await writeFile(join(staging, 'assets', file), file)
     await publishWeb(staging, destination, { now })
-    return readdir(join(destination, 'assets/v2'))
+    return readdir(join(destination, 'assets'))
   }
   try {
     await publish(['old.js', 'shared.js'], 0)
@@ -147,9 +147,9 @@ test('fresh Pages builds restore and expire history without keeping dist in Git'
   const output = join(root, 'first/dist')
   const stage = async (name, files) => {
     const directory = join(root, name)
-    await mkdir(join(directory, 'assets/v2'), { recursive: true })
+    await mkdir(join(directory, 'assets'), { recursive: true })
     await writeFile(join(directory, 'index.html'), name)
-    for (const file of files) await writeFile(join(directory, 'assets/v2', file), file)
+    for (const file of files) await writeFile(join(directory, 'assets', file), file)
     return directory
   }
   const remote = directory => async url => {
@@ -163,14 +163,14 @@ test('fresh Pages builds restore and expire history without keeping dist in Git'
     const fresh = join(root, 'second/dist')
     await restoreWebHistory(fresh, 'https://example.test/score/', { retentionMs, now: 10, fetchImpl: remote(output) })
     await publishWeb(await stage('stage2', ['two.js', 'same.js']), fresh, { now: 10 })
-    assert.ok((await readdir(join(fresh, 'assets/v2'))).includes('one.js'))
+    assert.ok((await readdir(join(fresh, 'assets'))).includes('one.js'))
     const history = JSON.parse(await readFile(join(fresh, historyFile), 'utf8'))
     assert.equal(history.assets.find(entry => entry.file.endsWith('/one.js')).retiredAt, 10)
     assert.equal(history.assets.find(entry => entry.file.endsWith('/same.js')).retiredAt, null)
     const third = join(root, 'third/dist')
     await restoreWebHistory(third, 'https://example.test/score/', { retentionMs, now: retentionMs + 10, fetchImpl: remote(fresh) })
-    assert.ok(!(await readdir(join(third, 'assets/v2'))).includes('one.js'))
-    assert.ok((await readdir(join(third, 'assets/v2'))).includes('same.js'))
+    assert.ok(!(await readdir(join(third, 'assets'))).includes('one.js'))
+    assert.ok((await readdir(join(third, 'assets'))).includes('same.js'))
     await assert.rejects(restoreWebHistory(join(root, 'unavailable/dist'), 'https://example.test/score/', { retentionMs, fetchImpl: async () => new Response('Unavailable', { status: 503 }) }), /HTTP 503/)
     await restoreWebHistory(join(root, 'bootstrap/dist'), 'https://example.test/score/', { retentionMs, fetchImpl: async () => new Response('<html>SPA</html>', { headers: { 'content-type': 'text/html' } }) })
     const corrupt = async url => String(url).endsWith('.json') ? remote(output)(url) : new Response('<html>SPA</html>')
