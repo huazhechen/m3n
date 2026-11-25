@@ -92,7 +92,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
-      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.62 : b.top-nativeStyle.markGap-ink.bottom))
+      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-nativeStyle.markGap-ink.bottom))
     }
     if (isArc) {
       const arc = initialArc!
