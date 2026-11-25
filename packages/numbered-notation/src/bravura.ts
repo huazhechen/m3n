@@ -4,7 +4,6 @@ import symbols from './bravura-symbols.json'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeMatrix, transformNativeInk } from './native-transform.js'
-import { translateNativeInk } from './native-ink.js'
 
 export type BravuraGlyph = keyof typeof symbols
 /** Measure at a common font size before scaling to the requested ink envelope.
@@ -25,10 +24,13 @@ export function bravuraGeometry(name: BravuraGlyph, height: number, centered = f
 }
 export const bravuraGlyph = bravuraGeometry
 export const bravuraSvg = (name: BravuraGlyph, height: number, measurer?: TextMeasurer) => bravuraGlyph(name,height,true,measurer).svg
-export function nativeDotInk(x: number, y: number, radius: number, measurer: TextMeasurer) {
-  return translateNativeInk(bravuraGeometry('augmentationDot',radius*2,true,measurer,radius*2).ink,n(x),n(y-radius))
+/** Attached dots are geometric circles, independent of font ink and hinting. */
+export function nativeDotInk(x: number, y: number, radius: number, _measurer: TextMeasurer) {
+  const cx = n(x), cy = n(y), r = n(radius)
+  return { left: cx - r, right: cx + r, top: cy - r, bottom: cy + r }
 }
 export function nativeDotSvg(x: number, y: number, radius: number, measurer: TextMeasurer, repeat = false) {
-  const glyph = bravuraGlyph(repeat ? 'repeatDot' : 'augmentationDot',radius*2,true,measurer,radius*2)
+  if (!repeat) return `<circle data-m3n-role="music-dot" cx="${n(x)}" cy="${n(y)}" r="${n(radius)}" fill="#000" aria-hidden="true"/>`
+  const glyph = bravuraGlyph('repeatDot',radius*2,true,measurer,radius*2)
   return `<g data-m3n-role="music-dot" transform="translate(${n(x)} ${n(y-radius)})">${glyph.svg}</g>`
 }

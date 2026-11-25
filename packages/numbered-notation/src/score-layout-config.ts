@@ -27,8 +27,8 @@ const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRat
 const numbered = {
   // 独立文字字号（px）；音符附属字形在实现中按 music 的 em 比例计算。
   music: numberedMusic,
-  // 附点与八度点共用直径0.175em（24px音符下4.2px）；倚音同比缩放。
-  dotRadiusEm: .0875,
+  // 附点与八度点共用直径0.2em（24px音符下4.8px）；倚音同比缩放。
+  dotRadiusEm: .1,
   accidentalScale: 1.15,
   // 核心上下间距，以 music 为1em；外层净空在使用处乘系数。
   coreGapEm: numberedCoreGapEm, // 谱源 leading 以em覆盖，作用于全部派生上下间距。
