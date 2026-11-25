@@ -39,7 +39,7 @@ it('shows each drag value immediately, throttles previews, and commits the final
   const { slider, onChange } = render()
   pointer(slider, 'pointerdown')
   for (const level of [21, 22, 23]) input(slider, level)
-  expect(host.querySelector('output')!.textContent).toBe('23倍')
+  expect(host.querySelector('output')!.textContent).toBe('552px')
   expect(onChange).not.toHaveBeenCalled()
   act(() => vi.advanceTimersByTime(150))
   expect(onChange.mock.calls).toEqual([[552]])
@@ -86,6 +86,6 @@ it('steps from an off-grid width in both directions and disables buttons at the 
 it('exposes the manual 20–40 multiple range independently from the search levels', () => {
   const { slider } = render(720)
   expect([slider.min, slider.max, slider.step, slider.value]).toEqual(['20', '40', '1', '30'])
-  expect(slider.getAttribute('aria-valuetext')).toBe('30倍，720px')
-  expect(host.querySelector('output')!.textContent).toBe('30倍')
+  expect(slider.getAttribute('aria-valuetext')).toBe('720px')
+  expect(host.querySelector('output')!.textContent).toBe('720px')
 })
