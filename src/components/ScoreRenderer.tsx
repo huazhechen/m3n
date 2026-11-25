@@ -44,6 +44,8 @@ type ScoreRendererProps = {
   playbackOnly?: boolean
   containedControls?: boolean
   previewWidth?: number
+  /** Disable for editable sources so content changes preserve the chosen width. */
+  autoSearchWidth?: boolean
   fitPagedToViewport?: boolean
   isSourceUpdating?: boolean
   activeXmlId?: string | null
@@ -123,6 +125,7 @@ export function ScoreRenderer({
   playbackOnly = false,
   containedControls = false,
   previewWidth,
+  autoSearchWidth = true,
   fitPagedToViewport = false,
   isSourceUpdating = false,
   activeXmlId,
@@ -210,7 +213,7 @@ export function ScoreRenderer({
   const [isRendering, setIsRendering] = useState(false)
   const [renderPhase, setRenderPhase] = useState<RenderPhase | null>(null)
   const [selectedXmlId, setSelectedXmlId] = useState<string | null>(null)
-  const automaticWidth = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
+  const automaticWidth = autoSearchWidth && !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth
   const renderWidth = previewWidth ?? (fitWidth ? Math.max(SCORE_WIDTH_MIN, contentWidth || layoutWidth) : layoutWidth)
   // Updating the displayed automatic width must not start another layout.
   const requestedWidth = automaticWidth ? undefined : renderWidth
@@ -284,7 +287,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const selectedWidth = autoWidthSelectionRef.current
-        const autoWidth = !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
+        const autoWidth = autoSearchWidth && !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
         const { message, width } = await renderScoreInto(paper, {
           scoreDocument, width: requestedWidth ?? selectedWidth?.width, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
@@ -329,7 +332,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
+  }, [autoSearchWidth, compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -661,7 +664,7 @@ export function ScoreRenderer({
         onResetWidth={() => {
           manualWidthRef.current = false
           const selected = autoWidthSelectionRef.current
-          const width = selected?.scoreDocument === scoreDocument && selected.notationMode === notationMode
+          const width = autoSearchWidth && selected?.scoreDocument === scoreDocument && selected.notationMode === notationMode
             ? selected.width
             : defaultWidth
           setFitWidth(false)

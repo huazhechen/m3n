@@ -168,6 +168,7 @@ export function NotationEditor({
           compact={embedded}
           playbackOnly={playbackOnly}
           previewWidth={previewWidth}
+          autoSearchWidth={embedded}
           isSourceUpdating={isAnalyzing}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}

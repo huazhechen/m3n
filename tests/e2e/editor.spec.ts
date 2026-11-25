@@ -46,6 +46,43 @@ test('exposes playback without an export action', async ({ page }) => {
   await expect(page.getByRole('button', { name: '打印' })).toHaveCount(0)
 })
 
+test('keeps editor width fixed across edits and display changes', async ({ page }) => {
+  await page.goto('/editor')
+  const editor = page.getByLabel('M3N source')
+  const paper = page.locator('.score-paper')
+  const svg = paper.locator('svg[data-engine="m3n"]').first()
+  const edit = async (title: string, width: number) => {
+    await editor.fill(`{title=${title}}{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||`)
+    await expect(paper).toContainText(title)
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await expect(svg).toHaveAttribute('width', String(width))
+  }
+  await edit('Initial width', 720)
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
+  await edit('Edited default width', 720)
+
+  await openScoreSettings(page)
+  await page.getByRole('slider', { name: '乐谱宽度', exact: true }).fill('32')
+  await expect(svg).toHaveAttribute('width', '768')
+  await page.keyboard.press('Escape')
+  await edit('Edited manual width', 768)
+  await selectNotationMode(page, '固定调')
+  await expect(svg).toHaveAttribute('width', '768')
+  await openScoreSettings(page)
+  await page.getByRole('switch', { name: '分页', exact: true }).click()
+  await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect(svg).toHaveAttribute('width', '768')
+  await page.keyboard.press('Escape')
+  await edit('Continuous manual width', 768)
+
+  await openScoreSettings(page)
+  await page.getByRole('switch', { name: '分页', exact: true }).click()
+  await page.getByRole('button', { name: '还原宽度', exact: true }).click()
+  await expect(svg).toHaveAttribute('width', '720')
+  await page.keyboard.press('Escape')
+  await edit('Edited reset width', 720)
+})
+
 test('renders tied full beats as sustain dashes and maps a dash click to its measure start', async ({ page }) => {
   const source = '{title=Sustain Test}{4/4}\nN: 6~ 6~ 6~ 6 |||\nL: 白'
   await page.goto('/editor')
@@ -82,7 +119,7 @@ test('highlights numbered notation during playback with tuplets and a bass voice
 test('export preview reuses current display settings and offers PNG and PDF', async ({ page }) => {
   await page.goto('/scores/huan_le_song_01')
   await openScoreSettings(page)
-  await page.getByRole('slider', { name: '乐谱宽度' }).fill('600')
+  await page.getByRole('slider', { name: '乐谱宽度' }).fill('25')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
   await openScoreSettings(page)
