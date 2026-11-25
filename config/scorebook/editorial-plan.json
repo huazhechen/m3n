@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 108,
+  "sourceCount": 109,
   "sections": [
     {
       "id": "basics",
@@ -344,6 +344,14 @@
       "section": "instrumental",
       "group": "现代器乐小品与表情",
       "reason": "二二拍、十六分节奏、半音变化、连奏、力度渐变与延长记号"
+    },
+    {
+      "id": "g_xian_shang_de_yong_tan_diao",
+      "file": "g_xian_shang_de_yong_tan_diao_01.m3n",
+      "title": "G弦上的咏叹调",
+      "section": "instrumental",
+      "group": "古典抒情与气息控制",
+      "reason": "长音延续、十六分节奏、临时变音、跨小节连奏与两段反复"
     },
     {
       "id": "meng_huan_qu",
