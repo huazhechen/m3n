@@ -42,6 +42,7 @@ if (process.argv[2] === '--worker') {
       if (id === '\0parity-plan') return `export default ${JSON.stringify(fixtures.plan)}`
       if (id === '\0parity-samples') return `const sources = ${JSON.stringify(fixtures.sources)};
         export const presetScores = ${JSON.stringify(fixtures.files.map((sourcePath, index) => ({ slug: String(index), sourcePath })))};
+        export async function preparePresetScores() {};
         export async function loadPresetScore(slug) { return sources[Number(slug)] }`
     } })
     await build({ plugins, configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') },

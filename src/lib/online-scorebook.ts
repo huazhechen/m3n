@@ -5,7 +5,7 @@ import { inspectScorePages } from '../../tools/lib/score-geometry.mjs'
 import { parseM3NDocument } from '@m3n/notation'
 import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
-import { loadPresetScore, presetScores } from './samples'
+import { loadPresetScore, presetScores, preparePresetScores } from './samples'
 import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplaySettings } from './scorebook-renderer'
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
@@ -14,7 +14,7 @@ const bookStyle = scoreLayoutConfig.scorebook
 
 
 export const scorebookTitle = plan.title
-export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'preparing' | 'measuring' | 'packing' | 'rendering' }
+export type ScorebookProgress = { completed: number; total: number; title: string; indeterminate?: boolean; phase?: 'downloading' | 'preparing' | 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
   measurementTimings: { auditLayout: boolean; totalMs: number; stages: Record<string, number>; scores: {
     file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: WidthTimings }[]
@@ -122,6 +122,11 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
   const entries: BookEntry[] = [], music: SVGSVGElement[] = []
   const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
   try {
+    signal.throwIfAborted()
+    await preparePresetScores({ signal, onProgress: value => {
+      onProgress({ phase: 'downloading', completed: value.completed, total: value.total,
+        indeterminate: value.installing, title: value.installing ? '正在安装字体…' : '' })
+    } })
     signal.throwIfAborted()
     onProgress({ completed: 0, total: plan.entries.length, title: '封面与目录', phase: 'preparing' })
     await pause()

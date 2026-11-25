@@ -6,6 +6,15 @@ export type ScoreFontResource = { file: string; url: string; webUrl?: string; ch
 const buffers = new Map<string, Promise<Uint8Array>>()
 const installed = new Map<string, Promise<void>>()
 const coverage = new Map<string, Set<string>>()
+let bundledCjk: ScoreFontResource | undefined
+
+/** Seed one shared download for screen installation, PNG outlines and PDF subsets. */
+export function registerScoreFontBundle(fonts: readonly (ScoreFontResource & { data: Uint8Array })[]): void {
+  for (const font of fonts) {
+    buffers.set(font.file, Promise.resolve(font.data))
+    if (font.file === 'NotoSansSC-library.ttf') bundledCjk = font
+  }
+}
 const supports = (font: ScoreFontResource, char: string) => {
   let chars = coverage.get(font.file)
   if (!chars) { chars = new Set(font.characters); coverage.set(font.file, chars) }
@@ -23,6 +32,7 @@ export function scoreFontText(value: unknown): string {
 
 export function scoreCjkFont(text: string): ScoreFontResource {
   const chars = [...new Set(text)].filter(c => !/\s|[\u200B\u2800]/u.test(c) && !supports(LATIN_FONTS[0], c) && !supports(BRAVURA_FONTS[0], c))
+  if (bundledCjk && chars.every(c => supports(bundledCjk!, c))) return bundledCjk
   const font = [...CJK_FONTS].sort((a, b) => a.bytes - b.bytes).find(font => chars.every(c => supports(font, c)))
   if (!font) throw new Error('乐谱包含三种字体均未覆盖的字符，请检查文字。')
   return font
@@ -67,7 +77,7 @@ function install(font: ScoreFontResource, family: string) {
   let promise = installed.get(key)
   if (!promise) {
     promise = (async () => {
-      const source = font.webUrl ? `url("${font.webUrl}")` : Uint8Array.from(await loadScoreFont(font))
+      const source = font.webUrl && !buffers.has(font.file) ? `url("${font.webUrl}")` : Uint8Array.from(await loadScoreFont(font))
       const face = new FontFace(family, source, {
         weight: String(font.weight ?? scoreLayoutConfig.fonts.regularWeight), style: font.style ?? 'normal', unicodeRange: unicodeRange(font.characters),
       })

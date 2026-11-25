@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { build } from 'vite'
+import { gunzipSync } from 'node:zlib'
 
 test('production HTML keeps hashed entry scripts and deferred application chunks external', async () => {
   const root = await mkdtemp(join(tmpdir(), 'm3n-hosting-build-'))
@@ -81,22 +82,27 @@ test('score edits, additions, book metadata and font updates preserve every Java
       const files = await readdir(join(root, 'dist/assets/v2'))
       const js = Object.fromEntries(await Promise.all(files.filter(file => file.endsWith('.js')).map(async file => [file, await readFile(join(root, 'dist/assets/v2', file), 'utf8')])))
       const catalog = JSON.parse(await readFile(join(root, 'dist/score-catalog.json'), 'utf8'))
+      const packedSources = await readFile(join(root, 'dist', catalog.bundles.sources.url.slice('/score/'.length)))
+      assert.equal(packedSources.length, catalog.bundles.sources.bytes)
+      const sources = JSON.parse(gunzipSync(packedSources))
       for (const score of catalog.scores) {
-        assert.ok((await readFile(join(root, 'dist', score.sourceUrl), 'utf8')).includes('|||'))
-        assert.equal(score.fontPreloads.length, 3)
-        assert.deepEqual(score.fontPreloads.map(font => font.as), ['font', 'font', 'font'])
-        for (const { url } of score.fontPreloads) {
-          assert.match(url, /^\/score\/assets\/v2\/.*\.woff2$/)
-          assert.equal((await readFile(join(root, 'dist', url.slice('/score/'.length)))).subarray(0, 4).toString(), 'wOF2')
-        }
+        assert.ok(sources[score.sourcePath].includes('|||'))
+        assert.equal(score.fontPreloads, undefined)
       }
+      const packedFonts = await readFile(join(root, 'dist', catalog.bundles.fonts.url.slice('/score/'.length)))
+      assert.equal(packedFonts.length, catalog.bundles.fonts.bytes)
+      const fonts = gunzipSync(packedFonts), indexLength = fonts.readUInt32LE(0)
+      const index = JSON.parse(fonts.subarray(4, 4 + indexLength))
+      assert.deepEqual(index.map(font => font.file), ['NotoSansSC-library.ttf', 'BarlowSemiCondensed-Medium.ttf', 'Bravura.ttf'])
+      assert.ok(index.every(font => fonts.readUInt32BE(4 + indexLength + font.offset) === 0x00010000))
       return { js, catalog }
     }
     const before = await compile()
     await writeFile(join(root, 'src/scores/one.m3n'), '{title=One revised}\n{1=C}\n{4/4}\n4 3 2 1 |||\n')
     const edited = await compile()
     assert.deepEqual(edited.js, before.js)
-    assert.notEqual(edited.catalog.scores[0].sourceUrl, before.catalog.scores[0].sourceUrl)
+    assert.notEqual(edited.catalog.bundles.sources.url, before.catalog.bundles.sources.url)
+    assert.equal(edited.catalog.bundles.fonts.url, before.catalog.bundles.fonts.url)
     await writeFile(join(root, 'src/scores/two.m3n'), '{title=Two}\n{1=C}\n{4/4}\n1 1 1 1 |||\n')
     await writeFile(join(root, 'config/scorebook/library-categories.json'), '[{"id":"new","title":"New category","files":["two.m3n"]}]')
     await writeFile(join(root, 'src/assets/builtin-pdf-text.ttf'), 'font two')
@@ -104,7 +110,7 @@ test('score edits, additions, book metadata and font updates preserve every Java
     const added = await compile()
     assert.deepEqual(added.js, before.js)
     assert.equal(added.catalog.scores.length, 2)
-    assert.equal(added.catalog.scores.find(score => score.slug === 'one').sourceUrl, edited.catalog.scores[0].sourceUrl)
+    assert.notEqual(added.catalog.bundles.sources.url, edited.catalog.bundles.sources.url)
     assert.equal(added.catalog.pdfFontUrl, undefined)
     assert.equal(added.catalog.plan, undefined)
   } finally { await rm(root, { recursive: true, force: true }) }

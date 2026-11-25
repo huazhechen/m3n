@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { libraryFontBundle } from './library-bundles.ts'
 
 const root = resolve(import.meta.dirname, '..')
 const recordPath = join(root, 'config/score-artifacts.json')
@@ -23,6 +24,7 @@ function rendererInputs() {
   inputs.push('tools/lib/numbered-width-measurement.mjs', 'tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/prepare-staff-glyphs.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
   for (const file of readdirSync(assetPath).filter(file => /^(Barlow|Bravura)/.test(file))) inputs.push(`packages/numbered-notation/src/font-assets/${file}`)
   inputs.push('config/scorebook/editorial-plan.json')
+  inputs.push('tools/prepare-library-fonts.py')
   return [...new Set(inputs)].sort()
 }
 
@@ -66,10 +68,16 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   const { previous, stale, deleted } = staleScores()
   if (check) {
     assert(!stale.length && !deleted.length, `乐谱生成结果过期，请运行 npm run prepare:scores：\n${[...stale, ...deleted].join('\n')}`)
-    console.log('Font subsets match every score; width selection runs in the browser.')
+    await libraryFontBundle()
+    console.log('Font subsets and shared library TTFs match every score; width selection runs in the browser.')
     return
   }
-  if (!stale.length && !deleted.length) { console.log('Score artifacts are current.'); return }
+  if (!stale.length && !deleted.length) {
+    try { await libraryFontBundle() }
+    catch { execFileSync(python(), ['tools/prepare-library-fonts.py'], { cwd: root, stdio: 'inherit' }) }
+    if (staged) execFileSync('git', ['add', '--', 'tools/fonts/library'], { cwd: root })
+    console.log('Score artifacts are current.'); return
+  }
   if (staged) assertFullyStaged(stale)
   const interpreter = python()
   console.log(`Preparing font subsets for ${stale.length} changed scores.`)
@@ -81,6 +89,7 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   for (const [file, source] of snapshots) assert.equal(read(file).toString(), source, `乐谱在生成期间发生变化：${file}`)
   execFileSync(interpreter, ['tools/prepare-score-fonts.py'], { cwd: root, stdio: 'inherit' })
   execFileSync(interpreter, ['tools/prepare-staff-glyphs.py'], { cwd: root, stdio: 'inherit' })
+  execFileSync(interpreter, ['tools/prepare-library-fonts.py'], { cwd: root, stdio: 'inherit' })
   const preparedFingerprint = rendererFingerprint()
   const { CJK_FONTS, LATIN_FONTS, BRAVURA_FONTS } = await import('../packages/numbered-notation/src/font-resources.ts?prepared=' + Date.now())
   const entries = { ...previous.entries }
@@ -97,7 +106,7 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   const output = JSON.stringify({ version: 1, staffGeneration: 'deferred', rendererSha256: preparedFingerprint, fontManifestSha256: hash(read(fontManifestFile)), entries }, null, 2) + '\n'
   writeFileSync(recordPath + '.tmp', output); renameSync(recordPath + '.tmp', recordPath)
   assert.equal(preparedFingerprint, rendererFingerprint(), 'Renderer changed while preparing score artifacts; rerun the command.')
-  if (staged) execFileSync('git', ['add', '--', ...stale, 'config/score-artifacts.json', 'packages/numbered-notation/src/font-assets', 'packages/numbered-notation/src/font-resources.ts', 'packages/score-renderer/src/staff/staff-glyphs.json'], { cwd: root, stdio: 'inherit' })
+  if (staged) execFileSync('git', ['add', '--', ...stale, 'config/score-artifacts.json', 'packages/numbered-notation/src/font-assets', 'packages/numbered-notation/src/font-resources.ts', 'packages/score-renderer/src/staff/staff-glyphs.json', 'tools/fonts/library'], { cwd: root, stdio: 'inherit' })
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

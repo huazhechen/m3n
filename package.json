@@ -38,6 +38,7 @@
     "test:pdf-font:full": "node --expose-gc tools/builtin-pdf-font.test.mjs --full-font",
     "prepare": "node tools/install-git-hooks.mjs",
     "prepare:scores": "node tools/score-artifacts.mjs",
+    "prepare:library-fonts": "node tools/prepare-library-fonts.mjs",
     "check:score-artifacts": "node tools/score-artifacts.mjs --check"
   },
   "dependencies": {

@@ -5,8 +5,9 @@ declare module 'virtual:m3n-works-catalog' {
 }
 
 declare module 'virtual:m3n-score-catalog' {
-  const scores: Array<import('@m3n/notation').PresetScoreMetadata & { sourceUrl: string; sourcePath: string; modifiedAt: number; fontPreloads: Array<{ url: string; as: 'font' | 'fetch' }>; category?: { id: string; title: string; order: number; itemOrder: number } }>
+  const scores: Array<import('@m3n/notation').PresetScoreMetadata & { sourcePath: string; modifiedAt: number; category?: { id: string; title: string; order: number; itemOrder: number } }>
   export function initializeCatalog(): Promise<void>
+  export function prepareCatalogResources(options?: import('./lib/library-resources').LibraryResourceOptions): Promise<void>
   export function loadScoreSource(score: (typeof scores)[number]): Promise<string>
   export default scores
 }

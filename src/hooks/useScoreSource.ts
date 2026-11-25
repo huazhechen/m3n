@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { isLocalScoreId, loadLocalScore } from '../lib/local-scores'
-import { loadPresetScore, presetScores } from '../lib/samples'
+import { loadPresetScore, presetScores, preparePresetScores } from '../lib/samples'
 import { loadSharedScore } from '../lib/shared-scores'
 
 type ScoreSourceState = {
@@ -12,6 +12,7 @@ type ScoreSourceState = {
 
 export async function loadScoreSource(id: string, collection: 'scores' | 'works' = 'scores'): Promise<string | null> {
   if (collection === 'works') return (await import('../lib/works')).loadWorkScore(id)
+  await preparePresetScores()
   if (isLocalScoreId(id)) return loadLocalScore(id)?.source ?? null
   if (presetScores.some(score => score.slug === id)) return loadPresetScore(id)
   return (await loadSharedScore(id))?.source ?? null

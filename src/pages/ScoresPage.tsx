@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
 import { NavActionIcon, TopNav } from '../components/TopNav'
 import { deleteLocalScore, listLocalScores, type LocalScore } from '../lib/local-scores'
-import { presetScores, type PresetScore } from '../lib/samples'
+import { presetScores, preparePresetScores, type PresetScore } from '../lib/samples'
 import { sortScoresByTitle, sortScoresByModifiedTime, scoreTitleInitial } from '../lib/score-order'
 import { LibraryIndex } from '../components/LibraryIndex'
 import { matchesScoreSearch } from '../lib/score-search'
@@ -205,6 +205,8 @@ export function ScoresPage() {
   const showIndex = view === 'alphabetical' && groups.length >= 3 && scores.length >= 12
   useEffect(() => {
     setLocalScores(listLocalScores())
+    // Warm both shared packages on library entry; readers and exports retry failures.
+    void preparePresetScores().catch(() => {})
   }, [])
   return (
     <main>

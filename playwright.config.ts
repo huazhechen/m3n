@@ -18,7 +18,10 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${previewPort}`,
     browserName,
     channel: browserName === 'chromium' && !systemChromium ? 'msedge' : undefined,
-    launchOptions: browserName === 'chromium' && systemChromium ? { executablePath: systemChromium } : undefined,
+    launchOptions: browserName === 'chromium' ? {
+      ...(systemChromium ? { executablePath: systemChromium } : {}),
+      args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=384'],
+    } : undefined,
     headless: true,
   },
   webServer: {

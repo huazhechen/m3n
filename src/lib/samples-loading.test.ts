@@ -1,42 +1,26 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ load: vi.fn(), fonts: [
-  { url: '/score/assets/v2/latin.woff2', as: 'font' },
-  { url: '/score/assets/v2/music.woff2', as: 'font' },
-  { url: '/score/assets/v2/text.woff2', as: 'font' },
-] }))
+const mocks = vi.hoisted(() => ({ load: vi.fn(), prepare: vi.fn() }))
 vi.mock('virtual:m3n-score-catalog', () => ({
-  default: [{ slug: 'test', fontPreloads: mocks.fonts }], loadScoreSource: mocks.load,
+  default: [{ slug: 'test', sourcePath: 'test.m3n' }], loadScoreSource: mocks.load,
+  prepareCatalogResources: mocks.prepare, initializeCatalog: async () => {},
 }))
-import { loadPresetScore } from './samples'
+import { loadPresetScore, preparePresetScores } from './samples'
 
-afterEach(() => { document.head.replaceChildren(); vi.resetAllMocks() })
+afterEach(() => { vi.resetAllMocks() })
 
-it('starts all score fonts while the score source is still pending and reuses preloads', async () => {
-  let complete!: (source: string) => void
-  const source = new Promise<string>(resolve => { complete = resolve })
-  mocks.load.mockImplementation(() => {
-    const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="preload"]')]
-    expect(links.map(link => new URL(link.href).pathname)).toEqual(mocks.fonts.map(font => font.url))
-    expect(links.every(link => link.as === 'font' && link.crossOrigin === 'anonymous')).toBe(true)
-    return source
-  })
-  const first = loadPresetScore('test')
-  const repeated = loadPresetScore('test')
-  expect(mocks.load).toHaveBeenCalledTimes(2)
-  expect(document.querySelectorAll('link[rel="preload"]')).toHaveLength(3)
-  complete('{title=Test}\n1 2 3 4')
-  expect(await first).toBe(await repeated)
+it('reads sources from the shared catalog without starting per-score font preloads', async () => {
+  mocks.load.mockResolvedValue('source')
+  expect(await loadPresetScore('test')).toBe('source')
+  expect(document.querySelectorAll('link[rel="preload"]')).toHaveLength(0)
+  expect(mocks.load).toHaveBeenCalledWith({ slug: 'test', sourcePath: 'test.m3n' })
+  expect(await loadPresetScore('missing')).toBeNull()
+  expect(mocks.load).toHaveBeenCalledOnce()
 })
 
-it('retries a failed font preload when reopening the score', async () => {
-  mocks.load.mockResolvedValue('source')
-  await loadPresetScore('test')
-  const failed = document.querySelector<HTMLLinkElement>('link[rel="preload"]')!
-  failed.dispatchEvent(new Event('error'))
-  expect(document.querySelectorAll('link[rel="preload"]')).toHaveLength(2)
-  await loadPresetScore('test')
-  expect(document.querySelectorAll('link[rel="preload"]')).toHaveLength(3)
-  expect(failed.isConnected).toBe(false)
+it('exposes shared preparation with byte progress and cancellation', async () => {
+  const options = { signal: new AbortController().signal, onProgress: vi.fn() }
+  await preparePresetScores(options)
+  expect(mocks.prepare).toHaveBeenCalledWith(options)
 })

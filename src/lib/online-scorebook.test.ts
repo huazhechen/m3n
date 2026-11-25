@@ -16,6 +16,7 @@ vi.mock('../../tools/lib/score-geometry.mjs', () => ({ inspectScorePages: mocks.
 vi.mock('./samples', () => ({
   presetScores: [{ slug: 'second', sourcePath: 'second.m3n', preferredWidth: 680 }, { slug: 'first', sourcePath: 'first.m3n', preferredWidth: 680 }],
   loadPresetScore: mocks.load,
+  preparePresetScores: async () => {},
 }))
 vi.mock('@m3n/numbered-notation', () => ({
   NumberedTextMeasurementCache: class {}, NumberedLayoutTask: class {},

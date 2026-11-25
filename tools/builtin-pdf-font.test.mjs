@@ -11,11 +11,13 @@ test('editor text outside score subsets selects the full font without loading it
   assert.equal(scoreCjkFont('龘').file, 'NotoSansSC-full.ttf')
 })
 
-const files = [scoreFont.file]
-if (process.argv.includes('--full-font')) files.push('NotoSansSC-full.ttf')
-for (const file of files) {
+const assetUrl = file => new URL(`../packages/numbered-notation/src/font-assets/${file}`, import.meta.url)
+const files = new Map([[scoreFont.file, assetUrl(scoreFont.file)],
+  ['NotoSansSC-library.ttf', new URL('./fonts/library/NotoSansSC-library.ttf', import.meta.url)]])
+if (process.argv.includes('--full-font')) files.set('NotoSansSC-full.ttf', assetUrl('NotoSansSC-full.ttf'))
+for (const [file, url] of files) {
   test(`PDF TrueType subsetting preserves every outline (${file})`, async () => {
-    const bytes = readFileSync(new URL(`../packages/numbered-notation/src/font-assets/${file}`, import.meta.url))
+    const bytes = readFileSync(url)
     const codes = fontkit.create(bytes).characterSet
     // Audit every glyph without retaining the complete font's decoded outlines.
     // A new source font per batch also releases fontkit's glyph caches.
