@@ -3,7 +3,7 @@ import type { ScoreDocument } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
 import { textMeasurer } from './layout-svg.js'
-import { createStaffVexPreparation } from './vexflow-engine.js'
+import { createStaffPreparation } from './staff-engine.js'
 
 type ProjectionSettings = { transpose?: number; includeBass?: boolean; tempoScale?: number }
 /** Created after font preparation for one immutable score and one selection task. */
@@ -14,7 +14,7 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const document = projectStaffDocument(score, settings.transpose, settings.includeBass)
   document.measures = document.measures.map(m => ({ ...m, tempo: m.tempo * tempoScale }))
   const measure = textMeasurer()
-  const preparation = createStaffVexPreparation()
+  const preparation = createStaffPreparation()
   return {
     document, measure, preparation, minimum: createStaffMeasureMinimum(document.hasBass, measure, preparation),
     assertCompatible(candidate: ScoreDocument, next: ProjectionSettings) {

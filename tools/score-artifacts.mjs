@@ -18,9 +18,9 @@ export function sourceFiles() {
 }
 
 function rendererInputs() {
-  const inputs = ['packages/notation/src', 'packages/numbered-notation/src'].flatMap(filesBelow)
+  const inputs = ['packages/notation/src', 'packages/numbered-notation/src', 'packages/score-renderer/src/staff'].flatMap(filesBelow)
     .filter(file => /\.(ts|json)$/.test(file) && !file.endsWith('.test.ts') && !file.endsWith('/font-resources.ts'))
-  inputs.push('tools/lib/numbered-width-measurement.mjs', 'tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
+  inputs.push('tools/lib/numbered-width-measurement.mjs', 'tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/prepare-staff-glyphs.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
   for (const file of readdirSync(assetPath).filter(file => /^(Barlow|Bravura)/.test(file))) inputs.push(`packages/numbered-notation/src/font-assets/${file}`)
   inputs.push('config/scorebook/editorial-plan.json')
   return [...new Set(inputs)].sort()
@@ -80,6 +80,7 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   // Reject edits made while font subsets were generated.
   for (const [file, source] of snapshots) assert.equal(read(file).toString(), source, `乐谱在生成期间发生变化：${file}`)
   execFileSync(interpreter, ['tools/prepare-score-fonts.py'], { cwd: root, stdio: 'inherit' })
+  execFileSync(interpreter, ['tools/prepare-staff-glyphs.py'], { cwd: root, stdio: 'inherit' })
   const preparedFingerprint = rendererFingerprint()
   const { CJK_FONTS, LATIN_FONTS, BRAVURA_FONTS } = await import('../packages/numbered-notation/src/font-resources.ts?prepared=' + Date.now())
   const entries = { ...previous.entries }
@@ -96,7 +97,7 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   const output = JSON.stringify({ version: 1, staffGeneration: 'deferred', rendererSha256: preparedFingerprint, fontManifestSha256: hash(read(fontManifestFile)), entries }, null, 2) + '\n'
   writeFileSync(recordPath + '.tmp', output); renameSync(recordPath + '.tmp', recordPath)
   assert.equal(preparedFingerprint, rendererFingerprint(), 'Renderer changed while preparing score artifacts; rerun the command.')
-  if (staged) execFileSync('git', ['add', '--', ...stale, 'config/score-artifacts.json', 'packages/numbered-notation/src/font-assets', 'packages/numbered-notation/src/font-resources.ts'], { cwd: root, stdio: 'inherit' })
+  if (staged) execFileSync('git', ['add', '--', ...stale, 'config/score-artifacts.json', 'packages/numbered-notation/src/font-assets', 'packages/numbered-notation/src/font-resources.ts', 'packages/score-renderer/src/staff/staff-glyphs.json'], { cwd: root, stdio: 'inherit' })
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

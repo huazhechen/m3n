@@ -1,37 +1,24 @@
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { build } from 'vite'
+import { execFileSync } from 'node:child_process'
 import { chromium } from '@playwright/test'
 
 const filter=process.argv.find(a=>a.startsWith('--score='))?.slice(8)
 const measureNumbers = process.argv.includes('--measure-numbers')
+const screenshots = process.argv.includes('--screenshots')
+const selected = file => !filter || filter.split(',').some(part => file.includes(part))
 const root = resolve(import.meta.dirname, '..'),
   output = join(root, '.tmp/staff-layout-audit/verification-' + (filter??'all') + (measureNumbers ? '-numbers' : ''))
 mkdirSync(output, { recursive: true })
-await build({
-  configFile: false,
-  logLevel: 'error',
-  base: '/',
-  define: { 'import.meta.url': JSON.stringify('http://staff-audit.local/bundle.js') },
-  build: {
-    outDir: join(output, 'bundle'),
-    emptyOutDir: true,
-    minify: false,
-    lib: {
-      entry: join(root, 'tools/staff-width-layout.mjs'),
-      name: 'staffWidths',
-      formats: ['iife'],
-      fileName: () => 'bundle.js',
-    },
-  },
-})
+execFileSync(process.execPath, [join(root, 'tools/build-staff-bundle.mjs'), `--output=${join(output, 'bundle')}`, '--origin=http://staff-audit.local'], { stdio: 'inherit' })
+
 const inputs = ['scores', 'works']
   .flatMap((scope) =>
     readdirSync(join(root, 'src', scope))
       .filter((f) => f.endsWith('.m3n'))
       .map((file) => ({ file: `${scope}/${file}`, source: readFileSync(join(root, 'src', scope, file), 'utf8') })),
   )
-  .filter((item) => !filter || item.file.includes(filter))
+  .filter((item) => selected(item.file))
 const fixtures = [
   { file: 'fixture/tuplet-groups', source: '{4/4}\nN: (([1 2 3:2]) ([4 5 6:2])) 1 2 3 | ([1 2 3 4 5:3]) 1 2 (3) | 1 2 3 ([0 0 3d:2]) |||' },
   { file: 'fixture/arpeggio-graces', source: '{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |||' },
@@ -60,7 +47,7 @@ const fixtures = [
   },
 ]
 const entries = []
-for (const input of [...fixtures.filter(item => !filter || item.file.includes(filter)), ...inputs]) {
+for (const input of [...fixtures.filter(item => selected(item.file)), ...inputs]) {
   const browser = await chromium.launch({
     executablePath:
       process.env.CHROMIUM_PATH ||
@@ -90,7 +77,7 @@ for (const input of [...fixtures.filter(item => !filter || item.file.includes(fi
     )
     entries.push({ file: input.file, ...result })
     console.log(input.file, result.pageCount, result.outside.length, result.overlaps.length)
-    if(result.outside.length||result.overlaps.length){
+    if(result.outside.length||result.overlaps.length||screenshots){
       const svgs=await page.evaluate(({source,width,measureNumbers,settings})=>window.staffWidths.preview(source,width,{...settings,measureNumbers}),{...input,width,measureNumbers})
       const name=input.file.replaceAll('/','_')
       svgs.forEach((svg,i)=>writeFileSync(join(output,`${name}-${i+1}.svg`),svg))

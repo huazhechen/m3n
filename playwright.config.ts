@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test'
 import { existsSync } from 'node:fs'
 
-const systemChromium = ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser']
+const systemChromium = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser']
   .find((path) => existsSync(path))
 
 const previewPort = Number(process.env.M3N_E2E_PORT ?? 4173)
@@ -22,7 +22,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: `VITE_BASE_URL=/ VITE_SUBMIT_MODE=local npm run build -- --outDir ${previewOutput} && VITE_BASE_URL=/ VITE_SUBMIT_MODE=local npm run preview -- --outDir ${previewOutput} --host 127.0.0.1 --port ${previewPort}`,
+    command: `${process.env.M3N_E2E_SKIP_BUILD === '1' ? '' : `VITE_BASE_URL=/ VITE_SUBMIT_MODE=local npm run build -- --outDir ${previewOutput} && `}node tools/serve-built-web.mjs --root=${previewOutput} --port=${previewPort}`,
     url: `http://127.0.0.1:${previewPort}`,
     reuseExistingServer: true,
     timeout: 60_000,

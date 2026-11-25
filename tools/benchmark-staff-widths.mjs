@@ -4,10 +4,8 @@ import {existsSync,mkdirSync,readFileSync,readdirSync,renameSync,writeFileSync} 
 import {cpus} from 'node:os'
 import {dirname,join,resolve} from 'node:path'
 import {execFileSync} from 'node:child_process'
-import {build} from 'vite'
 import {chromium} from '@playwright/test'
 import {chooseBestWidth,widthCandidates,widthSearchStrategy} from './scorebook-width.mjs'
-import {staffBenchmarkInstrumentation} from './lib/staff-benchmark-instrumentation.mjs'
 
 const root=resolve(import.meta.dirname,'..')
 const argument=name=>process.argv.find(value=>value.startsWith(`--${name}=`))?.slice(name.length+3)
@@ -30,9 +28,7 @@ const packageStarted=performance.now()
 if(!argument('bundle'))execFileSync('npm',['run','build:packages'],{cwd:root,stdio:'inherit'})
 const packageBuildMs=performance.now()-packageStarted
 const started=performance.now()
-if(!argument('bundle'))await build({configFile:false,logLevel:'error',base:'/',plugins:instrument?[staffBenchmarkInstrumentation()]:[],
- define:{'import.meta.url':JSON.stringify('http://staff-benchmark.local/bundle.js')},build:{outDir:temp,emptyOutDir:true,minify:false,
- lib:{entry:join(root,'tools/staff-width-layout.mjs'),name:'staffWidths',formats:['iife'],fileName:()=>'bundle.js'}}})
+if(!argument('bundle'))execFileSync(process.execPath,[join(root,'tools/build-staff-bundle.mjs'),`--output=${temp}`,'--origin=http://staff-benchmark.local',...(instrument?['--instrument']:[])],{cwd:root,stdio:'inherit'})
 const bundlePath=argument('bundle')?resolve(argument('bundle')):join(temp,'bundle.js')
 const bundleMs=performance.now()-started
 const report={revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),

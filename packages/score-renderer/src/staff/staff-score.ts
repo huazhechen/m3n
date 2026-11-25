@@ -1,6 +1,6 @@
 import { SCORE_TEXT_FONT, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
-import { findAll, hasClass, element, translate, moveInk, xml, type XmlNode } from './layout-svg.js'
+import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
 import { paginateStaff, type StaffSystem, type StaffPage } from './system-layout.js'
 import { staffHeader } from './staff-header.js'
@@ -16,7 +16,7 @@ export type StaffSettings = {
   width?: number; transpose?: number; tempoScale?: number; measureNumbers?: boolean
   includeBass?: boolean; pageMargin?: number; coreGap?: number
 }
-/** The optional module embeds its music outlines; there is no engine download. */
+/** Fonts are prepared per score; there is no separate engine resource. */
 export async function prepareStaffResources() {}
 
 export async function prepareStaffScore(score: ScoreDocument, settings: StaffSettings, signal?: AbortSignal, task?: StaffMeasurementTask) {
@@ -90,6 +90,17 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     if (cache.has(paged)) return
     const result = layout(width)
     const pages = outputPages(result, paged)
+    // Publish local painted bounds for interaction; SVG font line boxes can
+    // extend far beyond the actual music glyphs.
+    for (const system of result.systems) {
+      const geometry = new SvgGeometry(system.node, measure, true)
+      const systemBox = geometry.ink(element('g', {}, system.node.children))
+      system.node.attributes['data-m3n-ink-bounds'] = [systemBox.left, systemBox.top, systemBox.right - systemBox.left, systemBox.bottom - systemBox.top].join(' ')
+      for (const group of findAll(system.node, n => hasClass(n, 'measure'))) {
+        const box = geometry.ink(element('g', {}, group.children))
+        group.attributes['data-m3n-ink-bounds'] = [box.left, box.top, box.right - box.left, box.bottom - box.top].join(' ')
+      }
+    }
     cache.set(
       paged,
       pages.map((page, index) => {
@@ -131,54 +142,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const host = document.createElement('div')
       host.innerHTML = text
       const svg = host.querySelector('svg')!
-      // Resolve glyph references inside each page. Both PNG and the existing vector PDF
-      // writer then consume ordinary paths without another graphics dependency.
-      for (const use of svg.querySelectorAll('use')) {
-        const id = use.getAttribute('href') ?? use.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
-        const glyph = id?.startsWith('#') ? svg.querySelector(`[id="${id.slice(1)}"]`) : null
-        if (!glyph) throw new Error('五线谱字形缺失。')
-        const group = document.createElementNS(ns, 'g')
-        for (const attr of use.attributes)
-          if (!['href', 'xlink:href', 'x', 'y', 'transform'].includes(attr.name))
-            group.setAttribute(attr.name, attr.value)
-        group.setAttribute(
-          'transform',
-          `translate(${use.getAttribute('x') ?? 0} ${use.getAttribute('y') ?? 0}) ${use.getAttribute('transform') ?? ''}`,
-        )
-        const copy = glyph.cloneNode(true) as Element
-        copy.removeAttribute('id')
-        group.append(copy)
-        use.replaceWith(group)
-      }
-      // Keep the optional renderer within the existing PDF primitive contract.
-      for (const shape of svg.querySelectorAll('polygon, polyline, ellipse')) {
-        const replacement = document.createElementNS(ns, shape.localName === 'ellipse' ? 'circle' : 'path')
-        for (const attr of shape.attributes)
-          if (!['points', 'cx', 'cy', 'rx', 'ry', 'transform'].includes(attr.name))
-            replacement.setAttribute(attr.name, attr.value)
-        const transform = shape.getAttribute('transform') ?? ''
-        if (shape.localName === 'ellipse') {
-          replacement.setAttribute('r', '1')
-          replacement.setAttribute(
-            'transform',
-            `${transform} translate(${shape.getAttribute('cx') ?? 0} ${shape.getAttribute('cy') ?? 0}) scale(${shape.getAttribute('rx') ?? 0} ${shape.getAttribute('ry') ?? 0})`,
-          )
-        } else {
-          const points = (shape.getAttribute('points') ?? '')
-            .trim()
-            .split(/[\s,]+/)
-            .map(Number)
-          replacement.setAttribute(
-            'd',
-            points.reduce(
-              (path, value, index) => path + (index % 2 ? ` ${value}` : `${index ? ' L' : 'M'}${value}`),
-              '',
-            ) + (shape.localName === 'polygon' ? ' Z' : ''),
-          )
-          if (transform) replacement.setAttribute('transform', transform)
-        }
-        shape.replaceWith(replacement)
-      }
       svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
       resolveStaffText(svg, settings.measureNumbers)
       svg.querySelectorAll('defs').forEach((node) => node.remove())

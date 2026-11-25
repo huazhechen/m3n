@@ -1,5 +1,5 @@
 import { lyricSpacing, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
-import { STAFF_SCALE } from './vexflow-engine.js'
+import { STAFF_SCALE } from './staff-engine.js'
 import { element, type Ink, type FontInk, type MeasureText, type XmlNode } from './layout-svg.js'
 
 export type StaffLyricText = { ink?: FontInk; underlineWidth?: number }

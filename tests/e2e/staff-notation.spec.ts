@@ -1,8 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { readFile } from 'node:fs/promises'
 import { PDFDocument, PDFDict, PDFName } from 'pdf-lib'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 import { staffInkBounds } from '../../tools/lib/staff-ink-collisions.mjs'
+
+const widthConfig = scoreLayoutConfig.pageWidth
+const selectedWidthPattern = new RegExp(`^(?:${Array.from({ length: widthConfig.maximumMultiple - widthConfig.minimumMultiple + 1 }, (_, index) => (index + widthConfig.minimumMultiple) * widthConfig.unit).join('|')})$`)
 
 test('staff mode automatically selects width, locates source, highlights playback and keeps playback alive across modes and transposition', async ({ page }, info) => {
   const wasm: string[] = []
@@ -14,8 +18,8 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   expect(wasm).toHaveLength(0)
   await openScoreSettings(page)
-  await expect(paper).toHaveAttribute('data-selected-width', /^(?:4[89]0|[56]\d0|7[012]0)$/, { timeout: 30_000 })
-  await expect.poll(async () => page.getByRole('slider', { name: '乐谱宽度' }).inputValue()).toBe(await paper.getAttribute('data-selected-width'))
+  await expect(paper).toHaveAttribute('data-selected-width', selectedWidthPattern, { timeout: 30_000 })
+  await expect.poll(async () => Number(await page.getByRole('slider', { name: '乐谱宽度' }).inputValue()) * widthConfig.unit).toBe(Number(await paper.getAttribute('data-selected-width')))
   await selectNotationMode(page, '五线谱')
   await expect(paper).toHaveAttribute('data-notation', 'staff')
   await expect(paper.locator('g.staff').first()).toBeVisible()
@@ -48,8 +52,8 @@ test('staff mode automatically selects width, locates source, highlights playbac
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
-  await expect(paper).toHaveAttribute('data-selected-width', /^(?:4[89]0|[56]\d0|7[012]0)$/, { timeout: 30_000 })
-  await expect.poll(async () => page.getByRole('slider', { name: '乐谱宽度' }).inputValue()).toBe(await paper.getAttribute('data-selected-width'))
+  await expect(paper).toHaveAttribute('data-selected-width', selectedWidthPattern, { timeout: 30_000 })
+  await expect.poll(async () => Number(await page.getByRole('slider', { name: '乐谱宽度' }).inputValue()) * widthConfig.unit).toBe(Number(await paper.getAttribute('data-selected-width')))
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -68,14 +72,15 @@ test('staff mode automatically selects width, locates source, highlights playbac
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
   test.setTimeout(120_000)
   await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 64 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 64 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
+  await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 96 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 96 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
-  await page.getByRole('slider', { name: '乐谱宽度' }).fill('540')
+  await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(576 / widthConfig.unit))
   await page.getByRole('slider', { name: '播放速度', exact: true }).fill('137')
   const paper = page.locator('.score-paper')
   await expect.poll(async () => (await paper.locator('text').allTextContents()).join('')).toContain('137')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect.poll(() => paper.locator('.score-page-sheet').count()).toBeGreaterThan(1)
   const pageCount = await paper.locator('.score-page-sheet').count()
   expect(pageCount).toBeGreaterThan(1)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
@@ -90,6 +95,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
   if (!await pagination.isChecked()) await pagination.click()
   await expect(paper).toHaveAttribute('data-render-mode', 'paged')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await expect.poll(() => paper.locator('.score-page-sheet').count()).toBeGreaterThan(1)
   const readerPageCount = await paper.locator('.score-page-sheet').count()
   expect(readerPageCount).toBeGreaterThan(1)
   await page.keyboard.press('Escape')
@@ -109,6 +115,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
       expect(bytes.subarray(0, 4).toString()).toBe('%PDF')
       const pdf = await PDFDocument.load(bytes)
       expect(pdf.getPageCount()).toBe(readerPageCount)
+      expect(pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFDict && /Bravura/.test(object.get(PDFName.of('BaseFont'))?.toString() ?? ''))).toBe(true)
       expect(pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFDict && object.get(PDFName.of('Subtype')) === PDFName.of('Image'))).toBe(false)
     } else expect(bytes.subarray(1, 4).toString()).toBe('PNG')
   }
@@ -149,14 +156,17 @@ test('staff lyrics highlight the matching verse during a written repeat', async 
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(firstVerse).toHaveClass(/is-playing/)
   await expect(secondVerse).not.toHaveClass(/is-playing/)
-  await expect(secondVerse).toHaveClass(/is-playing/)
-  await expect(firstVerse).not.toHaveClass(/is-playing/)
-  await expect(secondVerse.locator('text').first()).toHaveCSS('fill', 'rgb(184, 130, 0)')
+  // Observe one playback frame: sequential assertions can cross a short note.
+  await expect.poll(() => paper.evaluate(element => {
+    const first = element.querySelector('[id="m3n-e-1-v1"]')!
+    const second = element.querySelector('[id="m3n-e-1-v2"]')!
+    return { first: first.classList.contains('is-playing'), second: second.classList.contains('is-playing'), fill: getComputedStyle(second.querySelector('text')!).fill }
+  })).toEqual({ first: false, second: true, fill: 'rgb(184, 130, 0)' })
 })
 
 test('a failed optional staff download leaves the notation selector available', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:notation-mode', 'staff'))
-  await page.route(/\/(?:staff-score|vexflow)[^/]*\.js$/, route => route.abort())
+  await page.route(/\/(?:staff-score|staff-engine)[^/]*\.js$/, route => route.abort())
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.render-message')).toBeVisible()
   await selectNotationMode(page, '首调')
@@ -173,8 +183,8 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   const paper = page.locator('.score-paper')
-  for (const width of [540, 640, 720]) {
-    await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(width))
+  for (const width of [576, 648, 720]) {
+    await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(width / widthConfig.unit))
     const pages = paper.locator(':scope > .score-page-sheet > svg, :scope > svg')
     await expect(pages.first()).toHaveAttribute('width', String(width))
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
@@ -189,12 +199,14 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
       if (!heading) return []
       const directions = [...system.querySelectorAll('g.dir')]
       const tempos = [...system.querySelectorAll('g.tempo')]
+      const ink = (group: Element) => (window as unknown as { staffInkBounds: (svg: Element, scope: Element) => DOMRect }).staffInkBounds(system.ownerSVGElement!, group)
+      const headingInk = ink(heading)
       return [{
         label: heading.textContent,
-        top: heading.getBoundingClientRect().top,
-        bottom: heading.getBoundingClientRect().bottom,
-        directionTop: Math.min(...directions.map(direction => direction.getBoundingClientRect().top)),
-        tempoBottom: Math.max(...tempos.map(tempo => tempo.getBoundingClientRect().bottom)),
+        top: headingInk.y,
+        bottom: headingInk.y + headingInk.height,
+        directionTop: Math.min(...directions.map(direction => ink(direction).y)),
+        tempoBottom: Math.max(...tempos.map(tempo => { const box = ink(tempo); return box.y + box.height })),
       }]
     }))
     expect(headings).toHaveLength(2)

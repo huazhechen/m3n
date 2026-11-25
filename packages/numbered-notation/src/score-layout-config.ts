@@ -68,7 +68,7 @@ const numbered = {
   collisionGapRatio: 0.5,
 }
 
-/** Staff music glyphs are sized by VexFlow; project-owned text is configured here. */
+/** Staff music glyphs use native Bravura metrics; project-owned text is configured here. */
 const staff = {
   title: 32, subtitle: 16, credit: 14, text: 16,
   annotation: 16, annotationLineHeight: 20,

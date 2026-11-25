@@ -2,6 +2,7 @@ import { scoreLayoutConfig } from '@m3n/numbered-notation'
 import { SCORE_TEXT_FONT } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
+import { staffCharacterInk } from './staff-music-font.js'
 import type { StaffNumericPath } from './staff-glyph-primitive.js'
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
@@ -342,6 +343,8 @@ export class SvgGeometry {
       }
       for (const box of saved.boxes) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }
       return
+    } else if (node.tagName === 'text' && a['font-family'] === 'Bravura') {
+      boxes = staffCharacterInk(textContent(node), num('font-size', style.size), num('x'), num('y'))
     } else if (node.tagName === 'text') {
       const size = Math.max(
         style.size,

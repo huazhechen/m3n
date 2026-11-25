@@ -34,6 +34,20 @@ describe('reading text attached to music geometry', () => {
     expect(note.scrollIntoView).toHaveBeenCalled()
     paper.remove(); control.remove()
   })
+  it('uses renderer ink bounds instead of font line boxes for hit areas', () => {
+    const paper = document.createElement('div')
+    paper.innerHTML = '<svg><g class="measure" id="m3n-measure-1-1" data-m3n-ink-bounds="10 20 100 40" /></svg>'
+    const group = paper.querySelector<SVGGElement>('g')!
+    group.getBBox = vi.fn(() => ({ x: 0, y: -200, width: 100, height: 600 }) as DOMRect)
+    const text = describeAccessibleScore(parseM3NDocument('{2/4}\nN: 1 2 |||'))
+    attachScoreReading(paper, text)
+    attachScoreReading(paper, text)
+    expect(group.getBBox).not.toHaveBeenCalled()
+    const areas = group.querySelectorAll('[data-score-reading-hitarea]')
+    expect(areas).toHaveLength(1)
+    expect(['x', 'y', 'width', 'height'].map(key => areas[0]!.getAttribute(key))).toEqual(['10', '20', '100', '40'])
+  })
+
   it('names actual measures and events and hides decorative glyphs without painting new text', () => {
     const paper = document.createElement('div')
     paper.innerHTML = '<svg role="img"><text>曲名</text><g class="system"><g class="measure" id="m3n-measure-1-1"><g class="note" id="m3n-e-1"><text>1</text></g><g class="note" id="m3n-e-1-sustain2"><text>—</text></g><text>歌词</text><g class="note" id="m3n-e-2"><text>2</text></g></g></g></svg>'

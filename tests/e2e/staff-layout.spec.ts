@@ -28,14 +28,18 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   const horizontal = () =>
     paper.locator('g.note[id] .notehead').evaluateAll((nodes) =>
       nodes.map((node) => {
-        const svg = node.ownerSVGElement!,
-          matrix = svg.getCTM()!.inverse().multiply(node.getCTM()!),
-          box = node.getBBox()
-        return {
-          id: node.parentElement!.id,
-          x: matrix.a * box.x + matrix.c * box.y + matrix.e,
-          width: box.width * matrix.a,
-        }
+        // SVG getBBox includes the music font's line box and position-based
+        // rounding. Independently measure the painted glyph at design size.
+        const glyph = node.querySelector('text')!, svg = node.ownerSVGElement!
+        const matrix = svg.getCTM()!.inverse().multiply(glyph.getCTM()!)
+        const style = getComputedStyle(glyph), context = document.createElement('canvas').getContext('2d')!
+        context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+        const ink = context.measureText(glyph.textContent!)
+        const x = Number(glyph.getAttribute('x')) - ink.actualBoundingBoxLeft
+        const y = Number(glyph.getAttribute('y'))
+        return { id: node.parentElement!.id, x: matrix.a * x + matrix.c * y + matrix.e,
+          width: (ink.actualBoundingBoxLeft + ink.actualBoundingBoxRight) * matrix.a }
+
       }),
     )
   const lines = await paper.locator('g.staff').first().locator(':scope > path').evaluateAll(paths => paths.filter(p => {
@@ -69,7 +73,14 @@ test('staff equal-measure mode changes positions without changing notehead sizes
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const sizes = () => paper.locator('g.note .notehead').evaluateAll((nodes) =>
-    nodes.map((n) => (n as SVGGraphicsElement).getBBox().width))
+    nodes.map((node) => {
+      const glyph = node.querySelector('text')!, style = getComputedStyle(glyph)
+      const context = document.createElement('canvas').getContext('2d')!
+      context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      const ink = context.measureText(glyph.textContent!)
+      const matrix = node.getCTM()!.inverse().multiply(glyph.getCTM()!)
+      return (ink.actualBoundingBoxLeft + ink.actualBoundingBoxRight) * matrix.a
+    }))
   const before = await sizes()
   await page.getByLabel('M3N source').fill(source)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')

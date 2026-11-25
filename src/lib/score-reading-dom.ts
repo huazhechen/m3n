@@ -1,3 +1,4 @@
+import { scoreInkBounds } from './score-ink-bounds'
 import type { AccessibleScore } from './score-accessibility'
 import type { ScoreDocument } from '@m3n/notation'
 
@@ -93,8 +94,9 @@ export function attachScoreReading(paper: HTMLElement, text: AccessibleScore) {
       if (!measure) continue
       // A small measure may have empty space between its notes. Give the whole
       // native group a hit area while keeping the painted notes above it.
-      if (typeof group.getBBox === 'function' && !group.querySelector(':scope > [data-score-reading-hitarea]')) {
-        const bounds = group.getBBox()
+      const painted = scoreInkBounds(group)
+      if ((painted || typeof group.getBBox === 'function') && !group.querySelector(':scope > [data-score-reading-hitarea]')) {
+        const bounds = painted ?? group.getBBox()
         const area = document.createElementNS(svgNamespace, 'rect')
         area.setAttribute('data-score-reading-hitarea', '')
         for (const attribute of ['x', 'y', 'width', 'height'] as const) area.setAttribute(attribute, String(bounds[attribute]))
