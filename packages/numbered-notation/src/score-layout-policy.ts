@@ -25,3 +25,8 @@ export function scoreAttachmentHeight(name: string): number | undefined {
   const ratio = attachmentRatios[name]
   return ratio === undefined ? undefined : scoreLayoutConfig.numbered.music * ratio
 }
+
+/** Duration springs use quarter-note units in both notation engines. */
+export function scoreRhythmicWeight(duration: number): number {
+  return Math.sqrt(Math.max(.01, duration))
+}

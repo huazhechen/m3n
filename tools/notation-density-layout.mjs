@@ -1,3 +1,4 @@
+import { selectBestWidth } from './scorebook-width.mjs'
 import { vectorScorePdf } from '../packages/score-renderer/src/score-pdf.ts'
 import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 import { analyzeM3N, A4_CONTENT_WIDTH_MM } from '@m3n/notation'
@@ -61,7 +62,7 @@ async function compareAtSize(source, width, auditLayout, includeSvg, profile, in
       staffSpaceMm: scoreLayoutConfig.staff.music / 4 * mmPerPx },
     numbered: { ...summary(numbered.candidate, numbered.prepared.quality.meanLineDensity, numbered.prepared.continuousHeight()), ...geometry(numberedInfo) },
     staff: { ...summary(staff, info.quality.meanLineDensity, render.continuousHeight()),
-      spacing: info.spacing, ...geometry(info), ...(profile ? { profile: staffProfile(render(false)) } : {}) },
+      spacing: info.spacing, measureRows: info.lines.map(line => line.measures), ...geometry(info), ...(profile ? { profile: staffProfile(render(false)) } : {}) },
   }
 }
 
@@ -97,4 +98,14 @@ function staffProfile(pages) {
       })
     })
   } finally { host.remove() }
+}
+
+
+/** Probe the same coarse and fine widths as the staff reader, then audit the winner separately. */
+export async function preferredStaffWidth(source) {
+  const analysis = analyzeM3N(source)
+  if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
+  await prepareNumberedNotationFonts(analysis.score)
+  const { best } = await selectBestWidth(width => measureStaffWidth(analysis.score, width))
+  return best.width
 }

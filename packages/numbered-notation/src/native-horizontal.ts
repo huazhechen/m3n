@@ -1,3 +1,4 @@
+import { scoreRhythmicWeight } from './score-layout-policy.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
@@ -38,7 +39,7 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
   return { opening, closing }
 }
 const minimumCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
-  const durationScale = Math.sqrt(Math.max(0.01, duration))
+  const durationScale = scoreRhythmicWeight(duration)
   // Rhythm alone determines stretch; ink and lyrics only constrain minima.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1

@@ -196,3 +196,71 @@ it('retains normal stems for flat beams and bounds shortened leap stems above th
     }
   }
 })
+
+
+it('keeps beat boundaries wider than the inside of a sixteenth-note beam at minimum width', () => {
+  const result = model('{2/4}\nN: ((5 5 5 5 5 5 5 5)) |||')
+  drawStaffMeasure(result, result.minimum, 0)
+  const notes = result.entries[0]!.flatMap(entry => entry.notes)
+  expect(result.beams.map(beam => beam.notes.length)).toEqual([4, 4])
+  const gap = (a: number, b: number) => notes[b]!.headLeft - notes[a]!.headRight
+  expect(gap(3, 4)).toBeGreaterThan(gap(1, 2) * 2)
+  expect(gap(1, 2) * scoreLayoutConfig.staff.engine.scale).toBeGreaterThan(1)
+})
+
+it('retains the slower voice spacing constraint at simultaneous onsets', () => {
+  const document = projectStaffDocument(analyzeM3N('{2/4}\nN: ((1 1 1 1 1 1 1 1)) |||\nB: 1d 2d |||').score)
+  const result = createStaffMeasure(document.measures[0]!, true, true, measureText, .25)
+  const columns = result.prepared.metrics.columns
+  expect(columns[0]!.afterGap).toBe(1)
+  expect(columns[1]!.afterGap).toBeLessThan(1)
+  expect(columns[4]!.beforeGap).toBe(1)
+})
+
+
+it('reserves ledger overhang before tightening rhythmic gaps', () => {
+  const result = model('{2/4}\nN: ((1ee 1ee 1ee 1ee 1ee 1ee 1ee 1ee)) |||')
+  drawStaffMeasure(result, result.minimum, 0)
+  const notes = result.entries[0]!.flatMap(entry => entry.notes)
+  const overhang = staffMusicSize() / 4 * .3
+  for (let i = 1; i < notes.length; i++)
+    expect(notes[i]!.headLeft - overhang).toBeGreaterThan(notes[i - 1]!.headRight + overhang)
+})
+
+
+describe('grace group engraving', () => {
+  it.each(['ac', 'ap'])('beams double %s graces upward without independent flags', kind => {
+    const result = model(`{4/4}\nN: 1{${kind}(1e 2e)} 2 3 4 |`)
+    const drawing = drawStaffMeasure(result, result.minimum, 0)
+    const groups = findAll(drawing, node => node.attributes.class === 'grace-group')
+    expect(groups).toHaveLength(1)
+    const group = groups[0]!
+    expect(findAll(group, node => node.attributes.class === 'grace')).toHaveLength(2)
+    expect(findAll(group, node => node.attributes.class === 'beam')).toHaveLength(1)
+    expect(xml(group)).not.toContain('data-m3n-glyph="flag')
+    expect(findAll(group, node => node.attributes.class === 'grace-slash')).toHaveLength(kind === 'ac' ? 1 : 0)
+    expect(result.entries[0]![0]!.notes[0]!.prepared.graces.every(child => child.note.direction === 1)).toBe(true)
+    const stems = findAll(group, node => node.attributes.class === 'stem')
+    const geometry = new SvgGeometry(drawing, measureText)
+    const beam = geometry.ink(findAll(group, node => node.attributes.class === 'beam')[0]!)
+    for (const stem of stems) {
+      const ink = geometry.ink(stem)
+      expect(ink.top).toBeLessThanOrEqual(beam.bottom)
+      expect(ink.bottom).toBeGreaterThan(beam.bottom)
+    }
+  })
+
+  it('retains single grace flags and keeps successive grace groups separate', () => {
+    const result = model('{4/4}\nN: 1{ac(7)} 2{ap(1e)} 3{ac((1e 2e 3e))}{ap(4e 5e)} 4 |')
+    const drawing = drawStaffMeasure(result, result.minimum, 0)
+    const groups = findAll(drawing, node => node.attributes.class === 'grace-group')
+    expect(groups).toHaveLength(4)
+    for (const group of groups.slice(0, 2)) {
+      expect(findAll(group, node => node.attributes.class === 'beam')).toHaveLength(0)
+      expect(xml(group)).toContain('data-m3n-glyph="flag8Up"')
+    }
+    expect(findAll(groups[2]!, node => node.attributes.class === 'beam')[0]!.children).toHaveLength(2)
+    expect(findAll(groups[3]!, node => node.attributes.class === 'beam')[0]!.children).toHaveLength(1)
+    expect(findAll(drawing, node => node.attributes.class === 'grace-slash')).toHaveLength(2)
+  })
+})

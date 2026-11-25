@@ -196,6 +196,7 @@ export function arrangeStaffSystem(
     for (const item of hairpins) {
       const center = (item.ink.top + item.ink.bottom) / 2
       const row = rows.find((row) => row.every((other) =>
+        item.node.attributes['data-m3n-staff'] === other.node.attributes['data-m3n-staff'] &&
         Math.abs(center - (other.ink.top + other.ink.bottom) / 2) <= style.attachmentRowTolerance / scale &&
         !overlapsX(item.ink, other.ink)))
       if (row) row.push(item)
@@ -209,7 +210,7 @@ export function arrangeStaffSystem(
       }
       measure.children = measure.children.filter((child) =>
         typeof child === 'string' || !row.some((item) => item.node === child))
-      measure.children.push(element('g', { class: 'm3n-hairpin-row' }, row.map((item) => item.node)))
+      measure.children.push(element('g', { class: 'm3n-hairpin-row', ...(row[0]!.node.attributes['data-m3n-staff'] === undefined ? {} : { 'data-m3n-staff': row[0]!.node.attributes['data-m3n-staff']! }) }, row.map((item) => item.node)))
     }
   }
   const groupedEndings = new Set<XmlNode>()
@@ -260,6 +261,19 @@ export function arrangeStaffSystem(
   )
   const music = attachments.length ? musicObstacles() : []
   const obstacles = [...music]
+  const placedDecorations: Array<{ lane?: number; pieces: Ink[] }> = []
+  const laneMusic = new Map<number, Ink[]>()
+  const belowMusic = (lane: number) => {
+    let pieces = laneMusic.get(lane)
+    if (!pieces) {
+      pieces = staffsByMeasure.flatMap(staffs => staffs[lane]
+        ? geometry.withoutClasses(staffs[lane]!, decorations.filter(name => name !== 'm3n-tuplet-label')) : [])
+      for (const slur of nodes(node).filter(n => hasClass(n, 'slur') && n.attributes['data-m3n-staff'] === String(lane)))
+        pieces.push(...geometry.pieces(slur))
+      laneMusic.set(lane, pieces)
+    }
+    return pieces
+  }
   for (const attachment of attachments) {
     let ink = geometry.ink(attachment)
     if (ink.right === ink.left && ink.bottom === ink.top) continue
@@ -270,10 +284,13 @@ export function arrangeStaffSystem(
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
     const localGap = hasClass(attachment, 'repeatMark') ? style.repeatMarkGap / scale : gap
-    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && lanes === 1)) {
+    const attachmentLane = attachment.attributes['data-m3n-staff']
+    const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
+    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && (lanes === 1 || attachmentLane !== undefined))) {
       // Start next to the local music, then let the normal ink avoidance
       // clear stems, curves and directions instead of preserving a fixed gap.
-      const local = music.filter(other => overlapsX(moveInk(ink, dx, 0), other, localGap / 2))
+      const local = (below && attachmentLane !== undefined ? belowMusic(Number(attachmentLane)) : music)
+        .filter(other => overlapsX(moveInk(ink, dx, 0), other, localGap / 2))
       if (local.length) dy = below
         ? Math.max(...local.map(other => other.bottom)) + localGap - ink.top
         : Math.min(...local.map(other => other.top)) - localGap - ink.bottom
@@ -282,17 +299,20 @@ export function arrangeStaffSystem(
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
+    const placementObstacles = below && lane !== undefined
+      ? [...Array.from({ length: lane + 1 }, (_, index) => belowMusic(index)).flat(),
+        ...placedDecorations.filter(item => item.lane === undefined || item.lane <= lane).flatMap(item => item.pieces)] : obstacles
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
     const clearance = ending ? (style.music * .07) / scale : localGap
     if (ending) {
       // Empty space underneath a volta's horizontal rule is not ink. Let
       // high notes and slurs fit there when they clear the hooks and number.
-      const offsets = attachmentPieces.flatMap(piece => obstacles
+      const offsets = attachmentPieces.flatMap(piece => placementObstacles
         .filter(other => overlapsX(piece, other, clearance / 2))
         .map(other => other.top - piece.bottom - clearance))
       if (offsets.length) dy = Math.min(...offsets)
     }
-    const intervals = attachmentPieces.flatMap(piece => obstacles
+    const intervals = attachmentPieces.flatMap(piece => placementObstacles
       .filter(other => overlapsX(piece, other, isHairpin(attachment) && hairpinPieces.has(other) ? 0 : clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
       .sort((a, b) => below ? a.start - b.start : b.end - a.end)
@@ -316,6 +336,13 @@ export function arrangeStaffSystem(
     }
     const placed = geometry.pieces(attachment)
     obstacles.push(...placed)
+    placedDecorations.push({ lane, pieces: placed })
+    if (below && lane !== undefined && lane + 1 < lanes) {
+      // Open the inter-staff space instead of letting a treble expression
+      // escape underneath the bass staff when its intended lane is crowded.
+      for (const piece of placed) for (const next of belowMusic(lane + 1))
+        if (overlapsX(piece, next, clearance / 2)) staffSpacing = Math.max(staffSpacing, piece.bottom + clearance - next.top)
+    }
     if (isHairpin(attachment)) placed.forEach((piece) => hairpinPieces.add(piece))
   }
   const inline = byClass('reh').filter(

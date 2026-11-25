@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { createStaffMeasureMinimum } from './line-layout.js'
+import { createStaffMeasureMinimum, planStaffLines, type StaffMeasureMinimum } from './line-layout.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { textMeasurer, xml } from './layout-svg.js'
 import { createStaffPreparation, createStaffMeasure, drawStaffMeasure } from './staff-engine.js'
@@ -54,4 +54,14 @@ describe('fixed staff measure preparation', () => {
     expect(item.fragment).not.toBe(true)
   })
 
+})
+
+
+it('counts the opening signature once when planning equal musical measure widths', () => {
+  const document = projectStaffDocument(analyzeM3N('{equal-measures=true}{4/4}\nN: 1^^ | 2^^ | 3^^ | 4^^ | 5^^ | 6^^ | 7^^ | 1e^^ |||').score)
+  const minimum: StaffMeasureMinimum = (_measure, first) => first ? 90 : 50
+  const lines = planStaffLines(document, 350, true, textMeasurer(), .25, minimum)
+  expect(lines).toHaveLength(1)
+  expect(lines[0]!.measures).toHaveLength(8)
+  expect(lines[0]!.minimum).toBe(8 * 50 + 40)
 })

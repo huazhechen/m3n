@@ -447,3 +447,28 @@ it('keeps slur endpoint clearance local instead of extending the peak over its f
   const fullBounds = new SvgGeometry(original, measure).ink(original)
   for (const edge of ['left', 'right', 'top', 'bottom'] as const) expect(bounds[edge]).toBeCloseTo(fullBounds[edge])
 })
+
+
+it('keeps grand-staff expressions attached to the indicated staff', () => {
+  const source = '{4/4}\nN: {p}{cresc}(1 2 3 4) 5 6{/} | {f}{decres=text}1e 7 6 5{/} |||\nB: {mp}{cresc}1d 2d 3d 4d{/} | {ff}{8vb}5d 6d 7d 1{/} |\nL: 春夏秋冬山川 | 天地人间'
+  const analysis = analyzeM3N(source)
+  expect(analysis.diagnostics.filter(item => item.severity === 'error')).toEqual([])
+  const document = projectStaffDocument(analysis.score)
+  const measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, .25)
+  const systems = engraveStaffSystems(document, lines, 640, measure, .25, false)
+  const expressions = systems.flatMap(system => findAll(system.node, node => hasClass(node, 'dynam') || hasClass(node, 'hairpin') || hasClass(node, 'octave')))
+  expect(expressions.length).toBeGreaterThan(4)
+  expect(expressions.every(node => ['0', '1'].includes(node.attributes['data-m3n-staff']!))).toBe(true)
+  for (const system of systems) {
+    const geometry = new SvgGeometry(system.node, measure)
+    const bass = findAll(system.node, node => hasClass(node, 'staff') && node.attributes['data-staff'] === 'bass')
+    const bassPieces = bass.flatMap(node => geometry.pieces(node))
+    for (const expression of findAll(system.node, node => hasClass(node, 'dynam') && node.attributes['data-m3n-staff'] === '0')) {
+      const ink = geometry.ink(expression)
+      const localBass = bassPieces.filter(piece => overlapsX(ink, piece))
+      expect(localBass.length).toBeGreaterThan(0)
+      expect(ink.bottom).toBeLessThan(Math.min(...localBass.map(piece => piece.top)))
+    }
+  }
+})

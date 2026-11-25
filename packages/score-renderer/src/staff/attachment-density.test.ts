@@ -38,3 +38,22 @@ it('uses the bow rise to clear a central obstacle without lifting both endpoints
   }
   expect(geometry.ink(shape).bottom).toBeCloseTo(baseline)
 })
+
+
+it.each(['dynam', 'hairpin'])('anchors a grand-staff %s to its own lane regardless of initial offset', cls => {
+  const place = (lane: number, y: number) => {
+    const staffs = [40, 180].map(top => element('g', { class: 'staff' }, [0, 10, 20, 30, 40].map(dy =>
+      element('path', { class: 'staff-line', d: `M0 ${top + dy} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1' }))))
+    const attachment = element('g', { class: cls, 'data-m3n-staff': String(lane) }, [element('rect', { x: '100', y: String(y), width: '20', height: '12' })])
+    const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [...staffs, attachment])])
+    const geometry = new SvgGeometry(node, textMeasurer())
+    arrangeStaffSystem(node, geometry, 320, new Set())
+    return geometry.ink(attachment)
+  }
+  for (const lane of [0, 1]) {
+    const near = place(lane, 95), far = place(lane, 400)
+    expect(far.top).toBeCloseTo(near.top)
+    expect((near.top - (lane ? 220.5 : 80.5)) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
+    if (!lane) expect(near.bottom).toBeLessThan(179.5)
+  }
+})

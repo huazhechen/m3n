@@ -68,7 +68,13 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
   preparation?: StaffPreparation) {
   const scale = STAFF_SCALE, rawWidth = width / scale
-  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => element('g', { class: cls }, [element('text', { x: String(x), y: String(y), 'font-size': String(size / scale), 'font-family': SCORE_TEXT_FONT, 'font-weight': String(scoreLayoutConfig.fonts.textWeight), ...attrs }, [value])])
+  const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
+    const { 'data-m3n-staff': lane, ...textAttrs } = attrs
+    return element('g', { class: cls, ...(lane === undefined ? {} : { 'data-m3n-staff': lane }) }, [
+      element('text', { x: String(x), y: String(y), 'font-size': String(size / scale),
+        'font-family': SCORE_TEXT_FONT, 'font-weight': String(scoreLayoutConfig.fonts.textWeight), ...textAttrs }, [value]),
+    ])
+  }
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
     const rows = numberedHeadingLines(value, rawWidth - style.attachmentWrapInset / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight)
     return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}))[0]!))
@@ -111,7 +117,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       let x = 0
       for (const [index, member] of line.measures.entries()) {
         const model = createStaffMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
-        const target = document.score.equalMeasures ? total / line.measures.length : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
+        const target = document.score.equalMeasures ? (total - (line.measures[0]!.head - inset)) / line.measures.length + (index ? 0 : member.head - inset) : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
         const measureNode = drawStaffMeasure(model, target, x)
         models.push(model)
         node.children.push(measureNode)
@@ -151,10 +157,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               const value = event.dynamic ?? event.prefix!
               const shape = scoreDynamicGlyph(value)
               const y = Math.max(...entry.notes.flatMap(n => n.ys)) + engine.dynamicBottomGap
-              if (shape) measureNode.children.push(element('g', { class: 'dynam', transform: `translate(${cx} ${y}) scale(${1 / scale})` }, [{
+              if (shape) measureNode.children.push(element('g', { class: 'dynam', 'data-m3n-staff': String(lane), transform: `translate(${cx} ${y}) scale(${1 / scale})` }, [{
                 tagName: 'g', attributes: {}, children: [], numericInk: [shape.ink], renderNodes: () => [readXml(shape.svg)],
               }]))
-              else measureNode.children.push(text(value, cx, y, style.dynamic, 'dynam', { 'font-style': 'italic' }))
+              else measureNode.children.push(text(value, cx, y, style.dynamic, 'dynam', { 'font-style': 'italic', 'data-m3n-staff': String(lane) }))
             }
             for (const p of event.postfixes) if (/^f[1-5]$/.test(p)) measureNode.children.push(text(p.slice(1), cx, top, style.fingering, 'fing'))
             for (const nav of event.navigation) addNavigation(nav, cx, top, measureNode)
@@ -232,17 +238,19 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
-          node.children.push(staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left)))
+          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left))
+          slur.attributes['data-m3n-staff'] = String(lane)
+          node.children.push(slur)
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
-          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam'))
+          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam', { 'data-m3n-staff': String(lane) }))
           else {
             const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc', endX = Math.max(left + (staffMusicSize() / 4 * 0.4), right)
             const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
-            parent.children.push(element('g', { class: 'hairpin' }, [element('path', { d: cresc ? `M${endX} ${y - (staffMusicSize() / 4 * 0.5)} L${left} ${y} L${endX} ${y + (staffMusicSize() / 4 * 0.5)}` : `M${left} ${y - (staffMusicSize() / 4 * 0.5)} L${endX} ${y} L${left} ${y + (staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
+            parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (staffMusicSize() / 4 * 0.5)} L${left} ${y} L${endX} ${y + (staffMusicSize() / 4 * 0.5)}` : `M${left} ${y - (staffMusicSize() / 4 * 0.5)} L${endX} ${y} L${left} ${y + (staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
           }
         } else if (interval.kind === '8va' || interval.kind === '8vb') {
           const y = interval.kind === '8va' ? yTop - engine.octaveAboveGap : low + engine.octaveBelowGap
-          node.children.push(element('g', { class: 'octave', 'data-m3n-below': String(interval.kind === '8vb') }, [
+          node.children.push(element('g', { class: 'octave', 'data-m3n-staff': String(lane), 'data-m3n-below': String(interval.kind === '8vb') }, [
             ...(a ? nodes(text(interval.kind, left, y, style.octave, 'octave')) : []),
             element('path', { d: `M${left + (a ? engine.octaveTextWidth : 0)} ${y - (staffMusicSize() / 4 * 0.4)} H${right} v${(interval.kind === '8va' ? 1 : -1) * (staffMusicSize() / 4 * 0.8)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), 'stroke-dasharray': `${(staffMusicSize() / 4 * 0.4)} ${(staffMusicSize() / 4 * 0.3)}`, fill: 'none' }),
           ]))

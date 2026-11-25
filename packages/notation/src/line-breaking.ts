@@ -1,5 +1,5 @@
 /** One legal row starting at its index in the candidate table. */
-export type LineCandidate = { end: number; density: number; penalty?: number }
+export type LineCandidate = { end: number; density: number; readingDensity?: number; penalty?: number }
 type Row = LineCandidate & { id: number; cost: number }
 type Plan = { row: Row; cost: number; previous?: Plan }
 const epsilon = 1e-12
@@ -42,7 +42,7 @@ export function planScoreLines(
         cost:
           1 +
           Math.max(0, 1 - row.density) ** 2 +
-          100 * Math.max(0, row.density - 1) ** 2 +
+          100 * Math.max(0, Math.max(row.density, row.readingDensity ?? row.density) - 1) ** 2 +
           (row.penalty ?? 0),
       }
     }),
