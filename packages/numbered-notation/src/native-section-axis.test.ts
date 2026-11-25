@@ -11,7 +11,7 @@ it.each([
   { text: '乐段', height: 14, ascent: 12 },
 ])('centers framed section $text on the measured music axis', ({ text, height, ascent }) => {
   const measurer: TextMeasurer = { measureText(value, style) {
-    if (style.fontFamily === 'M3N Numbers') return { w: 11, h: 18, baseline: 14 }
+    if (style.fontFamily === 'Barlow Semi Condensed') return { w: 11, h: 18, baseline: 14 }
     return { w: value.length * 9, h: height, baseline: ascent }
   } }
   const control = measureNativeControl('section', text, measurer)

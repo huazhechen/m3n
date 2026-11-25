@@ -88,7 +88,7 @@ try {
       }
       }
       for (const tempo of texts.filter(node => /^= \d+(?:\.\d+)?$/.test(node.textContent))) {
-        if (tempo.getAttribute('font-family') !== 'M3N Numbers') {
+        if (tempo.getAttribute('font-family') !== 'Barlow Semi Condensed') {
           issues.push({ file, width, paged, tempo: tempo.textContent, font: tempo.getAttribute('font-family') })
         }
       }

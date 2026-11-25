@@ -1,6 +1,5 @@
 import { NUMBER_FONT_CSS } from './font-data.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 
-/** Keep embedded font bytes unchanged; the installed and standalone SVG alias
- * must both follow the score font configuration. */
+/** Standalone SVGs embed the original face under the same family as Canvas. */
 export const numberFontCss = NUMBER_FONT_CSS.replace(/font-family:\s*'[^']*'/, () => `font-family: '${SCORE_NUMBER_FONT}'`)

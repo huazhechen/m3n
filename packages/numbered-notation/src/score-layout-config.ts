@@ -7,7 +7,7 @@
 const lyrics = { fontSize: 16, horizontalPadding: 1, musicGap: 6, rowGap: 4 } as const
 
 const fontFamilies = {
-  latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura', numbers: 'M3N Numbers',
+  latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',
 } as const
 const fonts = {
   ...fontFamilies,

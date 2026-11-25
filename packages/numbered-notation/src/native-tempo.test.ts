@@ -40,7 +40,7 @@ describe('numeric tempo labels', () => {
       expect(ink.right).toBeLessThanOrEqual(control.width + .0001)
       expect(control.tempoGeometry!.unit).toBe(unit)
       expect(text.textContent).toBe('96 BPM')
-      expect(text.getAttribute('font-family')).toBe('M3N Numbers')
+      expect(text.getAttribute('font-family')).toBe('Barlow Semi Condensed')
       expect(root.querySelector('path')).toBeNull()
     }
   })
@@ -58,7 +58,7 @@ describe('numeric tempo labels', () => {
     const root = new DOMParser().parseFromString(`<svg>${header.svg}</svg>`, 'image/svg+xml')
     expect(root.querySelector('[data-m3n-role="tempo"]')!.getAttribute('data-m3n-tempo-unit')).toBe(String(unit))
     expect(root.querySelector('[data-m3n-role="tempo"] text')!.textContent).toBe(`${60 * unit / 4} BPM`)
-    expect(root.querySelector('[data-m3n-role="tempo"] text')!.getAttribute('font-family')).toBe('M3N Numbers')
+    expect(root.querySelector('[data-m3n-role="tempo"] text')!.getAttribute('font-family')).toBe('Barlow Semi Condensed')
     expect(document).toEqual(before)
     expect(compileScorePerformance(document)).toEqual(performance)
   })

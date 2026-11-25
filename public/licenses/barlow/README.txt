@@ -1,4 +1,4 @@
-M3N Numbers uses the unmodified BarlowSemiCondensed-Medium.ttf by Jeremy Tribby.
+Score numerals use the unmodified BarlowSemiCondensed-Medium.ttf by Jeremy Tribby.
 Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow).
 License: SIL Open Font License 1.1; see LICENSE.txt in this directory.
 
@@ -10,13 +10,9 @@ Original file size: 105560 bytes.
 
 The complete original font is embedded as a data URL in
 packages/numbered-notation/src/font-data.ts and each generated numbered SVG.
-The CSS family alias "M3N Numbers" does not modify the font's internal names.
-The static Medium face is mapped to CSS weight 400 to match the engraving
-engine's normal weight. Both Canvas measurement and SVG use the same face;
-the browser does not synthesize a bold weight.
-
-Score text uses the same Barlow Semi Condensed family: Regular (400),
-Medium (500), SemiBold (600), and Italic (400), from the pinned revision above.
-The original static faces are in packages/numbered-notation/src/font-assets.
+Canvas measurement, SVG and score text use the original CSS family name
+"Barlow Semi Condensed" with its Medium (500) face. The font's internal names
+and outlines are unchanged.
+The original static face is in packages/numbered-notation/src/font-assets.
 Bravura handles musical symbols; Noto Sans SC handles Chinese text.
 PNG exports use these outlines and PDF exports embed subsets of these fonts.

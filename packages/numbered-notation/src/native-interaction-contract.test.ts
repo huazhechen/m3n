@@ -44,8 +44,8 @@ it.each([
   const high = root.querySelector('[data-m3n-role="pitch-range-high"]')!
   expect(low).not.toBeNull()
   expect(high).not.toBeNull()
-  expect(low.querySelector('text[font-family="M3N Numbers"]')?.textContent).toBe(options.low)
-  expect(high.querySelector('text[font-family="M3N Numbers"]')?.textContent).toBe(options.high)
+  expect(low.querySelector('text[font-family="Barlow Semi Condensed"]')?.textContent).toBe(options.low)
+  expect(high.querySelector('text[font-family="Barlow Semi Condensed"]')?.textContent).toBe(options.high)
   expect(low.querySelectorAll('[data-m3n-role="music-dot"]')).toHaveLength(1)
   expect(high.querySelectorAll('[data-m3n-role="music-dot"]')).toHaveLength(options.dots)
 })

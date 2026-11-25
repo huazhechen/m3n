@@ -27,7 +27,7 @@ describe('native annotations', () => {
     const fallback = new DefaultTextMeasurer()
     const measurer: TextMeasurer = { measureText(text, style) {
       const metrics = fallback.measureText(text, style)
-      return style.fontFamily === 'M3N Numbers' ? { ...metrics, h: style.fontSize * .65, baseline: style.fontSize * .65, inkBottom: style.fontSize * .65 } : metrics
+      return style.fontFamily === 'Barlow Semi Condensed' ? { ...metrics, h: style.fontSize * .65, baseline: style.fontSize * .65, inkBottom: style.fontSize * .65 } : metrics
     } }
     const score = layoutNativeScore(parseM3NDocument('{4/4}\n===B{br}\nN: ||: {f}(1e){tip} (2e){tip} 3e 4e :|||'), { ...options, textMeasurer: measurer })
     const heading = annotations(score).find(item => item.kind === 'section')!

@@ -72,7 +72,7 @@ describe('measured bar alignment', () => {
     return { w: text.length * style.fontSize * .6, h: style.fontSize * .4, baseline: style.fontSize * .1 }
   } }
   it.each(['single', 'dbl', 'end', 'rptstart', 'rptend', 'rptboth'])('centers %s on the actual music axis', kind => {
-    const y = 53, zero = unusual.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' })
+    const y = 53, zero = unusual.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'Barlow Semi Condensed' })
     const ink = nativeSvgInk(nativeBarSvg(kind, 80, y, unusual), unusual)
     expect((ink.top + ink.bottom) / 2).toBeCloseTo(y + zero.h / 2 - zero.baseline, 4)
   })

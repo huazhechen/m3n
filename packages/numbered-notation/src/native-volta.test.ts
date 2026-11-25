@@ -32,7 +32,7 @@ describe('measured native volta fragments', () => {
       expect(pieces).toHaveLength(count)
       expect(svg.includes('<text')).toBe(first)
       if (first) {
-        expect(svg).toContain('font-family="M3N Numbers"')
+        expect(svg).toContain('font-family="Barlow Semi Condensed"')
         expect(svg).toContain('>1.2.3.</text>')
         const hook = pieces[1]!, text = pieces[2]!
         expect((text.top + text.bottom) / 2).toBeCloseTo((hook.top + hook.bottom) / 2, 4)

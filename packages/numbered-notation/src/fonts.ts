@@ -1,6 +1,5 @@
-import { SCORE_NUMBER_FONT, SCORE_MUSIC_FONT, SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
+import { SCORE_MUSIC_FONT, SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
-import { NUMBER_FONT_CSS } from './font-data.js'
 import { LATIN_FONTS, CJK_FONTS, BRAVURA_FONTS } from './font-resources.js'
 
 export type ScoreFontResource = { file: string; url: string; webUrl?: string; characters: string; weight?: number; style?: string }
@@ -88,15 +87,5 @@ export async function prepareNumberedNotationFonts(value?: unknown): Promise<voi
   await Promise.all([
     ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),
     install(BRAVURA_FONTS[0], SCORE_MUSIC_FONT), install(cjk, SCORE_CJK_FONT),
-    (async () => {
-      const key = 'numbers'
-      if (!installed.has(key)) {
-        const source = /src:(.*);font-weight/.exec(NUMBER_FONT_CSS)?.[1]
-        if (!source) throw new Error('简谱数字字体资源无效。')
-        const font = new FontFace(SCORE_NUMBER_FONT, source)
-        installed.set(key, font.load().then(() => { document.fonts.add(font) }).catch(error => { installed.delete(key); throw error }))
-      }
-      await installed.get(key)
-    })(),
   ])
 }

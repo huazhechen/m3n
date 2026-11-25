@@ -136,7 +136,7 @@ test('renders numbered scores and their embedded fonts without loading the staff
   await page.goto('/scores/tong_hua_zhen_01')
   await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled()
-  expect(await page.evaluate(() => document.fonts.check('22px "M3N Numbers"'))).toBe(true)
+  expect(await page.evaluate(() => document.fonts.check('22px "Barlow Semi Condensed"'))).toBe(true)
   expect(await page.locator('.score-paper svg').first().innerHTML()).toContain('data:font/ttf;base64,')
   expect(engineRequests).toEqual([])
 })

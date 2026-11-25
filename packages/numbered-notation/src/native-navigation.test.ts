@@ -14,7 +14,7 @@ import { projectNativeScore } from './native-model.js';
 // ratio, a left overhang and ink extending beyond its advance width.
 const measurer: TextMeasurer = { measureText(text, style) {
         if (style.fontFamily === 'Bravura') return new DefaultTextMeasurer().measureText(text,style);
-        if (style.fontFamily === 'M3N Numbers')
+        if (style.fontFamily === 'Barlow Semi Condensed')
             return { w: 12, h: 18, baseline: 17 };
         return { w: text.length * style.fontSize * 0.6, advance: 26, inkLeft: -2, inkRight: 30, h: 9, baseline: 6 };
     } };

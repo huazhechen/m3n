@@ -20,7 +20,7 @@ describe('measured fraction geometry', () => {
     const rule = root.querySelector('rect')!, texts = [...root.querySelectorAll('text')]
     const lineY = Number(rule.getAttribute('y')), lineHeight = Number(rule.getAttribute('height'))
     const num = nativeSvgInk(texts[0]!.outerHTML, measurer), den = nativeSvgInk(texts[1]!.outerHTML, measurer)
-    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' })
+    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'Barlow Semi Condensed' })
     expect(lineY + lineHeight / 2).toBeCloseTo(zero.h / 2 - zero.baseline, 4)
     expect(lineY - num.bottom).toBeCloseTo(nativeStyle.meter * .08, 4)
     expect(den.top - lineY - lineHeight).toBeCloseTo(nativeStyle.meter * .08, 4)

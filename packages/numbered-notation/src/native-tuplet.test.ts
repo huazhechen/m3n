@@ -18,7 +18,7 @@ describe('native tuplet brackets', () => {
     const high = score.projection.glyphs[1]!
     expect(geometry.segments[0]![3]).toBeLessThan(-high.top)
     expect(system.lanes[0]!.top).toBeCloseTo(geometry.top)
-    const halfBody = measurer.measureText('0', { fontSize: 24, fontFamily: 'M3N Numbers' }).w / 2
+    const halfBody = measurer.measureText('0', { fontSize: 24, fontFamily: 'Barlow Semi Condensed' }).w / 2
     expect(geometry.segments[0]![0]).toBeCloseTo(Math.max(system.measures[0]!.start + geometry.stroke / 2, relation.first.x - halfBody))
     expect(geometry.segments[1]![0]).toBeCloseTo(relation.last.x + halfBody)
   })
@@ -95,7 +95,7 @@ describe('native tuplet brackets', () => {
     middle.musicTop = 80
     middle.musicInk = [{ left: -2, right: 2, top: -80, bottom: -10 }]
     const moved = nativeTupletGeometry(relation, system, measurer)
-    const metrics = measurer.measureText('3', { fontSize: moved.fontSize, fontFamily: 'M3N Numbers' })
+    const metrics = measurer.measureText('3', { fontSize: moved.fontSize, fontFamily: 'Barlow Semi Condensed' })
     const bottom = moved.baseline - metrics.baseline + (metrics.inkBottom ?? metrics.h)
     expect(-80 - bottom).toBeCloseTo(24 * .14)
   })
@@ -106,6 +106,6 @@ describe('native tuplet brackets', () => {
     const group = svg.match(/<g[^>]+data-m3n-relation="tuplet"[^>]*>(.*?)<\/g>/)![1]!
     expect(group.match(/<line\b/g)).toHaveLength(4)
     expect(group).not.toContain('<rect')
-    expect(group).toContain('font-family="M3N Numbers"')
+    expect(group).toContain('font-family="Barlow Semi Condensed"')
   })
 })

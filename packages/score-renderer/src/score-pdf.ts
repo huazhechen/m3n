@@ -74,7 +74,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         if (tag === 'text') {
           const text = element as SVGTextElement
           const fontSize = Number.parseFloat(style.fontSize)
-          const isMusic = style.fontFamily.includes(scoreLayoutConfig.fonts.numbers)
+          const isMusic = style.fontFamily.includes(scoreLayoutConfig.fonts.latin)
           const bold = Number.parseInt(style.fontWeight, 10) >= 600
           const italic = style.fontStyle === 'italic'
           page.pushOperators(setFillingRgbColor(0, 0, 0), setStrokingRgbColor(0, 0, 0), beginText())

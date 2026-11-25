@@ -18,7 +18,7 @@ export async function prepareScoreTextFonts(pages: readonly SVGSVGElement[], sup
   for (const page of pages) for (const node of page.querySelectorAll('text')) {
     const weight = Number(node.getAttribute('font-weight') ?? scoreLayoutConfig.fonts.regularWeight)
     const italic = node.getAttribute('font-style') === 'italic'
-    const numbers = node.getAttribute('font-family') === scoreLayoutConfig.fonts.numbers
+    const numbers = node.getAttribute('font-family') === scoreLayoutConfig.fonts.latin
     for (const char of node.textContent ?? '') if (!/\s|[\u200B\u2800]/u.test(char)) resource(char, weight, italic, numbers, node.getAttribute('font-family') ?? '')
   }
   for (const char of 'https://score.cheesefans.com/') resource(char)
@@ -48,7 +48,7 @@ export async function outlineScoreText(svg: SVGSVGElement) {
     for (const text of svg.querySelectorAll('text')) {
       const style = getComputedStyle(text), size = Number.parseFloat(style.fontSize)
       const weight = Number.parseInt(style.fontWeight), italic = style.fontStyle === 'italic'
-      const numbers = style.fontFamily.includes(scoreLayoutConfig.fonts.numbers)
+      const numbers = style.fontFamily.includes(scoreLayoutConfig.fonts.latin)
       const group = document.createElementNS(ns, 'g')
       for (const attr of text.attributes) if (['transform', 'opacity', 'class', 'id'].includes(attr.name) || attr.name.startsWith('data-')) group.setAttribute(attr.name, attr.value)
       let offset = 0

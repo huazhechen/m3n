@@ -15,7 +15,7 @@ const unusual: TextMeasurer = { measureText(text, style) {
 
 describe('shared measured music axis', () => {
   it.each([new DefaultTextMeasurer(), unusual])('uses one sustain fragment for measurement and painting', measurer => {
-    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' })
+    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'Barlow Semi Condensed' })
     const axis = zero.h / 2 - zero.baseline, svg = new NativeSymbols(measurer).sustain(0, 0)
     const ink = nativeSvgInk(svg, measurer)
     expect((ink.top + ink.bottom) / 2).toBeCloseTo(axis, 4)
@@ -29,7 +29,7 @@ describe('shared measured music axis', () => {
     const svg = new NativeMusicPainter(measurer).music(glyph)
     const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml')
     const beam = root.querySelector('line')!
-    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' })
+    const zero = measurer.measureText('0', { fontSize: nativeStyle.music, fontFamily: 'Barlow Semi Condensed' })
     const axis = zero.h / 2 - zero.baseline
     expect(Number(beam.getAttribute('y1'))).toBeCloseTo(axis, 4)
     expect(Number(beam.getAttribute('y2'))).toBeCloseTo(axis, 4)

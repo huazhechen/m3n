@@ -11,7 +11,7 @@ describe('numbered keyed section visits', () => {
         for (const prefix of ['1. 1=', '2. 1=']) {
             const text = [...root.querySelectorAll('text')].find(node => node.textContent === prefix)!;
             expect(text.getAttribute('font-size')).toBe('16');
-            expect(text.getAttribute('font-family')).toBe('M3N Numbers');
+            expect(text.getAttribute('font-family')).toBe('Barlow Semi Condensed');
         }
         expect(root.querySelectorAll('g.note')).toHaveLength(4);
         expect(document).toEqual(before);

@@ -45,7 +45,7 @@ describe('instrumental parentheses clear painted host edges', () => {
     const painter = new NativeMusicPainter(layout.measurer)
     const leftInk = nativeSvgInk(painter.music(first), layout.measurer)
     const rightInk = nativeSvgInk(painter.music(last), layout.measurer)
-    const advance = layout.measurer.measureText('(', { fontSize: nativeStyle.music, fontFamily: 'M3N Numbers' }).w
+    const advance = layout.measurer.measureText('(', { fontSize: nativeStyle.music, fontFamily: 'Barlow Semi Condensed' }).w
     expect(leftInk.left - leftX - advance).toBeGreaterThanOrEqual(minimumNoteGap - 1e-5)
     expect(rightX - rightInk.right).toBeGreaterThanOrEqual(minimumNoteGap - 1e-5)
   })

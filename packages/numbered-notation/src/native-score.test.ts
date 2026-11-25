@@ -15,7 +15,7 @@ function render(source:string|ScoreDocument,settings:Partial<NumberedNotationRen
  const root=new DOMParser().parseFromString('<main>'+pages.join('')+'</main>','text/html')
  return {pages,root,score,document}
 }
-function numbers(root:Document,id:string){return [...root.querySelectorAll('g.note[data-m3n-id="'+id+'"] text[font-family="M3N Numbers"]')].map(text=>text.textContent).join('')}
+function numbers(root:Document,id:string){return [...root.querySelectorAll('g.note[data-m3n-id="'+id+'"] text[font-family="Barlow Semi Condensed"]')].map(text=>text.textContent).join('')}
 function lyrics(root:Document,id:string,row=1){return [...root.querySelectorAll('text[data-m3n-role="lyric"][data-m3n-id="'+id+'"][data-m3n-rendition="'+row+'"]')].map(text=>text.textContent?.replaceAll('\u200B','')).join('')}
 
 describe('native repeat boundaries', () => {
@@ -398,7 +398,7 @@ it('renders leading grace notes and keeps them inside the main event group', () 
     const { root } = render('{4/4}\nN: 1{ac(7d)} 2{ap((35))} 3 4 |||')
     expect(numbers(root, 'm3n-e-1')).toContain('7')
     expect(numbers(root, 'm3n-e-2')).toContain('35')
-    expect(root.querySelector('#m3n-e-1')?.querySelectorAll('text[font-family="M3N Numbers"]').length).toBe(2)
+    expect(root.querySelector('#m3n-e-1')?.querySelectorAll('text[font-family="Barlow Semi Condensed"]').length).toBe(2)
   })
 
 it('expands tuplets sequentially with per-note lyrics and a shared playback identity', () => {
@@ -549,7 +549,7 @@ it('uses readable BPM labels for both header and in-score tempos', () => {
     const tempos = [...root.querySelectorAll('text')].filter(text => /^(96|120) BPM$/.test(text.textContent ?? ''))
     expect(new Set(tempos.map(text => text.textContent))).toEqual(new Set(['96 BPM', '120 BPM']))
     expect(tempos).toHaveLength(2)
-    for (const tempo of tempos) expect(tempo.getAttribute('font-family')).toBe('M3N Numbers')
+    for (const tempo of tempos) expect(tempo.getAttribute('font-family')).toBe('Barlow Semi Condensed')
   })
 
 it('reports unsupported marks instead of silently discarding them', () => {
