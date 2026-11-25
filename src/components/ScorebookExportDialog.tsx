@@ -13,8 +13,8 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
   const [notationMode] = useState(readNotationMode)
   const [measureNumbers] = useState(() => readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
   const [progress, setProgress] = useState<ScorebookProgress>({ completed: 0, total: 0, title: '' })
-  const [status, setStatus] = useState('正在准备谱集…')
-  const [stage, setStage] = useState(1)
+  const [status, setStatus] = useState('正在加载排版模块…')
+  const [stage, setStage] = useState(2)
   const [book, setBook] = useState<ReadyBook | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -26,16 +26,22 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const controller = new AbortController()
     const check = () => controller.signal.throwIfAborted()
-    setBook(null); setError(''); setStage(1); setProgress({ completed: 0, total: 0, title: '' }); setStatus('正在下载乐谱与字体…')
+    setBook(null); setError(''); setStage(2); setProgress({ completed: 0, total: 0, title: '' }); setStatus('正在加载排版模块…')
     void (async () => {
       // Let the dialog paint before starting layout and PDF work.
       await new Promise<void>(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)))
       check()
-      const [{ buildOnlineScorebook, scorebookTitle }] = await Promise.all([import('../lib/online-scorebook'), preloadScorePdf()])
+      // Fetch PDF code in parallel without delaying layout. PDF generation
+      // awaits it and reports any load failure in its own stage.
+      void preloadScorePdf().catch(() => {})
+      const { buildOnlineScorebook, scorebookTitle } = await import('../lib/online-scorebook')
       check()
       const result = await buildOnlineScorebook(controller.signal, value => {
         check()
         if (value.phase === 'downloading') {
+          // The toolbar already awaits shared resources. A cached completion
+          // snapshot must not put the dialog back into the download stage.
+          if (value.total > 0 && value.completed >= value.total && !value.indeterminate) return
           setStage(1); setProgress(value)
           setStatus(value.indeterminate ? '正在安装字体…' : `正在下载乐谱与字体 ${Math.floor(100 * value.completed / (value.total || 1))}%`)
         } else {

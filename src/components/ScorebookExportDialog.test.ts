@@ -5,10 +5,10 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { ScorebookExportDialog } from './ScorebookExportDialog'
 import type { ScorebookProgress } from '../lib/online-scorebook'
 
-const mocks = vi.hoisted(() => ({ build: vi.fn(), pdf: vi.fn(), download: vi.fn() }))
+const mocks = vi.hoisted(() => ({ build: vi.fn(), pdf: vi.fn(), download: vi.fn(), preload: vi.fn(async () => {}) }))
 vi.mock('../lib/online-scorebook', () => ({ buildOnlineScorebook: mocks.build, scorebookTitle: '测试谱集' }))
 vi.mock('@m3n/score-renderer/view', () => ({
-  preloadScorePdf: async () => {}, createScorePdf: mocks.pdf, downloadBlob: mocks.download, scoreFileName: (value: string) => value,
+  preloadScorePdf: mocks.preload, createScorePdf: mocks.pdf, downloadBlob: mocks.download, scoreFileName: (value: string) => value,
 }))
 const host = document.createElement('div')
 let root: ReturnType<typeof createRoot>
@@ -20,6 +20,8 @@ it('shows byte downloads and installation separately from layout progress', asyn
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
   let report!: (value: ScorebookProgress) => void
+  // Slow PDF code must not keep a ready library waiting to start layout.
+  mocks.preload.mockImplementation(() => new Promise(() => {}))
   mocks.build.mockImplementation((_signal, onProgress) => {
     report = onProgress
     return new Promise(() => {})
@@ -32,6 +34,11 @@ it('shows byte downloads and installation separately from layout progress', asyn
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)) })
   expect(mocks.build).toHaveBeenCalledWith(expect.any(AbortSignal), expect.any(Function), { notationMode: 'staff', measureNumbers: true })
   expect(document.body.textContent).toContain('采用当前五线谱设置')
+  expect(document.body.textContent).toContain('正在加载排版模块')
+  expect(document.body.textContent).not.toContain('正在下载乐谱与字体')
+  act(() => report({ phase: 'downloading', completed: 100, total: 100, title: '' }))
+  expect(document.body.textContent).toContain('第 2/3 阶段：排版乐谱')
+  expect(document.body.textContent).not.toContain('正在下载乐谱与字体')
   act(() => report({ phase: 'downloading', completed: 50, total: 100, title: '' }))
   expect(document.body.textContent).toContain('第 1/3 阶段：下载乐谱与字体')
   expect(document.body.textContent).toContain('正在下载乐谱与字体 50%')
