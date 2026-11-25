@@ -60,6 +60,14 @@ for path in sorted([*root.glob('src/scores/*.m3n'), *root.glob('src/works/*.m3n'
     name = f'NotoSansSC-{digest}.ttf'
     if not any(item['file'] == name for item in manifest):
         save_subset(name, text)
+# The book's combined titles cannot be covered by any one per-score subset.
+# Include all front-page text so export never needs the full CJK fallback.
+plan = json.loads((root / 'config/scorebook/editorial-plan.json').read_text())
+front_text = labels + ''.join(chr(c) for c in range(32, 127)) + '目录–' + plan['title']
+front_text += ''.join(section['title'] for section in plan['sections'])
+front_text += ''.join(entry['title'] for entry in plan['entries'])
+front_digest = hashlib.sha256(''.join(sorted(set(front_text))).encode()).hexdigest()[:16]
+save_subset(f'NotoSansSC-scorebook-front-{front_digest}.ttf', front_text)
 manifest.append(dict(file=full.name, characters=charset, bytes=len(full_bytes)))
 
 # Extract the existing unmodified Medium face used by music numerals.
@@ -68,7 +76,7 @@ import base64
 (assets / 'BarlowSemiCondensed-Medium.ttf').write_bytes(base64.b64decode(re.search(r'base64,([A-Za-z0-9+/=]+)', data)[1]))
 latin = []
 file = 'BarlowSemiCondensed-Medium.ttf'
-f = TTFont(assets / file)
+f = TTFont(assets / file, recalcTimestamp=False)
 web_file = file.replace('.ttf', '.woff2')
 f.flavor = 'woff2'
 f.save(assets / web_file)

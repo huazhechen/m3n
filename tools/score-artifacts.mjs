@@ -22,6 +22,7 @@ function rendererInputs() {
     .filter(file => /\.(ts|json)$/.test(file) && !file.endsWith('.test.ts') && !file.endsWith('/font-resources.ts'))
   inputs.push('tools/lib/numbered-width-measurement.mjs', 'tools/scorebook-layout.mjs', 'tools/scorebook-width.mjs', 'tools/lib/score-geometry.mjs', 'tools/lib/ink-overlap-pairs.mjs', 'tools/lib/svg-ink-bounds.mjs', 'tools/prepare-score-fonts.py', 'tools/subset-builtin-pdf-font.py', 'tools/fonts/NotoSansCJKsc-Regular.otf')
   for (const file of readdirSync(assetPath).filter(file => /^(Barlow|Bravura)/.test(file))) inputs.push(`packages/numbered-notation/src/font-assets/${file}`)
+  inputs.push('config/scorebook/editorial-plan.json')
   return [...new Set(inputs)].sort()
 }
 
