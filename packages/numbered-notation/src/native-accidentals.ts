@@ -6,7 +6,7 @@ import { nativeSvgNumber as n } from './native-svg-number.js'
 import type { NativeInk } from './native-ink.js'
 
 export type NativeAccidentalGlyph = { symbol: string; character: string; fontSize: number; x: number; y: number; ink: NativeInk }
-const height = (symbol: string, size: number) => (symbol === '♯' ? .78 : .82) * size * .72
+const height = (symbol: string, size: number) => (symbol === '♯' ? .78 : .82) * size * .72 * scoreLayoutConfig.numbered.accidentalScale
 function measuredGlyphs(symbols: string, size: number, measurer: TextMeasurer) {
   return [...symbols].flatMap(symbol => {
     const glyph = bravuraAccidentalCharacters[symbol as keyof typeof bravuraAccidentalCharacters]
@@ -26,7 +26,7 @@ export function nativeAccidentalGeometry(symbols: string, size: number, numberHa
   const advance = measured.reduce((sum, glyph) => sum + glyph.width + size * .035, 0)
   let left = -numberHalfWidth - advance
   const glyphs: NativeAccidentalGlyph[] = measured.map(({ symbol, character, fontSize, ascent, metrics, width }) => {
-    const top = -size * .42 - (symbol === '♯' ? .63 : .67) * size * .72
+    const top = -size * .42 - (symbol === '♯' ? .63 : .67) * size * .72 * scoreLayoutConfig.numbered.accidentalScale
     // Keep the font outline at its original design position; Canvas ink may
     // reserve a slightly larger hinted envelope, which still enters avoidance.
     const x = n(left - (metrics.inkLeft ?? 0)), y = n(top + fontSize * ascent)

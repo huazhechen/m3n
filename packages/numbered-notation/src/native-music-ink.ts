@@ -39,11 +39,11 @@ export function nativeBodyPieces(glyph: NativeGlyph, measurer: TextMeasurer, cla
       const ink = symbol.ink
       pieces.push({ left: ink.left + qx, right: ink.right + qx, top: ink.top + qy, bottom: ink.bottom + qy })
     }
-    for (let dot = 0; dot < Math.abs(pitch.octave); dot++) circle(x, y + body.octaveY(pitch.octave > 0, dot, index === 0 ? beamCount : 0), size * .075)
+    for (let dot = 0; dot < Math.abs(pitch.octave); dot++) circle(x, y + body.octaveY(pitch.octave > 0, dot, index === 0 ? beamCount : 0), size * nativeStyle.dotRadiusEm)
   }
   const base = 2 ** Math.floor(Math.log2(glyph.writtenBeats)), ratio = glyph.writtenBeats / base
   const dots = [1, 1.5, 1.75, 1.875].findIndex(value => Math.abs(ratio - value) < 1e-7)
-  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + (nativeStyle.music * .18) + index * (nativeStyle.music * .25), glyph.y + body.dotY, (nativeStyle.music * .07))
+  for (let index = 0; index < dots; index++) circle(glyph.x + body.width / 2 + (nativeStyle.music * .18) + index * (nativeStyle.music * .25), glyph.y + body.dotY, (nativeStyle.music * nativeStyle.dotRadiusEm))
   const beams = Math.max(0, Math.round(-Math.log2(base)))
   for (let index = 0; index < beams; index++) if (!claimedBeams?.has(index)) line(glyph.x - body.width / 2 + body.beamStroke / 2, glyph.y + body.beamY(index), glyph.x + body.width / 2 - body.beamStroke / 2, glyph.y + body.beamY(index), body.beamStroke)
   return pieces

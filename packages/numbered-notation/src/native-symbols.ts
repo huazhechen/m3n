@@ -31,7 +31,7 @@ export function attrs(values: Record<string, string | number | undefined>) {
   return result
 }
 export const line = (x1: number, y1: number, x2: number, y2: number, width = (nativeStyle.music * .06)) => `<line${attrs({ x1, y1, x2, y2, stroke: '#000', 'stroke-width': width, 'stroke-linecap': 'round' })}/>`
-export const circle = (x: number, y: number, radius = (nativeStyle.music * .07), measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
+export const circle = (x: number, y: number, radius = (nativeStyle.music * nativeStyle.dotRadiusEm), measurer: TextMeasurer = new DefaultTextMeasurer(), repeat = false) => nativeDotSvg(x,y,radius,measurer,repeat)
 export const path = (d: string, fill = 'none', extra = '') => `<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${n((nativeStyle.music * .05))}" stroke-linejoin="round"${extra}/>`
 
 export class NativeSymbols {
@@ -60,7 +60,7 @@ export class NativeSymbols {
     const body = nativeNoteBody(this.measurer, size)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
       const offset = body.octaveY(pitch.octave > 0, index, beams)
-      svg += circle(x, y + offset, size * 0.075, this.measurer)
+      svg += circle(x, y + offset, size * nativeStyle.dotRadiusEm, this.measurer)
     }
     return svg
   }

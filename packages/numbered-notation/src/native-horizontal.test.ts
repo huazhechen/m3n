@@ -37,17 +37,17 @@ describe('native spacing and measured note envelopes', () => {
     it('fits stacked chord tones by their actual octave-dot envelopes', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||\nB: [1d3d5d:h]^^ |||');
         const bass = result.projection.glyphs.find(glyph => glyph.staff === 'bass')!;
-        bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -28.56, -57.12][index]!, 6));
+        bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -29.16, -58.32][index]!, 6));
         const lanes = result.systems[0]!.lanes;
-        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(104.28, 6);
+        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(105.48, 6);
     });
     it('weights cross-system tie coverage without cumulative row padding', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [48.02737, 48.79284, 47.56453].entries())
+        for (const [index, gap] of [48.02737, 48.88544, 47.60558].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(339.43639, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(339.57005, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);

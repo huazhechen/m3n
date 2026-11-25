@@ -44,8 +44,8 @@ describe('relation and ending clearance', () => {
     const layout = (notes: string) => layoutNativeScore(parseM3NDocument(`{2/4}\nN: {lg}${notes}{/} |||`), { width: 800, paged: false })
     const plain = layout('1 2'), high = layout('1e 2e'), higher = layout('1ee 2ee')
     const top = (value: typeof plain) => value.systems[0]!.lanes[0]!.top
-    expect(top(high) - top(plain)).toBeCloseTo(24 * (0.23 + 0.05), 3)
-    expect(top(higher) - top(high)).toBeCloseTo(24 * 0.23, 3)
+    expect(top(high) - top(plain)).toBeCloseTo(24 * (0.255 + 0.05), 3)
+    expect(top(higher) - top(high)).toBeCloseTo(24 * 0.255, 3)
   })
 
   it.each(['tip', 'brk', 'hold', 'str'])('connects to %s above high notes without repeating the octave-dot gap', mark => {

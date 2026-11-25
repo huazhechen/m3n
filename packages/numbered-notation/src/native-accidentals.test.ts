@@ -40,6 +40,14 @@ describe('native accidental geometry', () => {
             }
         }
     });
+    it('enlarges sharp, flat and natural ink by fifteen percent', () => {
+        const measurer = new DefaultTextMeasurer();
+        for (const [symbol, expectedHeight] of [['♯', 15.50016], ['♭', 16.29504], ['♮', 16.29504]] as const) {
+            const glyph = nativeAccidentalGeometry(symbol, 24, 6, measurer).glyphs[0]!;
+            const ink = nativeSvgInk(new NativeSymbols(measurer).accidental(glyph), measurer);
+            expect(ink.bottom - ink.top).toBeCloseTo(expectedHeight, 4);
+        }
+    });
     it('reserves the widest accidental among all stacked chord tones', () => {
         const single = layout('1## 2 3 4').projection.glyphs[0]!;
         const chord = layout('[1 3## 5:h] 2 3 4').projection.glyphs[0]!;

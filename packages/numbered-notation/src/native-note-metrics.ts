@@ -28,7 +28,7 @@ export function nativeNoteMetrics(pitches: NativePitch[], writtenBeats: number, 
     }
     const beams = index === 0 ? beamCount : 0
     for (let dot = 0; dot < Math.abs(pitch.octave); dot++) {
-      const ink = nativeDotInk(0,body.octaveY(pitch.octave > 0,dot,beams),size*.075,measurer)
+      const ink = nativeDotInk(0,body.octaveY(pitch.octave > 0,dot,beams),size*nativeStyle.dotRadiusEm,measurer)
       top = Math.min(top, ink.top); bottom = Math.max(bottom, ink.bottom)
     }
     for (let beam = 0; beam < beams; beam++) {

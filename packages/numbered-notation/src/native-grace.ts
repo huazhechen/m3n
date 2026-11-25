@@ -25,7 +25,7 @@ export function nativeGraceGeometry(pitches: readonly NativeGracePitch[], mainLe
     const beams = Math.max(1, Math.round(-Math.log2(beats)))
     let svg = painter.pitch({ ...pitch, octave: 0 }, 0, 0, size, beams)
     const digit = digits[index]!
-    const radius = size * 0.075, gap = size * 0.08
+    const radius = size * nativeStyle.dotRadiusEm, gap = size * 0.08
     const bottom = Math.max(digit.bottom, beamY + (beams - 1) * beamStep + stroke / 2)
     for (let index = 0; index < Math.abs(pitch.octave); index++) {
       const offset = gap + radius + index * (2 * radius + gap)
