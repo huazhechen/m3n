@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "c59509f04a9e3ca1551654f80364b71cf45b1d7dabe2debd34c2430f7d4f771d",
+  "rendererSha256": "6cf4f799349c55b2c918c45ef841e66de25cea1e60d20b6188e79497411e1eea",
   "fontManifestSha256": "2accc2160be4572110eaae87d1c98009cd96b76b88763d3ecbea147ea2beb386",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -10,7 +10,7 @@
       "fontSha256": "baea280eec694545d836e45959bb674e4b0a024fc7f1c973c59893d110e47dd0"
     },
     "src/scores/ai_de_li_zan_01.m3n": {
-      "sourceSha256": "bc641e49238a4fc007c4ccba0dca5e0075005ce1f016af3e01059847441d388c",
+      "sourceSha256": "556cdea41e8b6656705ef123c9e8b31aa65b5dee24a3b0b44ca0492cc72b71f0",
       "font": "NotoSansSC-ca0432d08f84d00a.ttf",
       "fontSha256": "b21999e4581da004694cb5c3e8eb3adedee276fa546a007c3836d2dc83091317"
     },
@@ -20,7 +20,7 @@
       "fontSha256": "0732b31113630eb137a75211aae8cf24bbec13ba63a2cd38f48686202200f01f"
     },
     "src/scores/ai_ru_chao_shui_01.m3n": {
-      "sourceSha256": "c12473a6f48699f2df5da2dbba00284fef1be063e0238db8e2c67a0668192c2c",
+      "sourceSha256": "228df4e4ac82cf0c8ee9f4876bbe271c9adc24b4cf2926845d236f421e809bd8",
       "font": "NotoSansSC-57a96e51b41bf5d1.ttf",
       "fontSha256": "7057f4bb809c7980ebeff94982f6cd7295270fb0fe71044ac57ea3b994a09487"
     },
@@ -90,7 +90,7 @@
       "fontSha256": "4c209f8c7b472b3b92a3080136a8d00539f32f69b8560613c5dc5186d80d33c8"
     },
     "src/scores/dan_huang_guan_bo_er_ka_01.m3n": {
-      "sourceSha256": "830f61b265ca0226d3bacf47302ca5fb2a59b597f3b677ff1946de8691937f72",
+      "sourceSha256": "6248ad0436897c0947c099761e9a9b528e16dd8e3562a6617f88d5974b12b7c2",
       "font": "NotoSansSC-0cc582ee15cce927.ttf",
       "fontSha256": "eda0a5dfc9c17e6b3c5b7fca964cbaef2ec536f3ba45a18db7877af49bc26a08"
     },
