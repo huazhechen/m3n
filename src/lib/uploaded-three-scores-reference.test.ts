@@ -73,6 +73,22 @@ describe('three scores transcribed from the November 26 uploads', () => {
     expect(actual).toEqual(reference.badinerieSoloReference.notes)
   })
 
+  it('keeps all Onion chorus high A notes and the deliberately lower passing G notes', () => {
+    const document = parseM3NDocument(onion)
+    const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+    const pitches = resolveScorePitches(bars)
+    const notes = (index: number) => bars[index]!.events.map(event => pitches.get(event)![0])
+    // Both chorus lines: “你会发／你会鼻” rise to A5 on “会”.
+    for (const index of [19, 23]) expect(notes(index).slice(-4)).toEqual(['c:5:', 'c:5:', 'a:5:', 'g:5:'])
+    // “现／酸” and its tied continuation stay at A5; the short G4 passing notes have no octave dot in the upload.
+    for (const index of [20, 24]) {
+      expect(notes(index)).toEqual(['a:5:', 'a:5:', 'g:4:', 'g:5:', 'f:5:s', 'g:5:', 'g:5:', 'g:4:', 'f:5:n', 'e:5:'])
+      expect(bars[index]!.events[0]!.tie).toBe(true)
+    }
+    // The verse's “听到／的我” really ends on a low A3 in the uploaded score.
+    for (const index of [3, 11]) expect(notes(index).at(-1)).toBe('a:3:')
+  })
+
   it('sings Onion verses 1–2, chorus, verse 3, chorus with the original lyric wording', () => {
     const document = parseM3NDocument(onion)
     expect(document.order).toBeUndefined()
