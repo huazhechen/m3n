@@ -14,9 +14,9 @@ const host = document.createElement('div')
 let root: ReturnType<typeof createRoot>
 afterEach(() => { act(() => root?.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); vi.resetAllMocks(); vi.unstubAllGlobals() })
 
-it('shows byte downloads and installation separately from layout progress', async () => {
+it.each([['staff', '简谱', 'movable'], ['fixed', '五线谱', 'staff']] as const)('uses the export choice independently of saved %s notation and shows progress', async (savedMode, choice, mode) => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
-  vi.stubGlobal('localStorage', { getItem: (key: string) => key === 'm3n:notation-mode' ? 'staff' : key === 'm3n:measure-numbers' ? '1' : null })
+  vi.stubGlobal('localStorage', { getItem: (key: string) => key === 'm3n:notation-mode' ? savedMode : key === 'm3n:measure-numbers' ? '1' : null })
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
   let report!: (value: ScorebookProgress) => void
@@ -31,9 +31,14 @@ it('shows byte downloads and installation separately from layout progress', asyn
     root.render(createElement(ScorebookExportDialog, { onClose: vi.fn() }))
     await new Promise(resolve => setTimeout(resolve, 80))
   })
+  expect(mocks.build).not.toHaveBeenCalled()
+  expect(mocks.preload).not.toHaveBeenCalled()
+  expect(mocks.pdf).not.toHaveBeenCalled()
+  expect(document.querySelector('progress')).toBeNull()
+  act(() => [...document.querySelectorAll('button')].find(button => button.textContent === choice)!.click())
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)) })
-  expect(mocks.build).toHaveBeenCalledWith(expect.any(AbortSignal), expect.any(Function), { notationMode: 'staff', measureNumbers: true })
-  expect(document.body.textContent).toContain('采用当前五线谱设置')
+  expect(mocks.build).toHaveBeenCalledWith(expect.any(AbortSignal), expect.any(Function), { notationMode: mode, measureNumbers: true })
+  expect(document.body.textContent).toContain(`记谱方式：${choice}`)
   expect(document.body.textContent).toContain('正在加载排版模块')
   expect(document.body.textContent).not.toContain('正在下载乐谱与字体')
   act(() => report({ phase: 'downloading', completed: 100, total: 100, title: '' }))
@@ -69,6 +74,7 @@ it('finishes PDF generation before enabling a synchronous download', async () =>
     root.render(createElement(ScorebookExportDialog, { onClose: vi.fn() }))
     await new Promise(resolve => setTimeout(resolve, 80))
   })
+  act(() => [...document.querySelectorAll('button')].find(button => button.textContent === '简谱')!.click())
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)) })
   expect(mocks.pdf).toHaveBeenCalledOnce()
   expect(document.body.textContent).toContain('第 3/3 阶段：生成 PDF')
