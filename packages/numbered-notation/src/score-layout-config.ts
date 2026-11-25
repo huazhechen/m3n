@@ -12,7 +12,7 @@ const fontFamilies = {
 const fonts = {
   ...fontFamilies,
   text: `${fontFamilies.latin}, ${fontFamilies.music}, ${fontFamilies.cjk}`,
-  title: `${fontFamilies.cjk}, ${fontFamilies.latin}, ${fontFamilies.music}`,
+  title: `${fontFamilies.latin}, ${fontFamilies.cjk}, ${fontFamilies.music}`,
   titleWeight: 500, textWeight: 500, regularWeight: 400, boldWeight: 700,
   // Large-em glyph measurement avoids pixel rounding of small music symbols.
   measurementSize: 1000,
