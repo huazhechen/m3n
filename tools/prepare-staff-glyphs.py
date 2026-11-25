@@ -19,6 +19,8 @@ codes = {
     'augmentationDot': 0xE1E7, 'repeatDot': 0xE044,
     'articAccentAbove': 0xE4A0, 'articStaccatoAbove': 0xE4A2,
     'articTenutoAbove': 0xE4A4, 'articStaccatissimoAbove': 0xE4A6,
+    'articAccentBelow': 0xE4A1, 'articStaccatoBelow': 0xE4A3,
+    'articTenutoBelow': 0xE4A5, 'articStaccatissimoBelow': 0xE4A7,
     'fermataAbove': 0xE4C0, 'breathMarkComma': 0xE4CE,
     'ornamentTrill': 0xE566, 'ornamentShortTrill': 0xE56C,
     'segno': 0xE047, 'coda': 0xE048, 'wiggleArpeggiatoUp': 0xEAA9,

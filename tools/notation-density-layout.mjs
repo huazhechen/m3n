@@ -2,26 +2,28 @@ import { selectBestWidth } from './scorebook-width.mjs'
 import { vectorScorePdf } from '../packages/score-renderer/src/score-pdf.ts'
 import { createSvgInkMeasurer } from './lib/svg-ink-bounds.mjs'
 import { analyzeM3N, A4_CONTENT_WIDTH_MM } from '@m3n/notation'
-import { prepareNumberedNotationFonts, scoreLayoutConfig, SCORE_NUMBER_FONT, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { prepareNumberedNotationFonts, scoreLayoutConfig, SCORE_NUMBER_FONT, SCORE_TEXT_FONT, NumberedLayoutTask, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
+import { prepareStaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureStaffWidth } from './lib/staff-width-measurement.mjs'
 
 /** Compare the same written source and physical page width, without auto-width. */
-export async function compare(source, width, { auditLayout = true, staffMusic = scoreLayoutConfig.staff.music, includeSvg = false, profile = false, includePdf = false } = {}) {
+export async function compare(source, width, { auditLayout = true, staffMusic = scoreLayoutConfig.staff.music, includeSvg = false, profile = false, includePdf = false, coreGap } = {}) {
   const original = scoreLayoutConfig.staff.music
   scoreLayoutConfig.staff.music = staffMusic
-  try { return await compareAtSize(source, width, auditLayout, includeSvg, profile, includePdf) }
+  try { return await compareAtSize(source, width, auditLayout, includeSvg, profile, includePdf, coreGap) }
   finally { scoreLayoutConfig.staff.music = original }
 }
 
-async function compareAtSize(source, width, auditLayout, includeSvg, profile, includePdf) {
+async function compareAtSize(source, width, auditLayout, includeSvg, profile, includePdf, coreGap) {
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
   const score = analysis.score
   await prepareNumberedNotationFonts(score)
-  const numbered = measureNumberedWidth(score, width, { auditLayout })
+  const settings = coreGap === undefined ? {} : { coreGap }
+  const numbered = measureNumberedWidth(score, width, { auditLayout, settings })
   let render
-  const staff = await measureStaffWidth(score, width, {}, undefined, { auditLayout, onPrepared(value) { render = value } })
+  const staff = await measureStaffWidth(score, width, settings, undefined, { auditLayout, onPrepared(value) { render = value } })
   const info = render.layoutInfo()
   const numberedInfo = numbered.prepared.layoutInfo()
   const mmPerPx = A4_CONTENT_WIDTH_MM / width
@@ -60,7 +62,7 @@ async function compareAtSize(source, width, auditLayout, includeSvg, profile, in
       numberedFrameMm: scoreLayoutConfig.numbered.music * 1.25 * mmPerPx,
       staffFrameMm: scoreLayoutConfig.staff.music * mmPerPx,
       staffSpaceMm: scoreLayoutConfig.staff.music / 4 * mmPerPx },
-    numbered: { ...summary(numbered.candidate, numbered.prepared.quality.meanLineDensity, numbered.prepared.continuousHeight()), ...geometry(numberedInfo) },
+    numbered: { ...summary(numbered.candidate, numbered.prepared.quality.meanLineDensity, numbered.prepared.continuousHeight()), spacing: numberedInfo.spacing, measureRows: numberedInfo.measureRows, ...geometry(numberedInfo) },
     staff: { ...summary(staff, info.quality.meanLineDensity, render.continuousHeight()),
       spacing: info.spacing, measureRows: info.lines.map(line => line.measures), ...geometry(info), ...(profile ? { profile: staffProfile(render(false)) } : {}) },
   }
@@ -108,4 +110,27 @@ export async function preferredStaffWidth(source) {
   await prepareNumberedNotationFonts(analysis.score)
   const { best } = await selectBestWidth(width => measureStaffWidth(analysis.score, width))
   return best.width
+}
+
+
+/** Independently reproduce each reader's complete coarse/fine width search. */
+export async function optimalPages(source) {
+  const analysis = analyzeM3N(source)
+  if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
+  const score = analysis.score
+  await prepareNumberedNotationFonts(score)
+  const settings = { layoutTask: new NumberedLayoutTask(), textMeasurementCache: new NumberedTextMeasurementCache() }
+  const numberedSearch = await selectBestWidth(width => measureNumberedWidth(score, width, { settings }).candidate)
+  const numbered = measureNumberedWidth(score, numberedSearch.best.width, { settings, auditLayout: true })
+  const staffTask = await prepareStaffMeasurementTask(score)
+  const staffSearch = await selectBestWidth(width => measureStaffWidth(score, width, {}, undefined, { task: staffTask }))
+  let staffPrepared
+  const staff = await measureStaffWidth(score, staffSearch.best.width, {}, undefined,
+    { task: staffTask, auditLayout: true, onPrepared(value) { staffPrepared = value } })
+  const summarize = (candidate, displayedEvents, search) => ({ width: candidate.width,
+    pages: candidate.pageCount, rows: candidate.rows, displayedEvents,
+    outside: candidate.outside, overlaps: candidate.overlaps, requests: search.candidates.length,
+    candidates: search.candidates.map(({ width, pageCount, rows, qualityScore, error }) => ({ width, pages: pageCount, rows, qualityScore, ...(error ? { error } : {}) })) })
+  return { numbered: summarize(numbered.candidate, numbered.prepared.layoutInfo().displayedEvents, numberedSearch),
+    staff: summarize(staff, staffPrepared.layoutInfo().displayedEvents, staffSearch) }
 }

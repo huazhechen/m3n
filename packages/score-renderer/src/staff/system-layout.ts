@@ -286,7 +286,8 @@ export function arrangeStaffSystem(
     const localGap = hasClass(attachment, 'repeatMark') ? style.repeatMarkGap / scale : gap
     const attachmentLane = attachment.attributes['data-m3n-staff']
     const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
-    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && (lanes === 1 || attachmentLane !== undefined))) {
+    const localUpperText = lanes === 1 && ['dir', 'harm', 'fing'].some(kind => hasClass(attachment, kind))
+    if (localUpperText || hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && (lanes === 1 || attachmentLane !== undefined))) {
       // Start next to the local music, then let the normal ink avoidance
       // clear stems, curves and directions instead of preserving a fixed gap.
       const local = (below && attachmentLane !== undefined ? belowMusic(Number(attachmentLane)) : music)

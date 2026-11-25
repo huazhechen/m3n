@@ -1,7 +1,7 @@
 import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
 import type { ScoreDocument } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
-import { createStaffMeasureMinimum } from './line-layout.js'
+import { createStaffMeasureMinimum, createStaffHorizontalReference } from './line-layout.js'
 import { textMeasurer } from './layout-svg.js'
 import { createStaffPreparation } from './staff-engine.js'
 
@@ -15,8 +15,10 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   document.measures = document.measures.map(m => ({ ...m, tempo: m.tempo * tempoScale }))
   const measure = textMeasurer()
   const preparation = createStaffPreparation()
+  const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
+  minimum.reference = createStaffHorizontalReference(document, { includeBass, transpose, tempoScale })
   return {
-    document, measure, preparation, minimum: createStaffMeasureMinimum(document.hasBass, measure, preparation),
+    document, measure, preparation, minimum,
     assertCompatible(candidate: ScoreDocument, next: ProjectionSettings) {
       if (candidate !== score || (next.transpose ?? 0) !== transpose || (next.includeBass ?? true) !== includeBass || (next.tempoScale ?? 1) !== tempoScale)
         throw new Error('五线谱测量任务不能跨乐谱或排版设置复用。')

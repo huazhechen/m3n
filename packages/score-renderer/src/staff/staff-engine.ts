@@ -412,8 +412,30 @@ function drawNote(note: StaffNoteAnchor, staveY: number): XmlNode[] {
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
     ? Math.min(0, note.stemEnd - (staffMusicSize() / 4 * 0.6) - (staveY + Math.min(staffMusicSize(), ...p.heads.map(head => head.y)) - (staffMusicSize() / 4 * 1))) : 0
-  result.push(...p.symbols.map(s => staffGlyph(s.glyph, note.x + s.x, staveY + s.y +
-    (s.glyph.startsWith('accidental') || s.glyph === 'augmentationDot' ? 0 : markShift), s.size ?? size)))
+  let articulationTop = Math.min(...p.heads.map(head => head.y)) + staffGlyphMetrics(p.head, size).top
+  let articulationBottom = Math.max(...p.heads.map(head => head.y)) + staffGlyphMetrics(p.head, size).bottom
+  for (const s of p.symbols) {
+    if (!p.rest && s.glyph.startsWith('artic')) {
+      // Beam grouping can reverse a note's initial stem. Choose the side only
+      // after that direction is final, always on the head side of the stem.
+      const below = note.direction === 1
+      const glyph = s.glyph.replace(/Above$/, below ? 'Below' : 'Above') as StaffGlyph
+      const metrics = staffGlyphMetrics(glyph, s.size ?? size)
+      let y = below ? articulationBottom + unit * .5 - metrics.top : articulationTop - unit * .5 - metrics.bottom
+      if (glyph.startsWith('articStaccato')) {
+        const center = y + (metrics.top + metrics.bottom) / 2
+        const rule = staffMusicSize() + Math.round((center - staffMusicSize()) / unit) * unit
+        const radius = (metrics.bottom - metrics.top) / 2
+        // Keep the dot in an open space, including near ledger lines.
+        if (Math.abs(center - rule) < radius + unit * .15)
+          y += rule + (below ? unit / 2 : -unit / 2) - center
+      }
+      result.push(staffGlyph(glyph, note.x + s.x, staveY + y, s.size ?? size))
+      articulationTop = Math.min(articulationTop, y + metrics.top)
+      articulationBottom = Math.max(articulationBottom, y + metrics.bottom)
+    } else result.push(staffGlyph(s.glyph, note.x + s.x, staveY + s.y +
+      (s.glyph.startsWith('accidental') || s.glyph === 'augmentationDot' ? 0 : markShift), s.size ?? size))
+  }
   if (p.item.event.postfixes.includes('arp')) {
     const x = note.x - p.left + p.signature.width + (p.signature.width ? (staffMusicSize() / 4 * 0.6) : 0) + p.graceWidth + (staffMusicSize() / 4 * 0.2)
     const top = Math.min(...note.ys) - (staffMusicSize() / 4 * 0.5), bottom = Math.max(...note.ys) + (staffMusicSize() / 4 * 0.5)

@@ -137,7 +137,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       // An absent voice gets music-only minimum clearance. Lyrics and
       // parentheses belong to their real voice, not its neighbours' blanks.
       cell.placeholderLeft = cell.left; cell.placeholderRight = cell.right
-      const insets = { left: glyph.parenthesisLeft ?? 0, right: glyph.parenthesisRight ?? 0 }
+      const enclosureGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) - (glyph.parenthesisGap ?? nativeStyle.minimumNoteGap)
+      const insets = { left: glyph.parenthesisLeft ? glyph.parenthesisLeft + enclosureGap : 0,
+        right: glyph.parenthesisRight ? glyph.parenthesisRight + enclosureGap : 0 }
       // Parentheses enclose the painted host, including beam stroke caps.
       // Reserve that same extent at the actual passage endpoints.
       if (insets?.left) cell.left = Math.max(cell.left, (glyph.inkLeft ?? 0) + left)

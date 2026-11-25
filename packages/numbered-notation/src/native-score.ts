@@ -50,7 +50,8 @@ export class PreparedNumberedNotationScore {
   layoutInfo() {
     const blocks = this.layout.verticalBlocks.slice(this.layout.headerBlocks.length)
     const events = new Set(this.layout.projection.glyphs.map(glyph => glyph.id.replace(/-(?:sustain|rest)\d+$/, '')))
-    return { displayedEvents: events.size, hasBass: this.layout.projection.hasBass,
+    return { displayedEvents: events.size, hasBass: this.layout.projection.hasBass, spacing: this.layout.options.minimumNoteGap,
+      measureRows: this.layout.systems.map(system => system.measures.map(measure => measure.id)),
       lines: blocks.map(block => ({ core: block.core ? { ...block.core } : undefined,
         inkHeight: block.height, lyricGapScale: block.coreGapScale ?? 1 })) }
   }

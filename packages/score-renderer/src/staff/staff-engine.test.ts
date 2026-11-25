@@ -146,15 +146,28 @@ it('joins grace stems to the smaller heads and recomputes beams after width chan
   }
 })
 
-it('keeps above-staff articulations clear of upward stems and beams', () => {
-  const result = model('{4/4}\nN: (5{str} 1e{str}) 2 3 4 |||')
-  const drawing = drawStaffMeasure(result, result.minimum, 0)
-  const geometry = new SvgGeometry(drawing, measureText)
-  for (const entry of result.entries[0]!) for (const note of entry.notes) {
-    if (!note.prepared.item.event.postfixes.includes('str')) continue
-    const event = findAll(drawing, n => n.attributes.id === note.prepared.item.id)[0]!
-    const mark = findAll(event, n => n.numericInk !== undefined).at(-1)!
-    expect(geometry.ink(mark).bottom).toBeLessThan(Math.min(...note.ys, note.stemEnd))
+it.each(['tip', 'brk', 'hold', 'str'])('puts %s opposite final stems, including mixed-pitch beams and chords', mark => {
+  for (const music of [`1{${mark}} 1e{${mark}}`, `(1{${mark}} 1ee{${mark}})`, `[135:h]{${mark}}`]) {
+    const result = model(`{4/4}\nN: ${music} 2 3 |||`)
+    for (const width of [result.minimum, result.minimum + 200, result.minimum]) {
+      const drawing = drawStaffMeasure(result, width, 0)
+      const geometry = new SvgGeometry(drawing, measureText)
+      for (const entry of result.entries[0]!) for (const note of entry.notes) {
+        if (!note.prepared.item.event.postfixes.includes(mark)) continue
+        const event = findAll(drawing, n => n.attributes.id === note.prepared.item.id)[0]!
+        const symbol = findAll(event, n => n.numericInk !== undefined).at(-1)!
+        const ink = geometry.ink(symbol)
+        const heads = findAll(event, n => n.attributes.class === 'notehead').map(node => geometry.ink(node))
+        if (note.direction === 1) expect(ink.top).toBeGreaterThan(Math.max(...heads.map(head => head.bottom)))
+        else expect(ink.bottom).toBeLessThan(Math.min(...heads.map(head => head.top)))
+        expect(xml(symbol)).toContain(note.direction === 1 ? 'Below' : 'Above')
+        if (mark === 'tip') {
+          const center = (ink.top + ink.bottom) / 2, unit = staffMusicSize() / 4
+          const rule = staffMusicSize() + Math.round((center - staffMusicSize()) / unit) * unit
+          expect(Math.abs(center - rule)).toBeGreaterThan((ink.bottom - ink.top) / 2)
+        }
+      }
+    }
   }
 })
 

@@ -73,17 +73,17 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         paginationError = error
       }
       const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
-      const quality = scoreLineQuality(lines.map(line => line.minimum * STAFF_SCALE / available),
+      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
         lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
       return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
-    if (!selected.paginationError) for (const spacing of [0.375, 0.34375, 0.3125, 0.28125]) {
+    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
       const candidate = attempt(spacing)
       if (candidate.paginationError) continue
       const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
       const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
-      if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+      if (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
         && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing)) selected = candidate
     }
     layouts.set(candidateWidth, selected)

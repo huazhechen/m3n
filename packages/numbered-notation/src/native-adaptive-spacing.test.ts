@@ -7,7 +7,7 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js'
 import { NativeNumberedNotationScore, PreparedNumberedNotationScore } from './native-score.js'
 
-describe('page-aware automatic note spacing', () => {
+describe('shared horizontal automatic note spacing', () => {
   const options = { width: 320, pageMargin: 0, paged: true }
   const rows = (layout: ReturnType<typeof layoutNativeScore>) => layout.systems.map(system =>
     system.measures.map(measure => measure.columns.map(column => column.glyphs.map(glyph => [glyph.id, glyph.x]))))
@@ -69,7 +69,7 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   const candidates = [9,12,15].map(minimumNoteGap => layoutNativeScore(document, {
     ...settings, coreGap:nativeCoreGap(), minimumNoteGap,
   }))
-  candidates.sort((a,b) => a.pages.length-b.pages.length || nativeLayoutScore(b)-nativeLayoutScore(a)
+  candidates.sort((a,b) => a.systems.length-b.systems.length || nativeLayoutScore(b)-nativeLayoutScore(a)
     || a.options.minimumNoteGap!-b.options.minimumNoteGap!)
   const reference = candidates[0]!
   repaginateNativeLayout(reference,true)

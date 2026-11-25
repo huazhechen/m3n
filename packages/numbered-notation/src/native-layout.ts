@@ -56,7 +56,7 @@ function validate(options: NativeRenderOptions) {
   if (options.wrapWidthRatio !== undefined && (!Number.isFinite(options.wrapWidthRatio) || options.wrapWidthRatio <= 0 || options.wrapWidthRatio > 1)) throw new Error('wrapWidthRatio 必须大于 0 且不大于 1。')
 }
 
-function relationsFor(document: ScoreDocument, projection: NativeProjection): NativeRelation[] {
+export function prepareNativeRelations(document: ScoreDocument, projection: NativeProjection): NativeRelation[] {
   const byEvent = new Map<ScoreEvent, NativeGlyph[]>()
   for (const glyph of projection.glyphs) if (glyph.event) {
     const members = byEvent.get(glyph.event)
@@ -255,7 +255,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       throw error
     }
     const score = nativeLayoutScore(candidate)
-    if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+    if (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
       && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!)) {
       selected = candidate
       selectedScore = score
@@ -332,7 +332,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     reserveInstrumentalEndpoints(relations, projection)
     if (timings) timings.relationPlanReuses = (timings.relationPlanReuses ?? 0) + 1
   } else {
-    relations = relationsFor(document, projection)
+    relations = prepareNativeRelations(document, projection)
     if (preparation) {
       const indices = new Map(projection.glyphs.map((glyph, index) => [glyph, index]))
       preparation.relations = relations.map(relation => ({ ...relation, first: indices.get(relation.first)!, last: indices.get(relation.last)! }))

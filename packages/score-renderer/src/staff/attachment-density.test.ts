@@ -21,6 +21,22 @@ it.each(['dynam', 'hairpin'])('places a %s by local ink rather than its arbitrar
   expect((far.top - 80.5) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
 })
 
+it.each(['dir', 'harm', 'fing'])('anchors upper %s to local music without preserving a fixed head offset', cls => {
+  const place = (y: number, distantTop: number) => {
+    const rules = [40, 50, 60, 70, 80].map(y => element('path', { class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1' }))
+    const attachment = element('g', { class: cls }, [element('rect', { x: '100', y: String(y), width: '20', height: '12' })])
+    const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+      element('g', { class: 'staff' }, [...rules, element('rect', { x: '250', y: String(distantTop), width: '10', height: '10' })]), attachment,
+    ])])
+    const geometry = new SvgGeometry(node, textMeasurer())
+    arrangeStaffSystem(node, geometry, 320, new Set())
+    return geometry.ink(attachment)
+  }
+  const near = place(10, 10), far = place(-100, -100)
+  expect(far.bottom).toBeCloseTo(near.bottom)
+  expect((39.5 - far.bottom) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
+})
+
 
 it('uses the bow rise to clear a central obstacle without lifting both endpoints above it', () => {
   const obstacle = { left: 90, right: 110, top: 0, bottom: 10 }

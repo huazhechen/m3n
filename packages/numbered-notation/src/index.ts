@@ -24,3 +24,5 @@ export { scoreLineQuality, scoreHorizontalQuality } from './layout-quality.js'
 export { scoreRhythmicWeight, scoreAttachmentHeight, scoreNavigationGlyphHeight, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from './score-layout-policy.js'
 
 export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'
+
+export { createScoreHorizontalReference, type ScoreHorizontalSpan } from './score-horizontal-reference.js'
