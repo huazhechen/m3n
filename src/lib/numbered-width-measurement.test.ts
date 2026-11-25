@@ -6,7 +6,7 @@ vi.mock('@m3n/numbered-notation', () => ({
   PreparedNumberedNotationScore: class {
     pageCount = 1
     systemCount = 12
-    quality = { lineDensityVariation: .1, lastLineSlack: .2 }
+    quality = { lineDensityVariation: .1, lastLineSlack: .2, pageBottomSlack: .3 }
     continuousHeight = mocks.height
     renderPaged = mocks.render
     renderContinuous = mocks.render
@@ -21,7 +21,8 @@ it('production selection runs the layout while skipping SVG generation, DOM moun
   const score = {} as ScoreDocument
   const { candidate } = measureNumberedWidth(score, 560)
   expect(mocks.layout).toHaveBeenCalledExactlyOnceWith(score, { width: 560, pageMargin: 0 }, expect.any(Object))
-  expect(candidate).toMatchObject({ width: 560, pageCount: 1, rows: 12, naturalHeight: 666 })
+  expect(candidate).toMatchObject({ width: 560, pageCount: 1, rows: 12, naturalHeight: 666, pageBottomSlack: .3 })
+  expect(candidate.qualityScore).toBeCloseTo((576 / 560) / 1.35)
   expect(mocks.render).not.toHaveBeenCalled()
   expect(mocks.inspect).not.toHaveBeenCalled()
   expect(candidate.timings).not.toHaveProperty('svgRenderMs')

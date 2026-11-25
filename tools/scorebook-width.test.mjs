@@ -21,6 +21,19 @@ test('prefer fewer A4 pages, then the shared quality score, excluding unsafe ren
   assert.equal(chooseBestWidth([{ width: 720, error: 'render failed' }]), null)
 })
 
+test('page-bottom whitespace outweighs a small density improvement without adding pages', async () => {
+  // Real-font metrics from 你是我心爱的姑娘: seven rows at 738px used to
+  // beat eight rows at 702px despite leaving one fifth of the page empty.
+  const measure = async width => ({ width, rows: width >= 738 ? 7 : 8,
+    pageCount: width < 702 ? 2 : 1, outside: [], overlaps: [], lastLineSlack: 0,
+    lineDensityVariation: width >= 738 ? .051956 : .118302,
+    pageBottomSlack: width >= 738 ? .204 : .057 })
+  const { best } = await selectBestWidth(measure)
+  assert.equal(best.width, 702)
+  assert.equal(best.pageCount, 1)
+  assert.equal(chooseBestWidth([await measure(576), await measure(738)]).width, 738)
+})
+
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
 const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 576)

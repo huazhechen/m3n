@@ -139,7 +139,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(576)
+    expect(selected).toBe(582)
   })
 
   it('never trades a page for a higher balance score', async () => {
@@ -163,7 +163,7 @@ describe('numbered automatic width margins', () => {
 
 describe('staff automatic width range', () => {
   afterEach(() => { prepareStaffTask.mockClear(); staffTaskUses.mockClear() })
-  it.each([510, 590, 640])('selects within the nine levels (576–768px) when the required width is %s', async requiredWidth => {
+  it.each([510, 590, 640])('refines the nine levels at 6px steps when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
     staffLayoutInfo.mockImplementation(width => ({ pageCount: width >= requiredWidth ? 2 : 3, availableWidth: width,
@@ -171,10 +171,10 @@ describe('staff automatic width range', () => {
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(Math.max(576, Math.ceil(requiredWidth / 24) * 24))
+    expect(selected).toBe(Math.max(576, Math.ceil(requiredWidth / 6) * 6))
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
-    expect(staffTaskUses).toHaveBeenCalledTimes(9)
+    expect(staffTaskUses).toHaveBeenCalledTimes(requiredWidth <= 576 ? 12 : 15)
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 576 && width <= 768)).toBe(true)
   })
@@ -189,9 +189,9 @@ describe('staff automatic width range', () => {
     expect(prepareStaffTask).toHaveBeenCalledTimes(2)
     const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
     expect(first).not.toBe(second)
-    expect(staffTaskUses).toHaveBeenCalledTimes(18)
-    expect(staffTaskUses.mock.calls.slice(0, 9).every(([task]) => task === first)).toBe(true)
-    expect(staffTaskUses.mock.calls.slice(9).every(([task]) => task === second)).toBe(true)
+    expect(staffTaskUses).toHaveBeenCalledTimes(24)
+    expect(staffTaskUses.mock.calls.slice(0, 12).every(([task]) => task === first)).toBe(true)
+    expect(staffTaskUses.mock.calls.slice(12).every(([task]) => task === second)).toBe(true)
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {
