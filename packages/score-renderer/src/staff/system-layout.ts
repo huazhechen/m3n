@@ -270,11 +270,13 @@ export function arrangeStaffSystem(
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
     const localGap = hasClass(attachment, 'repeatMark') ? style.repeatMarkGap / scale : gap
-    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark')) {
+    if (hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && lanes === 1)) {
       // Start next to the local music, then let the normal ink avoidance
       // clear stems, curves and directions instead of preserving a fixed gap.
       const local = music.filter(other => overlapsX(moveInk(ink, dx, 0), other, localGap / 2))
-      if (local.length) dy = Math.min(...local.map(other => other.top)) - localGap - ink.bottom
+      if (local.length) dy = below
+        ? Math.max(...local.map(other => other.bottom)) + localGap - ink.top
+        : Math.min(...local.map(other => other.top)) - localGap - ink.bottom
     }
     if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - style.attachmentStandaloneGap / scale - ink.bottom
     // Consecutive wedges may share a baseline with a small real gap between

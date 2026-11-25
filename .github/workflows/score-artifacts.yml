@@ -13,3 +13,6 @@ jobs:
       - run: npm run build:packages
       - run: node --test tools/score-artifacts.test.mjs
       - run: npm run check:score-artifacts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify notation density with real fonts
+        run: M3N_MEMORY_LIMIT_MB=1750 python3 tools/run-low-memory.py node tools/compare-notation-density.mjs --regression

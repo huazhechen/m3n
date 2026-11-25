@@ -177,3 +177,22 @@ it.each([28, 35])('measures proportional tuplet bracket clearance at music size 
     expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + (staffMusicSize() / 4 * 0.3) - (staffMusicSize() / 4 * 0.1) / 2);
   } finally { scoreLayoutConfig.staff.music = previous; }
 });
+
+it('retains normal stems for flat beams and bounds shortened leap stems above the innermost beam', () => {
+  for (const music of ['((1 1 1 1))', '((1 1e 1 1e))', '(((1 1e 1 1e 1 1e 1 1e)))']) {
+    const result = model(`{4/4}\nN: ${music} 2 3 4 |||`)
+    drawStaffMeasure(result, result.minimum + 100, 0)
+    const space = staffMusicSize() / 4
+    for (const beam of result.beams) {
+      const lengths = beam.notes.map(note => {
+        const outer = note.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
+        const length = note.direction * (outer - note.stemEnd)
+        const levels = Math.log2(note.prepared.dur / 4)
+        expect(length / space).toBeGreaterThanOrEqual(Math.max(2.5, (levels - 1) * .7 + 1.4) - 1e-6)
+        return length / space
+      })
+      if (music === '((1 1 1 1))') for (const length of lengths) expect(length).toBeCloseTo(3.5)
+      else expect(Math.min(...lengths)).toBeLessThan(3.5)
+    }
+  }
+})

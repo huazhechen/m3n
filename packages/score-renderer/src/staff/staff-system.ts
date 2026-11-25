@@ -1,3 +1,4 @@
+import { staffSlur } from './staff-slur.js'
 import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
@@ -231,22 +232,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
-          const obstacles = music.filter(p => p.left < right && p.right > left)
-          const height = (staffMusicSize() / 4 * 1.4), y = Math.min(yTop - (staffMusicSize() / 4 * 1.5), ...obstacles.map(p => p.top - style.attachmentGap / scale))
-          const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + (staffMusicSize() / 4 * 0.2)} ${left + (right - left) / 3} ${y - height + (staffMusicSize() / 4 * 0.2)} ${left} ${y} Z`, fill: '#000' })
-          // The controls divide x evenly, so x is linear in t and the two
-          // edges are y - 3*h*t*(1-t). Bound short slices exactly; a volta
-          // number near an endpoint must not avoid the curve's distant peak.
-          const count = Math.max(1, Math.ceil(Math.abs(right - left) / engine.slurInkSlice))
-          const boxes = Array.from({ length: count }, (_, i) => {
-            const a = i / count, b = (i + 1) / count
-            const peak = Math.max(a, Math.min(b, 0.5))
-            return { left: left + (right - left) * a, right: left + (right - left) * b,
-              top: y - 3 * height * peak * (1 - peak),
-              bottom: y - 3 * (height - (staffMusicSize() / 4 * 0.2)) * Math.min(a * (1 - a), b * (1 - b)) }
-          })
-          path.pathInk = { d: path.attributes.d!, boxes }
-          node.children.push(element('g', { class: 'slur' }, [path]))
+          node.children.push(staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left)))
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
           if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam'))
           else {

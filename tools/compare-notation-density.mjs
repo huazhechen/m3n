@@ -5,6 +5,18 @@ import { resolve, join } from 'node:path'
 const argument = name => process.argv.find(value => value.startsWith(`--${name}=`))?.slice(name.length + 3)
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
+// Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
+const regression = process.argv.includes('--regression')
+const densityLimits = {
+  flower_dance_01: { staffHeight: 2140, staffRows: 28, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.17 },
+  mozart_k545_01: { staffHeight: 2000, staffRows: 23, numberedHeight: 1545, numberedRows: 23, heightRatio: 1.31 },
+  guo_huo_01: { staffHeight: 1000, staffRows: 10, numberedHeight: 760, numberedRows: 9, heightRatio: 1.34 },
+  ni_shi_wo_xin_ai_de_gu_niang_01: { staffHeight: 1170, staffRows: 9, numberedHeight: 1060, numberedRows: 9, heightRatio: 1.12 },
+}
+if (regression && (['scores', 'widths', 'staff-sizes'].some(name => argument(name))
+    || process.argv.includes('--all') || process.argv.includes('--metrics-only'))) {
+  throw new Error('--regression uses fixed fixtures, 640px and full ink audits')
+}
 const origin = 'http://notation-density.local'
 if (process.argv.includes('--bundle-only')) {
   const { build } = await import('vite')
@@ -17,11 +29,13 @@ if (process.argv.includes('--bundle-only')) {
   // Release all bundler/font buffers before launching Chromium.
   execFileSync(process.execPath, [import.meta.filename, '--bundle-only', `--output=${output}`], { stdio: 'inherit' })
   const { chromium } = await import('@playwright/test')
-  const files = (argument('scores') ?? 'huan_le_song_01,mo_li_hua_01,ni_shi_wo_xin_ai_de_gu_niang_01,flower_dance_01').split(',')
+  const files = (regression ? Object.keys(densityLimits).join(',') : argument('scores') ?? 'huan_le_song_01,mo_li_hua_01,ni_shi_wo_xin_ai_de_gu_niang_01,flower_dance_01').split(',')
   const inputs = process.argv.includes('--all') ? ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(root, 'src', scope)).filter(file => file.endsWith('.m3n')).map(file => `${scope}/${file}`)) : files.map(file => `scores/${file}.m3n`)
   const auditLayout = !process.argv.includes('--metrics-only')
   const includeSvg = process.argv.includes('--screenshots')
-  const widths = (argument('widths') ?? '528,640,768').split(',').map(Number)
+  const includePdf = process.argv.includes('--pdfs')
+  const profile = process.argv.includes('--profile')
+  const widths = (regression ? '640' : argument('widths') ?? '528,640,768').split(',').map(Number)
   if (widths.some(width => !Number.isFinite(width) || width < 320)) throw new Error('Invalid widths')
   const sizes = argument('staff-sizes')?.split(',').map(Number) ?? [undefined]
   if (sizes.some(size => size !== undefined && (!Number.isFinite(size) || size < 16))) throw new Error('Invalid staff sizes')
@@ -52,7 +66,14 @@ if (process.argv.includes('--bundle-only')) {
       await page.addScriptTag({ url: `${origin}/bundle.js` })
       const source = readFileSync(join(root, 'src', file), 'utf8')
       for (const width of widths) for (const staffMusic of sizes) {
-        const result = await page.evaluate(({ source, width, auditLayout, staffMusic, includeSvg }) => window.notationDensity.compare(source, width, { auditLayout, staffMusic, includeSvg }), { source, width, auditLayout, staffMusic, includeSvg })
+        const result = await page.evaluate(({ source, width, auditLayout, staffMusic, includeSvg, profile, includePdf }) => window.notationDensity.compare(source, width, { auditLayout, staffMusic, includeSvg, profile, includePdf }), { source, width, auditLayout, staffMusic, includeSvg, profile, includePdf })
+        if (result.pdf) {
+          for (const [notation, bytes] of Object.entries(result.pdf)) {
+            const name = `${file.replaceAll('/', '_')}-${width}${staffMusic ? `-${staffMusic}` : ''}`
+            writeFileSync(join(output, `${name}-${notation}.pdf`), Buffer.from(bytes))
+          }
+          delete result.pdf
+        }
         if (result.svg) {
           const name = `${file.replaceAll('/', '_')}-${width}${staffMusic ? `-${staffMusic}` : ''}`
           for (const [notation, svg] of Object.entries(result.svg)) writeFileSync(join(output, `${name}-${notation}.svg`), svg)
@@ -74,6 +95,25 @@ if (process.argv.includes('--bundle-only')) {
           }, { svg: result.svg, width })
           await page.screenshot({ path: join(output, `${name}.png`), fullPage: true })
           delete result.svg
+        }
+        if (regression) {
+          const limit = densityLimits[file.slice(7, -4)]
+          const failures = []
+          if (result.staff.naturalHeight > limit.staffHeight) failures.push('staff continuous height')
+          if (result.staff.rows > limit.staffRows) failures.push('staff row count')
+          if (result.numbered.naturalHeight > limit.numberedHeight) failures.push('numbered continuous height')
+          if (result.numbered.rows > limit.numberedRows) failures.push('numbered row count')
+          if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
+          if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
+          // A density improvement must retain the calibrated musical and lyric sizes.
+          for (const [key, expected] of Object.entries({ staffFrameMm: 8.1375, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
+            if (Math.abs(result.readability[key] - expected) > .001) failures.push(key)
+          }
+          if (failures.length) {
+            result.regressionFailures = failures
+            console.error(`Density regression: ${file}: ${failures.join(', ')}`)
+            process.exitCode = 1
+          }
         }
         entries.push({ file, width, staffMusic, ...result })
         writeReport()

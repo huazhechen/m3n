@@ -397,9 +397,14 @@ function positionBeam(beam: StaffBeam) {
   const first = beam.notes[0]!, last = beam.notes.at(-1)!, direction = first.direction
   const dx = last.stemX - first.stemX
   const slope = dx ? Math.max(-0.2, Math.min(0.2, (last.stemEnd - first.stemEnd) / dx)) : 0
-  let origin = first.stemEnd
+  // Keep the ordinary stem length on average. Requiring that full length
+  // at every extreme of a leap makes all the other stems needlessly long.
+  let origin = beam.notes.reduce((sum, note) => sum + note.stemEnd - slope * (note.stemX - first.stemX), 0) / beam.notes.length
   for (const note of beam.notes) {
-    const required = note.stemEnd - slope * (note.stemX - first.stemX)
+    const levels = Math.log2(note.prepared.dur / 4)
+    const minimum = (staffMusicSize() / 4) * Math.max(2.5, (levels - 1) * .7 + .4 + 1)
+    const outer = direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
+    const required = outer - direction * minimum - slope * (note.stemX - first.stemX)
     origin = direction === 1 ? Math.min(origin, required) : Math.max(origin, required)
   }
   for (const note of beam.notes) note.stemEnd = origin + slope * (note.stemX - first.stemX)
