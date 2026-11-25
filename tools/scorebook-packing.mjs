@@ -1,9 +1,10 @@
-import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum, widthStep } from './scorebook-width.mjs'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum } from './scorebook-width.mjs'
 
 // Keep at least 32 logical px between scores; never compress this to fit more works.
 export const sharedScoreGap = 32
 export const sharedPreferredWidth = widthMinimum
-export const sharedWidthMaximum = 640
+export const sharedWidthMaximum = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.sharedMaximumMultiple
 export const sharedWidthCandidates = widthCandidates.filter(width => width <= sharedWidthMaximum)
 export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, crowdedAbove: .85,
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
@@ -26,34 +27,24 @@ function soloOption(entry, index) {
   return { members: [index], width: solo.width, pageCount: solo.pageCount, fill, qualityScore: numberedLayoutScore(solo) }
 }
 
-function sharedOption(entries, members, requestWidth) {
+function sharedOption(entries, members) {
   if (members.length < 2) return null
   if (members.some(index => entries[index].sharePage === false)) return null
-  // Sharing eligibility is checked at 640px, independently of the solo search. Once a group passes,
+  // Sharing eligibility is checked at the configured admission level, independently of the solo search. Once a group passes,
   // choose its highest-quality common width.
   const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === sharedWidthMaximum))
   if (eligible.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
   const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
   if (eligibilityHeight > capacity(sharedWidthMaximum) + .001) return null
   const optionAt = width => {
-    const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width)
-      ?? entries[index].sharedCandidates?.find(candidate => candidate.width === width))
+    const candidates = members.map(index => entries[index].candidates.find(candidate => candidate.width === width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
     const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
     if (usedHeight > capacity(width) + .001) return null
     const qualityScore = candidates.reduce((sum, candidate) => sum + numberedLayoutScore(candidate), 0) / candidates.length
     return { members, width, pageCount: 1, fill: usedHeight / capacity(width), qualityScore, outside: [], overlaps: [] }
   }
-  const coarse = chooseBestWidth(sharedWidthCandidates.map(optionAt).filter(Boolean))
-  if (!coarse) return null
-  const options = [coarse]
-  for (const width of [coarse.width - widthStep / 2, coarse.width + widthStep / 2]) {
-    if (width < widthMinimum || width > sharedWidthMaximum) continue
-    for (const index of members) requestWidth?.(entries[index], width)
-    const option = optionAt(width)
-    if (option) options.push(option)
-  }
-  return chooseBestWidth(options)
+  return chooseBestWidth(sharedWidthCandidates.map(optionAt).filter(Boolean))
 }
 
 const empty = () => ({ cost: 0, pages: 0, density: 0, qualityCost: 0, groups: [] })
@@ -77,7 +68,7 @@ function better(a, b) {
 }
 
 /** Knuth–Plass-style whole-sequence DP; works remain complete and ordered. */
-function orderedPacking(entries, requestWidth) {
+function orderedPacking(entries) {
   const best = Array(entries.length + 1)
   best[entries.length] = empty()
   for (let start = entries.length - 1; start >= 0; start--) {
@@ -85,7 +76,7 @@ function orderedPacking(entries, requestWidth) {
     for (let end = start + 2; end <= entries.length; end++) {
       const next = entries[end - 1]
       if (next.section !== entries[start].section || next.breakBefore || next.sharePage === false || entries[start].sharePage === false) break
-      const group = sharedOption(entries, Array.from({ length: end - start }, (_, index) => start + index), requestWidth)
+      const group = sharedOption(entries, Array.from({ length: end - start }, (_, index) => start + index))
       if (!group) break // Positive heights mean adding further works cannot repair capacity or safety.
       const option = prepend(group, best[end])
       if (better(option, best[start])) best[start] = option
@@ -95,7 +86,7 @@ function orderedPacking(entries, requestWidth) {
 }
 
 /** Exact set partitioning via subset DP, equivalent to choosing one covering group per work. */
-function unorderedPacking(entries, requestWidth) {
+function unorderedPacking(entries) {
   const bits = entries.map((_, index) => 1n << BigInt(index))
   const indexes = new Map(bits.map((bit, index) => [bit, index]))
   const choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
@@ -107,7 +98,7 @@ function unorderedPacking(entries, requestWidth) {
   function enumerate(members, from) {
     for (let i = from; i < eligible.length; i++) {
       const next = [...members, eligible[i]]
-      const group = next.length > 1 ? sharedOption(entries, next, requestWidth) : null
+      const group = next.length > 1 ? sharedOption(entries, next) : null
       if (next.length > 1 && !group) continue
       if (group) choices[next[0]].push({ ...group, mask: next.reduce((mask, index) => mask | bits[index], 0n) })
       enumerate(next, i + 1)
@@ -134,7 +125,7 @@ function unorderedPacking(entries, requestWidth) {
 }
 
 /** Chapters and explicit anchors bound independently optimized segments. */
-function optimize(entries, movableSections, requestWidth) {
+function optimize(entries, movableSections) {
   const selected = []
   for (let start = 0; start < entries.length;) {
     let end = start + 1
@@ -142,7 +133,7 @@ function optimize(entries, movableSections, requestWidth) {
       while (end < entries.length && entries[end].section === entries[start].section && !entries[end].breakBefore && entries[end].sharePage !== false) end++
     }
     const segment = entries.slice(start, end)
-    const result = movableSections.has(entries[start].section) ? unorderedPacking(segment, requestWidth) : orderedPacking(segment, requestWidth)
+    const result = movableSections.has(entries[start].section) ? unorderedPacking(segment) : orderedPacking(segment)
     selected.push(...result.groups.map(group => ({ ...group, members: group.members.map(index => index + start) })))
     start = end
   }
@@ -168,25 +159,4 @@ export function reorderForSharing(entries, movableSections = new Set(entries.map
 
 export function optimizeScorebook(entries, movableSections = new Set()) {
   return optimize(entries, movableSections)
-}
-
-/** Discover every feasible group's coarse winner, measure its missing neighbors once,
- * then optimize with the refined group scores. Solo candidates remain independent. */
-export async function optimizeScorebookWithRefinement(entries, movableSections, measure, { signal } = {}) {
-  signal?.throwIfAborted()
-  const requests = new Map()
-  optimize(entries, movableSections, (entry, width) => {
-    if (entry.candidates.some(candidate => candidate.width === width) || entry.sharedCandidates?.some(candidate => candidate.width === width)) return
-    if (!requests.has(entry)) requests.set(entry, new Set())
-    requests.get(entry).add(width)
-  })
-  for (const [entry, widths] of requests) for (const width of widths) {
-    signal?.throwIfAborted()
-    let candidate
-    try { candidate = { width, ...await measure(entry, width) } }
-    catch (error) { signal?.throwIfAborted(); candidate = { width, error: error.message } }
-    signal?.throwIfAborted()
-    ;(entry.sharedCandidates ??= []).push(candidate)
-  }
-  return optimizeScorebook(entries, movableSections)
 }

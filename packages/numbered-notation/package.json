@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./layout-config": {
+      "types": "./dist/score-layout-config.d.ts",
+      "import": "./dist/score-layout-config.js"
     }
   },
   "scripts": {

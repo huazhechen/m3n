@@ -98,7 +98,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true, pageMargin: margin })
 
-    expect(selected).toBe(margin === 32 ? 620 : 600)
+    expect(selected).toBe(margin === 32 ? 624 : 600)
     expect(numberedQuality.mock.calls.every(([, options]) => options.pageMargin === (margin ?? 0))).toBe(true)
     expect(numberedQuality.mock.calls.every(([, options]) => options.paged === true)).toBe(true)
     expect(new Set(numberedQuality.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
@@ -119,14 +119,14 @@ describe('numbered automatic width margins', () => {
     expect(second[0]).not.toBe(first[0])
   })
 
-  it('keeps the automatic width at least 480px when narrower layouts fit', async () => {
+  it('keeps the automatic width at least level 1 (576px) when narrower layouts fit', async () => {
     numberedQuality.mockReset()
     numberedQuality.mockReturnValue({ pageCount: 2, lineDensityVariation: 0, lastLineSlack: 0 })
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(480)
-    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 480 && options.width <= 720)).toBe(true)
+    expect(selected).toBe(576)
+    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 576 && options.width <= 768)).toBe(true)
   })
 
   it('prefers balanced three-row spacing over a short, uneven last row', async () => {
@@ -139,7 +139,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(570)
+    expect(selected).toBe(576)
   })
 
   it('never trades a page for a higher balance score', async () => {
@@ -148,7 +148,7 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(480)
+    expect(selected).toBe(576)
   })
 
   it('chooses the minimum page count before comparing layout quality', async () => {
@@ -157,13 +157,13 @@ describe('numbered automatic width margins', () => {
 
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(570)
+    expect(selected).toBe(576)
   })
 })
 
 describe('staff automatic width range', () => {
   afterEach(() => { prepareStaffTask.mockClear(); staffTaskUses.mockClear() })
-  it.each([510, 590, 640])('selects within 480–720px when the required width is %s', async requiredWidth => {
+  it.each([510, 590, 640])('selects within the nine levels (576–768px) when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
     staffLayoutInfo.mockImplementation(width => ({ pageCount: width >= requiredWidth ? 2 : 3, availableWidth: width,
@@ -171,12 +171,12 @@ describe('staff automatic width range', () => {
 
     const selected = await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })
 
-    expect(selected).toBe(Math.max(480, Math.ceil(requiredWidth / 10) * 10))
+    expect(selected).toBe(Math.max(576, Math.ceil(requiredWidth / 24) * 24))
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
-    expect(staffTaskUses).toHaveBeenCalledTimes(15)
+    expect(staffTaskUses).toHaveBeenCalledTimes(9)
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
-    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 480 && width <= 720)).toBe(true)
+    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 576 && width <= 768)).toBe(true)
   })
 
   it('creates a fresh measurement task for every selection', async () => {
@@ -189,9 +189,9 @@ describe('staff automatic width range', () => {
     expect(prepareStaffTask).toHaveBeenCalledTimes(2)
     const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
     expect(first).not.toBe(second)
-    expect(staffTaskUses).toHaveBeenCalledTimes(28)
-    expect(staffTaskUses.mock.calls.slice(0, 14).every(([task]) => task === first)).toBe(true)
-    expect(staffTaskUses.mock.calls.slice(14).every(([task]) => task === second)).toBe(true)
+    expect(staffTaskUses).toHaveBeenCalledTimes(18)
+    expect(staffTaskUses.mock.calls.slice(0, 9).every(([task]) => task === first)).toBe(true)
+    expect(staffTaskUses.mock.calls.slice(9).every(([task]) => task === second)).toBe(true)
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {
@@ -204,7 +204,7 @@ describe('staff automatic width range', () => {
           ? [{ minimum: width * 0.55, target: width }, { minimum: width * 0.73, target: width }, { minimum: width * 0.59, target: width }]
           : [{ minimum: width * 0.99, target: width }, { minimum: width * 0.81, target: width }],
     }))
-    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(570)
+    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(576)
   })
 })
 

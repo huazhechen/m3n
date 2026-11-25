@@ -81,4 +81,16 @@ const staff = {
 // 图片导出页脚：保留随谱宽缩放的现有行为。
 const imageExport = { footerMinimumFontSize: 12, footerFontSizeWidthRatio: 0.02 } as const
 
-export const scoreLayoutConfig = { numbered, lyrics, staff, imageExport }
+// 页面宽度 1–9 档：24px 的 24–32 倍；合页在 30 倍（第 7 档）检查准入。
+const pageWidth = {
+  unit: numbered.music,
+  minimumMultiple: 24,
+  maximumMultiple: 32,
+  sharedMaximumMultiple: 30,
+  defaultMultiple: 30,
+  // 页面手动滑条范围，独立于自动搜索的九档。
+  manualMinimumMultiple: 20,
+  manualMaximumMultiple: 40,
+} as const
+
+export const scoreLayoutConfig = { numbered, lyrics, staff, imageExport, pageWidth }

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
-import { packScorebook, optimizeScorebook, optimizeScorebookWithRefinement, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
+import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates } from './scorebook-packing.mjs'
 
-test('the shared online and offline search uses 480–720px in 20px steps', () => {
-  assert.deepEqual(widthCandidates, Array.from({ length: 13 }, (_, index) => 480 + index * 20))
+test('the shared online and offline search uses nine 24px levels from 576–768px', () => {
+  assert.deepEqual(widthCandidates, Array.from({ length: 9 }, (_, index) => 576 + index * 24))
 })
 
 test('a failed search preserves the engraving error for the reader', async () => {
@@ -15,39 +15,39 @@ test('prefer fewer A4 pages, then the shared quality score, excluding unsafe ren
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
   const chosen = candidate(700, 1, { qualityScore: .9 })
   assert.equal(chooseBestWidth([
-    candidate(640, 2), candidate(710, 1, { qualityScore: .8, overlaps: ['lyric'] }), candidate(690, 1, { outside: ['note'] }),
+    candidate(720, 2), candidate(710, 1, { qualityScore: .8, overlaps: ['lyric'] }), candidate(690, 1, { outside: ['note'] }),
     { width: 650, error: 'render failed' }, candidate(800, 1), candidate(700, 1, { qualityScore: .7 }), chosen,
   ]), chosen)
-  assert.equal(chooseBestWidth([{ width: 640, error: 'render failed' }]), null)
+  assert.equal(chooseBestWidth([{ width: 720, error: 'render failed' }]), null)
 })
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 640)
-  ? candidates : [...candidates, candidate(640, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 720)
+  ? candidates : [...candidates, candidate(720, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
 
-test('640px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
-  assert.equal(sharedPreferredWidth, 480)
+test('720px determines sharing eligibility, then the highest-quality fitting common width is selected', () => {
+  assert.equal(sharedPreferredWidth, 576)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(320)), entry('B', make(320))]
-  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 480, pageCount: 1 }])
-  entries[1].candidates.find(item => item.width === 640).overlaps.push('lyric')
+  assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 576, pageCount: 1 }])
+  entries[1].candidates.find(item => item.width === 720).overlaps.push('lyric')
   assert.equal(packScorebook(entries).length, 2)
 })
 
-test('shared widths stop at 640px while solo selection can still choose 720px', () => {
-  assert.equal(sharedWidthMaximum, 640)
-  assert.deepEqual(sharedWidthCandidates, [480, 500, 520, 540, 560, 580, 600, 620, 640])
+test('shared widths stop at 720px while solo selection can still choose 768px', () => {
+  assert.equal(sharedWidthMaximum, 720)
+  assert.deepEqual(sharedWidthCandidates, [576, 600, 624, 648, 672, 696, 720])
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
-    { qualityScore: width === 720 ? 10 : width === 620 ? 2 : 1 }))))
-  assert.equal(chooseBestWidth(entries[0].candidates).width, 720)
-  assert.equal(packScorebook(entries)[0].width, 620)
-  assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 620)
+    { qualityScore: width === 768 ? 10 : width === 696 ? 2 : 1 }))))
+  assert.equal(chooseBestWidth(entries[0].candidates).width, 768)
+  assert.equal(packScorebook(entries)[0].width, 696)
+  assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 696)
 })
 
-test('passing 720px or narrower widths cannot bypass 640px admission', () => {
-  for (const at640 of [candidate(640, 250, 2), candidate(640, 470)]) {
-    const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 250), at640, candidate(720, 250)]))
+test('passing 768px or narrower widths cannot bypass 720px admission', () => {
+  for (const atAdmission of [candidate(720, 250, 2), candidate(720, 520)]) {
+    const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 250), atAdmission, candidate(768, 250)]))
     assert.equal(packScorebook(entries).length, 2)
     assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups.length, 2)
   }
@@ -55,79 +55,79 @@ test('passing 720px or narrower widths cannot bypass 640px admission', () => {
 
 test('a shared page prefers balanced quality over the narrowest feasible width', () => {
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
-    { qualityScore: width === 600 ? 2 : .5 })) ))
-  assert.equal(packScorebook(entries)[0].width, 600)
-  entries[1].candidates.find(item => item.width === 600).outside.push('ink')
-  assert.notEqual(packScorebook(entries)[0].width, 600)
+    { qualityScore: width === 648 ? 2 : .5 })) ))
+  assert.equal(packScorebook(entries)[0].width, 648)
+  entries[1].candidates.find(item => item.width === 648).outside.push('ink')
+  assert.notEqual(packScorebook(entries)[0].width, 648)
 })
 
 test('packing optimizes the complete sequence instead of greedily choosing the narrowest first page', () => {
-  const entries = [200, 200, 700, 200].map((height, index) => entry(String(index), [candidate(560, height), candidate(620, height), candidate(640, height)]))
+  const entries = [200, 200, 700, 200].map((height, index) => entry(String(index), [candidate(600, height), candidate(696, height), candidate(720, height)]))
   const packed = packScorebook(entries)
   assert.equal(packed.length, 2)
-  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 560], [2, 4, 640]])
+  assert.deepEqual(packed.map(group => [group.start, group.end, group.width]), [[0, 2, 600], [2, 4, 696]])
 })
 
 test('section boundaries, explicit breaks, opt-outs and long works stay on separate pages', () => {
-  const short = [candidate(560, 100), candidate(620, 100)]
+  const short = [candidate(600, 100), candidate(696, 100)]
   for (const extra of [{ section: 'next' }, { breakBefore: true }, { sharePage: false }]) {
     assert.equal(packScorebook([entry('A', short), entry('B', short, extra)]).length, 2)
   }
-  assert.deepEqual(packScorebook([entry('A', [candidate(560, undefined, 2)]), entry('B', short)]), [
-    { start: 0, end: 1, width: 560, pageCount: 2 }, { start: 1, end: 2, width: 560, pageCount: 1 },
+  assert.deepEqual(packScorebook([entry('A', [candidate(600, undefined, 2)]), entry('B', short)]), [
+    { start: 0, end: 1, width: 600, pageCount: 2 }, { start: 1, end: 2, width: 600, pageCount: 1 },
   ])
   assert.deepEqual(packScorebook([]), [])
 })
 
-test('search refines the coarse winner across a page-count transition', async () => {
+test('search selects a level across a page-count transition', async () => {
   const measured = []
   const { candidates, renderCache } = await probeWidthCandidates(async width => {
     measured.push(width)
-    return candidate(width, 100, width < 570 ? 2 : 1)
+    return candidate(width, 100, width < 624 ? 2 : 1)
   })
-  assert.deepEqual(measured, [...widthCandidates, 570, 590])
-  assert.equal(renderCache.uniqueWidths, 15)
-  assert.equal(chooseBestWidth(candidates).width, 570)
+  assert.deepEqual(measured, widthCandidates)
+  assert.equal(renderCache.uniqueWidths, 9)
+  assert.equal(chooseBestWidth(candidates).width, 624)
 })
 
 test('scoring checks every formal width and chooses the best composite score', async () => {
   const result = await probeWidthCandidates(async width => candidate(width, 100, 1,
-    { qualityScore: width === 600 ? 2 : .5 }))
-  assert.deepEqual(result.candidates.map(item => item.width), [...widthCandidates, 590, 610])
-  assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.equal(result.renderCache.uniqueWidths, 15)
+    { qualityScore: width === 648 ? 2 : .5 }))
+  assert.deepEqual(result.candidates.map(item => item.width), widthCandidates)
+  assert.equal(chooseBestWidth(result.candidates).width, 648)
+  assert.equal(result.renderCache.uniqueWidths, 9)
 })
 
 test('nonmonotone pagination is evaluated across the complete grid', async () => {
-  const result = await probeWidthCandidates(async width => candidate(width, 100, width === 580 ? 1 : 2))
-  assert.equal(chooseBestWidth(result.candidates).width, 580)
+  const result = await probeWidthCandidates(async width => candidate(width, 100, width === 624 ? 1 : 2))
+  assert.equal(chooseBestWidth(result.candidates).width, 624)
 })
 
-test('SVG checks also verify the fine candidates', async () => {
+test('SVG checks verify all nine levels', async () => {
   const verified = []
   const result = await probeWidthCandidates(async width => candidate(width, 100), {
     verify: async width => {
       verified.push(width)
-      return { outside: width < 560 ? ['ink'] : [], overlaps: [] }
+      return { outside: width < 600 ? ['ink'] : [], overlaps: [] }
     },
   })
-  assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.deepEqual(verified, [...widthCandidates, 550, 570])
+  assert.equal(chooseBestWidth(result.candidates).width, 600)
+  assert.deepEqual(verified, widthCandidates)
 })
 
 test('failed renders are recorded and excluded', async () => {
   const result = await probeWidthCandidates(async width => {
-    if (width < 560) throw new Error('render failed')
+    if (width < 600) throw new Error('render failed')
     return candidate(width, 100)
   })
-  assert.equal(chooseBestWidth(result.candidates).width, 560)
-  assert.equal(result.candidates.filter(c => c.error).length, 5)
+  assert.equal(chooseBestWidth(result.candidates).width, 600)
+  assert.equal(result.candidates.filter(c => c.error).length, 1)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
 
 test('chapter works can share across distant positions while preserving chapter boundaries and anchors', () => {
-  const entries = [200, 900, 900, 900, 900, 900, 200].map((height, index) => entry(String(index), [candidate(540, height), candidate(560, height)]))
+  const entries = [200, 900, 900, 900, 900, 900, 200].map((height, index) => entry(String(index), [candidate(576, height), candidate(600, height)]))
   assert.equal(packScorebook(entries).length, 7)
   const ordered = reorderForSharing(entries)
   assert.equal(packScorebook(ordered).length, 6)
@@ -142,7 +142,7 @@ test('chapter works can share across distant positions while preserving chapter 
 })
 
 test('fixed-order pagination balances the whole chapter instead of leaving a short solo between packed pages', () => {
-  const entries = Array.from({ length: 9 }, (_, index) => entry(String(index), [candidate(540, 200), candidate(560, 200)]))
+  const entries = Array.from({ length: 9 }, (_, index) => entry(String(index), [candidate(576, 200), candidate(600, 200)]))
   const result = optimizeScorebook(entries)
   assert.deepEqual(result.entries, entries)
   assert.deepEqual(result.groups.map(group => group.end - group.start), [3, 3, 3])
@@ -151,15 +151,15 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 32)
-  const entries = ['A', 'B'].map(title => entry(title, [candidate(540, 455), candidate(560, 455), candidate(720, 515)]))
-  // The 640px admission check rejects the combined height, even if 720px fits.
+  const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 455), candidate(600, 455), candidate(768, 515)]))
+  // The 720px admission check rejects the combined height, even if 768px fits.
   assert.equal(packScorebook(entries).length, 2)
-  for (const work of entries) work.candidates[1] = candidate(560, 450)
-  assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 560px capacity.
+  for (const work of entries) work.candidates[1] = candidate(600, 450)
+  assert.equal(packScorebook(entries).length, 2) // 932px exceeds the 600px capacity.
 })
 
 test('exact chapter set partitioning matches exhaustive permutation search', () => {
-  const entries = [480, 420, 330, 280, 220, 170].map((height, index) => entry(String(index), [candidate(540, height), candidate(560, height)]))
+  const entries = [480, 420, 330, 280, 220, 170].map((height, index) => entry(String(index), [candidate(576, height), candidate(600, height)]))
   const result = optimizeScorebook(entries, new Set(['basics']))
   let minimum = Infinity
   function permute(prefix, remaining) {
@@ -174,8 +174,8 @@ test('exact chapter set partitioning matches exhaustive permutation search', () 
 })
 
 test('large chapters retain exact packing across the 32-bit boundary without a chapter-size cap', () => {
-  const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(540, 900), candidate(560, 900)]))
-  for (const index of [0, 39]) entries[index].candidates = [candidate(540, 200), candidate(560, 200), candidate(640, 200), candidate(720, 200)]
+  const entries = Array.from({ length: 40 }, (_, index) => entry(String(index), [candidate(576, 900), candidate(600, 900)]))
+  for (const index of [0, 39]) entries[index].candidates = [candidate(576, 200), candidate(600, 200), candidate(720, 200), candidate(768, 200)]
   const result = optimizeScorebook(entries, new Set(['basics']))
   assert.equal(result.metrics.pages, 39)
   assert.deepEqual(result.metrics.pageGroups.find(group => group.titles.length === 2).titles, ['0', '39'])
@@ -184,8 +184,8 @@ test('large chapters retain exact packing across the 32-bit boundary without a c
 })
 
 test('forced solo works in a large chapter do not change the optimal partition of short works', () => {
-  const shorts = [480, 420, 330, 280, 220, 170].map((height, index) => entry(`short-${index}`, [candidate(540, height), candidate(560, height)]))
-  const solos = Array.from({ length: 35 }, (_, index) => entry(`solo-${index}`, [candidate(540, undefined, 2), candidate(560, undefined, 2)]))
+  const shorts = [480, 420, 330, 280, 220, 170].map((height, index) => entry(`short-${index}`, [candidate(576, height), candidate(600, height)]))
+  const solos = Array.from({ length: 35 }, (_, index) => entry(`solo-${index}`, [candidate(576, undefined, 2), candidate(600, undefined, 2)]))
   const expected = optimizeScorebook(shorts, new Set(['basics']))
   const result = optimizeScorebook([...solos, ...shorts], new Set(['basics']))
   assert(Math.abs(result.metrics.cost - expected.metrics.cost - 70) < 1e-9)
@@ -198,120 +198,34 @@ test('common selection propagates cancellation and rejects every unsafe candidat
   await assert.rejects(selectBestWidth(async width => {
     widths.push(width); controller.abort(); return candidate(width, 100)
   }, { signal: controller.signal }), { name: 'AbortError' })
-  assert.deepEqual(widths, [480])
+  assert.deepEqual(widths, [576])
   await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /排版候选/)
 })
 
-for (const [coarse, fine] of [[480, [490]], [720, [710]], [600, [590, 610]]]) {
-  test(`fine search stays in bounds and measures only neighbors of ${coarse}px`, async () => {
-    const measured = []
-    const result = await selectBestWidth(async width => {
-      measured.push(width)
-      return candidate(width, 100, 1, { qualityScore: width === coarse ? 2 : fine.includes(width) ? 3 : 1 })
-    })
-    assert.deepEqual(measured, [...widthCandidates, ...fine])
-    assert.equal(result.best.width, Math.min(...fine))
-    assert.equal(new Set(measured).size, measured.length)
-    assert.equal(result.renderCache.requests, measured.length)
-  })
-}
-
-test('fine renders keep safety and page count ahead of quality', async () => {
-  const result = await selectBestWidth(async width => candidate(width, 100, width === 610 ? 2 : 1,
-    { qualityScore: width === 600 ? 2 : 10, outside: width === 590 ? ['ink'] : [] }), {
-    // Only 600px is safe in the coarse grid.
-    verify: async width => ({ overlaps: width % 20 === 0 && width !== 600 ? ['lyric'] : [] }),
-  })
-  assert.equal(result.best.width, 600)
-})
-
-test('all failed coarse renders skip refinement', async () => {
+test('search visits each level once and never measures half levels', async () => {
   const measured = []
-  const result = await probeWidthCandidates(async width => { measured.push(width); throw new Error('failed') })
+  const result = await selectBestWidth(async width => {
+    measured.push(width)
+    return candidate(width, 100, 1, { qualityScore: width === 648 ? 2 : 1 })
+  })
   assert.deepEqual(measured, widthCandidates)
-  assert.equal(result.renderCache.requests, widthCandidates.length)
+  assert.equal(result.best.width, 648)
+  assert.equal(result.renderCache.requests, 9)
 })
 
-test('cancellation during refinement stops the search', async () => {
+test('cancellation between levels stops further measurements', async () => {
   const controller = new AbortController(), measured = []
   await assert.rejects(selectBestWidth(async width => {
     measured.push(width)
-    if (width === 590) controller.abort()
-    return candidate(width, 100, 1, { qualityScore: width === 600 ? 2 : 1 })
+    if (width === 624) controller.abort()
+    return candidate(width, 100)
   }, { signal: controller.signal }), { name: 'AbortError' })
-  assert.deepEqual(measured, [...widthCandidates, 590])
+  assert.deepEqual(measured, [576, 600, 624])
 })
 
-const sharedEntries = (best = 600) => ['A', 'B'].map(title => entry(title,
-  widthCandidates.map(width => candidate(width, 250, 1, { qualityScore: width === best ? 2 : 1 }))))
-
-for (const [coarse, fine] of [[480, [490]], [640, [630]], [600, [590, 610]]]) {
-  test(`shared refinement measures only bounded neighbors of ${coarse}px`, async () => {
-    const entries = sharedEntries(coarse), measured = []
-    const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (entry, width) => {
-      measured.push([entry.title, width])
-      return candidate(width, 250, 1, { qualityScore: 3 })
-    })
-    assert.deepEqual(measured, entries.flatMap(entry => fine.map(width => [entry.title, width])))
-    assert.equal(packed.groups[0].width, Math.min(...fine))
-    assert.equal(packed.groups[0].end, 2)
-    assert.equal(chooseBestWidth(entries[0].candidates).width, coarse)
-    // Reusing the same task never remeasures a width.
-    await optimizeScorebookWithRefinement(entries, new Set(), async () => assert.fail('duplicate measurement'))
-  })
-}
-
-test('shared refinement rejects overflowing, unsafe and multipage neighbors', async () => {
-  for (const extra of [{ naturalHeight: 500 }, { overlaps: ['lyric'] }, { outside: ['ink'] }, { pageCount: 2 }]) {
-    const entries = sharedEntries()
-    const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (_, width) =>
-      candidate(width, 250, 1, { qualityScore: 3, ...extra }))
-    assert.equal(packed.groups[0].width, 600)
-  }
-})
-
-test('shared refinement reuses solo neighbors and requires measurements for every member', async () => {
-  const entries = sharedEntries(), measured = []
-  entries[0].candidates.push(candidate(590, 250, 1, { qualityScore: 5 }))
-  const packed = await optimizeScorebookWithRefinement(entries, new Set(), async (entry, width) => {
-    measured.push([entry.title, width])
-    return candidate(width, 250, 1, { qualityScore: width === 590 ? 5 : 1 })
-  })
-  assert.deepEqual(measured, [['B', 590], ['B', 610], ['A', 610]])
-  assert.equal(packed.groups[0].width, 590)
-})
-
-test('shared refinement records failed measurements and propagates cancellation', async () => {
-  const entries = sharedEntries()
-  const packed = await optimizeScorebookWithRefinement(entries, new Set(), async () => { throw new Error('failed') })
-  assert.equal(packed.groups[0].width, 600)
-  assert(entries.every(entry => entry.sharedCandidates.every(candidate => candidate.error === 'failed')))
-  const controller = new AbortController(), measured = []
-  await assert.rejects(optimizeScorebookWithRefinement(sharedEntries(), new Set(), async (_, width) => {
-    measured.push(width); controller.abort(); return candidate(width, 250)
-  }, { signal: controller.signal }), { name: 'AbortError' })
-  assert.deepEqual(measured, [590])
-})
-
-test('shared refinement honors 640px admission, chapter boundaries and opt-outs', async () => {
-  for (const alter of [
-    entries => { entries[1].section = 'other' },
-    entries => { entries[1].breakBefore = true },
-    entries => { entries[0].sharePage = false },
-    entries => { entries[1].candidates.find(c => c.width === 640).pageCount = 2 },
-  ]) {
-    const entries = sharedEntries(); alter(entries)
-    await optimizeScorebookWithRefinement(entries, new Set(['basics']), async () => assert.fail('ineligible group'))
-  }
-})
-
-test('movable chapters refine all feasible groups and deduplicate shared measurements', async () => {
-  const entries = sharedEntries(); entries.push({ ...sharedEntries()[0], title: 'C' })
-  const measured = []
-  await optimizeScorebookWithRefinement(entries, new Set(['basics']), async (entry, width) => {
-    measured.push(`${entry.title}:${width}`)
-    return candidate(width, 250, 1, { qualityScore: 3 })
-  })
-  assert.equal(measured.length, 6)
-  assert.equal(new Set(measured).size, 6)
+test('shared packing ignores off-level and above-threshold candidates', () => {
+  const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250))))
+  for (const work of entries) work.candidates.push(candidate(588, 250, 1, { qualityScore: 100 }))
+  assert.equal(packScorebook(entries)[0].width, 576)
+  assert(sharedWidthCandidates.every(width => widthCandidates.includes(width) && width <= 720))
 })

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
-import { build } from 'vite'
+import { buildBrowserTestBundle } from './lib/browser-test-bundle.mjs'
 import { chromium } from '@playwright/test'
 import { browserTestFontAssets } from './lib/browser-test-font-assets.mjs'
 
@@ -14,7 +14,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
   const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowsPerColumn: 28, rowHeight: 35 },
     sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: false }],
     entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '红河谷'][index], section: 'basics' })) }
-  const fontAssets = browserTestFontAssets(root)
+  const fontAssets = browserTestFontAssets(root, { fontFile: join(temp, 'bundle/fixture-font.ttf') })
   let browser
   try {
     const entry = join(temp, 'entry.mjs')
@@ -25,25 +25,16 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       export {chooseNumberedScoreWidth, chooseStaffScoreWidth} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))};
       export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))};
       export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
-      export {optimizeScorebook, optimizeScorebookWithRefinement} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
-    await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') },
-      plugins: [fontAssets.plugin, { name: 'parity-fixtures', enforce: 'pre', resolveId(id) {
-        if (id.endsWith('editorial-plan.json')) return '\0parity-plan'
-        if (id === './samples' || id.endsWith('/samples') || id.endsWith('/samples.ts')) return '\0parity-samples'
-      }, load(id) {
-        if (id === '\0parity-plan') return `export default ${JSON.stringify(plan)}`
-        if (id === '\0parity-samples') return `const sources = ${JSON.stringify(sources)};
-          export const presetScores = ${JSON.stringify(files.map((sourcePath, index) => ({ slug: String(index), sourcePath })))};
-          export async function loadPresetScore(slug) { return sources[Number(slug)] }`
-      } }], build: { minify: false, outDir: join(temp, 'bundle'), lib: { entry, name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' } } })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+      export {optimizeScorebook} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
+    await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle'), fixtures: { plan, sources, files } })
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
     const page = await browser.newPage()
     await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
       : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><div id="scratch"></div>' }))
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
-    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
+    await page.evaluate(() => window.scorebook.prepare())
     const comparison = await page.evaluate(async ({ sources, plan }) => {
       const api = window.scorebook
       await api.prepareSources(sources)
@@ -60,13 +51,13 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         const audited = await api.probeWidthCandidates(width => api.auditWidth(source, width))
         auditedEntries.push(audited.candidates.map(({ timings: _timings, ...candidate }) => candidate))
       }
-      const sharedLocal = (await api.optimizeScorebookWithRefinement(entries, new Set(), (entry, width) => api.measure(sources[Number(entry.id)], width))).groups
+      const sharedLocal = api.optimizeScorebook(entries, new Set()).groups
       const online = await api.buildOnlineScorebook(new AbortController().signal, () => {})
       const music = online.pages.slice(2)
       const sharedOnline = music.map(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.viewBox.baseVal.width))
       api.parityPlan.entries[0].sharePage = false
       entries[0].sharePage = false
-      const soloLocal = (await api.optimizeScorebookWithRefinement(entries, new Set(), (entry, width) => api.measure(sources[Number(entry.id)], width))).groups
+      const soloLocal = api.optimizeScorebook(entries, new Set()).groups
       const solo = await api.buildOnlineScorebook(new AbortController().signal, () => {})
       const soloOnline = solo.pages.slice(2).map(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.viewBox.baseVal.width))
       api.parityPlan.entries[0].sharePage = true
@@ -105,12 +96,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
     for (const staff of comparison.staffWidths) {
       assert.equal(staff.reader, staff.local)
-      const coarse = Array.from({ length: 13 }, (_, i) => 480 + i * 20)
-      assert.deepEqual(staff.candidates.slice(0, 13), coarse)
-      const fine = staff.candidates.slice(13)
-      assert(fine.length >= 1 && fine.length <= 2)
-      assert(fine.every(width => width >= 480 && width <= 720 && width % 20 === 10))
-      if (fine.length === 2) assert.equal(fine[1] - fine[0], 20)
+      assert.deepEqual(staff.candidates, Array.from({ length: 9 }, (_, i) => 576 + i * 24))
     }
     assert.equal(comparison.soloSharedPages, 0)
     assert.deepEqual(comparison.soloOnline, comparison.soloLocal.map(group => Array(group.end - group.start).fill(group.width)))

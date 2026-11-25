@@ -1,17 +1,29 @@
-import { DEFAULT_PREFERRED_WIDTH } from '@m3n/notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
 export const SCORE_WIDTH_KEY = 'm3n:score-width'
 export const PLAYBACK_BPM_KEY = 'm3n:playback-bpm'
 export const METRONOME_ENABLED_KEY = 'm3n:metronome-enabled'
 export const RENDER_MODE_KEY = 'm3n:render-mode'
 
-export const SCORE_WIDTH_MIN = 240
-export const SCORE_WIDTH_MAX = 1280
-export const SCORE_WIDTH_STEP = 10
-export const DEFAULT_SCORE_WIDTH = DEFAULT_PREFERRED_WIDTH
+const widthConfig = scoreLayoutConfig.pageWidth
+export const SCORE_WIDTH_MIN = widthConfig.unit * widthConfig.manualMinimumMultiple
+export const SCORE_WIDTH_MAX = widthConfig.unit * widthConfig.manualMaximumMultiple
+export const SCORE_WIDTH_STEP = widthConfig.unit
+export const SCORE_WIDTH_MULTIPLE_MIN = widthConfig.manualMinimumMultiple
+export const SCORE_WIDTH_MULTIPLE_MAX = widthConfig.manualMaximumMultiple
+export const DEFAULT_SCORE_WIDTH = widthConfig.unit * widthConfig.defaultMultiple
 
 export function clampScoreWidth(width: number) {
-  return Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, width))
+  if (!Number.isFinite(width)) return DEFAULT_SCORE_WIDTH
+  return Math.max(SCORE_WIDTH_MIN, Math.min(SCORE_WIDTH_MAX, Math.round(width / SCORE_WIDTH_STEP) * SCORE_WIDTH_STEP))
+}
+
+export function scoreWidthMultiple(width: number) {
+  return clampScoreWidth(width) / SCORE_WIDTH_STEP
+}
+
+export function scoreWidthAtMultiple(multiple: number) {
+  return clampScoreWidth(multiple * SCORE_WIDTH_STEP)
 }
 
 export function stepScoreWidth(width: number, direction: -1 | 1) {

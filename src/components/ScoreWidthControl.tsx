@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { SCORE_WIDTH_MIN, SCORE_WIDTH_MAX, SCORE_WIDTH_STEP, stepScoreWidth } from '../lib/renderer-settings'
+import { SCORE_WIDTH_MIN, SCORE_WIDTH_MAX, SCORE_WIDTH_MULTIPLE_MIN, SCORE_WIDTH_MULTIPLE_MAX, scoreWidthMultiple, scoreWidthAtMultiple, stepScoreWidth } from '../lib/renderer-settings'
 import { ScoreControlIcon } from './ScoreControlIcon'
 
 type Props = { width: number; onChange: (width: number) => void; onReset: () => void }
@@ -28,17 +28,17 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
   }
 
   return <div className="control-slider-row">
-    <span className="control-row-label">宽度<output>{draft ?? width}px</output></span>
+    <span className="control-row-label">宽度<output>{scoreWidthMultiple(draft ?? width)}倍</output></span>
     <div className="control-range-adjuster">
-      <button type="button" className="control-button" aria-label="减小乐谱宽度" title="减至上一个10px档位" disabled={width <= SCORE_WIDTH_MIN}
+      <button type="button" className="control-button" aria-label="减小乐谱宽度" title="减至上一档" disabled={width <= SCORE_WIDTH_MIN}
         onClick={() => onChange(stepScoreWidth(width, -1))}>−</button>
-      <input type="range" min={SCORE_WIDTH_MIN} max={SCORE_WIDTH_MAX} step={SCORE_WIDTH_STEP} value={draft ?? width} aria-label="乐谱宽度" aria-valuetext={`${draft ?? width}px`}
+      <input type="range" min={SCORE_WIDTH_MULTIPLE_MIN} max={SCORE_WIDTH_MULTIPLE_MAX} step={1} value={scoreWidthMultiple(draft ?? width)} aria-label="乐谱宽度" aria-valuetext={`${scoreWidthMultiple(draft ?? width)}倍，${scoreWidthAtMultiple(scoreWidthMultiple(draft ?? width))}px`}
         onPointerDown={event => {
           dragging.current = true
           event.currentTarget.setPointerCapture(event.pointerId)
         }}
         onChange={event => {
-          const next = Number(event.currentTarget.value)
+          const next = scoreWidthAtMultiple(Number(event.currentTarget.value))
           if (!dragging.current) { onChange(next); return }
           setDraft(next)
           pending.current = next
@@ -47,7 +47,7 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
           timer.current ??= setTimeout(flush, 150)
         }}
         onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onBlur={finish} />
-      <button type="button" className="control-button" aria-label="增大乐谱宽度" title="增至下一个10px档位" disabled={width >= SCORE_WIDTH_MAX}
+      <button type="button" className="control-button" aria-label="增大乐谱宽度" title="增至下一档" disabled={width >= SCORE_WIDTH_MAX}
         onClick={() => onChange(stepScoreWidth(width, 1))}>+</button>
     </div>
     <button type="button" className="control-button" aria-label="还原宽度" title="还原乐谱推荐宽度" onClick={() => { finish(); onReset() }}><ScoreControlIcon name="reset" /></button>

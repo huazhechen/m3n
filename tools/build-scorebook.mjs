@@ -9,7 +9,7 @@ import { chromium } from '@playwright/test'
 import { build } from 'vite'
 import { chooseBestWidth, probeWidthCandidates, widthSearchStrategy, widthMinimum, widthMaximum, widthStep } from './scorebook-width.mjs'
 import { summarizeMeasurements } from './lib/scorebook-timing.mjs'
-import { optimizeScorebook, optimizeScorebookWithRefinement, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
+import { optimizeScorebook, packingPolicy, sharedScoreGap, sharedPreferredWidth, sharedWidthMaximum } from './scorebook-packing.mjs'
 
 const runStarted = performance.now(), stages = {}
 let phaseStarted = runStarted
@@ -82,13 +82,7 @@ try {
   saveTimings('measured')
   if (!probeOnly) {
     const before = [...records]
-    optimizedPacking = await optimizeScorebookWithRefinement(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)), async (entry, width) => {
-      const started = performance.now()
-      const result = await page.evaluate(({ source, width, auditLayout }) => window.scorebook.measure(source, width, true, undefined, undefined, auditLayout),
-        { source: sources.get(entry.id), width, auditLayout })
-      entry.measurement.wallMs += performance.now() - started
-      return result
-    })
+    optimizedPacking = optimizeScorebook(records, new Set(plan.sections.filter(section => section.reorderForSharing).map(section => section.id)))
     const baseline = optimizeScorebook(before)
     records.splice(0, records.length, ...optimizedPacking.entries)
     orderOptimization = { pagesBefore: baseline.metrics.pages, pagesAfter: optimizedPacking.metrics.pages,
@@ -112,7 +106,7 @@ try {
       for (const rendered of pages) music.push({ kind: 'music', id: entry.id, svg: pageSvg(rendered.markup) })
     }
     for (const entry of entries) {
-      const candidate = [...entry.candidates, ...(entry.sharedCandidates ?? [])].find(candidate => candidate.width === group.width)
+      const candidate = entry.candidates.find(candidate => candidate.width === group.width)
       Object.assign(entry, { width: chooseBestWidth(entry.candidates).width, bookWidth: group.width, systems: candidate.rows, pageCount: group.pageCount, musicStart: start })
     }
   }
@@ -176,7 +170,7 @@ const report = { title: plan.title, edition: plan.edition, renderer: 'web', rend
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: widthMinimum, maximum: widthMaximum, step: widthStep, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginPx: 0, a4MarginMm: 12, coreSpacing: { continuous: 28, pagedMinimum: 28, defaultLeadingPx: 28, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
-  sharedWidthSearch: { minimum: widthMinimum, maximum: sharedWidthMaximum, step: widthStep, refinementOffset: widthStep / 2, eligibilityWidth: sharedWidthMaximum },
+  sharedWidthSearch: { minimum: widthMinimum, maximum: sharedWidthMaximum, step: widthStep, eligibilityWidth: sharedWidthMaximum },
   entries: records, validation: { outside: auditLayout ? 0 : null, overlaps: auditLayout ? 0 : null, geometryAudited: auditLayout, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')

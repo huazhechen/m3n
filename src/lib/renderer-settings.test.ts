@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { clampPlaybackBpm, clampScoreWidth, stepScoreWidth, PLAYBACK_BPM_KEY, readPlaybackBpm, readNotationMode, writeNotationMode } from './renderer-settings'
+import { scoreWidthMultiple, scoreWidthAtMultiple, clampPlaybackBpm, clampScoreWidth, stepScoreWidth, PLAYBACK_BPM_KEY, readPlaybackBpm, readNotationMode, writeNotationMode } from './renderer-settings'
 
 beforeEach(() => {
   const values = new Map<string, string>()
@@ -10,15 +10,22 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('width buttons reach the adjacent 10px grid point within 240–1280', () => {
-  expect(stepScoreWidth(555, -1)).toBe(550)
-  expect(stepScoreWidth(555, 1)).toBe(560)
-  expect(stepScoreWidth(550, -1)).toBe(540)
-  expect(stepScoreWidth(550, 1)).toBe(560)
-  expect(stepScoreWidth(240, -1)).toBe(240)
-  expect(stepScoreWidth(1280, 1)).toBe(1280)
-  expect(clampScoreWidth(2560)).toBe(1280)
-  expect(clampScoreWidth(200)).toBe(240)
+test('manual widths use 20–40 multiples, independently from the nine search levels', () => {
+  expect(stepScoreWidth(610, -1)).toBe(600)
+  expect(stepScoreWidth(610, 1)).toBe(624)
+  expect(stepScoreWidth(600, -1)).toBe(576)
+  expect(stepScoreWidth(600, 1)).toBe(624)
+  expect(stepScoreWidth(480, -1)).toBe(480)
+  expect(stepScoreWidth(960, 1)).toBe(960)
+  expect(clampScoreWidth(2560)).toBe(960)
+  expect(clampScoreWidth(200)).toBe(480)
+  expect(clampScoreWidth(610)).toBe(600)
+  expect(clampScoreWidth(NaN)).toBe(720)
+  for (let multiple = 20; multiple <= 40; multiple++) {
+    const width = 24 * multiple
+    expect(scoreWidthAtMultiple(multiple)).toBe(width)
+    expect(scoreWidthMultiple(width)).toBe(multiple)
+  }
 })
 
 test('BPM settings use a new key and never reinterpret stored speed percentages', () => {

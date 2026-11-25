@@ -1,5 +1,5 @@
-import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
-import type { NotationMode } from './renderer-settings'
+import type { ScoreDocument } from '@m3n/notation'
+import { DEFAULT_SCORE_WIDTH, type NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
@@ -131,7 +131,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   const textMeasurementCache = input.textMeasurementCache ?? new NumberedTextMeasurementCache()
   const width = input.autoWidth
     ? await chooseNumberedScoreWidth(input.scoreDocument, { ...input, textMeasurementCache }, input.signal)
-    : input.width ?? DEFAULT_PREFERRED_WIDTH
+    : input.width ?? DEFAULT_SCORE_WIDTH
   check()
   const score = NumberedNotationScore.create(input.scoreDocument)
   const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap, textMeasurementCache }).join('')

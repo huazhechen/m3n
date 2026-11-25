@@ -1,35 +1,33 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
-import { build } from 'vite'
+import { buildBrowserTestBundle } from './lib/browser-test-bundle.mjs'
 import { chromium } from '@playwright/test'
 import { browserTestFontAssets } from './lib/browser-test-font-assets.mjs'
-import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
+import { execFileSync } from 'node:child_process'
 
 test('scorebook uses identical web pages, source equal-measures, credits and bass; A4 only scales the SVG', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-scorebook-'))
-  const fontAssets = browserTestFontAssets(root)
+  const fontAssets = browserTestFontAssets(root, { fontFile: join(temp, 'bundle/fixture-font.ttf') })
   let browser
   try {
     const entry = join(temp, 'entry.mjs')
     writeFileSync(entry, `export {inspectScorePages} from ${JSON.stringify(join(root, 'tools/lib/score-geometry.mjs'))}; export * from ${JSON.stringify(join(root, 'tools/scorebook-layout.mjs'))}; export {compactPage} from ${JSON.stringify(join(root, 'tools/scorebook-compact-layout.mjs'))}; export {renderScoreInto} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))}; export {describeAccessibleScore} from ${JSON.stringify(join(root, 'src/lib/score-accessibility.ts'))}; export {attachScoreReading} from ${JSON.stringify(join(root, 'src/lib/score-reading-dom.ts'))}; export {parseM3NDocument, scoreEventIds} from '@m3n/notation'; export {NumberedNotationScore} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))}; export {frameScoreImage} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-image-frame.ts'))}; export {renderScoreCanvas} from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-export.ts'))};`)
     // The temporary entry resolves package imports through an absolute re-export.
     writeFileSync(entry, readFileSync(entry, 'utf8').replace("from '@m3n/notation'", `from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))}`))
-    await build({ plugins: [fontAssets.plugin], configFile: false, logLevel: 'error', define: { 'import.meta.url': JSON.stringify('http://scorebook.local/bundle.js') }, build: {
-      minify: false, outDir: join(temp, 'bundle'), lib: { entry, name: 'scorebook', formats: ['iife'], fileName: () => 'bundle.js' },
-    } })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+    await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle') })
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
     const page = await browser.newPage()
     await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
       : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><style>body{margin:0}</style><div id="scratch"></div><div id="web"></div>' }))
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
-    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, 'packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf')).toString('base64'))
-    prepareBuiltinPdfFont()
-    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
+    await page.evaluate(() => window.scorebook.prepare())
+    execFileSync(process.execPath, [join(root, 'tools/prepare-builtin-pdf-font.mjs')], { stdio: 'ignore' })
+    await fontAssets.prepareBookFont(page)
     const fontStability = await page.evaluate(async ({ source, shared }) => {
       const before = await window.scorebook.auditWidth(source, 570)
       await window.scorebook.sharedA4Page(shared, 630, 32)
@@ -223,8 +221,9 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     // A fresh browser reproduces the book's real loading order. Overlapping
     // CJK subsets must all be installed before measuring the opening work.
     await page.reload()
+    await page.requestGC()
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
-    await page.evaluate(font => window.scorebook.prepare(font), readFileSync(join(root, '.tmp/scorebook-font/text.ttf')).toString('base64'))
+    await fontAssets.prepareBookFont(page)
     const bookSources = JSON.parse(readFileSync(join(root, 'config/scorebook/editorial-plan.json'), 'utf8')).entries
       .map(entry => readFileSync(join(root, 'src/scores', entry.file), 'utf8'))
     const annie = await page.evaluate(async ({ sources, source }) => {
