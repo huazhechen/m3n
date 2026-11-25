@@ -11,17 +11,17 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 test('manual widths use 20–40 multiples, independently from the nine search levels', () => {
-  expect(stepScoreWidth(610, -1)).toBe(600)
-  expect(stepScoreWidth(610, 1)).toBe(624)
-  expect(stepScoreWidth(600, -1)).toBe(576)
-  expect(stepScoreWidth(600, 1)).toBe(624)
+  expect(stepScoreWidth(610, -1)).toBe(606)
+  expect(stepScoreWidth(610, 1)).toBe(612)
+  expect(stepScoreWidth(600, -1)).toBe(594)
+  expect(stepScoreWidth(600, 1)).toBe(606)
   expect(stepScoreWidth(480, -1)).toBe(480)
   expect(stepScoreWidth(960, 1)).toBe(960)
   expect(clampScoreWidth(2560)).toBe(960)
   expect(clampScoreWidth(200)).toBe(480)
-  expect(clampScoreWidth(610)).toBe(600)
+  expect(clampScoreWidth(610)).toBe(612)
   expect(clampScoreWidth(NaN)).toBe(720)
-  for (let multiple = 20; multiple <= 40; multiple++) {
+  for (let multiple = 20; multiple <= 40; multiple += .25) {
     const width = 24 * multiple
     expect(scoreWidthAtMultiple(multiple)).toBe(width)
     expect(scoreWidthMultiple(width)).toBe(multiple)

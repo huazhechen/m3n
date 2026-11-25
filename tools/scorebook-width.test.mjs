@@ -85,17 +85,17 @@ test('search selects a level across a page-count transition', async () => {
     measured.push(width)
     return candidate(width, 100, width < 624 ? 2 : 1)
   })
-  assert.deepEqual(measured, widthCandidates)
-  assert.equal(renderCache.uniqueWidths, 9)
+  assert.deepEqual(measured, [...widthCandidates, 606, 612, 618, 630, 636, 642])
+  assert.equal(renderCache.uniqueWidths, 15)
   assert.equal(chooseBestWidth(candidates).width, 624)
 })
 
 test('scoring checks every formal width and chooses the best composite score', async () => {
   const result = await probeWidthCandidates(async width => candidate(width, 100, 1,
     { qualityScore: width === 648 ? 2 : .5 }))
-  assert.deepEqual(result.candidates.map(item => item.width), widthCandidates)
+  assert.deepEqual(result.candidates.map(item => item.width), [...widthCandidates, 630, 636, 642, 654, 660, 666])
   assert.equal(chooseBestWidth(result.candidates).width, 648)
-  assert.equal(result.renderCache.uniqueWidths, 9)
+  assert.equal(result.renderCache.uniqueWidths, 15)
 })
 
 test('nonmonotone pagination is evaluated across the complete grid', async () => {
@@ -103,7 +103,7 @@ test('nonmonotone pagination is evaluated across the complete grid', async () =>
   assert.equal(chooseBestWidth(result.candidates).width, 624)
 })
 
-test('SVG checks verify all nine levels', async () => {
+test('SVG checks verify coarse and refined candidates', async () => {
   const verified = []
   const result = await probeWidthCandidates(async width => candidate(width, 100), {
     verify: async width => {
@@ -112,7 +112,7 @@ test('SVG checks verify all nine levels', async () => {
     },
   })
   assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.deepEqual(verified, widthCandidates)
+  assert.deepEqual(verified, [...widthCandidates, 582, 588, 594, 606, 612, 618])
 })
 
 test('failed renders are recorded and excluded', async () => {
@@ -121,7 +121,7 @@ test('failed renders are recorded and excluded', async () => {
     return candidate(width, 100)
   })
   assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.equal(result.candidates.filter(c => c.error).length, 1)
+  assert.equal(result.candidates.filter(c => c.error).length, 4)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
@@ -202,15 +202,15 @@ test('common selection propagates cancellation and rejects every unsafe candidat
   await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /排版候选/)
 })
 
-test('search visits each level once and never measures half levels', async () => {
+test('search visits coarse levels once before refining between both neighbors', async () => {
   const measured = []
   const result = await selectBestWidth(async width => {
     measured.push(width)
     return candidate(width, 100, 1, { qualityScore: width === 648 ? 2 : 1 })
   })
-  assert.deepEqual(measured, widthCandidates)
+  assert.deepEqual(measured, [...widthCandidates, 630, 636, 642, 654, 660, 666])
   assert.equal(result.best.width, 648)
-  assert.equal(result.renderCache.requests, 9)
+  assert.equal(result.renderCache.requests, 15)
 })
 
 test('cancellation between levels stops further measurements', async () => {
@@ -228,4 +228,37 @@ test('shared packing ignores off-level and above-threshold candidates', () => {
   for (const work of entries) work.candidates.push(candidate(588, 250, 1, { qualityScore: 100 }))
   assert.equal(packScorebook(entries)[0].width, 576)
   assert(sharedWidthCandidates.every(width => widthCandidates.includes(width) && width <= 672))
+})
+
+for (const coarseBest of [576, 648, 768]) {
+  test(`6px refinement around ${coarseBest}px stays in bounds and finds a better width`, async () => {
+    const fineBest = coarseBest === 768 ? 762 : coarseBest + 6
+    const measured = []
+    const result = await selectBestWidth(async width => {
+      measured.push(width)
+      return candidate(width, 100, 1, { qualityScore: width === fineBest ? 3 : width === coarseBest ? 2 : 1 })
+    })
+    assert.deepEqual(measured.slice(0, 9), widthCandidates)
+    assert.equal(new Set(measured).size, measured.length)
+    assert(measured.every(width => width >= 576 && width <= 768))
+    assert.equal(result.best.width, fineBest)
+    assert.equal(measured.length, coarseBest === 648 ? 15 : 12)
+  })
+}
+
+test('refinement preserves page-count priority and excludes unsafe fine candidates', async () => {
+  const result = await selectBestWidth(async width => candidate(width, 100, width === 654 ? 2 : 1,
+    { qualityScore: width === 654 || width === 660 ? 100 : width === 648 ? 2 : 1,
+      overlaps: width === 660 ? ['lyric'] : [] }))
+  assert.equal(result.best.width, 648)
+})
+
+test('cancellation during refinement stops immediately', async () => {
+  const controller = new AbortController(), measured = []
+  await assert.rejects(selectBestWidth(async width => {
+    measured.push(width)
+    if (width === 582) controller.abort()
+    return candidate(width, 100)
+  }, { signal: controller.signal }), { name: 'AbortError' })
+  assert.deepEqual(measured, [...widthCandidates, 582])
 })

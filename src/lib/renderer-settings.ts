@@ -8,7 +8,7 @@ export const RENDER_MODE_KEY = 'm3n:render-mode'
 const widthConfig = scoreLayoutConfig.pageWidth
 export const SCORE_WIDTH_MIN = widthConfig.unit * widthConfig.manualMinimumMultiple
 export const SCORE_WIDTH_MAX = widthConfig.unit * widthConfig.manualMaximumMultiple
-export const SCORE_WIDTH_STEP = widthConfig.unit
+export const SCORE_WIDTH_STEP = widthConfig.unit / 4
 export const SCORE_WIDTH_MULTIPLE_MIN = widthConfig.manualMinimumMultiple
 export const SCORE_WIDTH_MULTIPLE_MAX = widthConfig.manualMaximumMultiple
 export const DEFAULT_SCORE_WIDTH = widthConfig.unit * widthConfig.defaultMultiple
@@ -19,11 +19,11 @@ export function clampScoreWidth(width: number) {
 }
 
 export function scoreWidthMultiple(width: number) {
-  return clampScoreWidth(width) / SCORE_WIDTH_STEP
+  return clampScoreWidth(width) / widthConfig.unit
 }
 
 export function scoreWidthAtMultiple(multiple: number) {
-  return clampScoreWidth(multiple * SCORE_WIDTH_STEP)
+  return clampScoreWidth(multiple * widthConfig.unit)
 }
 
 export function stepScoreWidth(width: number, direction: -1 | 1) {

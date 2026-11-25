@@ -1,6 +1,6 @@
 # 乐谱生成结果与提交检查
 
-每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护思源黑体子集。浏览器简谱与五线谱阅读器均在1～9档（576～768px，每步24px）共用同一选宽流程，逐候选执行完整布局及内部避让，再以最少页数和综合质量评分择优；SVG独立越界及碰撞验收只在测试模式启用；不将选宽结果写回谱源。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
+每首 `src/scores/`、`src/works/`、`src/examples/` 下的 `.m3n` 都维护思源黑体子集。浏览器简谱与五线谱阅读器均在1～9档（576～768px，每步24px）共用同一选宽流程，先以24px粗搜，再在最佳粗档位左右各24px范围内以6px细搜（限制在576～768px），逐候选执行完整布局及内部避让，再以最少页数和综合质量评分择优；SVG独立越界及碰撞验收只在测试模式启用；不将选宽结果写回谱源。字体只使用 Barlow Semi Condensed、Bravura、思源黑体。
 
 五线谱已使用原生Bravura字符与数值几何引擎。五线谱和简谱都由浏览器按当前排版实时搜索宽度，不在源文件中保存宽度字段；`npm run prepare:scores` 更新谱源摘要、字体子集及从分发Bravura提取的五线谱字形度量，不执行选宽。
 
@@ -30,7 +30,7 @@ npm run prepare:scores
 
 ## 验证范围与内存
 
-`npm test` 的常规验证不启动 Chromium。`npm run test:scorebook` 在 Node 中验证九档选宽、合页容量／分组、评分和统计；`npm run test:pdf-font` 使用真实单曲字体子集校验PDF子集字形，避免默认遍历完整中文字体的全部字形。
+`npm test` 的常规验证不启动 Chromium。`npm run test:scorebook` 在 Node 中验证粗搜与细搜选宽、合页容量／分组、评分和统计；`npm run test:pdf-font` 使用真实单曲字体子集校验PDF子集字形，避免默认遍历完整中文字体的全部字形。
 
 只有需要真实字体度量、SVG边界和Canvas输出的谱集端到端回归使用 `npm run test:scorebook:browser`。两组浏览器回归串行运行，临时Vite打包在独立子进程完成并退出后才启动浏览器。合成文字使用从原始TrueType轮廓生成的测试专用小子集，字体通过URL读取，不经Base64传输；测试若请求完整中文字体立即失败。测试字体保存在临时目录，不进入前端或曲库生成物。
 

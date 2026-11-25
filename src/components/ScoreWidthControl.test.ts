@@ -76,7 +76,7 @@ it('steps from an off-grid width in both directions and disables buttons at the 
   const { onChange } = render(610)
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.click())
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="增大乐谱宽度"]')!.click())
-  expect(onChange.mock.calls).toEqual([[600], [624]])
+  expect(onChange.mock.calls).toEqual([[606], [612]])
   render(480)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.disabled).toBe(true)
   render(960)
@@ -85,7 +85,18 @@ it('steps from an off-grid width in both directions and disables buttons at the 
 
 it('exposes the manual 20–40 multiple range independently from the search levels', () => {
   const { slider } = render(720)
-  expect([slider.min, slider.max, slider.step, slider.value]).toEqual(['20', '40', '1', '30'])
+  expect([slider.min, slider.max, slider.step, slider.value]).toEqual(['20', '40', '0.25', '30'])
   expect(slider.getAttribute('aria-valuetext')).toBe('720px')
   expect(host.querySelector('output')!.textContent).toBe('720px')
+})
+
+it('drags and uses keyboard steps at 6px granularity', () => {
+  const { slider, onChange } = render(600)
+  input(slider, 25.25)
+  expect(onChange.mock.calls).toEqual([[606]])
+  pointer(slider, 'pointerdown')
+  input(slider, 25.5)
+  expect(host.querySelector('output')!.textContent).toBe('612px')
+  pointer(slider, 'pointerup')
+  expect(onChange.mock.calls).toEqual([[606], [612]])
 })

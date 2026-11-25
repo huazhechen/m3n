@@ -180,7 +180,8 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           } finally {
             timings.totalMs ??= performance.now() - widthStarted
             scoreTiming.candidates.push({ width, timings })
-            progress(++completedWidths / (widthCandidates.length + 2))
+            // Each neighboring 24px interval adds three new 6px candidates.
+            progress(++completedWidths / (widthCandidates.length + 6))
           }
         }, { signal })
         progress(1)

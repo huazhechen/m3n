@@ -5,7 +5,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-v10`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v11`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.qualityScore !== undefined) return candidate.qualityScore
@@ -21,7 +21,7 @@ export function chooseBestWidth(candidates) {
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
-/** Measure exactly the nine configured width levels. */
+/** Search coarse levels, then refine within the winning level’s neighbors. */
 export async function probeWidthCandidates(measure, { verify, signal } = {}) {
   const candidates = []
   let verifiedWidths = 0
@@ -39,6 +39,15 @@ export async function probeWidthCandidates(measure, { verify, signal } = {}) {
     candidates.push(result)
   }
   for (const width of widthCandidates) await probe(width)
+  const coarseBest = chooseBestWidth(candidates)
+  if (coarseBest) {
+    const lower = Math.max(widthMinimum, coarseBest.width - widthStep)
+    const upper = Math.min(widthMaximum, coarseBest.width + widthStep)
+    const measured = new Set(candidates.map(candidate => candidate.width))
+    for (let width = lower; width <= upper; width += widthStep / 4) {
+      if (!measured.has(width)) await probe(width)
+    }
+  }
   return { candidates, renderCache: { strategy: widthSearchStrategy, requests: candidates.length,
     uniqueWidths: candidates.length, hits: 0, verifiedWidths } }
 }

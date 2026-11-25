@@ -32,7 +32,7 @@ export function ScoreWidthControl({ width, onChange, onReset }: Props) {
     <div className="control-range-adjuster">
       <button type="button" className="control-button" aria-label="减小乐谱宽度" title="减至上一档" disabled={width <= SCORE_WIDTH_MIN}
         onClick={() => onChange(stepScoreWidth(width, -1))}>−</button>
-      <input type="range" min={SCORE_WIDTH_MULTIPLE_MIN} max={SCORE_WIDTH_MULTIPLE_MAX} step={1} value={scoreWidthMultiple(draft ?? width)} aria-label="乐谱宽度" aria-valuetext={`${draft ?? width}px`}
+      <input type="range" min={SCORE_WIDTH_MULTIPLE_MIN} max={SCORE_WIDTH_MULTIPLE_MAX} step={0.25} value={scoreWidthMultiple(draft ?? width)} aria-label="乐谱宽度" aria-valuetext={`${draft ?? width}px`}
         onPointerDown={event => {
           dragging.current = true
           event.currentTarget.setPointerCapture(event.pointerId)
