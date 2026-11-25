@@ -16,7 +16,7 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeGraceGeometry, type NativeGracePitch } from './native-grace.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { nativeAccidentalAdvance } from './native-accidentals.js'
-import { nativeMarkStack, nativeInnerMark, type NativeMarkPlacement } from './native-marks.js'
+import { nativeGlyphMarkStack, nativeInnerMark, type NativeMarkPlacement } from './native-marks.js'
 import type { NativeKeyRow } from './native-key.js'
 import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-do.js'
 
@@ -199,7 +199,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             glyph.left = Math.max(glyph.musicLeft, lyricLeft)
             glyph.right = Math.max(glyph.musicRight, lyricRight)
           }
-          glyph.markLayout = nativeMarkStack(glyphMarks.filter(nativeInnerMark), metrics.top, options.textMeasurer, nativeCoreGap(document)).items
+          glyph.markLayout = nativeGlyphMarkStack(glyph, glyphMarks.filter(nativeInnerMark), painter.measurer, nativeCoreGap(document), metrics.top).items
           // Local marks remain centered on their host, so reserve their full
           // width before wrapping instead of shifting them outside relations.
           glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))

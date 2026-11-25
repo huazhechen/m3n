@@ -20,6 +20,29 @@ describe('native articulation occupancy', () => {
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(glyph.top)
   })
 
+  it.each(['', 'e', 'ee'])('keeps staccato aligned across accidentals at octave %s', octave => {
+    const first = (accidental: string) => layoutNativeScore(parseM3NDocument(
+      `{4/4}\nN: 1${accidental}${octave}{tip} 2 3 4 |||`), options).projection.glyphs[0]!
+    const plain = first('')
+    for (const accidental of ['#', 'b', '=', '##', 'bb']) {
+      const altered = first(accidental)
+      expect(altered.markLayout![0]!.y).toBeCloseTo(plain.markLayout![0]!.y)
+      expect(altered.top).toBeGreaterThanOrEqual(nativeNoteMetrics(altered.pitches, altered.writtenBeats, false).top)
+    }
+    const middle = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1{tip} 2 3 4 |||'), options).projection.glyphs[0]!
+    if (octave) expect(plain.markLayout![0]!.y).toBeLessThan(middle.markLayout![0]!.y)
+  })
+
+  it('clears unusually wide accidental ink when it overlaps the staccato column', () => {
+    const body = [{ left: -5, right: 5, top: -19.2, bottom: 0 }]
+    const side = { left: -20, right: -10, top: -40, bottom: -10 }
+    const separate = nativeMarkStack(['tip'], 40, undefined, undefined, [...body, side])
+    const overlapping = nativeMarkStack(['tip'], 40, undefined, undefined,
+      [...body, { ...side, right: 1 }])
+    expect(separate.items[0]!.top).toBeCloseTo(-29.28)
+    expect(overlapping.items[0]!.top).toBeCloseTo(-50.08)
+  })
+
   it('distinguishes ordinary staccato from staccatissimo in the printed score', () => {
     const symbols = new NativeSymbols(new DefaultTextMeasurer())
     expect(symbols.rawMark('tip')).toContain(String.fromCodePoint(0xF47B))

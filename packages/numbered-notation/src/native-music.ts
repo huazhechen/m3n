@@ -8,8 +8,8 @@ import { nativeBodyPieces } from './native-music-ink.js'
 import { nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, n, line, circle } from './native-symbols.js'
 import { nativeGraceGeometry } from './native-grace.js'
-import { nativeMarkStack } from './native-marks.js'
-import { nativeNoteMetrics, nativeBeamCount } from './native-note-metrics.js'
+import { nativeGlyphMarkStack } from './native-marks.js'
+import { nativeBeamCount } from './native-note-metrics.js'
 import type { NativeGlyph } from './native-model.js'
 
 /** Claim complete continuous runs one level at a time. Call with one lane in
@@ -66,7 +66,7 @@ export class NativeMusicPainter extends NativeSymbols {
   }
 
   private articulations(glyph: NativeGlyph): string {
-    const markStack = glyph.markLayout ?? nativeMarkStack(glyph.marks, nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, this.measurer).top, this.measurer).items
+    const markStack = glyph.markLayout ?? nativeGlyphMarkStack(glyph, glyph.marks, this.measurer).items
     return markStack.map(mark => `<g${attrs({ transform: `translate(${n(glyph.x + (mark.x ?? 0))} ${n(glyph.y + mark.y)})`, 'data-m3n-role': 'mark', 'data-m3n-mark': mark.name })}>${this.rawMark(mark.name)}</g>`).join('')
   }
 
