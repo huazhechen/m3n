@@ -140,9 +140,16 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       // Reserve that same extent at the actual passage endpoints.
       if (insets?.left) cell.left = Math.max(cell.left, (glyph.inkLeft ?? 0) + left)
       if (insets?.right) cell.right = Math.max(cell.right, (glyph.inkRight ?? 0) + right)
-      cell.left = Math.max(cell.left, glyph.lyricLeft ?? 0)
-      cell.right = Math.max(cell.right, glyph.lyricRight ?? 0)
       cell.left += insets?.left ?? 0; cell.right += insets?.right ?? 0
+    }
+  }
+  // Lyrics collide with other lyrics in the same visual tier, independently
+  // of bars, rests and controls in the music above them. Empty slots add no ink.
+  for (const item of items) for (const glyph of item.column?.glyphs ?? []) {
+    for (const [tier, ink] of (glyph.lyricTiers ?? []).entries()) {
+      if (!ink) continue
+      item.cells.push({ lane: `${glyph.lane}:lyric:${tier}`, sparse: true,
+        left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
     }
   }
   // Multi-measure rest symbols form compact rigid blocks with adjacent bars.

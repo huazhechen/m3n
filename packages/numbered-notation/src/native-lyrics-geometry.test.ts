@@ -79,6 +79,18 @@ describe('native lyric and music lower envelopes', () => {
     expect(glyph.lyricRight).toBeGreaterThanOrEqual(ink.right - glyph.x + 1 - 0.001)
   })
 
+  it('reserves punctuation ink without a full-width invisible character cell', () => {
+    const measurer = { measureText(text: string) {
+      const punctuation = text === '，'
+      return { w: text.length * 16, advance: text.length * 16, inkLeft: punctuation ? 1 : 0,
+        inkRight: punctuation ? 4 : text.length * 16, h: 16, baseline: 12 }
+    } }
+    const data = { texts: ['，'], passes: undefined }
+    const ink = nativeLyricInk(data, measurer)
+    expect(ink.right - ink.left).toBe(3)
+    expect(ink).toEqual(nativeLyricPieces(data, 0, 0, measurer)[0])
+  })
+
   it('aligns spoken text independently of surrounding punctuation and measures its asymmetry', () => {
     const measurer = new DefaultTextMeasurer()
     const plain = nativeLyricInk({ texts: ['春'], passes: undefined }, measurer)

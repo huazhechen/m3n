@@ -1,6 +1,8 @@
 /** Geometry consumed by the project-owned horizontal solver. All units are px. */
 export type SpacingCell = {
   lane: string
+  /** Sparse ink lanes constrain only columns that actually carry ink. */
+  sparse?: boolean
   left: number
   right: number
   before: number
@@ -25,12 +27,18 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const lanes = [...new Set(columns.flatMap(column => column.cells.map(cell => cell.lane)))]
+  const sparse = new Set(columns.flatMap(column => column.cells.filter(cell => cell.sparse).map(cell => cell.lane)))
   const rows = columns.map(column => {
-    const maxLeft = Math.max(0, ...column.cells.map(cell => cell.placeholderLeft ?? cell.left))
-    const maxRight = Math.max(0, ...column.cells.map(cell => cell.placeholderRight ?? cell.right))
-    return lanes.map(lane => column.cells.find(cell => cell.lane === lane) ?? {
-      lane, left: 0, right: 0, before: maxLeft, after: maxRight,
-      beforeStretch: 0, afterStretch: 0,
+    const maxLeft = Math.max(0, ...column.cells.filter(cell => !cell.sparse).map(cell => cell.placeholderLeft ?? cell.left))
+    const maxRight = Math.max(0, ...column.cells.filter(cell => !cell.sparse).map(cell => cell.placeholderRight ?? cell.right))
+    return lanes.map(lane => {
+      const found = column.cells.find(cell => cell.lane === lane)
+      if (found) return { ...found, active: true }
+      if (sparse.has(lane)) return { lane, sparse: true, active: false, left: 0, right: 0, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }
+      return {
+        lane, active: true, left: 0, right: 0, before: maxLeft, after: maxRight,
+        beforeStretch: 0, afterStretch: 0,
+      }
     })
   })
   if (columns.some(column => column.fixedAfter !== undefined)) {
@@ -42,13 +50,17 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
         offset += columns[end]!.fixedAfter!
         members[++end] = { group: groups.length, offset }
       }
-      groups.push({ cells: lanes.map((lane, row) => ({
-        ...rows[start]![row]!, lane,
-        left: Math.max(...rows.slice(start, end + 1).map((cells, i) => cells[row]!.left - members[start + i]!.offset)),
-        right: Math.max(...rows.slice(start, end + 1).map((cells, i) => members[start + i]!.offset + cells[row]!.right)),
-        afterStretch: rows[end]![row]!.afterStretch,
-        after: rows[end]![row]!.after,
-      })) })
+      groups.push({ cells: lanes.flatMap((lane, row) => {
+        const occupied = rows.slice(start, end + 1).flatMap((cells, i) => cells[row]!.active ? [{ cell: cells[row]!, offset: members[start + i]!.offset }] : [])
+        if (!occupied.length) return []
+        return [{
+          ...occupied[0]!.cell, lane,
+          left: Math.max(...occupied.map(({ cell, offset }) => cell.left - offset)),
+          right: Math.max(...occupied.map(({ cell, offset }) => offset + cell.right)),
+          afterStretch: occupied.at(-1)!.cell.afterStretch,
+          after: occupied.at(-1)!.cell.after,
+        }]
+      }) })
       start = end + 1
     }
     const solved = solveNativeSpacing(groups, width, justify, fillEdges)
@@ -56,9 +68,9 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   }
   const positions: number[] = [], ends = lanes.map(() => 0)
   rows.forEach(row => {
-    const position = Math.max(...row.map((cell, lane) => ends[lane]! + cell.left + cell.before))
+    const position = Math.max(...row.map((cell, lane) => cell.active ? ends[lane]! + cell.left + cell.before : 0))
     positions.push(position)
-    row.forEach((cell, lane) => { ends[lane] = position + cell.right + cell.after })
+    row.forEach((cell, lane) => { if (cell.active) ends[lane] = position + cell.right + cell.after })
   })
   const minimumWidth = Math.max(...ends)
   const cumulative = [fillEdges.left ? 1 : 0]
@@ -69,9 +81,10 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   }
   const stretchWeight = cumulative.at(-1)! + (fillEdges.right ? 1 : 0)
   if (justify && width !== Infinity) {
-    const left = Math.max(...rows[0]!.map(cell => cell.left)), right = Math.max(...rows.at(-1)!.map(cell => cell.right))
-    const occupied = positions.at(-1)! + right - positions[0]! + left
-    const shift = left - positions[0]!, free = Math.max(0, width - occupied)
+    const left = Math.min(...rows.flatMap((row, i) => row.filter(cell => cell.active).map(cell => positions[i]! - cell.left)))
+    const right = Math.max(...rows.flatMap((row, i) => row.filter(cell => cell.active).map(cell => positions[i]! + cell.right)))
+    const occupied = right - left
+    const shift = -left, free = Math.max(0, width - occupied)
     positions.forEach((position, index) => { positions[index] = position + shift + (stretchWeight > 0 ? free * cumulative[index]! / stretchWeight : 0) })
   }
   return { positions, minimumWidth, stretchWeight }

@@ -2,6 +2,33 @@ import { describe, expect, it } from 'vitest'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 const cell = (lane = 'melody', overrides: Partial<SpacingCell> = {}): SpacingCell => ({ lane, left: 5, right: 5, before: 6, after: 6, ...overrides })
 describe('native spacing constraints', () => {
+  it('lets lyric prefixes use space under bars while retaining lyric clearance across empty slots', () => {
+    const lyric = (left: number, right: number) => cell('lyric', { sparse: true, left, right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
+    const music = () => cell('melody', { left: 5, right: 5, before: 0, after: 0 })
+    const columns = [{ cells: [music(), lyric(8, 8)] }, { cells: [music()] }, { cells: [music(), lyric(30, 8)] }]
+    const solved = solveNativeSpacing(columns)
+    expect(solved.positions).toEqual([8, 18, 46])
+    // The prefix can reach left of the intervening bar at x=18.
+    expect(solved.positions[2]! - 30).toBeLessThan(solved.positions[1]!)
+    // Both lyric boxes include the normal single-side padding.
+    expect(solved.positions[2]! - 30).toBe(solved.positions[0]! + 8)
+    for (const width of [solved.minimumWidth, 200]) {
+      const filled = solveNativeSpacing(columns, width, true)
+      expect(filled.positions[2]! - 30).toBeGreaterThanOrEqual(filled.positions[0]! + 8)
+      expect(filled.positions[0]! - 8).toBeGreaterThanOrEqual(0)
+      expect(filled.positions[2]! + 8).toBeLessThanOrEqual(width)
+    }
+  })
+  it('preserves sparse lyric ink inside a rigid music group and after a trailing empty slot', () => {
+    const music = () => cell('melody', { left: 5, right: 5, before: 0, after: 0 })
+    const lyric = cell('lyric', { sparse: true, left: 30, right: 40, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
+    const columns = [{ cells: [music()], fixedAfter: 10 }, { cells: [music(), lyric] }, { cells: [music()] }]
+    const solved = solveNativeSpacing(columns, 100, true)
+    expect(solved.positions[1]! - solved.positions[0]!).toBe(10)
+    expect(solved.positions[1]! - 30).toBeGreaterThanOrEqual(0)
+    expect(solved.positions[1]! + 40).toBeLessThanOrEqual(100)
+    expect(solved.positions[2]! + 5).toBeLessThanOrEqual(100)
+  })
   it('retains each side clearance in unconstrained layout', () => {
     expect(solveNativeSpacing([{cells:[cell()]},{cells:[cell()]},{cells:[cell()]}])).toEqual({positions:[11,33,55],minimumWidth:66,stretchWeight:2})
   })

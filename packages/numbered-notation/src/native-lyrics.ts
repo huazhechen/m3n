@@ -1,4 +1,5 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
+import { lyricSpacing } from './lyric-spacing.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
@@ -39,7 +40,7 @@ function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer
     const ink = nativeSvgInk(svg, measurer)
     svg += line(ink.left, y, ink.right, y, stroke)
   }
-  if (data.annotation) svg += painter.text(data.annotation, left - size * 0.2, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
+  if (data.annotation) svg += painter.text(data.annotation, left - lyricSpacing.horizontalPadding * 2, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
   return svg
 }
 
@@ -67,7 +68,7 @@ export function nativeLyricPieces(data: LyricRowData, x: number, baseline: numbe
       pieces.push({ left: n(ink.left) - half, right: n(ink.right) + half, top: y - half, bottom: y + half })
     }
   }
-  if (data.annotation) pieces.push(textInk(data.annotation, left - size * 0.2, true))
+  if (data.annotation) pieces.push(textInk(data.annotation, left - lyricSpacing.horizontalPadding * 2, true))
   return pieces
 }
 
@@ -78,12 +79,12 @@ export function nativeLyricInk(data: LyricRowData, measurer: TextMeasurer) {
   const ink = unionLyricPieces(nativeLyricPieces(data, 0, 0, measurer))
   const text = data.texts.join(''), size = nativeStyle.lyric
   const advance = (value: string) => { const m = measurer.measureText(value, { fontSize: size, fontFamily: SCORE_TEXT_FONT }); return m.advance ?? m.w }
-  const { prefix, body } = lyricParts(text)
-  const left = -advance(body) / 2 - (prefix ? advance(prefix) : 0)
-  // Measured advances retain the font's side bearings. Ink alone would
-  // squeeze CJK characters whose contours occupy less than their advance.
-  return { ...ink, left: Math.min(ink.left, left - (data.annotation ? size * 0.2 + advance(data.annotation) : 0)),
-    right: Math.max(ink.right, left + advance(text)) }
+  const { body } = lyricParts(text)
+  // Reserve ordinary word advances; punctuation and visit numbers contribute
+  // only their painted ink, without a full character's invisible side bearings.
+  if (!body) return ink
+  const left = -advance(body) / 2
+  return { ...ink, left: Math.min(ink.left, left), right: Math.max(ink.right, left + advance(body)) }
 }
 
 export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number, system: number, measurer: TextMeasurer): string {
