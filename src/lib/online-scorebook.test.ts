@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { buildOnlineScorebook } from './online-scorebook'
+import { buildOnlineScorebook, type ScorebookProgress } from './online-scorebook'
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(), prepare: vi.fn(), prepared: vi.fn(), solo: vi.fn(), shared: vi.fn(), choose: vi.fn(), quality: vi.fn(), inspect: vi.fn(),
@@ -84,12 +84,16 @@ describe('online scorebook with per-run layout reuse', () => {
 
   it('finishes installing all score fonts before measuring the first candidate', async () => {
     layouts()
+    const progress: ScorebookProgress[] = []
     mocks.prepared.mockImplementation(() => {
       expect(mocks.load).toHaveBeenCalledTimes(2)
       expect(mocks.prepare).toHaveBeenCalledTimes(3)
       expect(mocks.prepare.mock.calls.slice(1).map(([score]) => score.title)).toEqual(['first', 'second'])
+      expect(progress.filter(value => value.phase === 'preparing').at(-1)).toMatchObject({ completed: 2, total: 2 })
     })
-    const result = await buildOnlineScorebook(new AbortController().signal, () => {})
+    const result = await buildOnlineScorebook(new AbortController().signal, value => progress.push(value))
+    expect(progress.filter(value => value.phase === 'preparing').map(value => value.completed)).toEqual([0, 0, 1, 1, 2])
+    expect(progress.find(value => value.phase === 'measuring')).toMatchObject({ completed: 0, total: 2, title: '<第一曲>' })
     expect(result.measurementTimings.stages.fontPreparationMs).toBeGreaterThan(0)
   })
 

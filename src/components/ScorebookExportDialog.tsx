@@ -31,7 +31,8 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
       check()
       const result = await buildOnlineScorebook(controller.signal, value => {
         check(); setProgress(value)
-        setStatus(value.phase === 'packing' ? '正在安排章节与合页…' : `${value.phase === 'measuring' ? '正在计算排版' : '正在生成页面'} ${Math.floor(value.completed)} / ${value.total} 首`)
+        const label = value.phase === 'preparing' ? '正在准备乐谱与字体' : value.phase === 'measuring' ? '正在计算排版' : '正在生成页面'
+        setStatus(value.phase === 'packing' ? '正在安排章节与合页…' : `${label} ${Math.floor(value.completed)} / ${value.total} 首`)
       })
       check(); setProgress({ completed: 0, total: result.pages.length, title: '' })
       const blob = await createScorePdf(result.pages, (done, total) => {

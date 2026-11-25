@@ -10,7 +10,7 @@ import { optimizeScorebookWithRefinement, sharedScoreGap, type PackingEntry } fr
 
 
 export const scorebookTitle = plan.title
-export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'measuring' | 'packing' | 'rendering' }
+export type ScorebookProgress = { completed: number; total: number; title: string; phase?: 'preparing' | 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
   measurementTimings: { auditLayout: boolean; totalMs: number; stages: Record<string, number>; scores: {
     file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: WidthTimings }[]
@@ -119,13 +119,16 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
   const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
   try {
     signal.throwIfAborted()
+    onProgress({ completed: 0, total: plan.entries.length, title: '封面与目录', phase: 'preparing' })
+    await pause()
     await prepareNumberedNotationFonts([plan.title, plan.sections.map(section => section.title), plan.entries.map(entry => entry.title), '目录'])
     // Install every score font before measuring: later overlapping CJK subsets
     // can otherwise alter canvas text metrics of already measured scores.
     const documents = new Map<string, { document: ReturnType<typeof parseM3NDocument>; parseFontsMs: number }>()
-    for (const entry of plan.entries) {
+    for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
-      onProgress({ completed: 0, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      onProgress({ completed: index, total: plan.entries.length, title: entry.title, phase: 'preparing' })
+      await pause()
       try {
         const preparationStarted = performance.now()
         const source = await loadPresetScore(files.get(entry.file)!.slug)
@@ -134,6 +137,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         const document = parseM3NDocument(source)
         await prepareNumberedNotationFonts(document)
         documents.set(entry.file, { document, parseFontsMs: performance.now() - preparationStarted })
+        onProgress({ completed: index + 1, total: plan.entries.length, title: entry.title, phase: 'preparing' })
       } catch (error) {
         signal.throwIfAborted()
         throw new Error(`《${entry.title}》生成失败：${error instanceof Error ? error.message : '请重试。'}`)
