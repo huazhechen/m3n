@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 106,
+  "sourceCount": 107,
   "sections": [
     {
       "id": "basics",
@@ -696,6 +696,14 @@
       "section": "classic",
       "group": "亚洲影视主题",
       "reason": "高音区、切分与导航"
+    },
+    {
+      "id": "xi_huan_ni",
+      "file": "xi_huan_ni_01.m3n",
+      "title": "喜欢你",
+      "section": "classic",
+      "group": "复拍子与反复",
+      "reason": "6/8拍、弱起、分遍歌词、局部变奏与 D.S.／Coda；仅保留演唱部分"
     },
     {
       "id": "huang_hun",
