@@ -9,9 +9,23 @@ import type { NotationMode } from './renderer-settings'
 export type ScorebookDisplaySettings = { notationMode: NotationMode; measureNumbers: boolean }
 type StaffRender = Awaited<ReturnType<typeof prepareStaffScore>>
 export type PreparedBookScore = {
-  renderPaged(): string[]
+  renderPaged(): string[] | Promise<string[]>
   numbered?: PreparedNumberedNotationScore
-  staff?: { document: ScoreDocument; task: StaffMeasurementTask; render: StaffRender }
+  staff?: { document: ScoreDocument; task: StaffMeasurementTask }
+}
+
+// Keep this closure separate from measure(): no measured render/layout may be
+// retained by the returned candidate. A whole book has thousands of candidates.
+function deferredStaffScore(staff: typeof import('@m3n/score-renderer/staff'), document: ScoreDocument,
+  task: StaffMeasurementTask, width: number, settings: ScorebookDisplaySettings, signal: AbortSignal): PreparedBookScore {
+  return {
+    staff: { document, task },
+    async renderPaged() {
+      signal.throwIfAborted()
+      const render = await staff.prepareStaffScore(document, { ...settings, width }, signal, task)
+      return render(true).map(svg => svg.outerHTML)
+    },
+  }
 }
 
 /** Both book formats use the reader's measurement adapters and export primitives. */
@@ -33,7 +47,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       let render!: StaffRender
       const candidate = await staffMeasure.measureStaffWidth(document, width, settings, signal, { auditLayout, task, onPrepared(value) { render = value } })
       if (candidate.pageCount === 1) candidate.naturalHeight = render.continuousHeight()
-      return { candidate, prepared: { staff: { document, task, render }, renderPaged: () => render(true).map(svg => svg.outerHTML) } }
+      return { candidate, prepared: deferredStaffScore(staff, document, task, width, settings, signal) }
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)

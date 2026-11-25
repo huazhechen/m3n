@@ -184,7 +184,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         }
         linkScores(svg, members); music.push(svg); sharedPages++
       } else {
-        const rendered = members[0].prepared.get(group.width)!.renderPaged()
+        const rendered = await members[0].prepared.get(group.width)!.renderPaged()
         if (rendered.length !== group.pageCount) throw new Error(`《${members[0].title}》分页结果已改变，请重试。`)
         for (const markup of rendered) {
           const svg = page(markup)
@@ -193,7 +193,10 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           linkScores(svg, members); music.push(svg)
         }
       }
-      for (const entry of members) { entry.musicStart = start; entry.pageCount = group.pageCount }
+      for (const entry of members) {
+        entry.musicStart = start; entry.pageCount = group.pageCount
+        entry.prepared.clear()
+      }
       onProgress({ completed: group.end, total: entries.length, title: members.map(entry => entry.title).join(' / '), phase: 'rendering' })
     }
     signal.throwIfAborted()
