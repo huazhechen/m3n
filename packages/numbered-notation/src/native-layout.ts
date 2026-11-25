@@ -1,3 +1,4 @@
+import { nativeLayoutScore } from './native-quality.js'
 import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
@@ -239,7 +240,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     throw error
   }
   let selected = baseline
-  for (let hundredths = 60; hundredths > 40; hundredths -= 5) {
+  let selectedScore = nativeLayoutScore(selected)
+  for (let hundredths = 60; hundredths > 40; hundredths -= 10) {
     let candidate: NativeLayout
     try {
       candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
@@ -250,7 +252,12 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       if (error instanceof Error && error.message.includes('单个谱行')) continue
       throw error
     }
-    if (candidate.pages.length <= baseline.pages.length) { selected = candidate; break }
+    const score = nativeLayoutScore(candidate)
+    if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGapEm! < selected.options.minimumNoteGapEm!)) {
+      selected = candidate
+      selectedScore = score
+    }
   }
   const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)

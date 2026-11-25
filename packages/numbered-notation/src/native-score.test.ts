@@ -160,7 +160,7 @@ it('accepts complementary pickups at repeats without hiding invalid meter', () =
 
 it('reflows Qiu Ying independently of font size while retaining event identities', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/qiu_ying_01.m3n'), 'utf8')
-    const settings = { width: 590, pageMargin: 8, coreGap: 18 }
+    const settings = { width: 590, pageMargin: 8, coreGap: 18, minimumNoteGapEm: .6 }
     const normal = render(source, settings)
     const reflowed = render(source, { ...settings, wrapWidthRatio: 0.9 })
     expect(reflowed.root.querySelectorAll('g.system').length).toBeGreaterThan(normal.root.querySelectorAll('g.system').length)

@@ -1,4 +1,5 @@
 import { renderNativePages } from './native-svg.js'
+import { nativeLayoutScore } from './native-quality.js'
 import { nativeStyle } from './native-style.js'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -11,23 +12,25 @@ describe('page-aware automatic note spacing', () => {
   const rows = (layout: ReturnType<typeof layoutNativeScore>) => layout.systems.map(system =>
     system.measures.map(measure => measure.columns.map(column => column.glyphs.map(glyph => [glyph.id, glyph.x]))))
 
-  it('uses spare page capacity to give Por una cabeza more readable rows', () => {
+  it('prefers better whole-score quality over the widest spacing at equal page count', () => {
     const source = readFileSync(new URL('../../../src/scores/por_una_cabeza_01.m3n', import.meta.url), 'utf8')
     const document = parseM3NDocument(source), before = structuredClone(document)
     const settings = { ...options, width: 540 }
     const compact = layoutNativeScore(document, { ...settings, minimumNoteGapEm: .4 })
     const automatic = layoutNativeScore(document, settings)
-    expect(automatic.options.minimumNoteGapEm).toBe(.6)
+    expect(automatic.options.minimumNoteGapEm).toBe(.4)
     expect(automatic.pages).toHaveLength(compact.pages.length)
-    expect(automatic.systems.length).toBeGreaterThan(compact.systems.length)
+    const wider = layoutNativeScore(document, { ...settings, minimumNoteGapEm: .6 })
+    expect(wider.pages).toHaveLength(compact.pages.length)
+    expect(nativeLayoutScore(automatic)).toBeGreaterThan(nativeLayoutScore(wider))
     expect(document).toEqual(before)
   })
 
-  it('chooses the largest safe step without assuming page counts are monotonic', () => {
+  it('scores all three steps and preserves continuous and paged layout agreement', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + '(1 2 3 4 5 6 7 1e) | '.repeat(31))
     const settings = { ...options, width: 540 }
     const automatic = layoutNativeScore(document, settings)
-    expect(automatic.options.minimumNoteGapEm).toBe(.55)
+    expect(automatic.options.minimumNoteGapEm).toBe(.4)
     expect(automatic.pages).toHaveLength(1)
     expect(layoutNativeScore(document, { ...settings, minimumNoteGapEm: .6 }).pages.length).toBeGreaterThan(1)
     for (const coreGap of [undefined, 32]) {
@@ -45,7 +48,7 @@ describe('page-aware automatic note spacing', () => {
     const automatic = layoutNativeScore(document, options)
     expect(automatic.options.minimumNoteGapEm).toBe(.4)
     expect(automatic.pages).toHaveLength(1)
-    for (const gap of [.45, .5, .55, .6]) {
+    for (const gap of [.5, .6]) {
       expect(layoutNativeScore(document, { ...options, minimumNoteGapEm: gap }).pages.length).toBeGreaterThan(1)
     }
   })
@@ -62,12 +65,12 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   const document = parseM3NDocument(source), before = structuredClone(document)
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)
-  let reference = layoutNativeScore(document,{...settings,coreGap:nativeStyle.minimumCoreGap,minimumNoteGapEm:.4})
-  const pages = reference.pages.length
-  for (const gap of [.6,.55,.5,.45]) {
-    const trial = layoutNativeScore(document,{...settings,coreGap:nativeStyle.minimumCoreGap,minimumNoteGapEm:gap})
-    if (trial.pages.length <= pages) { reference = trial; break }
-  }
+  const candidates = [.4,.5,.6].map(minimumNoteGapEm => layoutNativeScore(document, {
+    ...settings, coreGap:nativeStyle.minimumCoreGap, minimumNoteGapEm,
+  }))
+  candidates.sort((a,b) => a.pages.length-b.pages.length || nativeLayoutScore(b)-nativeLayoutScore(a)
+    || a.options.minimumNoteGapEm!-b.options.minimumNoteGapEm!)
+  const reference = candidates[0]!
   repaginateNativeLayout(reference,true)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(reference))
   expect(document).toEqual(before)
