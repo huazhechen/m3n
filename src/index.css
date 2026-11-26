@@ -19,7 +19,6 @@
 
 .top-nav nav,
 .score-reader-actions,
-.score-reader-navigation,
 .score-reader-tools {
   display: flex;
   align-items: center;
@@ -59,7 +58,6 @@
   .top-nav > nav { flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
   .top-nav nav,
   .top-nav .score-reader-actions,
-  .top-nav .score-reader-navigation,
   .top-nav .score-reader-tools { gap: var(--ui-space); }
   .top-nav nav a,
   .top-nav .action-button { width: var(--ui-control-size); height: var(--ui-control-size); min-width: var(--ui-control-size); padding: 0; }

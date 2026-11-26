@@ -24,7 +24,7 @@ export function WorksPage() {
     return modified ? sortScoresByModifiedTime(filtered) : sortScoresByTitle(filtered)
   }, [works, query, modified])
   return <main>
-    <TopNav libraryTo="/works" libraryLabel="独立作品" />
+    <TopNav showTools libraryTo="/works" libraryLabel="独立作品" />
     <div className="score-library">
       <section className="library-toolbar">
         <h1>独立作品</h1>

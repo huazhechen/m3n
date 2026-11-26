@@ -221,7 +221,7 @@ export function ScoresPage() {
   const resourceLabel = resourceState === 'loading' ? '正在加载乐谱和字体' : resourceState === 'error' ? '加载失败，点击重试' : '导出全量谱集'
   return (
     <main>
-      <TopNav actions={<button
+      <TopNav showTools actions={<button
         type="button"
         className="action-button"
         aria-label={resourceLabel}

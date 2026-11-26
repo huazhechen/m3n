@@ -12,6 +12,7 @@ import type { ScoreDisplaySettings } from '../lib/render-score'
 import { readRenderMode } from '../lib/renderer-settings'
 import { ScoreLoadStatus } from '../components/ScoreLoadStatus'
 import { attachScoreSwipe } from '../lib/score-swipe'
+import { attachScoreKeyboard } from '../lib/score-reader-keyboard'
 
 export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'scores' | 'works' }) {
   const { slug } = useParams()
@@ -43,10 +44,13 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
   const nextScore = scoreIndex >= 0 ? orderedScores[scoreIndex + 1] : undefined
   useEffect(() => {
     if (status !== 'ready' || !readerRef.current) return
-    return attachScoreSwipe(readerRef.current, direction => {
+    const changeScore = (direction: 'previous' | 'next') => {
       const destination = direction === 'previous' ? previousScore : nextScore
       if (destination) void navigate(`${basePath}/${destination.slug}`)
-    })
+    }
+    const stopSwipe = attachScoreSwipe(readerRef.current, changeScore)
+    const stopKeyboard = attachScoreKeyboard(readerRef.current, changeScore)
+    return () => { stopSwipe(); stopKeyboard() }
   }, [status, basePath, previousScore, nextScore, navigate])
 
   if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
@@ -54,22 +58,6 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
   return (
     <main ref={readerRef}>
       <TopNav {...navProps} actions={<div className="score-reader-actions">
-        <div className="score-reader-navigation" role="group" aria-label="切换曲目">
-          {score && previousScore ? (
-            <Link className="action-button" aria-label="上一曲" title="上一曲" to={`${basePath}/${previousScore.slug}`}>
-              <NavActionContent action="previous" />
-            </Link>
-          ) : (
-            <span className="action-button is-disabled" role="link" aria-label="上一曲" title="上一曲" aria-disabled="true"><NavActionContent action="previous" /></span>
-          )}
-          {score && nextScore ? (
-            <Link className="action-button" aria-label="下一曲" title="下一曲" to={`${basePath}/${nextScore.slug}`}>
-              <NavActionContent action="next" />
-            </Link>
-          ) : (
-            <span className="action-button is-disabled" role="link" aria-label="下一曲" title="下一曲" aria-disabled="true"><NavActionContent action="next" /></span>
-          )}
-        </div>
         <div className="score-reader-tools" role="group" aria-label="乐谱操作">
           <button
             type="button"

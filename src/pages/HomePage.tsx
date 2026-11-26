@@ -20,7 +20,7 @@ export function HomePage() {
 
   return (
     <main>
-      <TopNav />
+      <TopNav showTools />
       {!isReading && <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">Max&apos;s Markup Music Notation</span>
