@@ -1,3 +1,4 @@
+import { balanceScorePageTail } from './page-tail.js'
 import { interpolateScoreCoreGap } from './score-layout-policy.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
@@ -110,8 +111,18 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
       placed.push({ ...item, baseline })
     })
     if (placed.length) groups.push({ first, end: normalized.length })
+    const balanced = balanceScorePageTail(groups, (first, end) => {
+      const current: Placed[] = []
+      for (let index = first; index < end; index++) {
+        const item = normalized[index]!, baseline = nextBaseline(item, current, gap)
+        if (baseline + item.lower > pageHeight - margin + 1e-6) return false
+        current.push({ ...item, baseline })
+      }
+      return true
+    }, (first, end) => blocks.slice(first, end).filter(block => block.core).length,
+    index => Boolean(blocks[index - 1]?.core))
     const positions: NativeBlockPosition[] = [], heights: number[] = [], coreGaps: number[] = []
-    for (const [page, group] of groups.entries()) {
+    for (const [page, group] of balanced.entries()) {
       const arrange = (coreGap: number, publish = false) => {
         const current: Placed[] = []
         let bottom = margin

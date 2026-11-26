@@ -240,8 +240,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     for (const minimumNoteGap of [nativeStyle.minimumNoteGap, ...nativeStyle.noteGapCandidates.slice(1).reverse()]) {
       horizontalTrials.set(minimumNoteGap, prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap }, timings, preparation))
     }
-    const baselineRows = horizontalTrials.get(nativeStyle.minimumNoteGap)!.systemCount
-    if ([...horizontalTrials.values()].filter(trial => trial.systemCount <= baselineRows).every(trial => trial.score < minimumQuality))
+    if ([...horizontalTrials.values()].every(trial => trial.score < minimumQuality))
       throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
   }
   let baseline: NativeLayout
@@ -261,8 +260,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     try {
       const trial = horizontalTrials.get(minimumNoteGap)
       if (trial) {
-        if (trial.systemCount > selected.systems.length || trial.systemCount === selected.systems.length
-          && (trial.score < selectedScore || trial.score === selectedScore && minimumNoteGap >= selected.options.minimumNoteGap!)) continue
+        if (selected.pages.length === 1 && (trial.systemCount > selected.systems.length || trial.systemCount === selected.systems.length
+          && (trial.score < selectedScore || trial.score === selectedScore && minimumNoteGap >= selected.options.minimumNoteGap!))) continue
         candidate = trial.complete()
       } else candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
         minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation, { layout: selected, score: selectedScore })
@@ -273,8 +272,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       throw error
     }
     const score = nativeLayoutScore(candidate)
-    if (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
-      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!)) {
+    if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+      && (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
+      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!))) {
       selected = candidate
       selectedScore = score
     }
@@ -449,7 +449,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   // become the winner through vertical fitting, so do not build its curves,
   // lyric envelopes and page collision geometry. The baseline still receives
   // full validation, and every replacement must complete the same engraving.
-  if (selection) {
+  if (selection?.layout.pages.length === 1) {
     const score = nativeLayoutScore({ options, margin, systems, pages: [] })
     const previous = selection.layout
     const wins = systems.length < previous.systems.length || systems.length === previous.systems.length

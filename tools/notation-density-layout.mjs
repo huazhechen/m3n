@@ -65,7 +65,8 @@ async function compareAtSize(source, width, auditLayout, includeSvg, profile, in
     numbered: { ...summary(numbered.candidate, numbered.prepared.quality.meanLineDensity, numbered.prepared.continuousHeight()), spacing: numberedInfo.spacing, measureRows: numberedInfo.measureRows, ...geometry(numberedInfo) },
     staff: { ...summary(staff, info.quality.meanLineDensity, render.continuousHeight()),
       collisionDensity: info.lines.reduce((sum, line) => sum + line.minimum / info.availableWidth, 0) / Math.max(1, info.lines.length),
-      spacing: info.spacing, measureRows: info.lines.map(line => line.measures), ...geometry(info), ...(profile ? { profile: staffProfile(render(false)) } : {}) },
+      spacing: info.spacing, measureRows: info.lines.map(line => line.measures), ...geometry(info),
+      ...(profile ? { pagination: info.pageFit, localReading: info.lines.map(line => line.localReadingPenalty), profile: staffProfile(render(false)) } : {}) },
   }
 }
 
@@ -95,7 +96,9 @@ function staffProfile(pages) {
           .map(node => ({ role: role(node), ...ink(node) })).filter(p => p.width && p.height)
         for (const piece of pieces) (groups[piece.role] ??= []).push(piece)
         const all = bounds(pieces)
-        return { ink: all, categories: Object.fromEntries(Object.entries(groups).map(([role, boxes]) => [role, bounds(boxes)])),
+        return { ink: all, reading: [...system.querySelectorAll('g.measure')].map(measure => ({ id: measure.id,
+          worstRatio: Number(measure.dataset.m3nReadingRatio), penalty: Number(measure.dataset.m3nReadingPenalty) })),
+          categories: Object.fromEntries(Object.entries(groups).map(([role, boxes]) => [role, bounds(boxes)])),
           top: pieces.filter(p => Math.abs(p.y - all.y) < .01).map(p => p.role),
           bottom: pieces.filter(p => Math.abs(p.y + p.height - all.y - all.height) < .01).map(p => p.role) }
       })

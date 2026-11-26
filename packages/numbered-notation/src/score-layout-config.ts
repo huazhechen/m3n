@@ -4,7 +4,7 @@
  * Music-attached geometry is derived from the core font em at its use sites.
  */
 // 共用歌词：字号、横向留白、音乐到歌词的净空、歌词行间净空。
-const lyrics = { fontSize: 16, horizontalPadding: 1, musicGap: 6, rowGap: 4 } as const
+const lyrics = { fontSize: 16, horizontalPadding: 1, preferredExtraGap: 2, musicGap: 6, rowGap: 4 } as const
 
 const fontFamilies = {
   latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',

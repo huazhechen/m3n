@@ -1,14 +1,14 @@
 import { lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
-import { createStaffPreparation, staffMinimumAtSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
+import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
-export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; target: number; weight: number }
+export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -25,6 +25,18 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
   minimum.preferred = (measure, first, spacing) => {
     minimum(measure, first, spacing)
     return staffMinimumAtSpacing(metrics.get(measure)![first ? 1 : 0]!, spacing, true)
+  }
+  const localReadings = new WeakMap<StaffMeasure, Map<string, number>>()
+  minimum.localReading = (measure, spacing, extra) => {
+    let variants = localReadings.get(measure)
+    if (!variants) { variants = new Map(); localReadings.set(measure, variants) }
+    const key = `${spacing}:${extra}`
+    let penalty = variants.get(key)
+    if (penalty === undefined) {
+      penalty = staffReadingSpacing(preparation.measure(measure, false, hasBass, measureText), spacing, extra).reading.penalty
+      variants.set(key, penalty)
+    }
+    return penalty
   }
   const descriptions = new WeakMap<StaffMeasure, StaffMeasureDescription>()
   minimum.describe = measure => {
@@ -57,7 +69,7 @@ function describeStaffMeasure(measure: StaffMeasure, measureText: MeasureText): 
   }
 }
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
-  suppliedMinimum?: StaffMeasureMinimum): StaffLine[] {
+  suppliedMinimum?: StaffMeasureMinimum, rowCost = 1): StaffLine[] {
   const minimum = suppliedMinimum ?? createStaffMeasureMinimum(document.hasBass, measureText)
   const available = (width - scoreLayoutConfig.staff.contentEdgeInset) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
@@ -89,6 +101,13 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
     const minimumFor = (members: MeasuredStaffMeasure[]) => equal
       ? Math.max(...members.map(m => m.body)) * members.length + members[0]!.head
       : members.reduce((n, m) => n + m.body, 0) + members[0]!.head
+    const localPenalty = (members: MeasuredStaffMeasure[], minimumWidth: number) => {
+      if (!minimum.localReading) return 0
+      const weight = members.reduce((sum, member) => sum + member.weight, 0)
+      const surplus = Math.max(0, available - minimumWidth)
+      return Math.min(.25, 4 * members.reduce((sum, member) => sum + minimum.localReading!(member.measure, spacing,
+        equal ? Math.max(0, (available - members[0]!.head) / members.length - member.body) : surplus * member.weight / weight), 0) / members.length)
+    }
     const candidates: LineCandidate[][] = group.map((_, start) => {
       const result: LineCandidate[] = []
       let sum = 0, reading = 0, widest = -Infinity, widestReading = -Infinity
@@ -101,16 +120,17 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
         const minimum = equal ? widest * (stop - start) + group[start]!.head : sum + group[start]!.head
         if (minimum > available && stop > start + 1) break
         result.push({ end: stop, density: minimum / available,
+          penalty: localPenalty(group.slice(start, stop), minimum),
           readingDensity: Math.max(minimum, (equal ? widestReading * (stop - start) : reading) + group[start]!.head) / available })
       }
       return result
     })
     let start = 0
-    for (const stop of planScoreLines(candidates)) {
+    for (const stop of planScoreLines(candidates, { rowCost })) {
       const members = group.slice(start, stop), minimum = minimumFor(members)
       const reading = equal ? Math.max(...members.map(member => member.reading)) * members.length + members[0]!.head
         : members.reduce((sum, member) => sum + member.reading, 0) + members[0]!.head
-      lines.push({ measures: members, minimum, reading: Math.max(minimum, reading), target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
+      lines.push({ measures: members, minimum, reading: Math.max(minimum, reading), localReadingPenalty: localPenalty(members, minimum), target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
       start = stop
     }
     begin = end

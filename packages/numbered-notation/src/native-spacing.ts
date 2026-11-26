@@ -10,12 +10,49 @@ export type SpacingCell = {
   /** Relative share of positive justification surplus; defaults to 1. */
   beforeStretch?: number
   afterStretch?: number
+  /** Soft extra clearance beyond this lane's hard ink reservation. */
+  preferredAfter?: number
+  /** Soft centre-to-centre reading advance, in this notation's own scale. */
+  preferredAdvance?: number
   /** Music reservation before voice-local lyrics and parentheses are added. */
   placeholderLeft?: number
   placeholderRight?: number
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
 export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number }
+
+/** Spend at most a quarter of the surplus on tight local reading intervals.
+ * The rest retains the existing rhythmic springs. All increments are positive,
+ * so hard constraints, synchronous voices and the requested width stay intact. */
+export function distributeSpacingSurplus(columns: readonly SpacingColumn[], positions: readonly number[], weights: readonly number[], free: number): number[] {
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  if (total <= 0 || free <= 0) return [...positions]
+  let accumulated = 0
+  const cumulative = weights.slice(0, positions.length).map(weight => accumulated += weight)
+  const baseline = positions.map((position, index) => position + free * cumulative[index]! / total)
+  const demands = weights.map(() => 0)
+  const previous = new Map<string, { index: number; cell: SpacingCell }>()
+  columns.forEach((column, index) => column.cells.forEach(cell => {
+    const prior = previous.get(cell.lane)
+    if (prior && (prior.cell.preferredAfter || prior.cell.preferredAdvance)) {
+      const gap = baseline[index]! - cell.left - cell.before - baseline[prior.index]! - prior.cell.right - prior.cell.after
+      const deficit = Math.max(0, (prior.cell.preferredAfter ?? 0) - gap,
+        (prior.cell.preferredAdvance ?? 0) - (baseline[index]! - baseline[prior.index]!))
+      const span = cumulative[index]! - cumulative[prior.index]!
+      if (span > 0) for (let edge = prior.index + 1; edge <= index; edge++) {
+        demands[edge] = Math.max(demands[edge]!, deficit * weights[edge]! / span)
+      }
+    }
+    previous.set(cell.lane, { index, cell })
+  }))
+  const needed = demands.reduce((sum, value) => sum + value, 0)
+  const budget = Math.min(free * .25, needed)
+  let adjustment = 0
+  return positions.map((position, index) => {
+    adjustment += needed ? demands[index]! * budget / needed : 0
+    return position + adjustment + (free - budget) * cumulative[index]! / total
+  })
+}
 
 /**
  * Place columns at their minimum clearances, then distribute positive surplus.
@@ -100,6 +137,9 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
           right: Math.max(...occupied.map(({ cell, offset }) => offset + cell.right)),
           afterStretch: occupied.at(-1)!.cell.afterStretch,
           after: occupied.at(-1)!.cell.after,
+          preferredAfter: occupied.at(-1)!.cell.preferredAfter,
+          preferredAdvance: occupied.at(-1)!.cell.preferredAdvance === undefined ? undefined
+            : occupied.at(-1)!.offset + occupied.at(-1)!.cell.preferredAdvance!,
         }]
       }) })
       start = end + 1
@@ -131,7 +171,10 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     const right = Math.max(...rows.flatMap((row, i) => row.filter(cell => cell.active !== false).map(cell => positions[i]! + cell.right)))
     const occupied = right - left
     const shift = -left, free = Math.max(0, width - occupied)
-    positions.forEach((position, index) => { positions[index] = position + shift + (stretchWeight > 0 ? free * cumulative[index]! / stretchWeight : 0) })
+    const weights = cumulative.map((value, index) => value - (cumulative[index - 1] ?? 0))
+    weights.push(fillEdges.right ? 1 : 0)
+    const filled = distributeSpacingSurplus(columns, positions, weights, free)
+    positions.forEach((_, index) => { positions[index] = filled[index]! + shift })
   }
   return { positions, minimumWidth, stretchWeight }
 }

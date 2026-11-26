@@ -17,7 +17,7 @@ it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('matche
         throw error
       }
     })
-    trials.sort((a, b) => a.systems.length - b.systems.length || nativeLayoutScore(b) - nativeLayoutScore(a) || a.options.minimumNoteGap! - b.options.minimumNoteGap!)
+    trials.sort((a, b) => a.pages.length - b.pages.length || a.systems.length - b.systems.length || nativeLayoutScore(b) - nativeLayoutScore(a) || a.options.minimumNoteGap! - b.options.minimumNoteGap!)
     const expected = trials[0]!
     repaginateNativeLayout(expected, true)
     const timings: Record<string, number> = {}

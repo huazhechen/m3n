@@ -40,22 +40,23 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
-  const horizontal = new Map<number, Array<{ spacing: number; lines: StaffLine[]; quality: ReturnType<typeof scoreLineQuality> }>>()
-  const plans = (candidateWidth: number) => {
+  const horizontal = new Map<string, Array<{ spacing: number; lines: StaffLine[]; quality: ReturnType<typeof scoreLineQuality> }>>()
+  const plans = (candidateWidth: number, rowCost = 1) => {
     validate(candidateWidth)
-    let saved = horizontal.get(candidateWidth)
+    const key = `${candidateWidth}:${rowCost}`
+    let saved = horizontal.get(key)
     if (saved) return saved
     const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
     const musicWidth = candidateWidth - 2 * margin - gutter - scoreLayoutConfig.staff.rightGutter
     const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
     saved = [0.25, ...scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)].map(spacing => {
       signal?.throwIfAborted()
-      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum, rowCost)
       const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
         lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
       return { spacing, lines, quality }
     })
-    horizontal.set(candidateWidth, saved)
+    horizontal.set(key, saved)
     return saved
   }
   type Layout = {
@@ -75,18 +76,16 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const attempt = (spacing: number, selected?: Layout): Layout => {
+    const attempt = (spacing: number, rowCost = 1, incumbent?: Layout): Layout => {
       signal?.throwIfAborted()
-      const { lines, quality } = plans(candidateWidth).find(plan => plan.spacing === spacing)!
-      // Vertical engraving cannot improve this horizontal ranking. Complete
-      // the baseline and every possible replacement, but discard losing gaps
-      // before constructing their glyph nodes and collision geometry.
-      if (selected) {
+      const { lines, quality } = plans(candidateWidth, rowCost).find(plan => plan.spacing === spacing)!
+      // A one-page incumbent cannot lose on page count. For multipage
+      // incumbents, complete every trial before comparing the page count.
+      if (incumbent?.pages.length === 1) {
         const candidateScore = scoreHorizontalQuality(candidateWidth, quality)
-        const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
-        const wins = lines.length < selected.lines.length || lines.length === selected.lines.length
-          && (candidateScore > selectedScore || candidateScore === selectedScore && spacing < selected.spacing)
-        if (!wins) return selected
+        const previousScore = scoreHorizontalQuality(candidateWidth, incumbent.quality)
+        if (lines.length > incumbent.lines.length || lines.length === incumbent.lines.length
+          && (candidateScore < previousScore || candidateScore === previousScore && spacing >= incumbent.spacing)) return incumbent
       }
       const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale, measurements.preparation)
       for (const system of systems) {
@@ -106,21 +105,26 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
-    // The trial ranking is known before engraving. Visit alternatives in that
-    // exact total order: the first valid improvement is the final winner, so
-    // intermediate winners need no vertical geometry. The baseline must still
-    // paginate, and invalid alternatives fall through to the next original trial.
-    if (!selected.paginationError) {
-      const ranked = plans(candidateWidth).filter(plan => plan.spacing !== .25).slice().sort((a, b) =>
-        a.lines.length - b.lines.length
-        || scoreHorizontalQuality(candidateWidth, b.quality) - scoreHorizontalQuality(candidateWidth, a.quality)
-        || a.spacing - b.spacing)
-      for (const plan of ranked) {
-        const candidate = attempt(plan.spacing, selected)
-        if (candidate === selected) break
-        if (candidate.paginationError) continue
-        selected = candidate
-        break
+    const consider = (candidate: Layout) => {
+      if (candidate.paginationError) return
+      const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
+      const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
+      if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+        && (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
+        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing))) selected = candidate
+    }
+    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
+      consider(attempt(spacing, 1, selected))
+    }
+    // Only a short final page warrants extra whole-score engraving trials.
+    // Alter the soft row cost, never collision minima or preferred advances.
+    if (!selected.paginationError && selected.pages.length > 1 && selected.pages.at(-1)!.systems.length <= 2) {
+      const spacing = selected.spacing
+      const readingPenalty = (candidate: Layout) => candidate.lines.reduce((sum, line) => sum + (line.localReadingPenalty ?? 0), 0) / Math.max(1, candidate.lines.length)
+      const limit = readingPenalty(selected) + .02
+      for (const rowCost of [.85, 1.15]) {
+        const candidate = attempt(spacing, rowCost)
+        if (readingPenalty(candidate) <= limit) consider(candidate)
       }
     }
     layouts.set(candidateWidth, selected)
@@ -209,13 +213,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return svg
     })
   }
-  const qualityUpperBound = (candidateWidth: number) => {
-    const trials = plans(candidateWidth), baselineRows = trials[0]!.lines.length
-    // A valid width requires its baseline to paginate. More-row alternatives
-    // can never replace that baseline, even when their quality is higher.
-    return Math.max(...trials.filter(plan => plan.lines.length <= baselineRows)
-      .map(plan => scoreHorizontalQuality(candidateWidth, plan.quality)))
-  }
+  // Include every row-cost variant: page-first selection can choose more
+  // rows than the baseline, and tail repair can change horizontal quality.
+  const allPlans = (candidateWidth: number) => [1, .85, 1.15].flatMap(rowCost => plans(candidateWidth, rowCost))
+  const qualityUpperBound = (candidateWidth: number) => Math.max(...allPlans(candidateWidth)
+    .map(plan => scoreHorizontalQuality(candidateWidth, plan.quality)))
   return Object.assign(render, {
     qualityUpperBound(candidateWidth = width) {
       return qualityUpperBound(candidateWidth)
@@ -236,9 +238,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const gap = minimumGap * scoreLyricGapScale(minimumGap)
       const capacity = a4SourcePageHeight(candidateWidth) - 2 * margin
       const rowsPerPage = Math.max(1, Math.floor((capacity + gap + 1e-6) / (coreHeight + gap)))
-      const trials = plans(candidateWidth), baselineRows = trials[0]!.lines.length
+      const trials = allPlans(candidateWidth)
       return trials.some(plan => {
-        if (plan.lines.length > baselineRows) return false
         const lowerPages = Math.ceil(plan.lines.length / rowsPerPage)
         return lowerPages < pageCount || lowerPages === pageCount && scoreHorizontalQuality(candidateWidth, plan.quality) >= quality
       })
@@ -265,6 +266,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         spacing: result.spacing,
         quality: { ...result.quality },
         headerHeight: result.header.height,
+        pageFit: {
+          minimumHeight: paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, minimumGap, false)[0]!.height,
+          capacity: a4SourcePageHeight(candidateWidth) - 2 * margin - scoreLayoutConfig.staff.pageInset,
+          pageRows: result.pages.map(page => page.systems.length),
+        },
         availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter) - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset,
         pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,
         lines: result.lines.map((line, index) => ({
@@ -272,6 +278,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           inkHeight: result.systems[index]!.ink.bottom - result.systems[index]!.ink.top,
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,
+          localReadingPenalty: line.localReadingPenalty ?? 0,
           measures: line.measures.map((m) => m.id),
         })),
         pages: (result.paginationError ? [] : outputPages(result, true, candidateWidth)).map((page) => ({

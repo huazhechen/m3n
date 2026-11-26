@@ -1,4 +1,5 @@
 import { scoreRhythmicWeight } from './score-layout-policy.js'
+import { lyricSpacing } from './lyric-spacing.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
@@ -104,7 +105,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       }
       }
       const cells = column.glyphs.map(glyph => {
-        return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, (nativeStyle.music * .25), scale)
+        return { ...minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, (nativeStyle.music * .25), scale),
+          preferredAdvance: glyph.multiRest || glyph.beats > .5 ? undefined : nativeStyle.music * scoreRhythmicWeight(glyph.beats) }
       })
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
@@ -126,6 +128,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       && Math.abs(left.time + left.beats - right.time) < 1e-7
     if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
       previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * nativeStyle.groupSpacingRatio
+      if (previous.cell.preferredAdvance !== undefined) previous.cell.preferredAdvance *= nativeStyle.groupSpacingRatio
       cell.beforeStretch = (cell.beforeStretch ?? 1) * nativeStyle.groupSpacingRatio
       previous.cell.after *= nativeStyle.groupSpacingRatio
       cell.before *= nativeStyle.groupSpacingRatio
@@ -168,7 +171,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     for (const [tier, ink] of (glyph.lyricTiers ?? []).entries()) {
       if (!ink) continue
       item.cells.push({ lane: `${glyph.lane}:lyric:${tier}`, sparse: true,
-        left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
+        left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0,
+        preferredAfter: lyricSpacing.preferredExtraGap })
     }
   }
   // Multi-measure rest symbols form compact rigid blocks with adjacent bars.
