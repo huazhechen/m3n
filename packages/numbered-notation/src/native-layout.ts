@@ -1,6 +1,6 @@
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
-import { nativeLayoutScore } from './native-quality.js'
+import { nativeLayoutQuality } from './native-quality.js'
 import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
@@ -20,7 +20,7 @@ import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-hea
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
-import { measureNativeHorizontal, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
@@ -40,7 +40,7 @@ export type NativeRenderOptions = {
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { horizontalDensity?: number; coreGap?: number; index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { horizontalDensity?: number; unitRhythmicGap?: number; coreGap?: number; index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -228,23 +228,36 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const taskPreparationStarted = timings ? performance.now() : 0
   const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
-  // Both tiers receive complete horizontal plans; only the cost winner is
-  // placed vertically. Continuous and paged modes select the same plan.
+  // Both tiers receive complete horizontal plans and virtual A4 pagination.
+  // Paper use wins before physical spacing cost; continuous and paged modes agree.
   const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
   if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
-  // Select by full-score dispersion before doing any vertical placement.
-  // Stretch magnitude already shaped each tier's DP partition, but is not ranked.
-  // Font cost is identical for both tiers at this width. Ties retain tight.
-  const winner = trials.reduce((best, candidate) => candidate.trial.score > best.trial.score ? candidate : best)
-  let selected: NativeLayout
-  try { selected = winner.trial.complete() }
-  catch (error) {
-    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
-      selected = layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: winner.minimumNoteGap }, timings, preparation)
-    else throw error
+  let selected: NativeLayout | undefined, selectedCost = Infinity
+  let oversized: { error: Error; minimumNoteGap: number } | undefined
+  for (const { minimumNoteGap, trial } of trials) {
+    let candidate: NativeLayout
+    try { candidate = trial.complete() }
+    catch (error) {
+      if (error instanceof Error && error.message.includes('单个谱行')) {
+        oversized ??= { error, minimumNoteGap }; continue
+      }
+      throw error
+    }
+    // Stretch magnitude shapes each tier's DP partition, but final ranking
+    // uses actual pages first, then common physical spacing cost.
+    if (!selected || candidate.pages.length < selected.pages.length
+      || candidate.pages.length === selected.pages.length && (trial.tierCost < selectedCost
+        || trial.tierCost === selectedCost && minimumNoteGap > (selected.options.minimumNoteGap ?? 0))) {
+      selected = candidate; selectedCost = trial.tierCost
+    }
+  }
+  if (!selected) {
+    if (!supplied.paged && oversized)
+      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: oversized.minimumNoteGap }, timings, preparation)
+    throw oversized?.error ?? new Error('简谱间距候选为空。')
   }
   const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
@@ -255,7 +268,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
 function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
   return prepareNativeScoreAtGap(document, supplied, timings, preparation).complete()
 }
-function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): { score: number; systemCount: number; complete(): NativeLayout } {
+function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): { score: number; tierCost: number; systemCount: number; complete(): NativeLayout } {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -378,7 +391,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   }
   const lines = breakMeasures(projection.measures, available, options, arcLeading, timings)
   record('lineBreakMs')
-  const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
+  const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, unitRhythmicGap: nativeUnitRhythmicGap(measures, options, available - arcLeading(measures)), coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
+  record('horizontalQualityMs')
   // Named sections are labels within a projected part; expanded performances
   // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
   const startsSection = (current: NativeSystem, previous: NativeSystem) => {
@@ -408,7 +422,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
-  return { score: nativeLayoutScore({ options, margin, systems, pages: [] }), systemCount: systems.length, complete: () => {
+  const horizontal = { options, margin, systems, pages: [] }
+  const quality = nativeLayoutQuality(horizontal)
+  return { score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, complete: () => {
   stageStarted = timings ? performance.now() : 0
   for (const system of systems) placeSystem(system)
   record('horizontalPlacementMs')

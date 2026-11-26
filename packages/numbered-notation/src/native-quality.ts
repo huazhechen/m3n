@@ -1,4 +1,4 @@
-import { scoreLineQuality, scoreNumberedCost } from './layout-quality.js'
+import { scoreLineQuality, scoreNumberedCost, scoreNumberedSpacing } from './layout-quality.js'
 import type { NativeLayout } from './native-layout.js'
 
 export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
@@ -9,7 +9,9 @@ export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'marg
   const lastMeasure = lastSystem?.measures.at(-1)
   const rightEdge = width - layout.margin
   const lastLineSlack = lastMeasure ? Math.max(0, Math.min(1, (rightEdge - lastMeasure.end) / available)) : 0
-  return { pageCount: layout.pages.length, ...scoreLineQuality(densities, lastLineSlack), ...scoreNumberedCost(width, densities) }
+  const costs = scoreNumberedCost(width, densities)
+  const spacing = scoreNumberedSpacing(layout.systems.flatMap(system => system.unitRhythmicGap === undefined ? [] : [system.unitRhythmicGap]))
+  return { ...costs, ...spacing, totalCost: spacing.spacingCost + costs.overflowCost + costs.fontSizeCost, pageCount: layout.pages.length, ...scoreLineQuality(densities, lastLineSlack) }
 }
 
 

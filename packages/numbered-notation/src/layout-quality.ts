@@ -21,8 +21,7 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
 
-/** Keep the DP objective separate from the final ranking objective.
- * Stretch magnitude shapes breaks; only dispersion and font loss rank them. */
+/** Break diagnostics and font/overflow costs; final physical spacing is scored separately. */
 export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const stretches = densities.map(density => Math.max(0, 1 - density))
   const mean = stretches.reduce((sum, stretch) => sum + stretch, 0) / Math.max(1, stretches.length)
@@ -32,5 +31,15 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const layoutCost = lineStretchCost + lineUniformityCost + overflowCost
   const minimumWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.minimumMultiple
   const fontSizeCost = Math.max(0, (width / minimumWidth) ** 2 - 1)
-  return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost, totalCost: lineUniformityCost + overflowCost + fontSizeCost }
+  return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost }
+}
+
+/** Shared physical spacing objective; 16px is common to both minimum tiers. */
+export function scoreNumberedSpacing(gaps: readonly number[]) {
+  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingCrampedCost: 0, spacingCost: 0 }
+  const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
+  const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
+  const spacingUnevenCost = gaps.reduce((sum, gap) => sum + (gap - meanRhythmicGap) ** 2, 0) / gaps.length / denominator
+  const spacingCrampedCost = 16 ** 2 / denominator
+  return { meanRhythmicGap, spacingUnevenCost, spacingCrampedCost, spacingCost: spacingUnevenCost + spacingCrampedCost }
 }

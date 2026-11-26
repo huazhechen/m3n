@@ -14,23 +14,23 @@ it('does not confuse a deliberate short ending with excessive rhythmic stretchin
   expect(scoreLineQuality([.2], 0).lineStretchPenalty).toBe(0)
 })
 
-it('keeps stretch in the break objective but excludes it from width ranking', async () => {
+it('keeps stretch in the break diagnostics without defining the final spacing cost', async () => {
   const { scoreNumberedCost } = await import('./layout-quality.js')
   const cost = scoreNumberedCost(528, [.5, .75])
   expect(cost.lineStretchCost).toBeCloseTo(.3125)
   expect(cost.lineUniformityCost).toBeCloseTo(.03125)
   expect(cost.layoutCost).toBeCloseTo(.34375)
-  expect(cost.totalCost).toBeCloseTo(.03125)
   expect(scoreNumberedCost(1056, [.5, .75]).fontSizeCost).toBe(3)
-  expect(scoreNumberedCost(528, [.5, .75, .5, .75]).totalCost).toBeCloseTo(cost.totalCost * 2)
+  expect(scoreNumberedCost(528, [.5, .75, .5, .75]).layoutCost).toBeCloseTo(cost.layoutCost * 2)
 })
 
-it('ranks uniformly stretched rows equally at the same font size', async () => {
-  const { scoreNumberedCost } = await import('./layout-quality.js')
-  const loose = scoreNumberedCost(564, [.3, .3, .3])
-  const tight = scoreNumberedCost(564, [.9, .9, .9])
-  expect(loose.layoutCost).toBeGreaterThan(tight.layoutCost)
-  expect(loose.lineUniformityCost).toBeCloseTo(0)
-  expect(tight.lineUniformityCost).toBeCloseTo(0)
-  expect(loose.totalCost).toBeCloseTo(tight.totalCost)
+it('balances common physical spaciousness against relative unevenness', async () => {
+  const { scoreNumberedSpacing: cost } = await import('./layout-quality.js')
+  expect(cost([12, 12]).spacingCost).toBeCloseTo(1.7777777778)
+  expect(cost([16, 16]).spacingCost).toBe(1)
+  expect(cost([12, 20]).spacingUnevenCost).toBe(.0625)
+  expect(cost([12, 20]).spacingCost).toBeLessThan(cost([15, 15]).spacingCost)
+  expect(cost([8, 24]).spacingCost).toBeGreaterThan(cost([15, 15]).spacingCost)
+  expect(cost([16, 16, 16, 16]).spacingCost).toBe(cost([16, 16]).spacingCost)
+  expect(cost([]).spacingCost).toBe(0)
 })

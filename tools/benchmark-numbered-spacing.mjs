@@ -5,9 +5,11 @@ import { resolve, join, dirname } from 'node:path'
 import { createHash } from 'node:crypto'
 import { chromium } from '@playwright/test'
 
+const batchStarted = performance.now()
 const root = resolve(import.meta.dirname, '..')
 const argument = name => process.argv.find(value => value.startsWith(`--${name}=`))?.slice(name.length + 3)
 const sourceRoot = resolve(argument('source-root') ?? join(root, 'src'))
+const fontRoot = resolve(argument('font-root') ?? join(root, 'tools/fonts/library'))
 const output = resolve(argument('output') ?? '.tmp/numbered-spacing/report.json')
 const baselinePath = argument('baseline') ?? (process.argv.includes('--check') ? join(root, 'config/numbered-spacing-baseline.json') : undefined)
 const baseline = baselinePath ? JSON.parse(readFileSync(baselinePath, 'utf8')) : undefined
@@ -32,20 +34,34 @@ const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceR
 const report = { sourceRoot, sourceRevision, rendererHash, auditLayout, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
-for (const file of scores) {
-  const source = readFileSync(join(sourceRoot, file), 'utf8')
-  const sourceHash = createHash('sha256').update(source).digest('hex')
-  const saved = report.entries.find(entry => entry.file === file)
-  if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
-  const browser = await chromium.launch({ executablePath, headless: true,
-    args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--max-old-space-size=256'] })
-  try {
-    const page = await browser.newPage()
-    await page.route(`${origin}/**`, route => new URL(route.request().url()).pathname === '/'
-      ? route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><html style="font-synthesis:none"><body></body></html>' })
-      : route.fulfill({ path: join(bundle, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' }))
-    await page.goto(origin)
-    await page.addScriptTag({ url: `${origin}/bundle.js` })
+const browser = await chromium.launch({ executablePath, headless: true,
+  args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--expose-gc --max-old-space-size=256'] })
+try {
+  const page = await browser.newPage()
+  report.fontRoot = fontRoot
+  const fonts = JSON.parse(readFileSync(join(fontRoot, 'manifest.json'), 'utf8')).fonts
+  report.fontHashes = fonts.map(({ file, sha256 }) => ({ file, sha256 }))
+  await page.route(`${origin}/**`, route => {
+    const path = new URL(route.request().url()).pathname
+    if (path === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><html style="font-synthesis:none"><body></body></html>' })
+    if (path.startsWith('/fonts/')) {
+      const font = fonts.find(font => path === '/fonts/' + font.file)
+      if (!font) return route.abort()
+      return route.fulfill({ path: join(fontRoot, font.file), contentType: 'font/ttf' })
+    }
+    return route.fulfill({ path: join(bundle, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
+  })
+  await page.goto(origin)
+  await page.addScriptTag({ url: `${origin}/bundle.js` })
+  const fontStarted = performance.now()
+  await page.evaluate(fonts => m3n.initialize(fonts), fonts.map(font => ({ ...font, url: origin + '/fonts/' + font.file })))
+  report.fontPreparationMs = performance.now() - fontStarted
+  report.browserReuse = 'single-page-shared-fonts-and-metrics'
+  for (const file of scores) {
+    const source = readFileSync(join(sourceRoot, file), 'utf8')
+    const sourceHash = createHash('sha256').update(source).digest('hex')
+    const saved = report.entries.find(entry => entry.file === file)
+    if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
     const result = await page.evaluate(({ source, audit }) => m3n.search(source, audit), { source, audit: auditLayout })
     const previous = baseline?.entries.find(entry => entry.file === file)
     if (baseline) assert(previous && previous.sourceHash === sourceHash, `Baseline/source mismatch: ${file}`)
@@ -53,8 +69,12 @@ for (const file of scores) {
     report.entries.push(entry)
     save()
     console.log(`${report.entries.length}/${scores.length} ${file}: ${result.width}px / ${result.pages}p${previous ? ` (${entry.widthDelta >= 0 ? '+' : ''}${entry.widthDelta}px, ${entry.pageDelta}p)` : ''}`)
-  } finally { await browser.close() }
-}
+    // Release per-score layout graphs while preserving font and metric caches.
+    await page.evaluate(() => { if (typeof globalThis.gc === 'function') globalThis.gc() })
+  }
+} finally { await browser.close() }
+report.batchMs = performance.now() - batchStarted
+report.searchMs = report.entries.reduce((sum, entry) => sum + entry.searchMs, 0)
 report.complete = true
 save()
 if (baseline) {

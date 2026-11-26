@@ -302,6 +302,32 @@ export type NativeHorizontalSpacing = {
   equalCells?: { count: number; tailRight: number }
 }
 
+/** Full-width, music-only clearance per rhythmic unit. Does not mutate placement
+ * or subtract either tier's reserved minimum; short endings are scored full. */
+export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: HorizontalOptions, width: number): number | undefined {
+  const items = itemsFor(measures, options)
+  const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
+  const previous = new Map<string, { index: number; right: number; weight: number }>()
+  let clearance = 0, weight = 0
+  for (const [index, item] of items.entries()) for (const cell of item.cells) {
+    if (cell.sparse) continue
+    if (!item.column && !item.boundary) { previous.delete(cell.lane); continue }
+    const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
+    const left = glyph ? glyph.musicLeft ?? glyph.left : item.left
+    const right = glyph ? glyph.musicRight ?? glyph.right : item.right
+    const before = previous.get(cell.lane)
+    if (before && items[before.index]!.fixedAfter === undefined) {
+      const units = (before.weight + (cell.beforeStretch ?? 1)) / 2
+      if (units > 0) {
+        clearance += Math.max(0, positions[index]! - left - positions[before.index]! - before.right)
+        weight += units
+      }
+    }
+    previous.set(cell.lane, { index, right, weight: cell.afterStretch ?? 1 })
+  }
+  return weight > 0 ? clearance / weight : undefined
+}
+
 /** Measure the exact chain used for placement, including rigid groups, voice
  * placeholders, lyrics and visible boundary ink. Shared by row planning and placement. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {

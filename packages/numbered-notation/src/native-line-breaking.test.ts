@@ -89,7 +89,7 @@ describe('full-score stretch planning', () => {
       109.2634219384, 142.1124391210, 122.1847213036, 142.1124391210, 72.2865374756]
     expect(planNativeLines(candidatesFor(widths, 480))).toEqual([3, 6, 9])
     const source = readFileSync(new URL('../../../src/scores/hong_he_gu_01.m3n', import.meta.url), 'utf8')
-    const layout = layoutNativeScore(parseM3NDocument(source), { width: 480, pageMargin: 0, paged: true })
+    const layout = layoutNativeScore(parseM3NDocument(source), { width: 480, pageMargin: 0, paged: true, minimumNoteGap: 8 })
     expect(layout.systems.map(system => system.measures.length)).toEqual([3, 3, 3])
   })
 
