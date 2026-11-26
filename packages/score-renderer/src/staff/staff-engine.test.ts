@@ -23,9 +23,52 @@ describe('staff rhythm engraving', () => {
       const drawing = drawStaffMeasure(result, result.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
       const bar = findAll(drawing, node => node.attributes.class === 'staff-bar')[0]!
       const note = result.entries[0]![0]!.notes[0]!
-      expect(note.x - note.prepared.left - geometry.ink(bar).right).toBeGreaterThanOrEqual(staffMusicSize() / 8 - 1e-7)
+      expect(note.x - note.prepared.left - geometry.ink(bar).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 - 1e-7)
       const clef = findAll(drawing, node => node.attributes.class === 'staff-clef')[0]
       if (clef) expect(geometry.ink(bar).left).toBeGreaterThan(geometry.ink(clef).right)
+    }
+  })
+  it('keeps mid-system key cancellation and meter ink clear of the preceding bar in both staves', () => {
+    for (const change of ['{key=D}', '{key=C}', '{2/4}', '{key=D}{2/4}']) {
+      const score = projectStaffDocument(analyzeM3N(`{key=Dm}{4/4}\nN: 1 2 3 4 | ${change}1 2 |\nB: 1d 2d 3d 4d | 1d 2d |`).score)
+      const current = createStaffMeasure(score.measures[1]!, false, true, measureText, .25)
+      const x = 200
+      const drawing = drawStaffMeasure(current, current.minimum, x)
+      const geometry = new SvgGeometry(drawing, measureText)
+      const previousBar = drawStaffBar('single', x, 0)
+      const right = geometry.ink(previousBar).right
+      const signatures = findAll(drawing, node => node.attributes.class === 'staff-signature')
+      expect(signatures).toHaveLength(2)
+      for (const signature of signatures) {
+        expect(geometry.ink(signature).left - right).toBeGreaterThanOrEqual(staffMusicSize() / 4 * .45 - 1e-7)
+      }
+      // Signature space must also be included in the minimum-width layout.
+      for (const lane of current.entries) {
+        const firstNote = lane[0]!.notes[0]!
+        expect(firstNote.x - firstNote.prepared.left).toBeGreaterThanOrEqual(x + current.start - 1e-7)
+      }
+    }
+  })
+  it('centres single- and multi-digit meters on the middle staff line, including inline changes', () => {
+    for (const meter of ['2/4', '3/4', '4/4', '6/8', '12/8', '7/16']) {
+      const score = projectStaffDocument(analyzeM3N(`{5/4}\nN: 1 2 3 4 5 | {${meter}}1 2 |\nB: 1d 2d 3d 4d 5d | 1d 2d |`).score)
+      for (const first of [true, false]) {
+        const current = createStaffMeasure(score.measures[1]!, first, true, measureText, .25)
+        for (const signature of current.prepared.signatures) {
+          const digits = signature.symbols.filter(s => s.glyph.startsWith('time'))
+          const top = Math.min(...digits.map(s => s.y + staffGlyphMetrics(s.glyph).top))
+          const bottom = Math.max(...digits.map(s => s.y + staffGlyphMetrics(s.glyph).bottom))
+          expect((top + bottom) / 2).toBeCloseTo(staffMusicSize() * 1.5)
+          const rows = [...new Set(digits.map(s => s.y))]
+          expect(rows).toHaveLength(2)
+          const centers = rows.map(y => {
+            const row = digits.filter(s => s.y === y)
+            return (Math.min(...row.map(s => s.x + staffGlyphMetrics(s.glyph).left))
+              + Math.max(...row.map(s => s.x + staffGlyphMetrics(s.glyph).right))) / 2
+          })
+          expect(centers[0]).toBeCloseTo(centers[1]!)
+        }
+      }
     }
   })
   it('constrains music and each lyric row separately instead of adding unrelated envelopes', () => {
@@ -54,9 +97,18 @@ describe('staff rhythm engraving', () => {
     const drawing = drawStaffMeasure(ordinary, ordinary.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
     const first = ordinary.entries[0]![0]!.notes[0]!, last = ordinary.entries[0]!.at(-1)!.notes[0]!
     const space = staffMusicSize() / 4
-    expect(first.headLeft).toBeGreaterThanOrEqual(space / 2)
+    expect(first.headLeft).toBeGreaterThanOrEqual(space)
     const bar = drawStaffBar(ordinary.measure.source.right, ordinary.minimum, 0)
     expect(geometry.ink(bar).left - last.headRight).toBeGreaterThanOrEqual(space / 2 - space * .05)
+  })
+  it('preserves a full staff space before the first painted note, rest, accidental and grace group', () => {
+    for (const music of ['1 2 3 4', '1# 2 3 4', '1d 2 3 4', '1{ac(6 7)} 2 3 4', '0 2 3 4']) {
+      const doc = projectStaffDocument(analyzeM3N(`{4/4}\nN: 1 2 3 4 | ${music} |`).score)
+      const current = createStaffMeasure(doc.measures[1]!, false, false, measureText, .25)
+      const drawing = drawStaffMeasure(current, current.minimum, 0)
+      const event = findAll(drawing, n => n.attributes.id === current.measure.melody[0]!.id)[0]!
+      expect(new SvgGeometry(drawing, measureText).ink(event).left).toBeGreaterThanOrEqual(staffMusicSize() / 4 - 1e-7)
+    }
   })
   it('keeps staff reading space independent of digit size and proportional to its own music frame', () => {
     const numberedSize = scoreLayoutConfig.numbered.music, staffSize = scoreLayoutConfig.staff.music

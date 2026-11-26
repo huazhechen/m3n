@@ -105,16 +105,32 @@ function keySignature(key: string, previous: string | undefined, bass: boolean):
 }
 function meterSignature(count: number, unit: number): Signature {
   const symbols: SymbolPlacement[] = []
-  const widths = [count, unit].map(value => [...String(value)].reduce((sum, digit) => sum + staffGlyphMetrics(`time${digit}` as StaffGlyph).advance, 0))
-  const width = Math.max(...widths)
-  for (const [row, value] of [count, unit].entries()) {
-    let x = (width - widths[row]!) / 2
-    for (const digit of String(value)) {
-      const glyph = `time${digit}` as StaffGlyph
-      symbols.push({ glyph, x, y: row ? (staffMusicSize() * 2) : (staffMusicSize() * 1.5) }); x += staffGlyphMetrics(glyph).advance
-    }
+  const rows = [count, unit].map(value => {
+    let x = 0
+    const digits = [...String(value)].map(digit => {
+      const glyph = `time${digit}` as StaffGlyph, metrics = staffGlyphMetrics(glyph)
+      const symbol = { glyph, x, y: 0 }
+      x += metrics.advance
+      return { symbol, metrics }
+    })
+    const left = Math.min(...digits.map(({ symbol, metrics }) => symbol.x + metrics.left))
+    const right = Math.max(...digits.map(({ symbol, metrics }) => symbol.x + metrics.right))
+    const top = Math.min(...digits.map(({ metrics }) => metrics.top))
+    const bottom = Math.max(...digits.map(({ metrics }) => metrics.bottom))
+    return { digits, left, width: right - left, centerY: (top + bottom) / 2 }
+  })
+  const width = Math.max(...rows.map(row => row.width))
+  for (const [index, row] of rows.entries()) for (const { symbol } of row.digits) {
+    symbols.push({ ...symbol, x: symbol.x + (width - row.width) / 2 - row.left,
+      y: staffMusicSize() * (index ? 1.75 : 1.25) - row.centerY })
   }
-  return { symbols, width: width + (staffMusicSize() / 4 * 0.6) }
+  // SMuFL time digits are centred on their origin, unlike ordinary text.
+  // Centre the complete painted fraction on the middle staff line as well.
+  const top = Math.min(...symbols.map(s => s.y + staffGlyphMetrics(s.glyph).top))
+  const bottom = Math.max(...symbols.map(s => s.y + staffGlyphMetrics(s.glyph).bottom))
+  const dy = staffMusicSize() * 1.5 - (top + bottom) / 2
+  for (const symbol of symbols) symbol.y += dy
+  return { symbols, width: width + staffMusicSize() / 4 * .6 }
 }
 function appendSignature(target: Signature, next: Signature) {
   target.symbols.push(...next.symbols.map(symbol => ({ ...symbol, x: symbol.x + target.width })))
@@ -227,6 +243,14 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     }
     if (first || measure.key !== measure.previousKey) appendSignature(signature, keySignature(measure.key, first ? undefined : measure.previousKey, bass))
     if (measure.showMeter) appendSignature(signature, meterSignature(measure.meterCount, measure.meterUnit))
+    // Mid-system signatures share their origin with the preceding measure's
+    // closing bar. Reserve real ink clearance before the first glyph as well
+    // as after the signature; the same width feeds line planning and drawing.
+    if (!first && signature.symbols.length) {
+      const inset = staffMusicSize() / 8
+      for (const symbol of signature.symbols) symbol.x += inset
+      signature.width += inset
+    }
     signatures.push(signature)
     let key = measure.key, meter = `${measure.meterCount}/${measure.meterUnit}`
     const accidentals = new Map<string, string>()
@@ -359,9 +383,10 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     stretches.push(stretch)
     return column
   })
+  const startGap = staffMusicSize() / 4
   const start = measure.source.left?.startsWith('rpt')
-    ? repeatBarOffset(signatures) + staffMusicSize() / 4 * 1.55 + staffGlyphMetrics('repeatDot').right
-    : Math.max(...signatures.map(s => s.width + staffMusicSize() / 4 * (s.symbols.length ? .6 : .5)))
+    ? repeatBarOffset(signatures) + staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right + startGap
+    : Math.max(...signatures.map(s => s.width)) + startGap
   const endInset = measure.source.right?.startsWith('rpt') ? (staffMusicSize() / 4 * 1.8) : measure.source.right === 'end' ? (staffMusicSize() / 4 * 0.7) : measure.source.right === 'dbl' ? (staffMusicSize() / 4 * 0.4) : 0
   const multiRestWidth = measure.source.interlude ? (staffMusicSize() / 4 * 5.9) : measure.source.multiRest ? Math.max((staffMusicSize() / 4 * 4.3), measureText(String(measure.source.multiRest), scoreLayoutConfig.staff.restCount / STAFF_SCALE, true).width) + (staffMusicSize() / 4 * 1.6) : 0
   const weights = stretches.map((stretch, i) => i + 1 < stretches.length
@@ -402,7 +427,7 @@ function drawSignature(signature: Signature, x: number, y: number): XmlNode[] {
   })
 }
 /** A start repeat follows the row's clef/key/meter, then reserves its dots
- * plus half a staff space before the first music ink. */
+ * plus one staff space before the first music ink. */
 function repeatBarOffset(signatures: Signature[]): number {
   const width = Math.max(...signatures.map(signature => signature.width))
   return width + (width ? staffMusicSize() / 4 * .6 : 0)
@@ -613,7 +638,7 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     for (let i = 0; i < 5; i++) staff.children.push(staffLine(x, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, x + width, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, (staffMusicSize() / 4 * 0.1), 'staff-line'))
     const leftBarX = x + (model.measure.source.left?.startsWith('rpt') ? repeatBarOffset(prepared.signatures) : 0)
     staff.children.push(drawStaffBar(model.measure.source.left, leftBarX, stave.y, true), drawStaffBar(model.measure.source.right, x + width, stave.y),
-      ...drawSignature(prepared.signatures[lane]!, x, stave.y))
+      element('g', { class: 'staff-signature', id: `${model.measure.id}-signature-${lane}` }, drawSignature(prepared.signatures[lane]!, x, stave.y)))
     for (const entry of model.entries[lane]!) {
       const attrs: Record<string, string> = { id: entry.item.id, class: entry.item.event.kind }
       if (/-rend\d+$/.test(entry.item.id)) {

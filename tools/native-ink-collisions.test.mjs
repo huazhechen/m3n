@@ -42,6 +42,21 @@ test('staff audit detects repeat dots against notes and rests using the current 
     assert.equal(result.restored, true)
   }
 })
+test('staff audit detects a measure-opening cancellation against the previous bar', async () => {
+  const result = await page.evaluate(() => {
+    document.querySelector('main').innerHTML = `<svg width="120" height="100"><g class="system">
+      <g class="staff-bar" id="previous-bar"><path d="M40 30 V70" fill="none" stroke="black"/></g>
+      <g class="staff-signature" id="cancellation"><path d="M40 37 V58 M44 34 V55 M40 43 L44 41 M40 51 L44 49" fill="none" stroke="black" stroke-width="1.2"/></g>
+      </g></svg>`
+    const system = document.querySelector('g.system')
+    const failed = auditStaffInkCollisions(system)
+    system.querySelector('.staff-signature').setAttribute('transform', 'translate(4 0)')
+    return { failed, clear: auditStaffInkCollisions(system) }
+  })
+  assert.equal(result.failed.collisions.length, 1)
+  assert.ok(result.failed.collisions[0].opaquePixelsAt2x > 0)
+  assert.equal(result.clear.collisions.length, 0)
+})
 test('staff audit checks independent music and ending hooks but permits beam joins', async () => {
   const audit = svg => page.evaluate(svg => {
     document.querySelector('main').innerHTML = `<svg width="120" height="100"><g class="system">${svg}</g></svg>`
