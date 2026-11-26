@@ -1,3 +1,5 @@
+import { waitForEditor } from './editor-state'
+import { nextScorePath } from './score-navigation'
 import { expect, test } from '@playwright/test'
 
 // Real touch input verifies that browser panning does not swallow navigation.
@@ -8,12 +10,11 @@ test('single-finger swipes navigate while pinch, scroll and controls keep their 
   await page.goto('/scores/huan_le_song_01')
   const paper = page.locator('.score-paper')
   const ready = async () => {
-    await expect(paper.locator('svg').first()).toBeVisible()
-    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await waitForEditor(page)
   }
   await ready()
   const original = page.url()
-  const next = await page.getByRole('link', { name: '下一曲', exact: true }).getAttribute('href')
+  const next = nextScorePath('huan_le_song_01')
   const session = await context.newCDPSession(page)
   const swipe = async (from: number, to: number, y?: number, endY?: number) => {
     const bounds = await paper.boundingBox()
@@ -39,7 +40,8 @@ test('single-finger swipes navigate while pinch, scroll and controls keep their 
   const sliderBounds = await slider.boundingBox()
   await swipe(sliderBounds!.x + sliderBounds!.width - 10, sliderBounds!.x + 10, sliderBounds!.y + sliderBounds!.height / 2)
   expect(page.url()).toBe(original)
-  await page.getByRole('button', { name: '关闭乐谱设置' }).tap()
+  await page.keyboard.press('Escape')
+  await ready()
   // A vertical gesture cancels navigation.
   await swipe(200, 180, 400, 280)
   expect(page.url()).toBe(original)

@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test'
+import { waitForEditor } from './editor-state'
 
 const source = '{title=本地测试}\n{key=C} {4/4} {120qpm}\nN: 1 2 3 4 |||'
 
 test('browse saves locally and edit reuses the score id', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   await page.getByRole('button', { name: '保存' }).click()
 
@@ -15,16 +17,18 @@ test('browse saves locally and edit reuses the score id', async ({ page }) => {
   await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
   const editorUrl = page.url()
   const revised = source.replace('本地测试', '本地测试修订')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(revised)
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page).toHaveURL(editorUrl.replace('/editor/', '/scores/'))
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('m3n:local-scores') ?? '[]'))
   expect(entries).toHaveLength(1)
-  expect(entries[0]).toMatchObject({ source: revised, expiresAt: null })
+  expect(entries[0]).toMatchObject({ source: revised })
 })
 
 test('recovers the latest draft after reload without file actions or a save notice', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   await expect.poll(() => page.evaluate(() => localStorage.getItem('m3n:draft:new'))).not.toBeNull()
   await page.reload()
@@ -55,6 +59,7 @@ test('restores the current original score and clears only its draft, including a
   await expect(editor).toContainText('{title=小星星}')
   const original = await editor.innerText()
   await page.evaluate(() => localStorage.setItem('m3n:draft:another-score', JSON.stringify({ source: 'keep', updatedAt: new Date().toISOString() })))
+  await waitForEditor(page)
   await editor.fill(source)
   await expect.poll(() => page.evaluate(id => JSON.parse(localStorage.getItem(`m3n:draft:${id}`) ?? 'null')?.source, id)).toBe(source)
   await page.reload()
@@ -65,6 +70,7 @@ test('restores the current original score and clears only its draft, including a
   await expect(editor).toHaveText(original, { useInnerText: true })
   expect(await page.evaluate(id => localStorage.getItem(`m3n:draft:${id}`), id)).toBeNull()
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('m3n:draft:another-score')!).source)).toBe('keep')
+  await waitForEditor(page)
   await editor.fill(source)
   await expect.poll(() => page.evaluate(id => JSON.parse(localStorage.getItem(`m3n:draft:${id}`) ?? 'null')?.source, id)).toBe(source)
 })
@@ -78,6 +84,7 @@ test('keeps the editor open with the source when local storage rejects a save', 
     }
   })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page.getByRole('alert')).toContainText('本地保存失败')
@@ -110,6 +117,7 @@ test('reuses the shared source package when opening a built-in score', async ({ 
 test('submit is simulated locally and opens the reader', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.getByText('本地模拟提交')).toBeVisible()
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   await expect(page.locator('.score-paper').getByText('本地测试', { exact: true })).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
@@ -121,6 +129,7 @@ test('submit is simulated locally and opens the reader', async ({ page }) => {
 
 test('score library marks local scores, opens on click, and deletes', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
@@ -145,19 +154,18 @@ test('library puts recently modified local scores before alphabetized official s
     localStorage.setItem('m3n:library-view', 'alphabetical')
     if (localStorage.getItem('m3n:local-scores')) return
     localStorage.setItem('m3n:recent-edits', JSON.stringify([{ id: 'local-sort-0', title: '旧记录', updatedAt: Date.now() }]))
-    localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例', '旧版排序用例'].map((title, index) => ({
+    localStorage.setItem('m3n:local-scores', JSON.stringify(['Zzz 排序用例', 'Aaa 排序用例', '同时间排序用例'].map((title, index) => ({
       id: `local-sort-${index}`,
       source: `{title=${title}} {4/4}\nN: 1 2 3 4 |||`,
       createdAt: '2020-01-01T00:00:00Z',
       updatedAt: index < 2 ? `2021-01-0${2 - index}T00:00:00Z` : undefined,
-      expiresAt: null,
     }))))
   })
   await page.goto('/scores')
   const titles = page.locator('.score-list .score-card h3')
   await expect(titles.nth(0)).toHaveText('Zzz 排序用例')
   await expect(titles.nth(1)).toHaveText('Aaa 排序用例')
-  await expect(titles.nth(2)).toHaveText('旧版排序用例')
+  await expect(titles.nth(2)).toHaveText('同时间排序用例')
   const isLocal = await page.locator('.score-list .score-card').evaluateAll(cards => cards.map(card => card.classList.contains('is-local-card')))
   expect(isLocal.slice(0, 3)).toEqual([true, true, true])
   expect(isLocal.slice(3).every(local => !local)).toBe(true)
@@ -166,8 +174,9 @@ test('library puts recently modified local scores before alphabetized official s
   await expect(page.locator('.library-group-heading').first()).toHaveText('本地作品')
   await expect(page.getByRole('button', { name: '跳至本地作品' })).toBeVisible()
   await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('排序用例')
-  await expect(titles).toHaveText(['Zzz 排序用例', 'Aaa 排序用例', '旧版排序用例'])
+  await expect(titles).toHaveText(['Zzz 排序用例', 'Aaa 排序用例', '同时间排序用例'])
   await page.goto('/editor/local-sort-1')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{title=Aaa 排序用例}{4/4}\nN: 4 3 2 1 |||')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-sort-1$/)

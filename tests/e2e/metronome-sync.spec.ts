@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
+import { waitForEditor } from './editor-state'
 
 test.afterEach(async ({ page }, info) => {
   const trace = await page.evaluate(() => (window as any).m3nAudioTrace).catch(() => null)
@@ -42,7 +43,10 @@ test('metronome remains on the MIDI audio beat after forward/backward slider see
     }
   })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: ' + Array.from({ length: 8 }, () => '1 2 3 4 |').join(' ') + ' {60qpm}' + Array.from({ length: 8 }, () => '1 2 3 4 |').join(' '))
+  await waitForEditor(page)
+  await openScoreSettings(page)
   const metro = page.getByRole('switch', { name: '节拍器', exact: true })
   if (await metro.isChecked()) await metro.click()
   await openScoreSettings(page)
@@ -50,7 +54,9 @@ test('metronome remains on the MIDI audio beat after forward/backward slider see
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
+  await openScoreSettings(page)
   await metro.click()
+  await page.keyboard.press('Escape')
   const progress = page.getByRole('slider', { name: '播放位置', exact: true })
   const measurements = []
   for (const [value, rate] of [['453', 1], ['172', 1], ['691', 2], ['287', 2]] as const) {

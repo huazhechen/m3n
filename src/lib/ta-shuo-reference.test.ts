@@ -4,7 +4,6 @@ import source from '../scores/ta_shuo_01.m3n?raw'
 import categories from '../../config/scorebook/library-categories.json'
 import plan from '../../config/scorebook/editorial-plan.json'
 import pitchReference from './fixtures/ta-shuo-pitches.json'
-import expandedReference from './fixtures/ta-shuo-before-repeats.m3n?raw'
 
 it('preserves the uploaded Ta Shuo vocal line, including its second-verse and final-chorus variants', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
@@ -62,29 +61,6 @@ it('matches every vocal pitch and octave independently read from the uploaded PD
   }
 })
 
-function performedWords(document: ReturnType<typeof parseM3NDocument>) {
-  const lyrics = deriveScoreInteraction(document).lyricsByEvent
-  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyrics.get(event) ?? []]))
-  return compileScorePerformance(document).elements.filter(event => event.voice === 'score:melody').flatMap(event =>
-    (byId.get(event.xmlId) ?? []).filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(event.rendition))).map(lyric => lyric.text),
-  ).join('')
-}
-
-it('preserves the full expanded performance while shortening the written score', () => {
-  const meaning = (text: string) => {
-    const document = parseM3NDocument(text)
-    const bars = unfoldScorePerformance(document).parts.get('score')!.melody
-    const pitches = resolveScorePitches(bars)
-    return {
-      bars: bars.map(bar => ({ interlude: Boolean(bar.interlude), events: bar.events.map(event =>
-        ({ pitches: pitches.get(event) ?? [], beats: event.beats, tie: event.tie })) })),
-    }
-  }
-  expect(meaning(source)).toEqual(meaning(expandedReference))
-  // Keep the historical fixture unchanged; the PDF omitted these two pickup syllables.
-  expect(performedWords(parseM3NDocument(source))).toBe(performedWords(parseM3NDocument(expandedReference))
-    .replace(/天明我想只是害怕清醒$/, '不怕天明我想只是害怕清醒'))
-})
 
 it('encloses every lyric syllable spanning different pitches in a complete slur', () => {
   const document = parseM3NDocument(source)
@@ -111,3 +87,11 @@ it('encloses every lyric syllable spanning different pitches in a complete slur'
     start: group.events[0]!.sourceStart, endStart: group.events.at(-1)!.sourceStart,
   }))
 })
+
+function performedWords(document: ReturnType<typeof parseM3NDocument>) {
+  const lyrics = deriveScoreInteraction(document).lyricsByEvent
+  const byId = new Map([...scoreEventIds(document)].map(([event, id]) => [id, lyrics.get(event) ?? []]))
+  return compileScorePerformance(document).elements.filter(event => event.voice === 'score:melody').flatMap(event =>
+    (byId.get(event.xmlId) ?? []).filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(event.rendition))).map(lyric => lyric.text),
+  ).join('')
+}

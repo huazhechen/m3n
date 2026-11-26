@@ -7,7 +7,7 @@
 ```text
 M3N → analyzeM3N → ScoreDocument
                     ├→ NumberedNotationScore → SVG
-                    ├→ VexFlow → 自研系统布局 → 五线谱 SVG（可选、按需加载）
+                    ├→ 原生五线谱时间列与数值几何 → 五线谱 SVG（可选、按需加载）
                     └→ compileScorePerformance → MIDI → SpessaSynth
 ```
 
@@ -26,11 +26,10 @@ M3N → analyzeM3N → ScoreDocument
 ## 验证与维护
 
 - `npm run test:packages`：领域、简谱及播放器回归。
-- `node tools/test-numbered-snapshot.mjs`：复制当前领域与简谱源码，在同源副本构建和测试；结果记录期间源码变化。
 - `node tools/verify-native-ink.mjs --collisions`：浏览器检查最终SVG的裁切、边界和碰撞。
 - `node tools/verify-format-rendering.mjs`：检查格式化前后SVG一致。
 - `npm run test:e2e`：实际页面编辑、定位、播放、移调和分页。
 
-本站发布字体、音源与AudioWorklet。部分符号轮廓和字体来自第三方，保留所用素材的来源与许可证；许可证不是旧引擎运行依赖。
+本站发布字体、音源与AudioWorklet。部分符号轮廓和字体来自第三方，保留所用素材的来源与许可证；
 
 五线谱独立入口及其与简谱的边界见[五线谱显示](STAFF_NOTATION.md)。

@@ -1,16 +1,19 @@
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { openScoreSettings } from './score-settings'
+import { waitForEditor } from './editor-state'
 
 test('continuous preview has the image frame and PNG preserves the same score fonts', async ({ page }, info) => {
   await page.addInitScript(() => { localStorage.setItem('m3n:render-mode', 'continuous') })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=中文打印验证}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   for (const paged of [false, true]) {
     if (paged) {
       await openScoreSettings(page)
       await page.getByRole('switch', { name: '分页', exact: true }).click()
+      await openScoreSettings(page)
       // This one-line fixture settles at the unified search minimum, 528px.
       await expect(page.getByRole('slider', { name: '乐谱宽度', exact: true })).toHaveValue('22')
       await expect(page.locator('.score-paper .score-page-sheet svg').first()).toHaveAttribute('width', '528')

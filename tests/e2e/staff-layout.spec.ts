@@ -1,3 +1,4 @@
+import { waitForEditor } from './editor-state'
 import { expect, test } from '@playwright/test'
 import { selectNotationMode, openScoreSettings } from './score-settings'
 
@@ -5,6 +6,7 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
   page,
 }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page
     .getByLabel('M3N source')
     .fill(
@@ -57,6 +59,7 @@ test('staff layout respects hard boundaries and keeps identical horizontal geome
 
 test('staff equal-measure mode changes positions without changing notehead sizes', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const source =
     '{equal-measures=true}{4/4}\nN: 1^^ | (1 2) (3 4) (5 6) (7 1e) | 1 2 3 4 |||'
   await page.getByLabel('M3N source').fill(source.replace('{equal-measures=true}', ''))
@@ -72,8 +75,12 @@ test('staff equal-measure mode changes positions without changing notehead sizes
       const matrix = node.getCTM()!.inverse().multiply(glyph.getCTM()!)
       return (ink.actualBoundingBoxLeft + ink.actualBoundingBoxRight) * matrix.a
     }))
+  await waitForEditor(page)
+  await page.keyboard.press('Escape')
   const before = await sizes()
   await page.getByLabel('M3N source').fill(source)
+  await expect(page.getByLabel('M3N source')).toHaveText(source, { useInnerText: true })
+  await waitForEditor(page)
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const measureWidths = () => paper.locator('g.system').evaluateAll((systems) =>
     systems.map((system) =>
@@ -102,6 +109,7 @@ test('staff equal-measure mode changes positions without changing notehead sizes
 
 test('multiple lyric verses reopen the complete grand staff including connecting barlines', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(
     '{4/4}\nN: ||: 1 2 3 4 | {br}5 6 7 1e :|||{x8}\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\n' +
     Array.from({ length: 8 }, (_, i) => `L${i + 1}: 春夏秋冬 | 山川天地`).join('\n'),
@@ -112,7 +120,7 @@ test('multiple lyric verses reopen the complete grand staff including connecting
   const gaps = await paper.locator('g.measure').evaluateAll((measures) => measures.map((measure) => {
     const staff = [...measure.querySelectorAll(':scope > g.staff')].at(-1)!
     const bottom = Math.max(...[...staff.querySelectorAll(':scope > path')].map((p) => p.getBoundingClientRect().bottom))
-    const bar = Math.max(...[...measure.querySelectorAll('g.barLine path')].map((p) => p.getBoundingClientRect().bottom))
+    const bar = Math.max(...[...measure.querySelectorAll('g.staff-bar path')].map((p) => p.getBoundingClientRect().bottom))
     return Math.abs(bar - bottom)
   }))
   for (const gap of gaps) expect(gap).toBeLessThan(1)
@@ -120,6 +128,7 @@ test('multiple lyric verses reopen the complete grand staff including connecting
 
 test('an oversized header still renders continuously and reports an A4 pagination error', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()

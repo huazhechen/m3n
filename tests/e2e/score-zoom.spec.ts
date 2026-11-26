@@ -8,7 +8,7 @@ for (const [notation, mode] of ['movable', 'staff'].flatMap(notation =>
       localStorage.setItem('m3n:render-mode', mode)
       localStorage.setItem('m3n:local-scores', JSON.stringify([{
         id: 'local-zoom-test', source: '{title=缩放测试}{4/4}\nN: 1 2 3 4 |||',
-        createdAt: '2026-11-24T00:00:00Z', expiresAt: null,
+        createdAt: '2026-11-24T00:00:00Z',
       }]))
     }, { mode, notation })
     await page.goto('/scores/local-zoom-test')
@@ -61,7 +61,7 @@ test('touch pinch scales only the score and leaves single-finger scrolling avail
     localStorage.setItem('m3n:render-mode', 'paged')
     localStorage.setItem('m3n:local-scores', JSON.stringify([{
       id: 'local-zoom-touch', source: '{title=双指缩放}{4/4}\nN: 1 2 3 4 |||',
-      createdAt: '2026-11-24T00:00:00Z', expiresAt: null,
+      createdAt: '2026-11-24T00:00:00Z',
     }]))
   })
   await page.goto('/scores/local-zoom-touch')

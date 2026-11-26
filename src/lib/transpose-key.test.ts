@@ -33,7 +33,7 @@ describe('key selection', () => {
     expect(nearestKeyTranspose('C', 11)).toBe(-1)
     expect(nearestKeyTranspose('C', 6)).toBe(6)
   })
-  it('bases repeated selections on the original key and displays legacy octave shifts', () => {
+  it('bases repeated selections on the original key and normalizes octave shifts', () => {
     expect(nearestKeyTranspose('D', 11)).toBe(-3)
     expect(nearestKeyTranspose('D', 0)).toBe(-2)
     expect(nearestKeyTranspose('D', 2)).toBe(0)

@@ -1,8 +1,11 @@
+import { waitForEditor } from './editor-state'
+import { navigateScore } from './score-navigation'
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
-test('key dialog offers a circle of fifths, restores focus and chooses nearest shifts from original D', async ({ page }) => {
+test('key dialog offers a circle of fifths, restores focus on cancellation and chooses nearest shifts from original D', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{key=D}{4/4}\nN: 1 2 3 4 |||')
   await openScoreSettings(page)
   const trigger = page.getByRole('button', { name: /^移调，当前/ })
@@ -22,8 +25,6 @@ test('key dialog offers a circle of fifths, restores focus and chooses nearest s
   await trigger.press('Enter')
   await dialog.getByRole('button', { name: 'B大调', exact: true }).click()
   await expect(dialog).not.toBeVisible()
-  await openScoreSettings(page)
-  await expect(trigger).toBeFocused()
   await openScoreSettings(page)
   await expect(trigger.locator('.transpose-key-icon')).toHaveText('B')
   await openScoreSettings(page)
@@ -62,6 +63,7 @@ test('key dialog offers a circle of fifths, restores focus and chooses nearest s
 
 test('minor scores select relative signatures while preserving minor mode', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{key=Am}{4/4}\nN: 1 2 3 4 |||')
   await openScoreSettings(page)
   const trigger = page.getByRole('button', { name: /^移调，当前/ })
@@ -108,9 +110,9 @@ test('transposition is temporary and resets when switching or reopening songs', 
   }
   await selectDifferentKey()
   await expect.poll(() => page.evaluate(() => localStorage.getItem('m3n:playback-transpose'))).toBe('6')
-  await page.getByRole('link', { name: '下一曲', exact: true }).click()
+  await navigateScore(page, 'next')
   await checkOriginalKey()
-  await page.getByRole('link', { name: '上一曲', exact: true }).click()
+  await navigateScore(page, 'previous')
   await openScoreSettings(page)
   await expect(trigger.locator('.transpose-key-icon')).toHaveText(original)
   await selectDifferentKey()

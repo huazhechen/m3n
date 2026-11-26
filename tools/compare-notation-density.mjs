@@ -14,7 +14,8 @@ const densityLimits = {
   butter_fly_01: { staffHeight: 750, staffRows: 10, numberedHeight: 700, numberedRows: 11, heightRatio: 1.2 },
   badinerie_bwv1067_01: { staffHeight: 720, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.15 },
   flower_dance_01: { staffHeight: 2300, staffRows: 30, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.27 },
-  mozart_k545_01: { staffHeight: 2000, staffRows: 23, numberedHeight: 1545, numberedRows: 23, heightRatio: 1.31 },
+  // K.545 includes Allegro and dolce: 1558px at 640px, with 10px headroom.
+  mozart_k545_01: { staffHeight: 2000, staffRows: 23, numberedHeight: 1568, numberedRows: 23, heightRatio: 1.31 },
   guo_huo_01: { staffHeight: 1000, staffRows: 10, numberedHeight: 760, numberedRows: 9, heightRatio: 1.34 },
   ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: 2 },
   ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3200, staffRows: 42, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.4 },

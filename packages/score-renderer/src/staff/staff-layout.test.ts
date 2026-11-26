@@ -324,7 +324,8 @@ describe('staff layout contract', () => {
             if (ink.left < bar.left) expect(ink.right + 7).toBeLessThanOrEqual(bar.left)
             else expect(bar.right + 7).toBeLessThanOrEqual(ink.left)
           }
-          const barline = nodes(m).find(n => hasClass(n, 'barLine'))!
+          const barline = findAll(node, n => hasClass(n, 'staff-bar')).filter(n => n.children.length && geometry.ink(n).left >= bar.right)
+            .sort((a,b) => geometry.ink(a).left - geometry.ink(b).left)[0]!
           expect(bar.right + 7).toBeLessThanOrEqual(geometry.ink(barline).left)
         }
       }
@@ -443,6 +444,20 @@ it('keeps bass slurs on the bass staff instead of lifting them over the treble s
   const slur = findAll(system.node, n => hasClass(n, 'slur'))[0]!
   const treble = findAll(system.node, n => n.attributes['data-staff'] === 'melody')[0]!
   expect(geometry.ink(slur).top).toBeGreaterThan(geometry.ink(treble).bottom)
+})
+
+it('separates nested slurs including their shared endpoint', () => {
+  const document = projectStaffDocument(analyzeM3N('{4/4}\nN: {lg}1 2 {lg}3 4{/}{/} |').score)
+  const measure = textMeasurer()
+  const lines = planStaffLines(document, 640, false, measure, 0.25)
+  const system = engraveStaffSystems(document, lines, 640, measure, 0.25, false)[0]!
+  const geometry = new SvgGeometry(system.node, measure)
+  const slurs = findAll(system.node, n => hasClass(n, 'slur'))
+  expect(slurs).toHaveLength(2)
+  const [inner, outer] = slurs.map(slur => geometry.pieces(slur))
+  for (const a of inner!) for (const b of outer!) {
+    if (a.left < b.right && b.left < a.right) expect(b.bottom).toBeLessThan(a.top)
+  }
 })
 
 it('reports available widths in the same logical pixels as its line geometry', async () => {

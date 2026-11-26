@@ -4,7 +4,6 @@ export type LocalScore = {
   source: string
   createdAt: string
   updatedAt?: string
-  expiresAt: number | null
 }
 
 const localScoreIdPattern = /^local-[a-z0-9-]+$/
@@ -22,11 +21,6 @@ function isLocalScoreRecord(value: unknown): value is LocalScore {
     && typeof (value as LocalScore).id === 'string'
     && typeof (value as LocalScore).source === 'string'
     && typeof (value as LocalScore).createdAt === 'string'
-    && ((value as LocalScore).expiresAt === null || typeof (value as LocalScore).expiresAt === 'number')
-}
-
-export function pruneExpiredLocalScoreEntries(entries: LocalScore[], now: number) {
-  return entries.filter((entry) => entry.expiresAt === null || entry.expiresAt > now)
 }
 
 function readLocalScores(strict = false): LocalScore[] {
@@ -50,15 +44,8 @@ function writeLocalScores(scores: LocalScore[]) {
   }
 }
 
-export function pruneExpiredLocalScores(now = Date.now()) {
-  const scores = readLocalScores()
-  const remaining = pruneExpiredLocalScoreEntries(scores, now)
-  if (remaining.length !== scores.length) writeLocalScores(remaining)
-  return remaining
-}
-
 export function saveLocalScore(source: string, now = Date.now(), existingId?: string): LocalScore {
-  const scores = pruneExpiredLocalScoreEntries(readLocalScores(true), now)
+  const scores = readLocalScores(true)
   const previous = existingId ? scores.find(score => score.id === existingId) : undefined
   if (existingId && !previous) throw new Error('原乐谱已不存在，请另存为新乐谱。')
   const score: LocalScore = {
@@ -66,21 +53,20 @@ export function saveLocalScore(source: string, now = Date.now(), existingId?: st
     source,
     createdAt: previous?.createdAt ?? new Date(now).toISOString(),
     updatedAt: new Date(now).toISOString(),
-    expiresAt: null,
   }
   writeLocalScores([score, ...scores.filter(item => item.id !== score.id)])
   return score
 }
 
 export function loadLocalScore(id: string): LocalScore | null {
-  return pruneExpiredLocalScores().find((score) => score.id === id) ?? null
+  return readLocalScores().find((score) => score.id === id) ?? null
 }
 
 export function listLocalScores(): LocalScore[] {
   const modifiedAt = (score: LocalScore) => Date.parse(score.updatedAt ?? '') || Date.parse(score.createdAt) || 0
-  return pruneExpiredLocalScores().sort((left, right) => modifiedAt(right) - modifiedAt(left))
+  return readLocalScores().sort((left, right) => modifiedAt(right) - modifiedAt(left))
 }
 
 export function deleteLocalScore(id: string) {
-  writeLocalScores(pruneExpiredLocalScores().filter((score) => score.id !== id))
+  writeLocalScores(readLocalScores().filter((score) => score.id !== id))
 }

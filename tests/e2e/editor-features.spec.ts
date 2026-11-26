@@ -2,9 +2,11 @@ import { readFile } from 'node:fs/promises'
 import { PDFDocument } from 'pdf-lib'
 import { test, expect } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
+import { waitForEditor } from './editor-state'
 
 test('editor provides highlighting, completions, diagnostic navigation and keyboard resizing', async ({ page }, info) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByRole('textbox', { name: 'M3N source', exact: true })
   await editor.fill('{4/4}\nN: 1 2 3 4 5 |||')
   await expect(page.locator('.cm-gutter.cm-lineNumbers')).toBeVisible()
@@ -16,11 +18,16 @@ test('editor provides highlighting, completions, diagnostic navigation and keybo
   const split = page.getByRole('separator', { name: '调整源码与预览宽度' })
   await split.focus(); await split.press('ArrowRight')
   await expect(split).toHaveAttribute('aria-valuenow', '55')
-  await editor.fill('{key')
+  await waitForEditor(page)
+  await editor.fill('{key=C}{4/4}\nN: 1 2 3 4 |||')
+  await waitForEditor(page)
+  await editor.press('Control+Home')
+  for (let index = 0; index < 4; index++) await editor.press('ArrowRight')
   await editor.press('Control+Space')
   await expect(page.getByRole('listbox')).toBeVisible()
   await expect(page.getByRole('option', { name: 'key=C', exact: true })).toBeVisible()
   await editor.fill('{4/4}\nN: (1 2) 3 4 5 |||')
+  await waitForEditor(page)
   await editor.press('Home')
   for (let index = 0; index < 4; index++) await editor.press('ArrowRight')
   await expect(page.locator('.cm-matchingBracket')).toHaveCount(2)
@@ -30,6 +37,7 @@ test('editor provides highlighting, completions, diagnostic navigation and keybo
 test('mobile editor switches panes without losing input; catalog fills and filters the viewport', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByRole('textbox', { name: 'M3N source', exact: true })
   await editor.fill('{title=手机试改}{4/4}\nN: 1 2 3 4 |||')
   await page.getByRole('tab', { name: '预览', exact: true }).click()
@@ -60,6 +68,7 @@ test('mobile editor switches panes without losing input; catalog fills and filte
 
 test('floating controls expose BPM, tone, transpose, metronome and measure numbers', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{6/8}{80qpm}\nN: 1s 2s 3s 4s 5s 6s |||')
   const controls = page.getByRole('group', { name: '乐谱控制', exact: true })
   await openScoreSettings(page)
@@ -81,6 +90,7 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
   test.setTimeout(90_000)
   await page.addInitScript(() => localStorage.setItem('m3n:render-mode', 'continuous'))
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
@@ -89,7 +99,10 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
   for (const paged of [false, true]) {
     await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('25')
-    if (paged) await page.getByRole('switch', { name: '分页', exact: true }).click()
+    if (paged) {
+      await openScoreSettings(page)
+      await page.getByRole('switch', { name: '分页', exact: true }).click()
+    }
     await page.keyboard.press('Escape')
     await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
@@ -146,6 +159,7 @@ test('mobile PNG and PDF reuse the same score fonts', async ({ page }, info) => 
     return route.continue()
   })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByRole('textbox', { name: 'M3N source' }).fill('{title=手机保存导出}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了')
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)

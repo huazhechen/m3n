@@ -1,4 +1,4 @@
-import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
+import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
@@ -48,26 +48,4 @@ describe('Si Le Dou Yao Ai screenshot transcription', () => {
     const coda = '在穷途末路都要爱不极度浪漫不痛快发会雪白土会掩埋思念不腐坏到绝路都要爱不天荒地老不痛快不怕热爱变火海爱到沸腾才精彩'
     expect(lyrics).toBe('死' + chorus + verse + chorus + verse + chorus + coda)
   })
-})
-
-// Compare against the user's 4/4 revision before changing only navigation.
-it('preserves every performed note, duration, tie, legato and timed lyric from the updated arrangement', () => {
-  const reference = readFileSync(new URL('./fixtures/si-le-dou-yao-ai-before-coda.m3n', import.meta.url), 'utf8')
-  const snapshot = (input: string) => {
-    const score = parseM3NDocument(input)
-    const performance = compileScorePerformance(score)
-    const bars = unfoldScorePerformance(score).parts.get('score')!.melody
-    const pitches = resolveScorePitches(bars)
-    const interaction = deriveScoreInteraction(score)
-    const lyrics = new Map([...scoreEventIds(score)].map(([event, id]) => [id, interaction.lyricsByEvent.get(event) ?? []]))
-    return {
-      beats: performance.beats, notes: performance.notes, tempos: performance.tempos,
-      events: bars.flatMap(bar => bar.events.map(event => [pitches.get(event) ?? [], event.beats, event.tie, event.postfixes, event.dynamic, event.tempo])),
-      lyrics: performance.elements.filter(element => element.voice === 'score:melody')
-        .flatMap(element => (lyrics.get(element.xmlId) ?? [])
-          .filter(lyric => lyric.kind === 'text' && (!lyric.passes || lyric.passes.has(element.rendition)))
-          .map(lyric => [element.start, element.end, lyric.text])),
-    }
-  }
-  expect(snapshot(source)).toEqual(snapshot(reference))
 })

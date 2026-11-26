@@ -70,7 +70,7 @@ test('staff audit checks independent music and ending hooks but permits beam joi
   assert.equal(music.restored, true)
   const ending = await audit(note + '<g class="ending voltaBracket" id="ending"><path d="M35 35 V55" stroke="black"/></g>')
   assert.equal(ending.collisions.length, 1)
-  const beam = await audit(note + '<g class="beam"><rect x="30" y="40" width="20" height="2"/></g>')
+  const beam = await audit('<g class="note"><path data-m3n-join="stem-a" d="M30 60 V40" stroke="black"/></g><g class="beam" data-m3n-join="stem-a"><rect x="30" y="40" width="20" height="2"/></g>')
   assert.equal(beam.collisions.length, 0)
   const multiRest = await audit('<g class="rest"><path d="M10 60 H50" stroke="black"/><g class="rest"><text x="25" y="40">4</text></g></g>')
   assert.equal(multiRest.collisions.length, 0)
@@ -92,7 +92,7 @@ test('respects real gaps in a dashed line', async () => {
 test('checks complete system ink without rejecting disjoint shapes in overlapping boxes', async () => {
   const result = await page.evaluate(() => {
     const host = document.querySelector('main')
-    host.innerHTML = '<svg width="120" height="100"><g class="system" id="first"><path d="M0 40 H80 V60" fill="none" stroke="black" stroke-width="2"/></g><g class="system" id="second"><rect x="20" y="50" width="10" height="10"/></g></svg>'
+    host.innerHTML = '<svg width="120" height="100"><g class="system" id="first"><path data-m3n-join="local-join" d="M0 40 H80 V60" fill="none" stroke="black" stroke-width="2"/></g><g class="system" id="second"><rect data-m3n-join="local-join" x="20" y="50" width="10" height="10"/></g></svg>'
     const clear = auditNativeInkCollisions(host.querySelector('svg'), { groupSelector: 'g.system' })
     host.querySelector('rect').setAttribute('y', '39')
     const crossed = auditNativeInkCollisions(host.querySelector('svg'), { groupSelector: 'g.system' })
@@ -111,6 +111,57 @@ test('includes a section frame and consolidates a lyric fragment with its prefix
   assert.equal(lyric.collisions.length, 0)
 })
 
+
+test('all independent object categories collide regardless of role or DOM order', async () => {
+  const wrappers = ['class="note"', 'data-m3n-role="bar"', 'data-m3n-role="beam"', 'data-m3n-role="control"', 'data-m3n-relation="slur"', 'data-m3n-role="annotation"', 'data-m3n-role="new-role"', '']
+  for (let i = 0; i < wrappers.length; i++) for (let j = i; j < wrappers.length; j++) {
+    const shape = (role, x) => `<g ${role}><rect x="${x}" y="40" width="10" height="10"/></g>`
+    assert.equal((await check(shape(wrappers[i], 30) + shape(wrappers[j], 35))).collisions.length, 1, `${wrappers[i]} / ${wrappers[j]}`)
+    assert.equal((await check(shape(wrappers[j], 45) + shape(wrappers[i], 30))).collisions.length, 0)
+  }
+})
+
+test('nested unknown owners do not absorb an independently owned note', async () => {
+  for (const [x, overlaps] of [[35, 1], [45, 0]]) {
+    const result = await check(`<g data-m3n-role="new-role"><g class="note"><rect x="30" y="40" width="10" height="10"/></g><rect x="${x}" y="45" width="10" height="10"/></g>`)
+    assert.equal(result.collisions.length, overlaps)
+  }
+})
+
+test('stroke joins use their full painted bounds and the SVG miter limit', async () => {
+  for (const [limit, overlaps] of [[4, 0], [12, 1]]) {
+    const result = await check(`<g class="note"><rect x="39" y="12" width="2" height="3"/></g><path d="M30 70 L40 20 L50 70" fill="none" stroke="black" stroke-width="4" stroke-miterlimit="${limit}"/>`)
+    assert.equal(result.collisions.length, overlaps)
+  }
+})
+
+test('paint geometry includes transforms, polygons, fill rules, text strokes and visibility', async () => {
+  const cases = [
+    ['<polygon points="30,40 50,40 50,60 30,60"/>', true],
+    ['<polyline points="30,40 50,60" fill="none" stroke="black" stroke-width="3"/>', true],
+    ['<rect x="-10" y="-10" width="20" height="20" transform="translate(40 50) rotate(45)"/>', true],
+    ['<path d="M20 30 H60 V70 H20 Z M30 40 H50 V60 H30 Z" fill-rule="evenodd"/>', false],
+    ['<rect x="30" y="40" width="20" height="20" opacity="0"/>', false],
+    ['<rect x="30" y="40" width="20" height="20" opacity=".2"/>', true],
+    ['<rect x="30" y="40" width="20" height="20" fill-opacity="0"/>', false],
+    ['<rect x="30" y="40" width="20" height="20" fill="transparent"/>', false],
+    ['<g display="none"><rect x="30" y="40" width="20" height="20"/></g>', false],
+    ['<rect x="30" y="40" width="20" height="20" visibility="hidden"/>', false],
+    ['<defs><rect x="30" y="40" width="20" height="20"/></defs>', false],
+  ]
+  for (const [ink, collision] of cases) {
+    const result = await check(ink + '<rect x="38" y="48" width="4" height="4"/>')
+    assert.equal(result.collisions.length, Number(collision), ink)
+  }
+})
+
+test('declared joins exempt only the joining primitives, retaining every other overlap', async () => {
+  const stem = '<path data-m3n-join="s" d="M35 65 V40" stroke="black"/>'
+  const beam = '<g data-m3n-role="beam" data-m3n-join="s"><rect x="30" y="40" width="30" height="3"/></g>'
+  assert.equal((await check(`<g class="note">${stem}</g>${beam}`)).collisions.length, 0)
+  assert.equal((await check(`<g class="note">${stem}<rect x="35" y="40" width="10" height="10"/></g>${beam}`)).collisions.length, 1)
+  assert.equal((await check(`<g class="note">${stem}</g>${beam}<rect x="50" y="40" width="5" height="5"/>`)).collisions.length, 1)
+})
 
 const restMetrics = (id = 'm3n-rest-1-0', count = '12', x = 30, y = 40, measure = 'm3n-measure-1-1', extra = '') => page.evaluate(({id,count,x,y,measure,extra}) => {
   document.querySelector('main').innerHTML = `<svg viewBox="0 0 120 100"><g class="system"><g class="note" id="${id}" data-m3n-measure="${measure}"><text font-size="22" x="${x}" y="${y}">${count}</text></g>${extra}</g></svg>`

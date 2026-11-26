@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { selectNotationMode } from './score-settings'
+import { openScoreSettings, selectNotationMode } from './score-settings'
 
 for (const width of [390, 1280]) {
   test(`home page introduces features before the playable score at ${width}px`, async ({ page }, info) => {
@@ -63,13 +63,18 @@ for (const width of [390, 1280]) {
     const settings = page.getByRole('dialog', { name: '乐谱设置', exact: true })
     await expect(settings.getByRole('button', { name: /^选择音色，当前/ })).toBeVisible()
     await settings.getByRole('slider', { name: '播放速度', exact: true }).fill('90')
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await openScoreSettings(page)
     await expect(settings.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('90')
     await settings.getByRole('switch', { name: '分页', exact: true }).click()
     await expect(paper).toHaveAttribute('data-render-mode', 'paged')
     await selectNotationMode(page, '固定调')
     await expect(paper).toHaveAttribute('data-fixed-do', 'true')
+    await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await openScoreSettings(page)
     await settings.getByRole('switch', { name: '小节号', exact: true }).click()
     await expect(paper).toHaveAttribute('data-measure-numbers', 'true')
+    await openScoreSettings(page)
     await expect(settings.getByRole('button', { name: /^移调，当前/ })).toBeVisible()
     await expect(settings.getByRole('slider', { name: '乐谱宽度', exact: true })).toBeVisible()
     await page.keyboard.press('Escape')
@@ -82,7 +87,7 @@ for (const width of [390, 1280]) {
   })
 }
 
-test('guide and manual open inside the home page and old document links redirect', async ({ page }) => {
+test('guide and manual open inside the home page by links and direct URLs', async ({ page }) => {
   await page.goto('/')
   await page.locator('.home-feature-links').getByRole('link', { name: '浏览指南' }).click()
   await expect(page).toHaveURL(/\/?\?doc=guide/)
@@ -99,7 +104,7 @@ test('guide and manual open inside the home page and old document links redirect
   await page.locator('.home-feature-links').getByRole('link', { name: '查阅手册' }).click()
   await expect(page).toHaveURL(/\?doc=manual$/)
   await expect(page.getByRole('heading', { name: 'M3N 手册', exact: true })).toBeVisible()
-  await page.goto('/docs?doc=guide')
+  await page.goto('/?doc=guide')
   await expect(page).toHaveURL(/\?doc=guide$/)
   await expect(page.getByRole('heading', { name: 'M3N 指南', exact: true })).toBeVisible()
 })

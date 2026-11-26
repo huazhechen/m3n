@@ -18,7 +18,7 @@ test('tablet settings fit their content and share the interface scale', async ({
       const bounds = (await button.boundingBox())!
       expect(bounds.width).toBeCloseTo(buttonSize, 1)
       expect(bounds.height).toBeCloseTo(buttonSize, 1)
-      expect((await button.locator('svg').boundingBox())!.width).toBeCloseTo(buttonSize * .8, 1)
+      expect((await button.locator('svg').boundingBox())!.width).toBeCloseTo(buttonSize * .6, 1)
     }
     const bounds = (await panel.boundingBox())!
     expect(bounds.height).toBeLessThan(buttonSize * 5 + 100)
@@ -33,17 +33,17 @@ test('tablet settings fit their content and share the interface scale', async ({
   }
 })
 
-test('icons stay at eighty percent of buttons across phones, tablets and rotation', async ({ page }, info) => {
+test('icons stay at sixty percent of buttons across phones, tablets and rotation', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
   for (const [width, height, iconSize, buttonSize, barHeight] of [
-    [320, 900, 28.8, 36, 45],
-    [390, 844, 28.8, 36, 45],
-    [844, 390, 28.8, 36, 45],
-    [744, 1133, 37.2, 46.5, 58.125],
-    [1133, 744, 37.2, 46.5, 58.125],
-    [1280, 900, 38.4, 48, 60],
-    [2560, 1920, 38.4, 48, 60],
-    [3840, 2880, 38.4, 48, 60],
+    [320, 900, 21.6, 36, 45],
+    [390, 844, 21.6, 36, 45],
+    [844, 390, 21.6, 36, 45],
+    [744, 1133, 27.9, 46.5, 58.125],
+    [1133, 744, 27.9, 46.5, 58.125],
+    [1280, 900, 28.8, 48, 60],
+    [2560, 1920, 28.8, 48, 60],
+    [3840, 2880, 28.8, 48, 60],
   ]) {
     await page.setViewportSize({ width: width!, height: height! })
     for (const selector of ['.top-nav svg', '.brand-mark img', '.floating-controls .control-button svg']) {
@@ -53,8 +53,7 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
     }
     const navigationHeight = (await page.locator('.top-nav').boundingBox())!.height
     if (width === 320) {
-      // The extra Tools action wraps on narrow touch screens while controls
-      // retain their shared 36px size and stay inside the viewport.
+      // Narrow touch navigation retains the shared control size within the viewport.
       expect(navigationHeight).toBeGreaterThanOrEqual(barHeight!)
       expect(navigationHeight).toBeLessThanOrEqual(barHeight! + buttonSize! * 1.125 + 1)
     } else expect(navigationHeight).toBeCloseTo(barHeight!, 1)
@@ -84,7 +83,7 @@ test('icons stay at eighty percent of buttons across phones, tablets and rotatio
   }
   await page.goto('/editor')
   const icon = (await page.locator('.editor-action svg').first().boundingBox())!
-  expect(icon.width).toBeCloseTo(38.4, 1)
+  expect(icon.width).toBeCloseTo(28.8, 1)
 })
 
 test('touch document notes use half the shared scale between eighteen and twenty-four', async ({ page }) => {
@@ -117,7 +116,7 @@ test.describe('desktop', () => {
       await page.setViewportSize({ width, height: 1920 })
       await expect(page.locator('.top-nav .nav-action-label').first()).toBeVisible()
       await expect(page.locator('.floating-controls .playback-toggle')).toHaveCSS('height', '36px')
-      expect((await page.locator('.floating-controls .playback-toggle svg').boundingBox())!.width).toBeCloseTo(28.8, 1)
+      expect((await page.locator('.floating-controls .playback-toggle svg').boundingBox())!.width).toBeCloseTo(21.6, 1)
       await expect(page.locator('.audio-controls')).toHaveCSS('font-size', '13.5px')
       await expect(page.locator('main')).toHaveCSS('padding-top', '4.5px')
       expect(await page.locator('.top-nav').evaluate(element => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { LOCAL_SCORES_KEY, createLocalScoreId, isLocalScoreId, loadLocalScore, saveLocalScore, pruneExpiredLocalScoreEntries, type LocalScore } from './local-scores'
+import { LOCAL_SCORES_KEY, createLocalScoreId, isLocalScoreId, loadLocalScore, saveLocalScore } from './local-scores'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -32,12 +32,6 @@ describe('local scores', () => {
     expect(loadLocalScore(first.id)).toEqual(updated)
   })
 
-  it('keeps saved works permanently and preserves cleanup of legacy temporary entries', () => {
-    memoryStorage()
-    const saved = saveLocalScore('permanent', 100)
-    expect(saved.expiresAt).toBeNull()
-    expect(pruneExpiredLocalScoreEntries([saved], 100 + 365 * 86_400_000)).toEqual([saved])
-  })
   it('recognizes and generates local score ids', () => {
     expect(isLocalScoreId('local-1755000000000-ab12')).toBe(true)
     expect(isLocalScoreId(undefined)).toBe(false)
@@ -46,13 +40,4 @@ describe('local scores', () => {
     expect(isLocalScoreId(createLocalScoreId())).toBe(true)
   })
 
-  it('prunes expired entries', () => {
-    const entries: LocalScore[] = [
-      { id: 'local-1', source: 'a', createdAt: '2026-01-01T00:00:00.000Z', expiresAt: 200 },
-      { id: 'local-2', source: 'b', createdAt: '2026-01-01T00:00:00.000Z', expiresAt: 150 },
-      { id: 'local-3', source: 'c', createdAt: '2026-01-01T00:00:00.000Z', expiresAt: 100 },
-    ]
-    expect(pruneExpiredLocalScoreEntries(entries, 150).map((entry) => entry.id)).toEqual(['local-1'])
-    expect(pruneExpiredLocalScoreEntries(entries, 200)).toEqual([])
-  })
 })
