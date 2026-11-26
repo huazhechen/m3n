@@ -261,20 +261,29 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const taskPreparationStarted = timings ? performance.now() : 0
   const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
-  // One natural/minimum pair replaces the old 9/12/15px trials. A virtual
-  // A4 layout still keeps horizontal geometry identical in both output modes.
-  const options = { ...supplied, paged: true, coreGap: nativeCoreGap(document),
-    minimumNoteGap: supplied.minimumNoteGap ?? nativeStyle.minimumNoteGap }
-  const trial = prepareNativeScoreAtGap(document, options, timings, preparation)
-  if (minimumQuality !== undefined && trial.score < minimumQuality)
+  // Both spacing tiers receive independent geometry and real A4 pagination.
+  // Continuous output chooses the same tier before its final repagination.
+  const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
+  const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
+    trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
+  if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
-  let selected: NativeLayout
-  try { selected = trial.complete() }
-  catch (error) {
-    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
-      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: options.minimumNoteGap }, timings, preparation)
-    throw error
+  let selected: NativeLayout | undefined, selectedScore = -Infinity
+  for (const { minimumNoteGap, trial } of trials) {
+    let candidate: NativeLayout
+    try { candidate = trial.complete() }
+    catch (error) {
+      if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
+        candidate = layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap }, timings, preparation)
+      else throw error
+    }
+    const score = nativeLayoutScore(candidate)
+    if (!selected || candidate.pages.length < selected.pages.length
+      || candidate.pages.length === selected.pages.length && score > selectedScore) {
+      selected = candidate; selectedScore = score
+    }
   }
+  if (!selected) throw new Error('简谱间距候选为空。')
   const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
   if (timings) timings.repaginationMs = (timings.repaginationMs ?? 0) + performance.now() - repaginationStarted

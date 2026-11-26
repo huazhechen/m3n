@@ -53,7 +53,8 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
   // Rhythm alone determines stretch; ink and lyrics only constrain minima.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1
-  const naturalExtra = Math.max(0, nativeStyle.naturalNoteGap - gapScale * nativeStyle.music * .5)
+  // Natural clearance is twice the selected minimum in both spacing tiers.
+  const naturalExtra = gapScale * nativeStyle.music * .5
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
     beforeStretch: stretch, afterStretch: stretch,
     beforeNatural: stretch * naturalExtra, afterNatural: stretch * naturalExtra,

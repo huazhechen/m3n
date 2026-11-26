@@ -171,12 +171,12 @@ it('reflows Qiu Ying independently of font size while retaining event identities
     for (const wrapWidthRatio of [0, -1, 1.1, NaN, Infinity]) expect(() => render(source, { wrapWidthRatio })).toThrow('wrapWidthRatio')
   })
 
-it.each([false, true])('uses fixed elastic spacing by default in paged=%s layouts', paged => {
+it.each([false, true])('selects a complete elastic spacing tier in paged=%s layouts', paged => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
       const chosen = layoutNativeScore(defaults.document, { width, paged }).options.minimumNoteGap
-      expect(chosen).toBe(8)
+      expect([8, 12]).toContain(chosen)
       expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGap: chosen }).pages)
       expect(defaults.score.diagnostics).toEqual([])
     }

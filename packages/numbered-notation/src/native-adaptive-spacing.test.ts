@@ -6,17 +6,17 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js'
 import { NativeNumberedNotationScore, PreparedNumberedNotationScore } from './native-score.js'
 
-describe('natural 16px / minimum 8px note spacing', () => {
+describe('tight 8/16px and loose 12/24px note spacing', () => {
   const options = { width: 320, pageMargin: 0, paged: true }
   const rows = (layout: ReturnType<typeof layoutNativeScore>) => layout.systems.map(system =>
     system.measures.map(measure => measure.columns.map(column => column.glyphs.map(glyph => [glyph.id, glyph.x]))))
 
-  it('uses one fixed collision minimum instead of selecting the tightest layout', () => {
+  it('engraves both spacing tiers before selecting a complete layout', () => {
     const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/por_una_cabeza_01.m3n', import.meta.url), 'utf8'))
     const before = structuredClone(document), timings: Record<string, number> = {}
     const automatic = layoutNativeScore(document, { ...options, width: 540 }, timings)
-    expect(automatic.options.minimumNoteGap).toBe(8)
-    expect(timings.layoutTrials).toBe(1)
+    expect([8, 12]).toContain(automatic.options.minimumNoteGap)
+    expect(timings.layoutTrials).toBe(2)
     expect(document).toEqual(before)
   })
 
@@ -24,7 +24,7 @@ describe('natural 16px / minimum 8px note spacing', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + '(1 2 3 4 5 6 7 1e) | '.repeat(31))
     const settings = { ...options, width: 540 }
     const automatic = layoutNativeScore(document, settings)
-    expect(automatic.options.minimumNoteGap).toBe(8)
+    expect([8, 12]).toContain(automatic.options.minimumNoteGap)
     for (const coreGap of [undefined, 32]) {
       const continuous = layoutNativeScore(document, { ...settings, paged: false, coreGap })
       expect(rows(continuous)).toEqual(rows(automatic))
@@ -47,13 +47,13 @@ it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)
   const reference = layoutNativeScore(document, {
-    ...settings, coreGap:nativeCoreGap(), minimumNoteGap:8,
+    ...settings, coreGap:nativeCoreGap(), minimumNoteGap:automatic.options.minimumNoteGap,
   })
   repaginateNativeLayout(reference,true)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(reference))
   expect(document).toEqual(before)
   expect(timings.projectionBuilds).toBe(1)
-  expect(timings.projectionReuses ?? 0).toBe(0)
+  expect(timings.projectionReuses).toBe(1)
   expect(timings.relationPlanBuilds).toBe(1)
-  expect(timings.relationPlanReuses ?? 0).toBe(0)
+  expect(timings.relationPlanReuses).toBe(1)
 })

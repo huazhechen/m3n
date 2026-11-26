@@ -18,8 +18,8 @@ describe('line strain against available compression travel', () => {
 })
 
 describe('one strain curve with separate compression and stretch scales', () => {
-  const policy = { stretchTravelRatio: .5 }
-  it.each([[8, 1], [12, .25], [14, .0625], [16, 0], [18, .25], [20, 1], [24, 4]])(
+  const policy = { stretchTravelRatio: .25 }
+  it.each([[8, 1], [12, .25], [14, .0625], [16, 0], [17, .25], [18, 1], [20, 4]])(
     'prices a %spx clearance as %s at natural 16px and minimum 8px', (width, expected) => {
       expect(spacingStrainBadness(8, 16, width, policy)).toBe(expected)
     })
@@ -34,8 +34,8 @@ describe('one strain curve with separate compression and stretch scales', () => 
   it('excludes rigid ink, respects engraving scale and handles rows without elastic travel', () => {
     expect(spacingStrainBadness(108, 116, 112, policy)).toBe(.25)
     expect(spacingStrainBadness(80, 160, 120, policy)).toBe(.25)
-    expect(spacingStrainBadness(108, 116, 120, policy)).toBe(1)
-    expect(spacingStrainBadness(80, 160, 200, policy)).toBe(1)
+    expect(spacingStrainBadness(108, 116, 118, policy)).toBe(1)
+    expect(spacingStrainBadness(80, 160, 180, policy)).toBe(1)
     expect(spacingStrainBadness(16, 16, 16, policy)).toBe(0)
     expect(Number.isFinite(spacingStrainBadness(16, 16, 20, policy))).toBe(true)
   })
