@@ -252,8 +252,12 @@ function expandInitialPasses(nodes: readonly PlaybackNode[]) {
       const selected = selectedIndex === undefined ? undefined : nodes[selectedIndex]
       if (selected?.repeatCount && visit < selected.repeatCount) {
         if (!endingGroup.hasExplicitRepeatStart) {
+          // Restart completed earlier repeats, while keeping local houses in
+          // this repeat on their next pass when returning to the score start.
+          const previousRepeatEnd = nodes.reduce((last, node, nodeIndex) =>
+            nodeIndex < index && node.repeatCount ? nodeIndex : last, -1)
           for (const endingIndex of endingGroups.keys()) {
-            if (endingIndex < index) repeatVisits.delete(endingIndex)
+            if (endingIndex <= previousRepeatEnd) repeatVisits.delete(endingIndex)
           }
         }
         index = endingGroup.repeatStart

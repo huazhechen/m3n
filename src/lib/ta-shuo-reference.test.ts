@@ -12,9 +12,10 @@ it('preserves the uploaded Ta Shuo vocal line, including its second-verse and fi
   expect(document.tempo).toBe(86)
   expect(document.order).toBeUndefined()
   const written = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(written).toHaveLength(59)
-  expect(written.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
-  expect(written.filter(bar => bar.right === 'rptend')).toHaveLength(1)
+  expect(written).toHaveLength(56)
+  expect(written.filter(bar => bar.left === 'rptstart')).toHaveLength(0)
+  expect(source).not.toContain('||:')
+  expect(document.parts.get('score')!.melody.filter(bar => bar.right === 'rptend')).toHaveLength(1)
   const part = unfoldScorePerformance(document).parts.get('score')!
   const bars = part.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
@@ -98,7 +99,7 @@ it('encloses every lyric syllable spanning different pitches in a complete slur'
     }
   }
   const melismas = groups.filter(group => new Set(group.events.map(event => pitches.get(event)![0])).size > 1)
-  expect(melismas.map(group => group.word)).toEqual(['尾', '毁', '默', '尾', '毁'])
+  expect(melismas.map(group => group.word)).toEqual(['默', '尾', '毁', '尾', '毁'])
   const slurs = document.intervals.filter(interval => interval.kind === 'lg')
   expect(slurs).toHaveLength(melismas.length)
   for (const group of melismas) expect(slurs, group.word).toContainEqual(expect.objectContaining({

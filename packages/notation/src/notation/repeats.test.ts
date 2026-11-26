@@ -83,6 +83,34 @@ describe('repeat planning', () => {
     expect(parsePassRange('1,3~5,7')).toEqual(new Set([1, 3, 4, 5, 7]))
   })
 
+  it('advances local houses on an implicit return to the beginning', () => {
+    expect(buildPlaybackSequence(nodes(
+      { kind: 'section' },
+      { kind: 'ending', n: '1' },
+      { kind: 'ending', n: '2' },
+      { kind: 'section' },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2' },
+    ))).toEqual(['n1', 'n2', 'n4', 'n5', 'n1', 'n3', 'n4', 'n6'])
+  })
+
+  it('resets local houses within a completed earlier implicit repeat', () => {
+    expect(buildPlaybackSequence(nodes(
+      { kind: 'section' },
+      { kind: 'ending', n: '1' },
+      { kind: 'ending', n: '2' },
+      { kind: 'section' },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2' },
+      { kind: 'section' },
+      { kind: 'ending', n: '1', repeatCount: 2 },
+      { kind: 'ending', n: '2' },
+    ))).toEqual([
+      'n1', 'n2', 'n4', 'n5', 'n1', 'n3', 'n4', 'n6', 'n7', 'n8',
+      'n1', 'n2', 'n4', 'n5', 'n1', 'n3', 'n4', 'n6', 'n7', 'n9',
+    ])
+  })
+
   it('resets earlier ending groups after a later implicit repeat', () => {
     const sequence = buildPlaybackSequence(nodes(
       { kind: 'section' },
