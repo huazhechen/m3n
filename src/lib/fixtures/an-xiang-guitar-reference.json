@@ -1,0 +1,110 @@
+{
+  "source": "Screenshot_2026-11-26-16-56-31-586_tv.danmaku.bili.jpg",
+  "sha256": "a6db4f808be3d0f90cbe0a3d9cb4e8e03d3561996f989d25a80606a18c7e1ffe",
+  "description": "标准调弦；string=1为高音E弦。钢琴过渡用原《暗香.pdf》37—38小节（谱源36—37小节），首个十六分休止替换为人声“留”；吉他2—9小节对应谱源38—45小节。推弦以bendSemitones记录目标音增量，持续音合并或延音；第1小节预备休止、闷音扫弦不录入。第4小节推弦延音含无品号的八分音符；第5小节前两音为十六分，其后20个三十二分，最后四分；第6小节末两音为三十二分；第7小节两组八分三连音，第8小节一组四分三连音。",
+  "bars": [
+    {
+      "number": 2,
+      "notes": [
+        {"string": 2, "fret": 10, "beats": 2, "bendSemitones": 0, "tie": true},
+        {"string": 2, "fret": 10, "beats": 0.5, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 9, "beats": 0.5, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 10, "beats": 0.5, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.5, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 3,
+      "notes": [
+        {"string": 2, "fret": 17, "beats": 3, "bendSemitones": 2, "tie": false},
+        {"string": 1, "fret": 16, "beats": 0.75, "bendSemitones": 1, "tie": false},
+        {"string": 1, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 4,
+      "notes": [
+        {"string": 1, "fret": 16, "beats": 2, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 17, "beats": 0.75, "bendSemitones": 2, "tie": true},
+        {"string": 2, "fret": 17, "beats": 0.5, "bendSemitones": 2, "tie": true},
+        {"string": 2, "fret": 17, "beats": 0.25, "bendSemitones": 2, "tie": false},
+        {"string": 2, "fret": 15, "beats": 0.25, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 5,
+      "notes": [
+        {"string": 2, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 17, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 15, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 16, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 15, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 16, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 13, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 16, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 13, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 11, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 13, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 11, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 12, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 11, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 12, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 11, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 12, "beats": 0.125, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 11, "beats": 1, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 6,
+      "notes": [
+        {"string": 0, "fret": 0, "beats": 0.5, "bendSemitones": 0, "tie": false},
+        {"string": 4, "fret": 11, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 12, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 11, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 11, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 3, "fret": 12, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 11, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 12, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 14, "beats": 0.25, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 17, "beats": 0.75, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 17, "beats": 0.125, "bendSemitones": 2, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.125, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 7,
+      "notes": [
+        {"string": 2, "fret": 15, "beats": 2, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 12, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 14, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false},
+        {"string": 2, "fret": 15, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 13, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 14, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 16, "beats": 0.3333333333333333, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 8,
+      "notes": [
+        {"string": 1, "fret": 16, "beats": 2, "bendSemitones": 1, "tie": false},
+        {"string": 1, "fret": 16, "beats": 0.6666666666666666, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 17, "beats": 0.6666666666666666, "bendSemitones": 0, "tie": false},
+        {"string": 1, "fret": 18, "beats": 0.6666666666666666, "bendSemitones": 0, "tie": false}
+      ]
+    },
+    {
+      "number": 9,
+      "notes": [
+        {"string": 1, "fret": 19, "beats": 4, "bendSemitones": 0, "tie": false}
+      ]
+    }
+  ]
+}
