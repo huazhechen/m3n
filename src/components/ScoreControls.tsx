@@ -90,6 +90,9 @@ export function ScoreControls(props: ScoreControlsProps) {
 
         </div>
         <div className="control-options">
+          <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
+          <ScoreControlIcon name="metronome" /><span>节拍器</span>
+        </button>
       <button type="button" aria-label={`选择音色，当前${selectedTone.label}`} aria-haspopup="dialog" aria-busy={props.toneLoading || undefined} title="选择音色" className="control-button tone-selector" onClick={() => {
         toneDialogRef.current?.showModal()
         toneDialogRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
@@ -111,9 +114,6 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
-        <div className="control-settings-footer"><button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
-          <ScoreControlIcon name="metronome" /><span>节拍器</span>
-        </button></div>
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在加载${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
     <dialog ref={notationDialogRef} className="transpose-dialog" aria-labelledby={notationTitleId}>
       <div className="transpose-dialog-header"><h2 id={notationTitleId}>选择记谱方式</h2><button type="button" className="control-button" aria-label="关闭记谱方式选择" onClick={() => notationDialogRef.current?.close()}>×</button></div>

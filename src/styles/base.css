@@ -5,7 +5,8 @@
   --ui-unit: calc(var(--ui-control-size) / 2);
   --ui-space: calc(var(--ui-control-size) / 8);
   --ui-text: calc(var(--ui-control-size) * .375);
-  --ui-icon-size: calc(var(--ui-control-size) * .8);
+  --ui-icon-ratio: .6;
+  --ui-icon-size: calc(var(--ui-control-size) * var(--ui-icon-ratio));
   --ui-content-width: calc(var(--ui-text) * 90);
   --ui-transport-width: max(680px, calc(var(--ui-control-size) * 6));
   --ui-toolbar-height: calc(var(--ui-control-size) + var(--ui-space) * 2);

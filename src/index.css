@@ -596,8 +596,8 @@ textarea::selection {
 }
 
 .library-view-toggle svg {
-  width: 80%;
-  height: 80%;
+  width: var(--ui-icon-size);
+  height: var(--ui-icon-size);
 }
 
 .library-toolbar h1 {
