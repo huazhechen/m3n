@@ -18,12 +18,12 @@ export function auditStaffInkCollisions(system) {
   }
   mark('g.syl,g.reh,g.dir,g.dynam,g.tempo,g.harm,g.fing,g.mNum,g.repeatMark,g.ending.voltaBracket,g.inline-signature,g.staff-signature', 'data-m3n-role', 'annotation')
   mark('g.slur,g.tie,g.hairpin,g.octave,g.tupletBracket', 'data-m3n-relation', 'staff-relation')
-  mark('g.staff-bar,g.barLine', 'data-m3n-role', 'bar')
+  mark('g.staff-bar', 'data-m3n-role', 'bar')
   mark('g.beam', 'data-m3n-role', 'beam')
   mark('g.rest,g.chord', 'data-m3n-role', 'control')
   mark('g.fermata,g.breath,g.trill,g.mordent,g.tupletNum', 'data-m3n-role', 'annotation')
   try {
-    const result=auditNativeInkCollisions(system, { independentMusic: true })
+    const result=auditNativeInkCollisions(system)
     for(const collision of result.collisions)for(const side of ['a','b'])collision[side].class=system.querySelector(`[id="${collision[side].id}"]`)?.getAttribute('class')
     return result
   } finally {

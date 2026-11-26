@@ -134,7 +134,7 @@ export function arrangeStaffSystem(
       }
       removeNumbers(measure)
     } else {
-      const bars = findAll(measure, (n) => hasClass(n, 'barLine'))
+      const bars = findAll(measure, (n) => hasClass(n, 'staff-bar'))
       if (bars.length)
         for (const number of findAll(measure, (n) => hasClass(n, 'mNum'))) {
           const barInk = union(bars.flatMap((bar) => geometry.pieces(bar)))

@@ -445,7 +445,11 @@ function repeatBarOffset(signatures: Signature[]): number {
 }
 export function drawStaffBar(type: string | undefined, x: number, y: number, left = false): XmlNode {
   const lines: XmlNode[] = [], bar = type ?? (left ? 'invis' : 'single')
-  const rule = (dx: number, width = (staffMusicSize() / 4 * 0.1)) => lines.push(staffLine(x + dx, y + staffMusicSize(), x + dx, y + (staffMusicSize() * 2), width))
+  const rule = (dx: number, width = (staffMusicSize() / 4 * 0.1)) => {
+    const line = staffLine(x + dx, y + staffMusicSize(), x + dx, y + staffMusicSize() * 2, width)
+    line.attributes['data-m3n-join'] = `bar-${x + dx},${y}`
+    lines.push(line)
+  }
   if (bar !== 'invis') {
     if (bar === 'dbl') { rule(-(staffMusicSize() / 4 * 0.3)); rule(0) }
     else if (bar === 'end') { rule(-(staffMusicSize() / 4 * 0.5)); rule(-(staffMusicSize() / 4 * 0.1), (staffMusicSize() / 4 * 0.3)) }
@@ -482,12 +486,18 @@ function drawNote(note: StaffNoteAnchor, staveY: number): XmlNode[] {
       for (let y = staffMusicSize() - (staffMusicSize() / 4); y >= head.y; y -= (staffMusicSize() / 4)) add(y)
       for (let y = (staffMusicSize() * 2) + (staffMusicSize() / 4); y <= head.y; y += (staffMusicSize() / 4)) add(y)
     }
-    for (const [y, { left, right }] of ledger) result.push(staffLine(left, staveY + y, right, staveY + y, unit * .1, 'ledger-line'))
+    for (const [y, { left, right }] of ledger) {
+      const line = staffLine(left, staveY + y, right, staveY + y, unit * .1, 'ledger-line')
+      if (note.beam) line.attributes['data-m3n-join'] = `${note.stemX},${note.stemEnd}`
+      result.push(line)
+    }
   }
   for (const head of p.heads) result.push(element('g', { class: p.rest ? 'rest-symbol' : 'notehead' }, [staffGlyph(p.head, note.x + head.x, staveY + head.y + (p.rest && p.dur === 1 ? -(staffMusicSize() / 4) : 0), size)]))
   if (!p.rest && p.dur > 1) {
     const root = p.direction === 1 ? Math.max(...note.ys) - unit * .1 : Math.min(...note.ys) + unit * .1
-    result.push(staffLine(note.stemX, root, note.stemX, note.stemEnd, unit * .12, 'stem'))
+    const stem = staffLine(note.stemX, root, note.stemX, note.stemEnd, unit * .12, 'stem')
+    if (note.beam) stem.attributes['data-m3n-join'] = `${note.stemX},${note.stemEnd}`
+    result.push(stem)
     if (p.dur >= 8 && !note.beam) result.push(staffGlyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size))
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
@@ -566,6 +576,24 @@ function positionBeam(beam: StaffBeam) {
     const required = outer - direction * minimum - slope * (note.stemX - first.stemX)
     origin = direction === 1 ? Math.min(origin, required) : Math.max(origin, required)
   }
+  // Fixed note ink can project into a neighboring beam segment. Solve the
+  // whole group's beam envelope against those glyphs, in either direction.
+  const space = first.prepared.size / 4
+  const levels = Math.max(...beam.notes.map(note => Math.log2(note.prepared.dur / 4)))
+  const inward = ((levels - 1) * .7 + .4) * space
+  for (const note of beam.notes) for (const symbol of note.prepared.symbols) {
+    if (!symbol.glyph.startsWith('accidental') && symbol.glyph !== 'augmentationDot') continue
+    const ink = staffGlyphMetrics(symbol.glyph, symbol.size ?? note.prepared.size)
+    const left = Math.max(first.stemX, note.x + symbol.x + ink.left)
+    const right = Math.min(last.stemX, note.x + symbol.x + ink.right)
+    if (right <= left) continue
+    const offsets = [slope * (left - first.stemX), slope * (right - first.stemX)]
+    const y = note.ys[0]! - note.prepared.heads[0]!.y + symbol.y
+    const required = direction === 1
+      ? y + ink.top - space * .25 - inward - Math.max(...offsets)
+      : y + ink.bottom + space * .25 + inward - Math.min(...offsets)
+    origin = direction === 1 ? Math.min(origin, required) : Math.max(origin, required)
+  }
   for (const note of beam.notes) note.stemEnd = origin + slope * (note.stemX - first.stemX)
 }
 function drawBeam(beam: StaffBeam): XmlNode {
@@ -593,7 +621,7 @@ function drawBeam(beam: StaffBeam): XmlNode {
       shapes.push(path)
     }
   }
-  return element('g', { class: 'beam' }, shapes)
+  return element('g', { class: 'beam', 'data-m3n-join': notes.map(note => `${note.stemX},${note.stemEnd}`).join(' ') }, shapes)
 }
 function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, measureText: MeasureText): XmlNode {
   const pitched = notes.find(n => !n.prepared.rest), below = pitched?.direction === -1
@@ -677,7 +705,7 @@ export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNote
   const direction = -note.direction, count = Math.min(first?.ys.length ?? Infinity, last?.ys.length ?? Infinity)
   const curves: XmlNode[] = []
   for (let i = 0; i < count; i++) {
-    const x1 = first ? first.headRight + (staffMusicSize() / 4 * 0.1) : left, x2 = last ? last.headLeft - (staffMusicSize() / 4 * 0.1) : right
+    const x1 = first ? Math.max(first.headRight, first.x + first.prepared.after) + (staffMusicSize() / 4 * 0.1) : left, x2 = last ? Math.min(last.headLeft, last.x - last.prepared.left + last.prepared.signature.width + last.prepared.graceWidth) - (staffMusicSize() / 4 * 0.1) : right
     const y1 = (first?.ys[i] ?? last!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6), y2 = (last?.ys[i] ?? first!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6)
     const space = staffMusicSize() / 4, thickness = space * .23
     let rise = Math.min(space * 1.6, Math.max(space * .6, (x2 - x1) / 6))

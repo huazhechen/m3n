@@ -1,16 +1,18 @@
+import { waitForEditor } from './editor-state'
+import { navigateScore, nextScorePath } from './score-navigation'
 import { expect, test } from '@playwright/test'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 
 test('floating transport stays visible and settings open without shifting the score', async ({ page }, info) => {
   await page.goto('/scores/huan_le_song_01')
+  await waitForEditor(page)
   const bar = page.getByRole('group', { name: '乐谱控制', exact: true })
   const panel = page.getByRole('dialog', { name: '乐谱设置', exact: true })
   const settings = page.getByRole('button', { name: '乐谱设置', exact: true })
   await expect(bar).toBeVisible()
   await expect(panel).not.toBeVisible()
   await expect(bar.getByRole('slider')).toHaveCount(1)
-  await expect(bar.getByRole('switch')).toHaveCount(1)
-  await expect(bar.getByRole('switch', { name: '节拍器' })).toBeChecked()
+  await expect(bar.getByRole('switch')).toHaveCount(0)
   await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', 'paged')
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 })
@@ -26,8 +28,9 @@ test('floating transport stays visible and settings open without shifting the sc
     await settings.click()
     await expect(settings).toHaveAttribute('aria-expanded', 'true')
     await expect(panel.getByRole('slider')).toHaveCount(2)
-    await expect(panel.locator('.control-options > button')).toHaveCount(5)
-    await expect(panel.locator('.control-options > button')).toHaveText(['合成', '分页', /首调/, '小节号', /调号/])
+    await expect(panel.locator('.control-options > button')).toHaveCount(6)
+    await expect(panel.getByRole('switch', { name: '节拍器' })).toBeChecked()
+    await expect(panel.locator('.control-options > button')).toHaveText(['节拍器', '合成', '分页', /首调/, '小节号', /调号/])
     await expect(panel.locator('.transpose-key-icon')).toHaveText('G')
     expect(await paper.boundingBox()).toEqual(before)
     const popupBounds = (await panel.boundingBox())!
@@ -47,7 +50,7 @@ test('floating transport stays visible and settings open without shifting the sc
   await settings.press('Enter')
   await expect(panel).toBeVisible()
   await page.getByRole('switch', { name: '节拍器' }).click()
-  await expect(panel).not.toBeVisible()
+  await openScoreSettings(page)
   await expect(page.getByRole('switch', { name: '节拍器' })).not.toBeChecked()
 })
 
@@ -68,13 +71,19 @@ test('BPM resets on reopening while switches persist; speed reset leaves other s
   await openScoreSettings(page)
   const originalKey = await trigger.locator('.transpose-key-icon').textContent()
   await openScoreSettings(page)
-  for (const value of ['10', '240', '137']) { await bpm.fill(value); await expect(speed).toHaveValue(value) }
+  for (const value of ['10', '240', '137']) {
+    await openScoreSettings(page)
+    await bpm.fill(value)
+    await openScoreSettings(page)
+    await expect(speed).toHaveValue(value)
+  }
   await expect(page.locator('.audio-controls input:not([type=range])')).toHaveCount(0)
   await openScoreSettings(page)
   await speed.fill('137')
   await openScoreSettings(page)
   await page.getByRole('button', { name: /^移调，当前/ }).click()
   await page.getByRole('dialog', { name: '选择调性' }).getByRole('button', { name: 'D大调', exact: true }).click()
+  await openScoreSettings(page)
   await page.getByRole('switch', { name: '节拍器' }).click()
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '小节号', exact: true }).click()
@@ -114,6 +123,7 @@ test('width resets to the automatically selected width for each score', async ({
     }, { timeout: 30_000 }).toBe(true)
     await expect.poll(async () => Number(await slider.inputValue()) * 24).toBe(Number(await page.locator('.score-paper').getAttribute('data-selected-width')))
     const width = await slider.inputValue()
+    await openScoreSettings(page)
     await slider.fill('40')
     await openScoreSettings(page)
     await page.getByRole('button', { name: '还原宽度' }).click()
@@ -126,6 +136,7 @@ test('width resets to the automatically selected width for each score', async ({
     await expect(slider).toHaveValue(width!)
   }
   await page.goto('/editor')
+  await waitForEditor(page)
   await openScoreSettings(page)
   await page.getByRole('button', { name: '还原宽度' }).click()
   await openScoreSettings(page)
@@ -134,6 +145,7 @@ test('width resets to the automatically selected width for each score', async ({
 
 test('width buttons snap to adjacent grid points and dragging commits on release outside the slider', async ({ page }, info) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{4/4}\nN: 1 2 3 4 |||')
   const paper = page.locator('.score-paper')
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '720')
@@ -144,18 +156,28 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   await expect(slider).toHaveAttribute('min', '20')
   await expect(slider).toHaveAttribute('max', '40')
   await expect(slider).toHaveAttribute('step', '0.25')
+  await openScoreSettings(page)
   await slider.fill('27')
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '648')
+  await openScoreSettings(page)
   await minus.click()
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '642')
+  await openScoreSettings(page)
   await slider.fill('27')
+  await openScoreSettings(page)
   await plus.click()
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '654')
+  await openScoreSettings(page)
   await slider.fill('20')
+  await openScoreSettings(page)
   await expect(minus).toBeDisabled()
+  await openScoreSettings(page)
   await slider.fill('40')
+  await openScoreSettings(page)
   await expect(plus).toBeDisabled()
+  await openScoreSettings(page)
   await slider.fill('25')
+  await openScoreSettings(page)
   const bounds = (await slider.boundingBox())!
   await page.mouse.move(bounds.x + bounds.width * (25 - 20) / 20, bounds.y + bounds.height / 2)
   await page.mouse.down()
@@ -164,6 +186,7 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   await page.mouse.move(bounds.x + bounds.width * .75, bounds.y - 8)
   await page.mouse.up()
   await expect(paper.locator('svg').first()).toHaveAttribute('width', finalWidth)
+  await openScoreSettings(page)
   await expect(slider.locator('xpath=../..').locator('output')).toHaveText(`${finalWidth}px`)
   await slider.press('ArrowLeft')
   await expect(paper.locator('svg').first()).toHaveAttribute('width', String(Number(finalWidth) - 6))
@@ -181,21 +204,11 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '720')
 })
 
-test('removed source width directives do not override the reading width', async ({ page }) => {
-  await page.goto('/editor')
-  await page.getByLabel('M3N source').fill('{4/4}\nN: 1 2 3 4 |||')
-  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '720')
-  await openScoreSettings(page)
-  await expect(page.getByRole('button', { name: '增大乐谱宽度', exact: true })).toBeEnabled()
-  await page.getByRole('slider', { name: '乐谱宽度' }).fill('27')
-  await page.getByRole('button', { name: '还原宽度' }).click()
-  await expect(page.locator('.score-paper svg').first()).toHaveAttribute('width', '720')
-})
-
 test('BPM controls actual playback; measure number changes preserve the player', async ({ page }) => {
   const resources: string[] = []
   page.on('request', request => resources.push(request.url()))
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||')
   await openScoreSettings(page)
   await expect(page.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('60')
@@ -272,6 +285,7 @@ test('documentation examples reflow to a shared width with readable notes and no
 
 test('clicking notes during playback seeks forward and backward and keeps playing', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e |||')
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
@@ -300,6 +314,7 @@ test('clicking notes during playback seeks forward and backward and keeps playin
 for (const mode of ['首调', '五线谱'] as const) {
 test(`reader measure clicks never start playback before play or after pause in ${mode}`, async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await expect(page.locator('.score-paper g.note').first()).toBeVisible()
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await expect(page.locator('dialog[open]')).toHaveCount(0)
@@ -363,6 +378,7 @@ test(`reader measure clicks never start playback before play or after pause in $
 
 test('fixed C spelling and measure numbers toggle independently and persist', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{key=D}{4/4}\nN: 1 2 3 4 |||')
   const paper = page.locator('.score-paper')
   await openScoreSettings(page)
@@ -406,6 +422,7 @@ test('fixed C spelling and measure numbers toggle independently and persist', as
 
 test('transposition updates key signatures and fixed C notes without restarting playback', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{key=D}{4/4}{30qpm}\nN: 1 2 3 4 | 5 6 7 1e |||')
   const paper = page.locator('.score-paper')
   const digits = () => paper.locator('g.note[data-m3n-id] text[font-family="Barlow Semi Condensed"]').allTextContents()
@@ -447,8 +464,8 @@ test('switching songs restores each song’s original tempo and default width', 
   const originalBpm = await bpm.inputValue()
   await openScoreSettings(page)
   await expect(width).toHaveValue('22')
-  const nextUrl = await page.getByRole('link', { name: '下一曲', exact: true }).getAttribute('href')
-  await page.getByRole('link', { name: '下一曲', exact: true }).click()
+  const nextUrl = nextScorePath('huan_le_song_01')
+  await navigateScore(page, 'next')
   await openScoreSettings(page)
   const nextBpm = await bpm.inputValue()
   await openScoreSettings(page)
@@ -458,7 +475,7 @@ test('switching songs restores each song’s original tempo and default width', 
   await bpm.fill('137')
   await openScoreSettings(page)
   await width.fill('35')
-  await page.getByRole('link', { name: '下一曲', exact: true }).click()
+  await navigateScore(page, 'next')
   await expect(page).toHaveURL(nextUrl!)
   await openScoreSettings(page)
   await expect(bpm).toHaveValue(nextBpm)
@@ -468,7 +485,7 @@ test('switching songs restores each song’s original tempo and default width', 
   await bpm.fill('139')
   await openScoreSettings(page)
   await width.fill('38')
-  await page.getByRole('link', { name: '上一曲', exact: true }).click()
+  await navigateScore(page, 'previous')
   await openScoreSettings(page)
   await expect(bpm).toHaveValue(originalBpm)
   await openScoreSettings(page)

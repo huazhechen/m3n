@@ -1,9 +1,11 @@
+import { waitForEditor } from './editor-state'
 import { expect, test } from '@playwright/test'
 import { openScoreSettings, selectNotationMode } from './score-settings'
 
 for (const notation of ['首调', '五线谱']) {
   test(`${notation} highlights each tuplet note with its own lyric`, async ({ page }) => {
     await page.goto('/editor')
+    await waitForEditor(page)
     await page.getByLabel('M3N source').fill('{2/4}{60qpm}\nN: ||: [123:2] :|||\nL1: 春夏秋\nL2: 天地人')
     const paper = page.locator('.score-paper')
     await expect(paper.locator('svg').first()).toBeVisible()

@@ -129,8 +129,8 @@ test('modified view mixes local and preset scores by date and keeps that order d
   await page.addInitScript(() => {
     localStorage.setItem('m3n:library-view', 'modified')
     localStorage.setItem('m3n:local-scores', JSON.stringify([
-      { id: 'local-old', source: '{title=旧作品}{4/4}\nN: 1 2 3 4 |||', createdAt: '2000-01-01T00:00:00Z', expiresAt: null },
-      { id: 'local-new', source: '{title=新作品}{4/4}\nN: 1 2 3 4 |||', createdAt: '2000-01-01T00:00:00Z', updatedAt: '2099-01-01T00:00:00Z', expiresAt: null },
+      { id: 'local-old', source: '{title=旧作品}{4/4}\nN: 1 2 3 4 |||', createdAt: '2000-01-01T00:00:00Z' },
+      { id: 'local-new', source: '{title=新作品}{4/4}\nN: 1 2 3 4 |||', createdAt: '2000-01-01T00:00:00Z', updatedAt: '2099-01-01T00:00:00Z' },
     ]))
   })
   await page.goto('/scores')

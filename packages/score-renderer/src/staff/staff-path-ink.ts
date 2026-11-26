@@ -20,7 +20,7 @@ function cubic(a: number, b: number, c: number, d: number, range: Range, floor: 
   }
   // On a nondegenerate cubic the evaluated extrema are convex combinations.
   // A strictly interior control hull cannot enlarge already accumulated ink.
-  // Retain the legacy quadratic fallback above (its rounding is significant).
+  // Retain the quadratic degeneracy calculation above (its rounding is significant).
   const low = floor + 1e-6, high = ceiling - 1e-6
   if (floor >= -1e6 && ceiling <= 1e6 && a > low && a < high && b > low && b < high && c > low && c < high && d > low && d < high) {
     range.min = floor; range.max = ceiling; return

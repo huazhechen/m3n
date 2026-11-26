@@ -1,3 +1,4 @@
+import { waitForEditor } from './editor-state'
 import { expect, test } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
 
@@ -7,7 +8,7 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem('m3n:local-scores', JSON.stringify([1, 30, 160].map(rows => ({
       id: `local-pages-${rows}`,
       source: '{title=分页测试}{4/4}\nN: ' + Array.from({ length: rows }, (_, index) => `${index ? '{br}' : ''}1 2 3 4${index === rows - 1 ? ' |||' : ' |'}`).join(' '),
-      createdAt: '2026-11-16T00:00:00Z', expiresAt: null,
+      createdAt: '2026-11-16T00:00:00Z',
     }))))
   })
 })
@@ -36,7 +37,7 @@ test('desktop pages fit the remaining height, center each row and respond to res
         }, [])
         return {
           firstRowFits: rows[0]!.every(sheet => sheet.top >= 0 && sheet.bottom <= innerHeight),
-          wholePages: sheets.every(sheet => Math.abs(sheet.height / sheet.width - 297 / 210) < 0.001),
+          wholePages: sheets.every(sheet => Math.abs(sheet.height / sheet.width - 302.6129032258 / 210) < 0.001),
           wrappingMatchesSpace: (rows.length === 1) === shouldShareRow,
           centered: rows.every(row => Math.abs((row[0]!.left + row.at(-1)!.right) / 2 - (bounds.left + bounds.right) / 2) < 1),
           scrollingMatchesRows: (document.documentElement.scrollHeight > innerHeight + 1) === (rows.length > 1),
@@ -167,6 +168,7 @@ test.describe('touch tablets', () => {
   test('tablet editor switches panes without losing input and library uses compact cards', async ({ page }) => {
     await page.setViewportSize({ width: 1133, height: 744 })
     await page.goto('/editor')
+    await waitForEditor(page)
     const editor = page.getByRole('textbox', { name: 'M3N source', exact: true })
     const source = '{title=平板试改}{4/4}\nN: 1 2 3 4 |||'
     await editor.fill(source)

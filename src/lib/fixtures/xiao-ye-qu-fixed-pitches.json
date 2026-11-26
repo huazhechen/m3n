@@ -1,5 +1,5 @@
 {
-  "description": "User-approved sounding pitches captured before rewriting the F/D notation entirely in F. Names use fixed concert pitches and scientific octave numbers; times are quarter-note beats, including grace notes and ties.",
+  "description": "Approved sounding pitches for the F-key notation. Names use fixed concert pitches and scientific octave numbers; times are quarter-note beats, including grace notes and ties.",
   "sourceSha256": "c688c41a9da785ee9e69c4be793c85159ae5363a57962b3f77aa974e989ff6be",
   "beats": 189,
   "tempos": [

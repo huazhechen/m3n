@@ -1,3 +1,4 @@
+import { navigateScore } from './score-navigation'
 import { expect, test } from '@playwright/test'
 import { scoreMetadataFromSource } from '@m3n/notation'
 
@@ -35,9 +36,8 @@ test('works support search, isolated navigation, direct reading, export and edit
   await page.locator('.score-card').click()
   await expect(page).toHaveURL(/\/works\/work-two$/)
   await expect(page.locator('.score-reader svg').first()).toBeVisible()
-  await expect(page.getByRole('link', { name: '上一曲', exact: true })).toHaveAttribute('href', '/works/work-one')
-  await expect(page.getByRole('link', { name: '下一曲', exact: true })).toHaveAttribute('aria-disabled', 'true')
-  await page.getByRole('link', { name: '上一曲', exact: true }).click()
+  await navigateScore(page, 'next', false)
+  await navigateScore(page, 'previous')
   await expect(page.locator('.score-reader svg').first()).toBeVisible()
   await page.reload()
   await expect(page.locator('.score-reader svg').first()).toBeVisible()

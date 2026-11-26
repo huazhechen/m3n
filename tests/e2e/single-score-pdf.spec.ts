@@ -82,7 +82,7 @@ test('slow PDF module loading shows cancellable progress immediately and does no
 for (const covered of [true, false]) test(`local PDF embeds Source Han Sans for both preset and additional characters (${covered})`, async ({ page }, info) => {
   await page.addInitScript((covered) => {
     localStorage.setItem('m3n:local-scores', JSON.stringify([
-      { id: 'local-font-test', source: `{title=${covered ? '小星星' : '本地龘字体验证'}}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了`, createdAt: '2026-11-19T00:00:00Z', expiresAt: null },
+      { id: 'local-font-test', source: `{title=${covered ? '春天来了' : '本地龘字体验证'}}{4/4}\nN: 1 2 3 4 |||\nL: 春天来了`, createdAt: '2026-11-19T00:00:00Z' },
     ]))
   }, covered)
   const fonts: string[] = []
@@ -93,7 +93,8 @@ for (const covered of [true, false]) test(`local PDF embeds Source Han Sans for 
   await page.getByRole('button', { name: '打印', exact: true }).click()
   const dialog = page.locator('.export-dialog')
   await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-  expect(fonts.some(url => /score-fonts\.bin\.gz$/.test(url))).toBe(true)
+  expect(fonts.some(url => /score-fonts\.bin\.gz$/.test(url))).toBe(false)
+  expect(fonts.some(url => /NotoSansSC-[^/]*\.(?:woff2|ttf)$/.test(url))).toBe(true)
   expect(fonts.some(url => /NotoSansSC-full[^/]*\.ttf$/.test(url))).toBe(!covered)
   const downloading = page.waitForEvent('download')
   await dialog.getByRole('button', { name: 'PDF', exact: true }).click()

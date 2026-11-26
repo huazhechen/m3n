@@ -1,0 +1,59 @@
+{
+  "description": "按用户逐小节校订的Solo实音参考。第3小节只补5e经过音；第4小节按PDF跑句，末拍改3长音；第5小节恢复吉他谱并保留此前高八度音区；第6、7小节保留原版本；第8、9小节按PDF46—47音序与节奏并升高八度。谱源统一用8va并反向换算写音，过渡不受影响。",
+  "bars": [
+    {
+      "number": 39,
+      "key": "A",
+      "basis": "guitar, one octave up",
+      "notes": "1e~/2 1e/.5 7/.5 1e/.5 3e/.5"
+    },
+    {
+      "number": 40,
+      "key": "A",
+      "basis": "guitar, one octave up",
+      "notes": "6e/3 1ee/.75 6e/.25"
+    },
+    {
+      "number": 41,
+      "key": "A",
+      "basis": "guitar rhythm, restore PDF passing 5e",
+      "notes": "7e/2 6e/.25 6e~/.75 6e/.5 5e/.25 4e/.25"
+    },
+    {
+      "number": 42,
+      "key": "A",
+      "basis": "PDF run; replace the final triplet ornament and continuation with a quarter-note 3",
+      "notes": "3e/.25 5e/.125 4e/.125 3e/.125 2e/.125 4e/.125 3e/.125 2e/.125 1e/.125 3e/.125 2e/.125 1e/.125 7/.125 2e/.125 1e/.125 7/.125 6/.125 1e/.125 7/.125 6/.125 5/.125 4/.125 3/.125 3"
+    },
+    {
+      "number": 43,
+      "key": "A",
+      "basis": "guitar, one octave up; restore the rest and original guitar run",
+      "notes": "0/.5 3/.25 7b/.25 6/.25 1#e/.25 7b/.25 3e/.25 1#e/.25 5e/.25 3e/.25 6e/.25 5e/.75 6e/.125 3e/.125"
+    },
+    {
+      "number": 44,
+      "key": "A",
+      "basis": "guitar; retain the previous octave",
+      "notes": "4e/2 2e/t 3e/t 4e/t 5#e/t 6e/t 7e/t"
+    },
+    {
+      "number": 45,
+      "key": "A",
+      "basis": "guitar; retain the previous octave and quarter-note triplet",
+      "notes": "1ee/2 7e/0.6666666666666666 1ee/0.6666666666666666 1#ee/0.6666666666666666"
+    },
+    {
+      "number": 46,
+      "key": "A",
+      "basis": "PDF pitches and rhythm, raised one octave",
+      "notes": "2ee/2 4/s 5/s 7/s 2e/s 4e/s 5e/s 2e/s 4e/s 5e/s 7e/s 2ee/s 4ee/s"
+    },
+    {
+      "number": 47,
+      "key": "A",
+      "basis": "PDF pitches and rhythm, raised one octave",
+      "notes": "5ee/4"
+    }
+  ]
+}

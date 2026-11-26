@@ -170,7 +170,7 @@ export function NotationEditor({
           playbackOnly={playbackOnly}
           previewWidth={previewWidth}
           autoSearchWidth={embedded}
-          isSourceUpdating={isAnalyzing}
+          isSourceUpdating={isAnalyzing || isComposing}
           activeXmlId={activeXmlId}
           invalidMeasureIds={invalidMeasureIds}
           onActiveXmlId={highlightSourceRange}
@@ -182,7 +182,7 @@ export function NotationEditor({
         )}
         {shareError && <p className="editor-share-error" role="alert">{shareError}</p>}
         {analysisError && <p className="editor-share-error" role="alert">{analysisError} <button type="button" className="action-button" onClick={retryAnalysis}>重试分析</button></p>}
-        {isAnalyzing && <p className="editor-analysis-status" role="status" aria-label="乐谱分析状态">{isComposing ? '正在输入…' : '正在更新乐谱…'}</p>}
+        {(isAnalyzing || isComposing) && <p className="editor-analysis-status" role="status" aria-label="乐谱分析状态">{isComposing ? '正在输入…' : '正在更新乐谱…'}</p>}
       </EditorSplit>
     </div>
   )

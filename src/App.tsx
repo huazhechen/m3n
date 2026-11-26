@@ -1,8 +1,7 @@
 import { ResourceLoadingHost } from './components/ResourceLoadingDialog'
 import { lazy, Suspense, useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
-import { pruneExpiredLocalScores } from './lib/local-scores'
 import { pruneExpiredSimulatedSubmissions } from './lib/simulated-submissions'
 
 const HomePage = lazy(() => import('./pages/HomePage').then(({ HomePage: Page }) => ({ default: Page })))
@@ -20,16 +19,8 @@ function isH123Host() {
   return typeof window !== 'undefined' && window.location.hostname.split('.')[0]?.toLowerCase() === 'h123'
 }
 
-function LegacyDocsRedirect() {
-  const location = useLocation()
-  const params = new URLSearchParams(location.search)
-  if (params.get('doc') === 'home') params.delete('doc')
-  return <Navigate to={{ pathname: '/', search: params.toString(), hash: location.hash }} replace />
-}
-
 export default function App() {
   useEffect(() => {
-    pruneExpiredLocalScores()
     pruneExpiredSimulatedSubmissions()
   }, [])
   return (
@@ -52,7 +43,6 @@ export default function App() {
               <Route path=":slug" element={<ScoreReaderPage collection="works" />} />
               <Route path=":scoreId/edit" element={<EditorPage collection="works" />} />
             </Route>
-            <Route path="/docs" element={<LegacyDocsRedirect />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}

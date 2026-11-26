@@ -1,9 +1,11 @@
 import {test, expect} from '@playwright/test'
+import {waitForEditor} from './editor-state'
 import {openScoreSettings, selectNotationMode} from './score-settings'
 
 test('plain text measures support native folding without exposing the score graphics',async({page})=>{
   await page.setViewportSize({width:390,height:844})
   await page.goto('scores/hei_se_you_mo_01')
+  await waitForEditor(page)
   const reading=page.getByRole('region',{name:'黑色幽默，无障碍读谱',exact:true})
   const entry=reading.getByText('无障碍读谱',{exact:true})
   await expect(reading.locator('.score-accessible-measure > summary').first()).not.toBeVisible()
@@ -51,6 +53,7 @@ test('plain text measures support native folding without exposing the score grap
 
 test('plain text retains pickup beats and separate note paragraphs',async({page})=>{
   await page.goto('scores/turkish_march_01')
+  await waitForEditor(page)
   const reading=page.getByRole('region',{name:'土耳其进行曲，无障碍读谱',exact:true})
   await reading.getByRole('button',{name:'无障碍读谱',exact:true}).focus()
   await page.keyboard.press('Enter')
@@ -67,8 +70,11 @@ test('plain text retains pickup beats and separate note paragraphs',async({page}
 
 test('text follows notation projection and keeps expanded measures across settings changes',async({page})=>{
   await page.goto('editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{title=读屏换调测试}{key=C}{2/4}{order=A,A@Db5}\n===A\nN: [1 2 3:2] |||\nL1: 春天好\nL2: 秋天好')
   await page.getByRole('button',{name:'保存',exact:true}).click()
+  await expect(page).toHaveURL(/\/scores\/local-/)
+  await waitForEditor(page)
   const reading=page.getByRole('region',{name:'读屏换调测试，无障碍读谱',exact:true})
   const paper=page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy','true')
@@ -91,6 +97,7 @@ test('text follows notation projection and keeps expanded measures across settin
 
 test('editor selection and playback keep their visual colors without focusing hidden graphics',async({page})=>{
   await page.goto('editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{title=焦点与播放测试}{2/4}{60qpm}\nN: 1^ | 3^ |||')
   const paper=page.locator('.score-paper')
   const notes=paper.locator('[data-reading-event]')
@@ -100,7 +107,7 @@ test('editor selection and playback keep their visual colors without focusing hi
   await selected.click()
   await expect.poll(()=>selected.locator('text').first().evaluate(e=>getComputedStyle(e).fill)).toBe('rgb(22, 131, 255)')
   expect(await paper.evaluate(e=>e.contains(document.activeElement))).toBe(false)
-  // A restored legacy reading marker must never paint a stuck focus frame.
+  // A reading marker must never paint a stuck focus frame.
   await selected.evaluate(note=>note.closest('[data-reading-measure]')!.setAttribute('data-reading-current','true'))
   await expect(paper.locator('[data-reading-current] > [data-score-reading-hitarea]')).toHaveCSS('stroke','none')
   await notes.first().click()
@@ -141,6 +148,7 @@ test('editor selection and playback keep their visual colors without focusing hi
 
 test('closed reader leaves the visual score layout unchanged and remains accessible',async({page})=>{
   await page.goto('scores/hei_se_you_mo_01')
+  await waitForEditor(page)
   const reading=page.getByRole('region',{name:'黑色幽默，无障碍读谱',exact:true})
   const entry=reading.getByText('无障碍读谱',{exact:true})
   const paper=page.locator('.score-paper')

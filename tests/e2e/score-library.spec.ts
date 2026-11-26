@@ -32,7 +32,7 @@ for (const width of [390, 1280]) {
   test(`library uses one search and responsive centered metadata at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 })
     await page.addInitScript(sources => {
-      localStorage.setItem('m3n:local-scores', JSON.stringify(sources.map((source, index) => ({ id: `local-filter-${index}`, source, createdAt: new Date().toISOString(), expiresAt: null }))))
+      localStorage.setItem('m3n:local-scores', JSON.stringify(sources.map((source, index) => ({ id: `local-filter-${index}`, source, createdAt: new Date().toISOString() }))))
     }, sources)
     await page.goto('/scores')
     const search = page.getByRole('searchbox', { name: '搜索乐谱' })

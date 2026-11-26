@@ -1,0 +1,209 @@
+{
+  "ai_de_li_zan_01.m3n": {
+    "beats": 252,
+    "notes": 353,
+    "events": 374,
+    "lyrics": 0,
+    "music": "e57ce7f0393ab2753cfc568434ba2c577eeed34903ee3ecca1fbaef6fe12ab0c",
+    "lyricsHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "notation": "ab456560e0d66857155d1d897d5c810f5652bb64858fc286fd5a53e5f9848205"
+  },
+  "ai_ru_chao_shui_01.m3n": {
+    "beats": 204,
+    "notes": 398,
+    "events": 457,
+    "lyrics": 374,
+    "music": "b5a4300471cfa0c11a2fad69696b75639a74245aaa2e309cd9755f75ec1f7195",
+    "lyricsHash": "0cb7379a60f88a12dd5021ea527f0529946ced1df6d548f51c8a22a31b8bf7a7",
+    "notation": "1365cbb1fa829375959278a37bcf12646537bb31df1bac8583ccb96be39b955b"
+  },
+  "an_xiang_01.m3n": {
+    "beats": 316,
+    "notes": 349,
+    "events": 436,
+    "lyrics": 222,
+    "music": "689992341326f1095502d4d37b3af7444051fc78cb870000bb47be2d82204554",
+    "lyricsHash": "54de1d382973de8cac013b13bbf513654831ca575a7e519d307fd7f37fb29b38",
+    "notation": "fe143988f74995a2f2ed8614076f0037ebcd8622d8889810763c1f25bf78eeca"
+  },
+  "annie_01.m3n": {
+    "beats": 272,
+    "notes": 305,
+    "events": 408,
+    "lyrics": 234,
+    "music": "b5f5e7fd62b2c01129341d5856cb68041685323716d74fe328c62f1803ba6f3f",
+    "lyricsHash": "b3510dfd7bb9f7195e232468d300082af672c5f64fdb2ba4c1dee4092f9a4fdd",
+    "notation": "58198aa2e94000e5beeeb6483b5c29f4a6eb964d2e8899a3cb66deec710332c1"
+  },
+  "bai_hua_lin_01.m3n": {
+    "beats": 336,
+    "notes": 314,
+    "events": 316,
+    "lyrics": 313,
+    "music": "35df9cfc978340cae0e4113218de85ce9a401354880baccfd1a4f697d26d74e2",
+    "lyricsHash": "b81e8d771f45ed56c7eb56d7bdeab8f97f8c51cb6e987041e243210667b171d5",
+    "notation": "9073d7e5f689cbd1530641562a7ea791a3daa1f1f2b7b4d4eaed28ce0122c955"
+  },
+  "bei_jia_er_hu_pan_01.m3n": {
+    "beats": 276,
+    "notes": 199,
+    "events": 271,
+    "lyrics": 186,
+    "music": "da8db20716356a4b54ddcf3413bcd045ee19623d4caebe2b5f88fb760ccf6b6c",
+    "lyricsHash": "7b27075c99f964a3dd67c16436059a8c54b8cb8e411782fd431929461562648a",
+    "notation": "381304c3f01c1fa8a5dccd380870d02bf3ecfc4d5b2683213d0665e2e3ef9e82"
+  },
+  "feng_01.m3n": {
+    "beats": 268,
+    "notes": 402,
+    "events": 512,
+    "lyrics": 397,
+    "music": "4809df4c2560b3ffb2a4d151466a61944f5f1e19a463cbdefa223f2a81abfff3",
+    "lyricsHash": "4cea132f38bf23825c0a4a2f54065bd9cc6e025a7c7ec3790dc2cc01c60c3968",
+    "notation": "b784518c13c2b86df31b2b9b34f76b9bb2b8be12f063d2dd230632fa1b68b9b1"
+  },
+  "flower_dance_01.m3n": {
+    "beats": 420,
+    "notes": 1189,
+    "events": 1203,
+    "lyrics": 0,
+    "music": "4508b87806c9b5e3eb3b8553b7175c8e2c80b0c114b299cdb86c48575c1bf54d",
+    "lyricsHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "notation": "46761385a87a38d57f9324fe5ad846f8e92e803a877d2417eeb956770f9bedca"
+  },
+  "hei_se_you_mo_01.m3n": {
+    "beats": 248,
+    "notes": 329,
+    "events": 370,
+    "lyrics": 300,
+    "music": "2a19d38bcbf2bd31461a090916cb190a7b7a4fd5408e1f57d4c177f4470d3b74",
+    "lyricsHash": "e7ece72f7d8a11cc130a326565264ab4fdb58624f29737bc1adfce51704e1387",
+    "notation": "90c1efe85d17936cee275294d1326d39d57468b0c469c026b44d81521d3f1781"
+  },
+  "jiu_er_01.m3n": {
+    "beats": 96,
+    "notes": 102,
+    "events": 110,
+    "lyrics": 0,
+    "music": "32f586a4251e52ede64f69f22a139674129b6458701608b5819aad6820b803aa",
+    "lyricsHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "notation": "9f351ed6dee6e192649bc9b4eaa109a9b3c6ae0357b851396d2541f38d24788c"
+  },
+  "man_man_xi_huan_ni_01.m3n": {
+    "beats": 208,
+    "notes": 336,
+    "events": 322,
+    "lyrics": 432,
+    "music": "05c641d49fbf4cc7a8777253e10696bf48d7026a337ed86f320158b8e60a7cae",
+    "lyricsHash": "dce45db8349e80ccc4e7fadb4439d051e9d09e26ee2dca426bb51f1859c483aa",
+    "notation": "b5ee52bde69cb9ee2929f74252baa93bf5358d284a8d79e690946b97ad1f4ccd"
+  },
+  "qian_si_xi_01.m3n": {
+    "beats": 256,
+    "notes": 316,
+    "events": 385,
+    "lyrics": 310,
+    "music": "0c3ad32924d412f300a8da02c2a1067e8fe5cb0911ee5241f68978033737333d",
+    "lyricsHash": "902e26297d2f88b40f0b48a3a790c405e08cd29ff16ea2297a0f3fc59e629953",
+    "notation": "1b8bb9b351fc486717e098c487893e07e991ca99e0fc78af4886f9dbcbf33df9"
+  },
+  "qing_niao_01.m3n": {
+    "beats": 436,
+    "notes": 443,
+    "events": 580,
+    "lyrics": 0,
+    "music": "c69bfbd5f503d7e7820480508bc800e5b1d7a21fad42f0ec3ee3e0ce1528d291",
+    "lyricsHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "notation": "8d5fc0ceeeaa50d12cafad3235eb81b82cef8aa6c703e6333a8ebfed6e8b4a22"
+  },
+  "shi_jie_zeng_yu_wo_de_01.m3n": {
+    "beats": 188,
+    "notes": 228,
+    "events": 290,
+    "lyrics": 227,
+    "music": "a1a0bbfb6813d1046a567a77361d656b476d9b653dbf1e1742f297f4032766ad",
+    "lyricsHash": "824c2345098f0b596b42318380eba4350283995b2216e19f700b19c6b7000af1",
+    "notation": "1e1c7fd466a0e5e1220137f3556e01003324f831771f403d1b6f51cb9d0d4fd1"
+  },
+  "si_le_dou_yao_ai_01.m3n": {
+    "beats": 272,
+    "notes": 383,
+    "events": 408,
+    "lyrics": 368,
+    "music": "13413ab23fafdb48dcdcabd4003b6af239ed3a605fdc3e4299ee3138bbc6933a",
+    "lyricsHash": "0b1faad1934ec4f2890f47d762be0a54dcce48bbb8da6b5d3975da9537625af7",
+    "notation": "283a1ae7f05769d968417991b4c990afb7a458d2ae3bc36a5eb9c9b502167d3b"
+  },
+  "ta_shuo_01.m3n": {
+    "beats": 344,
+    "notes": 399,
+    "events": 470,
+    "lyrics": 385,
+    "music": "81466e585673682c266f37c2431bc7e27432c7da0873417ffef2a99e7ef33019",
+    "lyricsHash": "f3105cd1677f31d61967afcfe10834bbcb5661c986415575b329346b9b658f78",
+    "notation": "55a64874b4f879f5ce2f2fa8805ebf880cfd5b26dc56a07cafd7b7218ec2f943"
+  },
+  "tian_hei_hei_01.m3n": {
+    "beats": 320,
+    "notes": 382,
+    "events": 456,
+    "lyrics": 381,
+    "music": "7360958867e0a72cd031bd63ae170f197e053df9afb76ace438e4820dee03b24",
+    "lyricsHash": "6941f728c79a035dea8b47342dd4e9d63e0281060b04682a1010bb22af576e4a",
+    "notation": "90d7ce1a361ac6b4bf35a8955d1a68758745ba0bba601886b6da47c82fb5eae2"
+  },
+  "wo_yao_ni_01.m3n": {
+    "beats": 168,
+    "notes": 213,
+    "events": 239,
+    "lyrics": 211,
+    "music": "216fcfb35734d10e9a57d0f253bfa6da849c1155859748b2a82f0e52015ddb1c",
+    "lyricsHash": "ba5e253e4ef113611263675cee81ea2aee60e9be0b74439c85ae294d3eb6195b",
+    "notation": "a7362d2b056e1b6605b4b91e83c6c298379c27d60a136f47975079789d29d4cd"
+  },
+  "wo_zhi_zai_hu_ni_01.m3n": {
+    "beats": 214,
+    "notes": 327,
+    "events": 367,
+    "lyrics": 313,
+    "music": "c0b1f8083f1047d6fa12357c688f9c23f118ecf360f7ab98d01896463c6de950",
+    "lyricsHash": "7ac3cf41c899ebe54292507e32dbedab328388625b089edc2140203317360a7b",
+    "notation": "a74894637a08bbcec1c977e0b31fc346eeff451edaada99c780558d2558fa87e"
+  },
+  "xin_bu_liao_qing_01.m3n": {
+    "beats": 224,
+    "notes": 268,
+    "events": 208,
+    "lyrics": 488,
+    "music": "018428f8869ba752dda89a39ac133a410b9348dfdfb1129fb9d2804e0ea3aca6",
+    "lyricsHash": "57532c9bc3b4e01137ee3e3446612ad0b2b4c0087f8921aa1786a68c2cd4e2aa",
+    "notation": "14de3744a1315e139819946e11c3fc8161ac9ad10dd0bffa72805cafaa658a9b"
+  },
+  "xing_xing_dian_deng_01.m3n": {
+    "beats": 380,
+    "notes": 683,
+    "events": 732,
+    "lyrics": 444,
+    "music": "6baf8d0ac8bac6e171a01ffbb6dcb9a7e0c50e74e5197932acfb0c44c377c239",
+    "lyricsHash": "2aaf33c615fdfcc8438c5c703e8e66c01b5ffa3f53d58c168a75d78d4be88998",
+    "notation": "0c890e0b1d97910eb96c58d9eecd82f05d8709727ba63cec68851718811f65f0"
+  },
+  "yan_hua_yi_leng_01.m3n": {
+    "beats": 336,
+    "notes": 428,
+    "events": 524,
+    "lyrics": 416,
+    "music": "2cb1c0a091b7fae60c52443f1b7f585c5548ab48044dfab7ed911a3ccded84df",
+    "lyricsHash": "9de26e1d37bd1491344dd5c50f63a5dc4816a94d9d54c572e7508e9d43468761",
+    "notation": "04f3a699e3351c8257ca9e20b7632d6d676917ebc95a6bae7402c07d885defb3"
+  },
+  "yi_qian_ge_shang_xin_de_li_you_01.m3n": {
+    "beats": 268,
+    "notes": 382,
+    "events": 496,
+    "lyrics": 283,
+    "music": "5eb9c74548b24ce74768c2730e93af2788247df9adafc463cb5e729341e51793",
+    "lyricsHash": "43d8490e7712b3d9c37ea36720c52bfe99b4eab40085a9b04fef220907ff75f2",
+    "notation": "57125203a087c542c7c65d77f415be95354c9cb09049f6d709a699b52bf7efa1"
+  }
+}

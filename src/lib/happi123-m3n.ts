@@ -679,12 +679,8 @@ function normalizeMeasureMeters(source: string) {
     .reduce((result, [offset, meter]) => `${result.slice(0, offset)}${meter}${result.slice(offset)}`, source)
 }
 
-/**
- * The converter historically emitted the v0.2 "free body" form. Keep that
- * form readable for callers, but expose proper v0.3 rows so the current
- * analyser can retain phrase-scoped lyrics and source mapping.
- */
-function modernizeOutput(source: string, hasParts: boolean) {
+/** Emit phrase-scoped melody and lyric rows with source mapping. */
+function renderOutputRows(source: string, hasParts: boolean) {
   const lines = source.split('\n')
   const lyricStart = lines.findIndex((line) => /^\{lyrics(?:=\d+)?\}$/.test(line.trim()))
   const bodyEnd = lyricStart >= 0 ? lyricStart : lines.length
@@ -736,7 +732,7 @@ function modernizeOutput(source: string, hasParts: boolean) {
   return [...header, musicRows, ...lyrics].join('\n')
 }
 
-function repairLegacyStructure(source: string, conversionDiagnostics: string[]) {
+function normalizeConvertedStructure(source: string, conversionDiagnostics: string[]) {
   const diagnostics = validateM3N(source, { skipBeatValidation: true })
   let repaired = source
 
@@ -833,9 +829,9 @@ export function happi123ToM3N(source: string): Happi123ConversionResult {
       '{/}',
     ]),
   ].filter(Boolean).join('\n').replace(/\s*\{br\}\s*/g, ' {br}\n')
-  const repairedOutput = repairLegacyStructure(normalizeMeasureMeters(rawOutput), diagnostics)
-  const output = modernizeOutput(
-    repairLegacyStructure(normalizeMeasureMeters(repairedOutput), diagnostics)
+  const repairedOutput = normalizeConvertedStructure(normalizeMeasureMeters(rawOutput), diagnostics)
+  const output = renderOutputRows(
+    normalizeConvertedStructure(normalizeMeasureMeters(repairedOutput), diagnostics)
       .replace(/\(\{(\d+\/64)\}\s*/g, '{$1} ('),
     partCount > 0,
   )

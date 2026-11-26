@@ -1,3 +1,4 @@
+import { waitForEditor, selectionStart } from './editor-state'
 import { expect, test } from '@playwright/test'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { readFile } from 'node:fs/promises'
@@ -11,6 +12,7 @@ test('staff editor preserves width, locates source, highlights playback and keep
   const wasm: string[] = []
   page.on('request', request => { if (request.url().includes('.wasm')) wasm.push(request.url()) })
   await page.goto('/editor')
+  await waitForEditor(page)
   const source = '{title=五线谱验证}{key=D}{4/4}{60qpm}\nN: [123:2] 4 5 | [135:h] 6 7 1e | 1e 7 6 5 |||\nL: 春夏秋冬天 | 山川天地 | 明月清风\nB: 1d 2d 3d 4d | 5d 6d 7d 1 | 1 7d 6d 5d |'
   await page.getByLabel('M3N source').fill(source)
   const paper = page.locator('.score-paper')
@@ -28,17 +30,7 @@ test('staff editor preserves width, locates source, highlights playback and keep
   expect(wasm).toHaveLength(0)
   await page.keyboard.press('Escape')
   await paper.locator('[id="m3n-e-2"] .notehead').first().click()
-  await expect.poll(() => page.getByLabel('M3N source').evaluate(element => {
-    const selection = window.getSelection()
-    if (!selection?.rangeCount) return -1
-    const range = selection.getRangeAt(0)
-    const container = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer as Element : range.startContainer.parentElement
-    const line = container?.closest('.cm-line')
-    const lines = [...element.querySelectorAll('.cm-line')]
-    if (!line) return -1
-    const before = document.createRange(); before.selectNodeContents(line); before.setEnd(range.startContainer, range.startOffset)
-    return lines.slice(0, lines.indexOf(line)).reduce((total, item) => total + (item.textContent?.length ?? 0) + 1, 0) + before.toString().length
-  })).toBe(source.indexOf('[123:2]'))
+  await expect.poll(() => selectionStart(page.getByLabel('M3N source'))).toBe(source.indexOf('[123:2]'))
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible({ timeout: 30_000 })
   await expect(paper.locator('g.note.is-playing, g.tuplet.is-playing, g.chord.is-playing').first()).toBeVisible({ timeout: 15_000 })
@@ -51,6 +43,7 @@ test('staff editor preserves width, locates source, highlights playback and keep
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await selectNotationMode(page, '固定调')
   await expect(paper).toHaveAttribute('data-fixed-do', 'true')
+  await openScoreSettings(page)
   await expect(page.getByRole('slider', { name: '乐谱宽度' })).toHaveValue('30')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toHaveAttribute('width', '720')
   await expect(paper.locator('svg[data-engine="m3n"]').first()).toBeVisible()
@@ -71,6 +64,7 @@ test('staff editor preserves width, locates source, highlights playback and keep
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
   test.setTimeout(120_000)
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 96 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 96 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
@@ -122,6 +116,7 @@ test('staff pagination, tempo and transposition are shared by screen, PNG and ve
 
 test('keyed visits keep source clicks and highlight the performed staff occurrence', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{key=C}{4/4}{60qpm}{order=A,A@D5}\n===A\nN: 1 2 3 4 |||\nL1: 春夏秋冬\nL2: 山川天地')
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
@@ -144,6 +139,7 @@ test('keyed visits keep source clicks and highlight the performed staff occurren
 
 test('staff lyrics highlight the matching verse during a written repeat', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{2/4}{120qpm}\nN: ||: 1 2 :||\nL1: 春天\nL2: 秋天')
   await selectNotationMode(page, '五线谱')
   await page.keyboard.press('Escape')
@@ -177,12 +173,14 @@ test('basic exercises keep section labels and Chinese directions inside staff pa
   test.setTimeout(120_000)
   const source = await readFile('src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'utf8')
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.addScriptTag({ content: staffInkBounds.toString() })
   await page.getByLabel('M3N source').fill(source)
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   const paper = page.locator('.score-paper')
   for (const width of [576, 648, 720]) {
+    await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(width / widthConfig.unit))
     const pages = paper.locator(':scope > .score-page-sheet > svg, :scope > svg')
     await expect(pages.first()).toHaveAttribute('width', String(width))
@@ -250,7 +248,7 @@ test('staff measure numbers appear only at system ends in continuous and paged l
       return { systems: systems.length, count: numbers.length, expected: rows.length,
         labels: rows.map((system, index) => {
           const last = [...system.querySelectorAll('g.measure')].at(-1)!
-          const right = Math.max(...[...last.querySelectorAll('g.barLine path')].map(path => path.getBoundingClientRect().right))
+          const right = Math.max(...[...last.querySelectorAll('g.staff-bar path')].map(path => path.getBoundingClientRect().right))
           const number = numbers[index]
           return { text: number?.textContent?.replace(/\s/g, ''), rightGap: right - (number?.getBoundingClientRect().right ?? 0),
             overlay: number?.parentElement?.parentElement === svg }
@@ -305,17 +303,21 @@ test('row-end measure numbers retain white masks alongside endings in both notat
 
 test('staff volta hooks, separation, and music clearance stay correct', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(await readFile('src/scores/besame_mucho_01.m3n', 'utf8'))
   await selectNotationMode(page, '五线谱')
   const paper = page.locator('.score-paper')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
-  // Bravura changes the line breaks; the second ending now has the continuation.
+  // The second ending continues across systems at this width.
   const continuedEnding = paper.locator('g.ending.id-m3n-ending-2')
   await expect(continuedEnding.locator('.m3n-ending-start-hook')).toHaveCount(1)
 
   // A small fixture guarantees two adjacent endings regardless of library widths.
+  await waitForEditor(page)
+  await page.keyboard.press('Escape')
   await page.getByLabel('M3N source').fill('{4/4}\nN: ||: 1 2 3 4 |\n---V1\nN: 5 6 7 1e :||\n---V2\nN: 5 4 3 1 |||')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+  await waitForEditor(page)
   const brackets = await paper.locator('g.system').evaluateAll(systems => systems.flatMap(system => {
     const endings = [...system.querySelectorAll('g.ending.voltaBracket, g.ending .voltaBracket')]
       .filter(ending => ending.querySelectorAll('path').length >= 3)
@@ -367,8 +369,7 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
   expect(gaps.length).toBeGreaterThan(0)
   for (const { gap, protrusion } of gaps) {
     expect(gap).toBeGreaterThanOrEqual(0)
-    // Allow compact space for the bracket and its label above actual music;
-    // the previous engine's 4.5 CSS-pixel position is not an engraving rule.
+    // The bracket and its label clear the complete row's music.
     expect(gap).toBeLessThanOrEqual(protrusion + 8)
   }
 })

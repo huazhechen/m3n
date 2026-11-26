@@ -1,6 +1,6 @@
 import type { PerformanceElement } from '@m3n/notation'
 
-/** Keep historical whole-event lyric fingerprints independent of tuplet highlighting. */
+/** Aggregate the complete written event interval across tuplet playback slots. */
 export function writtenEventSpans(elements: readonly PerformanceElement[]): PerformanceElement[] {
   const spans: PerformanceElement[] = []
   for (const element of elements) {

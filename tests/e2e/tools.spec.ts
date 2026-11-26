@@ -62,6 +62,7 @@ test('tool index contains only two tool entries and opens child routes', async (
   await expect(page).toHaveURL(/\/tools\/scales$/)
   await expect(page.locator('.harmonica-diagram')).toBeVisible()
   await expect(page.locator('.tools-catalog')).toHaveCount(0)
+  await page.getByRole('link', { name: 'M3N', exact: true }).click()
   await page.getByRole('link', { name: '练琴工具', exact: true }).click()
   await page.getByRole('link', { name: '节拍器', exact: true }).click()
   await expect(page).toHaveURL(/\/tools\/metronome$/)

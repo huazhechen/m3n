@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { openScoreSettings } from './score-settings'
+import { waitForEditor } from './editor-state'
 
 async function selectTone(page: Page, label: string) {
   await openScoreSettings(page)
@@ -7,6 +8,7 @@ async function selectTone(page: Page, label: string) {
   await page.getByRole('dialog', { name: '选择音色', exact: true }).getByRole('button', { name: label, exact: true }).click()
 }
 async function ready(page: Page) {
+  await waitForEditor(page)
   await expect(page.locator('.playback-loading-dialog')).toHaveCount(0, { timeout: 30_000 })
   await expect(page.locator('.control-tone-status')).toHaveCount(0)
 }
@@ -86,10 +88,21 @@ test('saved piano waits for Play and cached playback never opens a loading dialo
 
 test('an uncached tone keeps its dialog through preparation after a fast download', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:playback-tone', 'piano'))
-  let release!: () => void
-  const gate = new Promise<void>(resolve => { release = resolve })
-  await page.route('**/*spessasynth_processor*', async route => { await gate; await route.continue().catch(() => {}) })
+  await page.addInitScript(() => {
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    Object.assign(window, { releaseTonePreparation: () => release() })
+    const NativeContext = window.AudioContext
+    window.AudioContext = class extends NativeContext {
+      constructor(options?: AudioContextOptions) {
+        super(options)
+        const addModule = this.audioWorklet.addModule.bind(this.audioWorklet)
+        this.audioWorklet.addModule = async (...args) => { await gate; return addModule(...args) }
+      }
+    }
+  })
   await page.goto('/scores/huan_le_song_01')
+  await waitForEditor(page)
   await page.getByRole('button', { name: '播放', exact: true }).click()
   try {
     // At this point the sample has downloaded, but the audio engine is still loading.
@@ -99,7 +112,7 @@ test('an uncached tone keeps its dialog through preparation after a fast downloa
     const dialog = page.getByRole('dialog', { name: '加载钢琴音色', exact: true })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByRole('status')).toContainText('正在准备钢琴音色')
-  } finally { release() }
+  } finally { await page.evaluate(() => Reflect.get(window, 'releaseTonePreparation')()) }
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
   await expect(page.locator('.playback-loading-dialog')).toHaveCount(0)
 })
@@ -147,6 +160,7 @@ test('live download and transpose preserve the audio context and transport posit
     }
   })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(`{title=播放切换验证}{4/4}{60qpm}\nN: ${'1 2 3 4 | '.repeat(16)}||`)
   await expect(page.locator('.score-paper')).toContainText('播放切换验证')
   const progress = page.locator('.playback-progress input[aria-hidden="true"]')
@@ -172,7 +186,7 @@ test('live download and transpose preserve the audio context and transport posit
   await pause.click()
 })
 
-test('unknown stored tones use the default, while harmonica is now supported', async ({ page }) => {
+test('stored tones accept harmonica and use the default for unknown values', async ({ page }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('m3n:playback-tone')) localStorage.setItem('m3n:playback-tone', 'unknown') })
   await page.goto('/scores/huan_le_song_01'); await openScoreSettings(page)
   await expect(page.getByRole('button', { name: '选择音色，当前合成', exact: true })).toBeVisible()
@@ -220,6 +234,7 @@ async function auditFinalOutput(page: Page) {
 test('full-volume playback stays audible and compresses dense chords without clipping', async ({ page }) => {
   await auditFinalOutput(page)
   await page.goto('/editor')
+  await waitForEditor(page)
   // Six simultaneous notes expose clipping that single-note playback cannot.
   await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
   await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -236,6 +251,7 @@ for (const label of ['合成', '钢琴', '吉他', '口琴', '小提琴', '长�
   test(`${label} has clear monophonic output after mastering`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
+    await waitForEditor(page)
     await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 - - - | 1 - - - |||')
     if (label !== '合成') { await selectTone(page, label); await ready(page) }
     await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -252,6 +268,7 @@ for (const label of ['钢琴', '吉他', '口琴', '小提琴', '长笛']) {
   test(`${label} dense sampled chords stay below the output ceiling`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
+    await waitForEditor(page)
     await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
     await selectTone(page, label); await ready(page)
     await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -267,11 +284,14 @@ for (const label of ['钢琴', '吉他', '口琴', '小提琴', '长笛']) {
 for (const withNotes of [false, true]) test(`metronome is audible alongside instruments and shares the output ceiling (${withNotes})`, async ({ page }) => {
   await auditFinalOutput(page)
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(withNotes
     ? '{4/4}{120qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||'
     : '{4/4}{120qpm}\nN: 0 - - - | 0 - - - |||')
+  await openScoreSettings(page)
   const metronome = page.getByRole('switch', { name: '节拍器', exact: true })
   if (await metronome.getAttribute('aria-checked') !== 'true') await metronome.click()
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms), { timeout: 10_000 }).toBeGreaterThan(0.2)
   await page.waitForTimeout(1500)

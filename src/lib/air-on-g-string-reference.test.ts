@@ -6,7 +6,7 @@ import categories from '../../config/scorebook/library-categories.json'
 import reference from './fixtures/air-on-g-string-reference.json'
 
 // G-major arrangement: Kuaiyuepu 4bFml142f, corrected against Mutopia
-// BWV1068/bach-air. See docs/AIR_ON_G_STRING_AUDIT_2026-11-26.md.
+// BWV1068/bach-air.
 it('preserves the complete Air arrangement, chromatic notes and simple repeats without breaths', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)

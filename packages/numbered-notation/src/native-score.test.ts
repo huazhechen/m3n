@@ -196,7 +196,7 @@ it('applies the equal-measures source switch and permits an explicit rendering o
 
 it.each([22, 31])('applies a larger minimum clearance at %spx without changing event identities', minimumNoteGap => {
     const source = '{equal-measures=true}\n{4/4}\nN: ' + Array(10).fill('1^^ |').join(' ')
-    const normal = render(source, { width: 600 })
+    const normal = render(source, { width: 600, minimumNoteGap: 8 })
     const spaced = render(source, { width: 600, minimumNoteGap })
     expect(spaced.root.querySelectorAll('g.system').length).toBeGreaterThan(normal.root.querySelectorAll('g.system').length)
     expect([...spaced.root.querySelectorAll('g.note')].map(node => [node.getAttribute('data-m3n-id'), node.textContent]))

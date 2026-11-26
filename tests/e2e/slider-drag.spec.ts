@@ -14,7 +14,7 @@ for (const name of ['播放速度', '乐谱宽度']) {
     await page.mouse.down()
     for (const fraction of [0.5, 0.6, 0.8]) {
       await page.mouse.move(bounds.x + bounds.width * fraction, bounds.y + bounds.height / 2, { steps: 5 })
-      // Exceeds the old 150ms throttle while keeping the pointer held down.
+      // Hold each position long enough to detect an early layout commit.
       await page.waitForTimeout(200)
       expect(await paper.innerHTML()).toBe(before)
     }
@@ -24,6 +24,7 @@ for (const name of ['播放速度', '乐谱宽度']) {
     )
     await page.mouse.up()
     await expect.poll(() => paper.innerHTML()).not.toBe(before)
+    await openScoreSettings(page)
     await expect(slider).toHaveValue(finalValue)
   })
 }

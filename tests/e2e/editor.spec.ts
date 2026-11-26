@@ -1,25 +1,15 @@
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { openScoreSettings, selectNotationMode } from './score-settings'
+import { selectionStart, waitForEditor } from './editor-state'
 
-async function selectionStart(editor: Locator) {
-  return editor.evaluate(element => {
-    const selection = window.getSelection()
-    if (!selection?.rangeCount) return -1
-    const range = selection.getRangeAt(0)
-    const container = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer as Element : range.startContainer.parentElement
-    const line = container?.closest('.cm-line')
-    const lines = [...element.querySelectorAll('.cm-line')]
-    if (!line) return -1
-    const before = document.createRange(); before.selectNodeContents(line); before.setEnd(range.startContainer, range.startOffset)
-    return lines.slice(0, lines.indexOf(line)).reduce((total, item) => total + (item.textContent?.length ?? 0) + 1, 0) + before.toString().length
-  })
-}
 
 const source = '{title=Browser Test}\n{key=C} {4/4} {120qpm}\nN: 1 2 3 4 |||'
 
 test('edits, renders, and maps a score note back to source', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByLabel('M3N source')
+  await waitForEditor(page)
   await editor.fill(source)
 
   const paper = page.locator('.score-paper')
@@ -27,6 +17,7 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   const firstNote = page.locator('.score-paper [id^="m3n-e-"]').first()
   await expect(firstNote).toBeVisible({ timeout: 30_000 })
+  await waitForEditor(page)
   await editor.press('ControlOrMeta+End')
   await expect(page.locator('.score-paper .is-cursor-active-measure')).toHaveCount(1)
   await expect(paper.locator('.is-cursor-active').first()).toBeVisible()
@@ -36,6 +27,7 @@ test('edits, renders, and maps a score note back to source', async ({ page }) =>
 
 test('exposes playback without an export action', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(source)
   const play = page.getByRole('button', { name: '播放', exact: true })
   await expect(play).toBeVisible({ timeout: 30_000 })
@@ -48,10 +40,12 @@ test('exposes playback without an export action', async ({ page }) => {
 
 test('keeps editor width fixed across edits and display changes', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByLabel('M3N source')
   const paper = page.locator('.score-paper')
   const svg = paper.locator('svg[data-engine="m3n"]').first()
   const edit = async (title: string, width: number) => {
+    await waitForEditor(page)
     await editor.fill(`{title=${title}}{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||`)
     await expect(paper).toContainText(title)
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
@@ -77,6 +71,8 @@ test('keeps editor width fixed across edits and display changes', async ({ page 
 
   await openScoreSettings(page)
   await page.getByRole('switch', { name: '分页', exact: true }).click()
+  await waitForEditor(page)
+  await openScoreSettings(page)
   await page.getByRole('button', { name: '还原宽度', exact: true }).click()
   await expect(svg).toHaveAttribute('width', '720')
   await page.keyboard.press('Escape')
@@ -86,6 +82,7 @@ test('keeps editor width fixed across edits and display changes', async ({ page 
 test('renders tied full beats as sustain dashes and maps a dash click to its measure start', async ({ page }) => {
   const source = '{title=Sustain Test}{4/4}\nN: 6~ 6~ 6~ 6 |||\nL: 白'
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByLabel('M3N source')
   await editor.fill(source)
   const paper = page.locator('.score-paper')
@@ -97,6 +94,7 @@ test('renders tied full beats as sustain dashes and maps a dash click to its mea
   await expect(dash.locator('text')).toHaveCount(0)
   // A horizontal SVG line has a zero-height bounding box. Click its painted
   // stroke with the real mouse instead of Playwright's box visibility check.
+  await waitForEditor(page)
   const point = await dash.locator('line').evaluate(line => {
     const box = line.getBoundingClientRect()
     return { x: box.x + box.width / 2, y: box.y }
@@ -107,7 +105,10 @@ test('renders tied full beats as sustain dashes and maps a dash click to its mea
 
 test('highlights numbered notation during playback with tuplets and a bass voice', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{4/4}\nN: [123:2] 4 5 | 6 7 1e 2e |||\nL: 春夏秋冬天 | 山川天地\nB: 1 2 3 4 | 5 6 7 1e |')
+  await expect(page.locator('.score-paper')).toContainText('春')
+  await waitForEditor(page)
   const play = page.getByRole('button', { name: '播放', exact: true })
   await expect(play).toBeVisible({ timeout: 30_000 })
   await play.click()
@@ -180,6 +181,7 @@ test('renders numbered scores and their embedded fonts without loading the staff
 
 test('maps numbered notes and lyrics to source and highlights the repeated verse', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByLabel('M3N source')
   const text = '{2/4} {120qpm}\nN: ||: 1 2 | 3 4 :|||\nL1: 春天来了\nL2: 花开满园'
   await editor.fill(text)
@@ -187,10 +189,11 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
   const note = page.locator('.score-paper #m3n-e-2 text')
   await expect(note).toBeVisible()
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy','true')
+  await waitForEditor(page)
   await note.click()
   await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2'))
-  await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-1"]').first().click()
-  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('1 2'))
+  await page.locator('.score-paper text[data-m3n-role="lyric"][data-m3n-id="m3n-e-3"]').first().click()
+  await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('3 4'))
   await page.getByRole('button', { name: '播放', exact: true }).click()
   await expect(page.locator('.score-paper text[data-m3n-rendition="2"].is-playing').first()).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: '暂停' }).click()
@@ -198,6 +201,7 @@ test('maps numbered notes and lyrics to source and highlights the repeated verse
 
 test('orders numbered annotations above music and maps their clicks back to the source event', async ({ page }) => {
   await page.goto('/editor')
+  await waitForEditor(page)
   const editor = page.getByLabel('M3N source')
   const text = '{4/4}\n===训练{br}\nN: {text=练习说明} {cresc}1{tr} 2 3 4{/} |||'
   await editor.fill(text)
@@ -218,6 +222,7 @@ test('orders numbered annotations above music and maps their clicks back to the 
 test('uses the current numbered layout and includes visible bass in PNG and PDF', async ({ page }, testInfo) => {
   const { readFile } = await import('node:fs/promises')
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill('{title=导出验证} {2/4}\nN: 1 2 | 3 4 |||\nL: 春天来了\nB: 1d 2d | 3d 4d |||')
   await page.getByRole('button', { name: '保存' }).click()
   await expect(page.locator('.score-paper svg[data-engine="m3n"]')).toBeVisible()
@@ -241,6 +246,7 @@ test('uses the current numbered layout and includes visible bass in PNG and PDF'
 test('playback highlights notes without forcing page or source scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/editor')
+  await waitForEditor(page)
   await page.getByLabel('M3N source').fill(`{title=播放滚动验证}{4/4}{240qpm}\n${Array(48).fill('N: 1 2 3 4 |').join('\n---\n')}`)
   await expect(page.locator('.score-paper')).toContainText('播放滚动验证')
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
@@ -267,6 +273,7 @@ test('playback highlights notes without forcing page or source scrolling', async
 for (const mode of ['首调', '固定调', '五线谱'] as const) {
   test(`clicks anywhere in a measure seek and edit at its start in ${mode}`, async ({ page }) => {
     await page.goto('/editor')
+    await waitForEditor(page)
     const editor = page.getByLabel('M3N source')
     await expect(page.locator('.score-paper g.note').first()).toBeVisible()
     await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')

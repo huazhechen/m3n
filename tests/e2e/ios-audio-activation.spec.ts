@@ -37,6 +37,6 @@ for (const tone of ['synth', 'piano']) {
     await page.evaluate(() => (window as unknown as { interruptTestAudio: () => Promise<void> }).interruptTestAudio())
     await page.getByRole('button', { name: '播放', exact: true }).click()
     await expect(page.locator('.score-paper .is-playing')).not.toHaveCount(0)
-    expect(await page.evaluate(() => (window as unknown as { testAudioStates: () => string[] }).testAudioStates())).toEqual(['running'])
+    await expect.poll(() => page.evaluate(() => (window as unknown as { testAudioStates: () => string[] }).testAudioStates())).toEqual(['running'])
   })
 }
