@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { selectNotationMode } from './score-settings'
+import { openScoreSettings, selectNotationMode } from './score-settings'
 
 test('resume skips the interrupted note and keeps the following rest in the cued measure', async ({ page }) => {
   await page.goto('/editor')
+  await expect(page.locator('.score-paper g.note').first()).toBeVisible()
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByLabel('M3N source').fill('{2/4}{120qpm}\nN: 1^ | 0 2 | 3^ |||')
   const notes = page.locator('.score-paper [data-reading-event]')
   await expect(notes).toHaveCount(4)
@@ -22,14 +24,20 @@ test('resume skips the interrupted note and keeps the following rest in the cued
 for (const mode of ['首调', '五线谱'] as const) {
 test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels the cue`, async ({ page }) => {
   await page.goto('/editor')
+  await expect(page.locator('.score-paper g.note').first()).toBeVisible()
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByLabel('M3N source').fill('{4/4}{120qpm}\nN: 0 1 2 3 |||')
+  await expect(page.locator('.score-paper g.note, .score-paper g.rest')).toHaveCount(4)
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await selectNotationMode(page, mode)
   await page.keyboard.press('Escape')
   await expect(page.locator('.score-paper g.note, .score-paper g.rest')).toHaveCount(4)
   const first = page.locator('.score-paper g.note, .score-paper g.rest').first()
   const measure = page.locator('.score-paper g.measure').filter({ has: page.locator('g.note') }).first()
+  await openScoreSettings(page)
   const metro = page.getByRole('switch', { name: '节拍器', exact: true })
   if (await metro.isChecked()) await metro.click()
+  await page.keyboard.press('Escape')
   await page.evaluate(() => {
     const events: { beat: number; at: number }[] = []
     Object.assign(window, { cueEvents: events })
@@ -89,7 +97,7 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
   await expect(page.locator('.startup-beat-highlight')).toHaveCount(0, { timeout: 300 })
   await page.waitForTimeout(1700)
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
-  await expect(page.locator('.score-paper .is-playing')).toHaveCount(0)
+  await expect(page.locator('.score-paper .is-playing')).not.toHaveCount(0)
   await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 0 4 5 6 |||')
   await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByRole('button', { name: '播放', exact: true }).click()
@@ -105,6 +113,8 @@ test(`three tempo pulses color the upcoming measure in ${mode}; pause cancels th
 
 test('highlights the exact top order occurrence across repeated A and local repeats', async ({ page }) => {
   await page.goto('/editor')
+  await expect(page.locator('.score-paper g.note').first()).toBeVisible()
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByLabel('M3N source').fill('{2/4}{240qpm}{order=A,B,A}\n===A\nN: ||: 0 1 :||\n===B\nN: 2 3 |||')
   const order = page.locator('.score-paper [data-m3n-order-index]')
   await expect(order).toHaveCount(3)
@@ -114,11 +124,13 @@ test('highlights the exact top order occurrence across repeated A and local repe
     await expect(page.locator('.score-paper [data-m3n-order-index].is-playing')).toHaveCount(1)
   }
   await page.getByRole('button', { name: '暂停', exact: true }).click()
-  await expect(page.locator('.score-paper [data-m3n-order-index].is-playing')).toHaveCount(0)
+  await expect(page.locator('.score-paper [data-m3n-order-index].is-playing')).toHaveCount(1)
 })
 
 test('shows only one closing measure number per complete rendered music row', async ({ page }) => {
   await page.goto('/editor')
+  await expect(page.locator('.score-paper g.note').first()).toBeVisible()
+  await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
   await page.getByLabel('M3N source').fill('{4/4}\nN: 1 2 3 4 | 2 3 4 5 | {br}3 4 5 6 | 4 5 6 7 |||')
   await page.getByRole('button', { name: '乐谱设置', exact: true }).click()
   const numbers = page.getByRole('switch', { name: '小节号', exact: true })

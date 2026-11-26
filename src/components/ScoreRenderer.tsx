@@ -168,6 +168,9 @@ export function ScoreRenderer({
   const midiRef = useRef<ArrayBuffer | null>(null)
   const isSeekingRef = useRef(false)
   const pendingSeekProgressRef = useRef(0)
+  const playbackProgressRef = useRef(0)
+  const measureSeekTimeRef = useRef<number | null>(null)
+  const restorePlaybackHighlightRef = useRef<() => void>(() => undefined)
   const highlightedElementsRef = useRef<Element[]>([])
   const startupPositionRef = useRef(0)
   const startupBeatRef = useRef<1 | 2 | 3 | null>(null)
@@ -246,6 +249,8 @@ export function ScoreRenderer({
   useEffect(() => {
     const playbackLease = playbackLeaseRef.current
     setSelectedXmlId(null)
+    playbackProgressRef.current = 0
+    measureSeekTimeRef.current = null
     setPlaybackProgress(0)
     setIsPlayRequest(false)
     setToneLoading(false)
@@ -317,7 +322,10 @@ export function ScoreRenderer({
           measure.prepend(area)
         })
         addInvalidMeasureHighlights(paper, invalidMeasureIds)
-        if (startupBeatRef.current !== null) drawStartupBeat(paper, scoreRef.current, startupBeatRef.current, startupPositionRef.current * 1000)
+        const startupBeat = startupBeatRef.current
+        restorePlaybackHighlightRef.current()
+        startupBeatRef.current = startupBeat
+        if (startupBeat !== null) drawStartupBeat(paper, scoreRef.current, startupBeat, startupPositionRef.current * 1000)
         setMessage(message)
         hasRenderedRef.current = true
         setHasAudioControls(true)
@@ -384,12 +392,14 @@ export function ScoreRenderer({
     playerRef.current?.pause()
     setIsPlaying(false)
     clearPlaybackHighlight()
+    restorePlaybackHighlightRef.current()
     scorePlaybackCoordinator.release(playbackLeaseRef.current)
   }
 
   const showStartupBeat = (beat: 1 | 2 | 3 | null, seconds: number) => {
     startupPositionRef.current = seconds
     clearPlaybackHighlight()
+    restorePlaybackHighlightRef.current()
     startupBeatRef.current = beat
     if (beat === null) return
     drawStartupBeat(paperRef.current, scoreRef.current, beat, seconds * 1000)
@@ -397,8 +407,20 @@ export function ScoreRenderer({
 
   const updatePlaybackHighlight = (seconds: number, duration: number, syncProgress = true) => {
     const progress = duration > 0 ? Math.max(0, Math.min(1, seconds / duration)) : 0
-    if (syncProgress) setPlaybackProgress(progress)
-    const timedElements = scoreRef.current?.elementsAtTime(seconds * 1000) ?? []
+    if (syncProgress) {
+      playbackProgressRef.current = progress
+      setPlaybackProgress(progress)
+    }
+    if (progress <= 0 || progress >= 1) {
+      clearPlaybackHighlight()
+      return
+    }
+    // The transport sits 1ms before a clicked boundary to preserve its note-on.
+    // Display the selected first event while the clock remains at that boundary.
+    const selectedTime = measureSeekTimeRef.current
+    const milliseconds = selectedTime !== null && Math.abs(seconds * 1000 - selectedTime) <= 1.01
+      ? selectedTime : seconds * 1000
+    const timedElements = scoreRef.current?.elementsAtTime(milliseconds) ?? []
     const elements = timedElements.flatMap(({ xmlId, rendition, tupletSlot }) => queryPlaybackElements(paperRef.current, xmlId, rendition, tupletSlot))
     const orderIndex = timedElements.find(element => element.orderIndex !== undefined)?.orderIndex
     if (orderIndex !== undefined) elements.push(...paperRef.current?.querySelectorAll(`[data-m3n-order-index="${orderIndex}"]`) ?? [])
@@ -425,8 +447,17 @@ export function ScoreRenderer({
     onActiveXmlId?.(timedElements.map((element) => element.xmlId).find((id) => sourceMap.some((range) => range.xmlId === id)) ?? null)
   }
 
+  restorePlaybackHighlightRef.current = () => {
+    const player = playerRef.current
+    if (player) updatePlaybackHighlight(playbackProgressRef.current * player.duration, player.duration, false)
+  }
+
   const onPlayerTime = (seconds: number, duration: number) => {
-    if (!isSeekingRef.current && startupBeatRef.current === null) updatePlaybackHighlight(seconds, duration)
+    if (!isSeekingRef.current && startupBeatRef.current === null) {
+      // The player clamps a seek to the end just before its final MIDI event.
+      const atEnd = playbackProgressRef.current === 1 && duration - seconds <= 0.00101
+      updatePlaybackHighlight(atEnd ? duration : seconds, duration)
+    }
   }
 
   const activateAudio = () => {
@@ -565,6 +596,7 @@ export function ScoreRenderer({
 
   const previewSeek = (progress: number) => {
     pendingSeekProgressRef.current = progress
+    playbackProgressRef.current = progress
     setPlaybackProgress(progress)
     const player = playerRef.current
     if (player) {
@@ -576,6 +608,7 @@ export function ScoreRenderer({
   const beginSeek = () => {
     if (isSeekingRef.current) return
     isSeekingRef.current = true
+    measureSeekTimeRef.current = null
     pendingSeekProgressRef.current = playbackProgress
     void (async () => { activateAudio(); return getPlayer('synth') })().then((player) => {
       const progress = pendingSeekProgressRef.current
@@ -727,12 +760,21 @@ export function ScoreRenderer({
           if (!target) return
           const { xmlId, playbackId } = target
           setSelectedXmlId(xmlId)
-          const player = playerRef.current
-          if (isPlaying && player && !player.paused && player.duration > 0) {
+          // Initialize only the built-in synth for positioning; selecting a
+          // measure must not start playback or download the chosen sampled tone.
+          const seekToMeasure = (player: SpessaPlayer) => {
             const milliseconds = scoreRef.current?.timeForElement(playbackId) ?? -1
-            // Leave the note-on pending: MIDI's accumulated clock can round
-            // just below the score timestamp and otherwise consume the first note.
-            if (milliseconds >= 0) player.seek(measureSeekProgress(milliseconds, player.duration))
+            if (milliseconds < 0 || player.duration <= 0) return
+            measureSeekTimeRef.current = milliseconds
+            player.seek(measureSeekProgress(milliseconds, player.duration))
+            restorePlaybackHighlightRef.current()
+          }
+          if (playerRef.current) seekToMeasure(playerRef.current)
+          else {
+            activateAudio()
+            void getPlayer('synth').then(seekToMeasure).catch((error: unknown) => {
+              setMessage(error instanceof Error ? error.message : '当前浏览器无法初始化音频。')
+            })
           }
           window.requestAnimationFrame(() => onNoteClick?.(xmlId))
         }}

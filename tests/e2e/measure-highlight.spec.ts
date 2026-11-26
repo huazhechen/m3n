@@ -9,6 +9,8 @@ for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 })
       await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
       await page.goto('/editor')
+      await page.locator('.score-paper g.note').first().waitFor({ state: 'attached' })
+      await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
       await page.getByLabel('M3N source').fill(littleRedRidingHood.replace('108qpm', '240qpm'))
       const preview = page.getByRole('tab', { name: '预览', exact: true })
       if (await preview.isVisible()) await preview.click()
@@ -44,6 +46,8 @@ for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 })
       await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
       await page.goto('/editor')
+      await page.locator('.score-paper g.note').first().waitFor({ state: 'attached' })
+      await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
       await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||\nL: 一二三四五六七八')
       const preview = page.getByRole('tab', { name: '预览', exact: true })
       if (await preview.isVisible()) await preview.click()
@@ -69,7 +73,7 @@ for (const width of [390, 1280]) {
       expect(bounds.bandRight).toBeGreaterThanOrEqual(bounds.noteRight)
       await page.screenshot({ path: info.outputPath('measure-highlight.png') })
       await page.getByRole('button', { name: '暂停', exact: true }).click()
-      await expect(page.locator('.score-paper .is-playing-measure')).toHaveCount(0)
+      await expect(page.locator('.score-paper .is-playing-measure')).toHaveCount(1)
     })
   }
 }

@@ -268,12 +268,19 @@ for (const mode of ['首调', '固定调', '五线谱'] as const) {
   test(`clicks anywhere in a measure seek and edit at its start in ${mode}`, async ({ page }) => {
     await page.goto('/editor')
     const editor = page.getByLabel('M3N source')
+    await expect(page.locator('.score-paper g.note').first()).toBeVisible()
+    await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
+    await expect(page.locator('dialog[open]')).toHaveCount(0)
     const text = '{4/4}{60qpm}\nN: 1 2 3 4 | 0 5 6 7 | 1 2 3 4 |||\nL: 春天来了 花开满园 春天来了'
     await editor.fill(text)
+    await expect(page.locator('.score-paper g.note, .score-paper g.rest')).toHaveCount(12)
+    await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
+    await expect(page.locator('dialog[open]')).toHaveCount(0)
     await selectNotationMode(page, mode)
     await page.keyboard.press('Escape')
     const paper = page.locator('.score-paper')
     await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+    await expect(page.locator('dialog[open]')).toHaveCount(0)
     const measure = paper.locator('g.measure').nth(1)
     const last = measure.locator('g.note, g.rest').last()
     const clickLast = async () => {
@@ -283,13 +290,18 @@ for (const mode of ['首调', '固定调', '五线谱'] as const) {
     }
     await clickLast()
     await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('0 5'))
+    await expect(measure).toHaveClass(/is-playing-measure/)
+    await expect(measure.locator('g.note, g.rest').first()).toHaveClass(/is-playing/)
+    await expect(page.getByRole('slider', { name: '播放位置', exact: true })).toHaveValue('333')
     const area = measure.locator(':scope > .measure-click-area')
     const box = (await area.boundingBox())!
     // The corner is blank score space, away from any note or lyric.
     await page.mouse.click(box.x + box.width - 3, box.y + box.height - 3)
     await expect.poll(() => selectionStart(editor)).toBe(text.indexOf('0 5'))
+    await openScoreSettings(page)
     const metro = page.getByRole('switch', { name: '节拍器', exact: true })
     if (await metro.isChecked()) await metro.click()
+    await page.keyboard.press('Escape')
     await page.getByRole('button', { name: '播放', exact: true }).click()
     await expect(paper.locator('.is-playing').first()).toBeVisible()
     await clickLast()
