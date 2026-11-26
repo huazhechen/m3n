@@ -445,3 +445,14 @@ test('numbered additive score compares cost only after page count', () => {
   assert.equal(chooseBestWidth([candidate(528, 1, .9), candidate(600, 4, .5)]).width, 528)
   assert.equal(chooseBestWidth([candidate(600, 4, .5), candidate(594, 4, .5)]).width, 594)
 })
+
+test('numbered pruning uses the normalized font curve and preserves a 552px winner', async () => {
+  const fontCost = width => 3 * ((width - 528) / 240) ** 2
+  const measure = async width => ({ width, pageCount: 1, rows: 8, outside: [], overlaps: [],
+    fontSizeCost: fontCost(width), totalCost: fontCost(width) + (width === 528 ? .05 : width === 552 ? .01 : 1) })
+  const exhaustive = await selectBestWidth(measure)
+  const pruned = await selectBestWidth(measure, { prune: true })
+  assert.equal(exhaustive.best.width, 552)
+  assert.deepEqual(pruned.best, exhaustive.best)
+  assert(pruned.renderCache.skippedWidths.includes(768))
+})

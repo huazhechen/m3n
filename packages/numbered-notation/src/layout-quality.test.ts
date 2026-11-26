@@ -20,7 +20,7 @@ it('keeps stretch in the break diagnostics without defining the final spacing co
   expect(cost.lineStretchCost).toBeCloseTo(.3125)
   expect(cost.lineUniformityCost).toBeCloseTo(.03125)
   expect(cost.layoutCost).toBeCloseTo(.34375)
-  expect(scoreNumberedCost(1056, [.5, .75]).fontSizeCost).toBe(3)
+  expect(scoreNumberedCost(768, [.5, .75]).fontSizeCost).toBe(3)
   expect(scoreNumberedCost(528, [.5, .75, .5, .75]).layoutCost).toBeCloseTo(cost.layoutCost * 2)
 })
 
@@ -33,4 +33,14 @@ it('balances common physical spaciousness against relative unevenness', async ()
   expect(cost([8, 24]).spacingCost).toBeGreaterThan(cost([15, 15]).spacingCost)
   expect(cost([16, 16, 16, 16]).spacingCost).toBe(cost([16, 16]).spacingCost)
   expect(cost([]).spacingCost).toBe(0)
+})
+
+it('calibrates font loss at the readable and small-font ends of the search range', async () => {
+  const { scoreNumberedFontCost: cost } = await import('./layout-quality.js')
+  expect(cost(528)).toBe(0)
+  expect(cost(552)).toBeCloseTo(.03)
+  expect(cost(744)).toBeCloseTo(2.43)
+  expect(cost(768)).toBe(3)
+  expect(cost(552) - cost(528)).toBeLessThan(.2 ** 2)
+  expect(cost(768) - cost(744)).toBeCloseTo(.57)
 })

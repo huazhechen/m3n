@@ -60,3 +60,19 @@ it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('horizo
     expect(() => layoutNativeScore(document, options, undefined, 1.01)).toThrow('cannot improve')
   }
 }, 60000)
+
+it('reuses width-independent row minima across widths without reusing placed geometry', () => {
+  const document = parseM3NDocument('{4/4}\nN: ' + Array(12).fill('1 2 3 4 |').join(' '))
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  const run = (width: number, minimumNoteGap = 8) => {
+    const timings: Record<string, number> = {}
+    const layout = layoutNativeScore(document, { width, minimumNoteGap, paged: true, pageMargin: 0, layoutTask, textMeasurementCache }, timings)
+    expect(renderNativePages(layout)).toEqual(renderNativePages(layoutNativeScore(document, { width, minimumNoteGap, paged: true, pageMargin: 0 })))
+    return timings
+  }
+  expect(run(720).lineMinimumBuilds).toBeGreaterThan(0)
+  const narrower = run(528)
+  expect(narrower.lineMinimumCacheHits).toBeGreaterThan(0)
+  expect(narrower.lineMinimumBuilds).toBeUndefined()
+  expect(run(528, 16).lineMinimumBuilds).toBeGreaterThan(0)
+})

@@ -156,7 +156,8 @@ function startsNativeSection(current: NativeMeasure, previous?: NativeMeasure): 
 }
 
 /** Break complete measures first, splitting oversized measures at time columns. */
-function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0, timings?: Record<string, number>): { measures: NativeMeasure[]; density: number }[] {
+function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0, timings?: Record<string, number>, rowMinimums?: Map<string, number>): { measures: NativeMeasure[]; density: number }[] {
+  const graphStarted = timings ? performance.now() : 0
   const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
   const candidates: NativeLineCandidate[][] = Array.from({ length: fragments.length }, () => [])
   const ratio = options.wrapWidthRatio ?? 1
@@ -164,6 +165,9 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
     const group = fragments.slice(begin, end)
+    // Unsplit row geometry is independent of page width. Split fragments depend
+    // on the current capacity and deliberately bypass this immutable cache.
+    const cacheable = rowMinimums && group.every(measure => !measure.continuation && measure.lastFragment)
     const availableFor = (start: number) => Math.max(1, width * ratio - leading([group[start]!]))
     for (let index = group.length - 1; index >= 0; index--) {
       const available = availableFor(index)
@@ -171,7 +175,13 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         const count = stop - index + 1
         // Use the same isolated constraint chain as rendering. Prefix differences
         // retain exterior margins and can incorrectly reject a legal extra bar.
-        const minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
+        const key = cacheable ? `${group[index]!.id}:${group[stop]!.id}` : undefined
+        let minWidth = key === undefined ? undefined : rowMinimums!.get(key)
+        if (minWidth === undefined) {
+          minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
+          if (key !== undefined) rowMinimums!.set(key, minWidth)
+          if (timings) timings.lineMinimumBuilds = (timings.lineMinimumBuilds ?? 0) + 1
+        } else if (timings) timings.lineMinimumCacheHits = (timings.lineMinimumCacheHits ?? 0) + 1
         if (minWidth > available && count > 1) break
         // Every row, including the final one, is scored at full width.
         candidates[begin + index]!.push({ end: begin + stop + 1, density: minWidth / available })
@@ -179,11 +189,17 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     }
     begin = end
   }
+  if (timings) {
+    timings.lineCandidateMs = (timings.lineCandidateMs ?? 0) + performance.now() - graphStarted
+    timings.lineCandidateCount = (timings.lineCandidateCount ?? 0) + candidates.reduce((sum, list) => sum + list.length, 0)
+  }
+  const planningStarted = timings ? performance.now() : 0
   const lines: { measures: NativeMeasure[]; density: number }[] = []
   let start = 0
   for (const end of planNativeLines(candidates, timings)) {
     lines.push({ measures: fragments.slice(start, end), density: candidates[start]!.find(row => row.end === end)!.density }); start = end
   }
+  if (timings) timings.linePlanningMs = (timings.linePlanningMs ?? 0) + performance.now() - planningStarted
   return lines
 }
 
@@ -192,7 +208,7 @@ type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | '
   columns: Array<{ minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number }>
 }>
 type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
-  horizontal?: Map<string, HorizontalMinima> }
+  horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>> }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
  * preparation is shared: every candidate/trial still owns its placement state.
@@ -389,7 +405,10 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       && firstByLane.get(relation.last.lane) === relation.last && !glyphs.includes(relation.first))
       .map(relation => nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
   }
-  const lines = breakMeasures(projection.measures, available, options, arcLeading, timings)
+  if (preparation) preparation.rowMinimums ??= new Map()
+  let rowMinimums = preparation?.rowMinimums?.get(horizontalKey)
+  if (preparation && !rowMinimums) preparation.rowMinimums!.set(horizontalKey, rowMinimums = new Map())
+  const lines = breakMeasures(projection.measures, available, options, arcLeading, timings, rowMinimums)
   record('lineBreakMs')
   const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, unitRhythmicGap: nativeUnitRhythmicGap(measures, options, available - arcLeading(measures)), coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   record('horizontalQualityMs')

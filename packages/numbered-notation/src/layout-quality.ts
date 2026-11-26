@@ -21,6 +21,13 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
 
+/** Readability loss grows from zero at the largest font to 3 at the smallest. */
+export function scoreNumberedFontCost(width: number) {
+  const config = scoreLayoutConfig.pageWidth
+  const minimum = config.unit * config.minimumMultiple, maximum = config.unit * config.maximumMultiple
+  return 3 * Math.max(0, (width - minimum) / (maximum - minimum)) ** 2
+}
+
 /** Break diagnostics and font/overflow costs; final physical spacing is scored separately. */
 export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const stretches = densities.map(density => Math.max(0, 1 - density))
@@ -29,8 +36,7 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const lineUniformityCost = stretches.reduce((sum, stretch) => sum + (stretch - mean) ** 2, 0)
   const overflowCost = densities.reduce((sum, density) => sum + 100 * Math.max(0, density - 1) ** 2, 0)
   const layoutCost = lineStretchCost + lineUniformityCost + overflowCost
-  const minimumWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.minimumMultiple
-  const fontSizeCost = Math.max(0, (width / minimumWidth) ** 2 - 1)
+  const fontSizeCost = scoreNumberedFontCost(width)
   return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost }
 }
 

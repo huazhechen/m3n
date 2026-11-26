@@ -1,4 +1,4 @@
-import { scoreHorizontalQuality } from '@m3n/numbered-notation/layout-quality'
+import { scoreHorizontalQuality, scoreNumberedFontCost } from '@m3n/numbered-notation/layout-quality'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
 const config = scoreLayoutConfig.pageWidth
@@ -6,7 +6,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v25`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v26`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -22,9 +22,14 @@ export class WidthSearchPruned extends Error {}
 
 // All horizontal costs are nonnegative. Once a one-page winner exists, font
 // loss alone certifies that a width cannot win. Multi-page winners cannot.
-export const widthQualityUpperBound = width => (widthMinimum / width) ** 2
+export function widthQualityUpperBound(width, numbered) {
+  const legacy = (widthMinimum / width) ** 2
+  const additive = 1 / (1 + scoreNumberedFontCost(width))
+  // Shared averaged scores lack a notation tag: use a bound safe for both.
+  return numbered === true ? additive : numbered === false ? legacy : Math.max(legacy, additive)
+}
 export function widthCannotWin(width, best) {
-  return Boolean(best && best.pageCount === 1 && widthQualityUpperBound(width) < numberedLayoutScore(best))
+  return Boolean(best && best.pageCount === 1 && widthQualityUpperBound(width, best.totalCost !== undefined ? true : undefined) < numberedLayoutScore(best))
 }
 
 export function chooseBestWidth(candidates) {

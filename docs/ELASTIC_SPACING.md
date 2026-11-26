@@ -27,7 +27,7 @@ variance = average(gaps.map(g => (g - mean) ** 2))
 spacingUnevenCost = variance / mean ** 2
 spacingCrampedCost = (16 / mean) ** 2
 spacingCost = spacingUnevenCost + spacingCrampedCost
-fontSizeCost = max(0, (版宽 / 528) ** 2 - 1)
+fontSizeCost = 3 * max(0, (版宽 - 528) / 240) ** 2
 totalCost = spacingCost + fontSizeCost + overflowCost
 ```
 
