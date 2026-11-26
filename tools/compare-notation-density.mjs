@@ -6,18 +6,20 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
 // Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
+// Staff ceilings reflect duration-based natural spacing (see ELASTIC_SPACING.md);
+// lyric/music sizes, ink audits and the numbered optimal-width gate stay fixed.
 const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')
 const coreGap = argument('core-gap') === undefined ? undefined : Number(argument('core-gap'))
 if (coreGap !== undefined && (!Number.isFinite(coreGap) || coreGap < 0)) throw new Error('Invalid core gap')
 const densityLimits = {
   butter_fly_01: { staffHeight: 750, staffRows: 10, numberedHeight: 700, numberedRows: 11, heightRatio: 1.2 },
-  badinerie_bwv1067_01: { staffHeight: 720, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.15 },
-  flower_dance_01: { staffHeight: 2300, staffRows: 30, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.27 },
-  mozart_k545_01: { staffHeight: 2000, staffRows: 23, numberedHeight: 1545, numberedRows: 23, heightRatio: 1.31 },
+  badinerie_bwv1067_01: { staffHeight: 720, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.28 },
+  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.34 },
+  mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.41 },
   guo_huo_01: { staffHeight: 1000, staffRows: 10, numberedHeight: 760, numberedRows: 9, heightRatio: 1.34 },
-  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: 2 },
-  ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3200, staffRows: 42, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.4 },
+  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 1 } },
+  ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.47 },
   ni_shi_wo_xin_ai_de_gu_niang_01: { staffHeight: 1300, staffRows: 10, numberedHeight: 1060, numberedRows: 9, heightRatio: 1.26 },
 }
 if (regression && (['scores', 'widths', 'staff-sizes', 'core-gap'].some(name => argument(name))
@@ -121,7 +123,7 @@ if (process.argv.includes('--bundle-only')) {
         }
         if (regression) {
           const failures = []
-          if (limit.exactRows && [result.staff, result.numbered].some(value => value.rows !== limit.exactRows)) failures.push('automatic phrase rows')
+          if (limit.exactRows && Object.entries(limit.exactRows).some(([notation, rows]) => result[notation].rows !== rows)) failures.push('automatic phrase rows')
           if (limit.together && !['staff', 'numbered'].every(notation => result[notation].measureRows.some(row => limit.together.every(id => row.includes(id))))) failures.push('exercise split across rows')
           if (result.staff.naturalHeight > limit.staffHeight) failures.push('staff continuous height')
           if (result.staff.rows > limit.staffRows) failures.push('staff row count')

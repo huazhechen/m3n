@@ -385,3 +385,24 @@ describe('grace group engraving', () => {
     expect(findAll(drawing, node => node.attributes.class === 'grace-slash')).toHaveLength(2)
   })
 })
+
+it('keeps a natural eighth-note advance independent of beam tightening', async () => {
+  const { staffReadingSpacing } = await import('./staff-engine.js')
+  const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |')
+  const space = staffMusicSize() / 4
+  expect(result.prepared.metrics.columns[0]!.naturalAdvance / space).toBeCloseTo(2.38)
+  expect(result.prepared.metrics.columns[4]!.naturalAdvance / space).toBeCloseTo(3.58)
+  const compressed = staffReadingSpacing(result.prepared, .25, 0)
+  const relaxed = staffReadingSpacing(result.prepared, .25, 100)
+  expect(compressed.compressionPenalty).toBeGreaterThan(0)
+  expect(relaxed.positions[1]! - relaxed.positions[0]!).toBeGreaterThan(compressed.positions[1]! - compressed.positions[0]!)
+  expect(relaxed.compressionPenalty).toBe(0)
+})
+
+it('uses one score-wide spacing basis for ordinary and split measure preparations', async () => {
+  const { createStaffPreparation } = await import('./staff-engine.js')
+  const document = projectStaffDocument(analyzeM3N('{4/4}\nN: ([3333:2]) 3 3 3 | ([3333:2]) 3 3 3 | (3 3) 3 3 3 |').score)
+  const preparation = createStaffPreparation(document)
+  const result = preparation.measure(document.measures[2]!, false, false, measureText)
+  expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(3.58)
+})

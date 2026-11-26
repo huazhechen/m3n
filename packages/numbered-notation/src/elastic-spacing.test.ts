@@ -1,0 +1,59 @@
+import { describe, expect, it } from 'vitest'
+import { solveElasticSprings } from './elastic-spacing.js'
+import { scoreNaturalAdvance, scoreSpacingBasis } from './score-layout-policy.js'
+
+describe('bidirectional spacing springs', () => {
+  const springs = [{ minimum: 10, natural: 20, stretch: 1 }, { minimum: 15, natural: 35, stretch: 2 }]
+  it.each([25, 35, 55, 85])('fits %s units while retaining collision limits', width => {
+    const result = solveElasticSprings(springs, width)
+    expect(result.lengths.reduce((a, b) => a + b, 0)).toBeCloseTo(width, 10)
+    result.lengths.forEach((length, index) => expect(length).toBeGreaterThanOrEqual(springs[index]!.minimum))
+    expect(Math.sign(result.force)).toBe(Math.sign(width - 55))
+  })
+  it('returns natural lengths without force and preserves proportional stretch', () => {
+    expect(solveElasticSprings(springs, 55).lengths).toEqual([20, 35])
+    expect(solveElasticSprings(springs, 85).lengths).toEqual([30, 55])
+  })
+  it('locks compressed springs at their minima and reallocates remaining force', () => {
+    const result = solveElasticSprings([
+      { minimum: 9, natural: 10, stretch: 1, compress: 10 },
+      { minimum: 5, natural: 20, stretch: 1, compress: 1 },
+      { minimum: 7, natural: 7, stretch: 0, compress: 0 },
+    ], 25)
+    expect(result.lengths).toEqual([9, 9, 7])
+    expect(result.force).toBe(-11)
+  })
+  it('keeps strain independent of engraving scale', () => {
+    const small = [{ minimum: .1, natural: .2, stretch: .1 }, { minimum: .15, natural: .35, stretch: .2 }]
+    const original = solveElasticSprings(small, .4)
+    const scaled = solveElasticSprings(small.map(spring => ({ minimum: spring.minimum * 100,
+      natural: spring.natural * 100, stretch: spring.stretch * 100 })), 40)
+    expect(scaled.badness).toBeCloseTo(original.badness, 12)
+    scaled.lengths.forEach((length, index) => expect(length).toBeCloseTo(original.lengths[index]! * 100, 10))
+  })
+  it('reports impossible widths through retained minima, without negative lengths', () => {
+    expect(solveElasticSprings(springs, 1).lengths).toEqual([10, 15])
+    expect(() => solveElasticSprings(springs, NaN)).toThrow()
+    expect(() => solveElasticSprings([{ minimum: 5, natural: 2, stretch: 1 }], 10)).toThrow()
+  })
+})
+
+describe('duration-based natural advances', () => {
+  it('uses the common per-measure shortest duration with a maximum of an eighth', () => {
+    expect(scoreSpacingBasis([[1, 2], [.5, 1], [.5, 2], [.125, 1]])).toBe(.5)
+    expect(scoreSpacingBasis([[.25, 1], [.25, .5], [.5, 1]])).toBe(.25)
+    expect(scoreSpacingBasis([[1, 2]])).toBe(.5)
+    expect(scoreSpacingBasis([])).toBe(.5)
+  })
+  it('selects the same basis independently of measure order, including ties', () => {
+    expect(scoreSpacingBasis([[.25], [.5]])).toBe(.25)
+    expect(scoreSpacingBasis([[.5], [.25]])).toBe(.25)
+  })
+  it.each([[.125, 1.5], [.25, 1.8], [.5, 2.4], [1, 3.6], [2, 4.8], [4, 6]])('gives duration %s a natural advance of %s staff spaces', (duration, expected) => {
+    expect(scoreNaturalAdvance(duration, .5, 1.2, 1.2)).toBeCloseTo(expected, 10)
+  })
+  it('retains actual glyph width and scales without pixel constants', () => {
+    expect(scoreNaturalAdvance(.5, .5, 8.26, 8.4)).toBeCloseTo(16.66)
+    expect(scoreNaturalAdvance(.5, .5, 16.52, 16.8)).toBeCloseTo(33.32)
+  })
+})

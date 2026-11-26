@@ -14,7 +14,7 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const document = projectStaffDocument(score, settings.transpose, settings.includeBass)
   document.measures = document.measures.map(m => ({ ...m, tempo: m.tempo * tempoScale }))
   const measure = textMeasurer(settings.systemCjk)
-  const preparation = createStaffPreparation()
+  const preparation = createStaffPreparation(document)
   const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
   return {
     document, measure, preparation, minimum,

@@ -35,13 +35,13 @@ export type NativeGlyph = {
 }
 export type NativeColumn = {
   time: number; glyphs: NativeGlyph[]; left: number; right: number; x: number
-  minimumStart?: number; minimumEnd?: number
+  minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number
 }
 export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
   breakBefore: boolean; breakAfter: boolean; coreGapBefore?: number; minimum: number; label?: string
   start: number; end: number; continuation: boolean; lastFragment: boolean; number?: number
-  minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
+  minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number; barX?: number; openingBarX?: number
   navigation?: NativeNavigation[]
 }
 export type NativeProjection = { measures: NativeMeasure[]; glyphs: NativeGlyph[]; diagnostics: NativeDiagnostic[]; hasBass: boolean }

@@ -21,12 +21,14 @@ export { lastLineWidth } from './last-line-width.js'
 
 export { scoreLineQuality, scoreHorizontalQuality } from './layout-quality.js'
 export { solveNativeSpacing as solveScoreSpacing } from './native-spacing.js'
-export { distributeSpacingSurplus } from './native-spacing.js'
+export { fitSpacingSprings } from './native-spacing.js'
 export { scoreReadingWindows, type ReadingPoint } from './reading-density.js'
 export { balanceScorePageTail } from './page-tail.js'
 
-export { scoreRhythmicWeight, scoreAttachmentHeight, scoreNavigationGlyphHeight, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from './score-layout-policy.js'
+export { scoreSpacingBasis, scoreNaturalAdvance, scoreRhythmicWeight, scoreAttachmentHeight, scoreNavigationGlyphHeight, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from './score-layout-policy.js'
 
 export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'
 
 export type { LyricWordSyllable } from './lyric-spacing.js'
+
+export { inheritElasticWidth, elasticLineBadness, solveElasticSprings, type SpacingSpring, type ElasticSpacing } from './elastic-spacing.js'

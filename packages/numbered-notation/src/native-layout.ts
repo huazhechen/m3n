@@ -1,3 +1,4 @@
+import { elasticLineBadness } from './elastic-spacing.js'
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeLayoutScore } from './native-quality.js'
@@ -169,18 +170,25 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
       }
     })
     for (let index = group.length - 1; index >= 0; index--) {
-      let minimum = 0, widestMinimum = 0
+      let minimum = 0, widestMinimum = 0, widestNatural = 0
       const available = Math.max(1, width * ratio - leading([group[index]!]))
       for (let stop = index; stop < group.length; stop++) {
         const measure = group[stop]!, count = stop - index + 1
         minimum += measure.minimum
         widestMinimum = Math.max(widestMinimum, measure.minimum)
+        widestNatural = Math.max(widestNatural, (measure.naturalEnd ?? measure.minimumEnd ?? measure.minimum)
+          - (measure.naturalStart ?? measure.minimumStart ?? 0))
         const equal = options.equalMeasures
         let minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        if (boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing)
-          minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
+        const isolated = boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing
+          ? nativeHorizontalSpacing(group.slice(index, stop + 1), options) : undefined
+        if (isolated) minWidth = isolated.minimumWidth
         if (minWidth > available && count > 1) break
-        candidates[index]!.push({ end: stop + 1, density: minWidth / available })
+        const naturalWidth = Math.max(minWidth, isolated?.naturalWidth ?? (equal ? widestNatural * count
+          : (measure.naturalEnd ?? measure.minimumEnd ?? minimum) - (group[index]!.naturalStart ?? group[index]!.minimumStart ?? 0)))
+        candidates[index]!.push({ end: stop + 1, density: minWidth / available,
+          naturalDensity: naturalWidth / available,
+          elasticBadness: elasticLineBadness(minWidth, naturalWidth, available) })
       }
     }
     let index = 0
@@ -191,8 +199,8 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 }
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
-type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | 'minimumEnd'> & {
-  columns: Array<{ minimumStart?: number; minimumEnd?: number }>
+type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | 'minimumEnd' | 'naturalStart' | 'naturalEnd'> & {
+  columns: Array<{ minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number }>
 }>
 type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
   horizontal?: Map<string, HorizontalMinima> }
@@ -378,8 +386,11 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     for (const [index, measure] of projection.measures.entries()) {
       const measured = measuredProjection[index]!
       measure.minimum = measured.minimum
+      measure.naturalStart = measured.naturalStart; measure.naturalEnd = measured.naturalEnd
       measure.minimumStart = measured.minimumStart; measure.minimumEnd = measured.minimumEnd
       for (const [columnIndex, column] of measure.columns.entries()) {
+        column.naturalStart = measured.columns[columnIndex]!.naturalStart
+        column.naturalEnd = measured.columns[columnIndex]!.naturalEnd
         column.minimumStart = measured.columns[columnIndex]!.minimumStart
         column.minimumEnd = measured.columns[columnIndex]!.minimumEnd
       }
@@ -391,7 +402,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       preparation.horizontal ??= new Map()
       preparation.horizontal.set(horizontalKey, projection.measures.map(measure => ({
         minimum: measure.minimum, minimumStart: measure.minimumStart, minimumEnd: measure.minimumEnd,
-        columns: measure.columns.map(column => ({ minimumStart: column.minimumStart, minimumEnd: column.minimumEnd })),
+        naturalStart: measure.naturalStart, naturalEnd: measure.naturalEnd,
+        columns: measure.columns.map(column => ({ minimumStart: column.minimumStart, minimumEnd: column.minimumEnd, naturalStart: column.naturalStart, naturalEnd: column.naturalEnd })),
       })))
     }
   }

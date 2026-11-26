@@ -1,5 +1,5 @@
 /** One legal row starting at its index in the candidate table. */
-export type LineCandidate = { end: number; density: number; readingDensity?: number; penalty?: number }
+export type LineCandidate = { end: number; density: number; readingDensity?: number; penalty?: number; elasticBadness?: number; naturalDensity?: number }
 type Row = LineCandidate & { id: number; cost: number }
 type Plan = { row: Row; cost: number; previous?: Plan }
 const epsilon = 1e-12
@@ -21,7 +21,7 @@ function better(candidate: Plan, current: Plan | undefined) {
 }
 
 function transition(previous: Row, current: Row) {
-  const difference = current.density - previous.density
+  const difference = (current.naturalDensity ?? current.density) - (previous.naturalDensity ?? previous.density)
   return difference * difference
 }
 
@@ -42,8 +42,9 @@ export function planScoreLines(
         id: id++,
         cost:
           (options.rowCost ?? 1) +
-          Math.max(0, 1 - row.density) ** 2 +
-          100 * Math.max(0, Math.max(row.density, row.readingDensity ?? row.density) - 1) ** 2 +
+          (row.elasticBadness === undefined
+            ? Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, Math.max(row.density, row.readingDensity ?? row.density) - 1) ** 2
+            : row.elasticBadness + 100 * Math.max(0, row.density - 1) ** 2) +
           (row.penalty ?? 0),
       }
     }),

@@ -1,3 +1,5 @@
+import { solveElasticSprings } from './elastic-spacing.js'
+
 /** Geometry consumed by the project-owned horizontal solver. All units are px. */
 export type SpacingCell = {
   lane: string
@@ -7,7 +9,10 @@ export type SpacingCell = {
   right: number
   before: number
   after: number
-  /** Relative share of positive justification surplus; defaults to 1. */
+  /** Flexibility and natural extra clearance beyond hard ink reservations. */
+  beforeNatural?: number
+  afterNatural?: number
+  /** Relative share of stretch force; defaults to 1. */
   beforeStretch?: number
   afterStretch?: number
   /** Soft extra clearance beyond this lane's hard ink reservation. */
@@ -19,48 +24,64 @@ export type SpacingCell = {
   placeholderRight?: number
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
-export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number }
+export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number; naturalWidth?: number; compressionPenalty?: number }
 
-/** Spend at most a quarter of the surplus on tight local reading intervals.
- * The rest retains the existing rhythmic springs. All increments are positive,
- * so hard constraints, synchronous voices and the requested width stay intact. */
-export function distributeSpacingSurplus(columns: readonly SpacingColumn[], positions: readonly number[], weights: readonly number[], free: number): number[] {
-  const total = weights.reduce((sum, weight) => sum + weight, 0)
-  if (total <= 0 || free <= 0) return [...positions]
-  let accumulated = 0
-  const cumulative = weights.slice(0, positions.length).map(weight => accumulated += weight)
-  const baseline = positions.map((position, index) => position + free * cumulative[index]! / total)
-  const demands = weights.map(() => 0)
+/** Fit a chain around its natural spacing. Hard-solution distances are
+ * conservative collision limits, including sparse voices and lyric spans.
+ * Both compression and stretch use one force; rigid edges have zero flexibility.
+ */
+export function fitSpacingSprings(columns: readonly SpacingColumn[], positions: readonly number[], weights: readonly number[], free: number) {
+  const natural = weights.map(() => 0)
+  // Natural clearances are notation-owned. Shared voices take the strongest
+  // requirement, never the sum of simultaneous reservations.
+  for (let edge = 0; edge < natural.length; edge++) {
+    const left = columns[edge - 1]?.cells ?? [], right = columns[edge]?.cells ?? []
+    const lanes = new Set([...left, ...right].map(cell => cell.lane))
+    for (const lane of lanes) {
+      const a = left.find(cell => cell.lane === lane), b = right.find(cell => cell.lane === lane)
+      const desired = ((a?.afterNatural ?? 0) + (b?.beforeNatural ?? 0)) / 2
+      natural[edge] = Math.max(natural[edge]!, weights[edge]! > 0 ? desired : 0)
+    }
+  }
+  const cumulative = (values: readonly number[]) => {
+    let sum = 0
+    return values.map(value => sum += value)
+  }
+  // Sparse lyrics may span several time columns. Distribute their natural
+  // demand over that span rather than inventing a hard collision reservation.
+  const increments = cumulative(natural)
   const previous = new Map<string, { index: number; cell: SpacingCell }>()
+  const demands = weights.map(() => 0)
   columns.forEach((column, index) => column.cells.forEach(cell => {
     const prior = previous.get(cell.lane)
-    if (prior && (prior.cell.preferredAfter || prior.cell.preferredAdvance)) {
-      const gap = baseline[index]! - cell.left - cell.before - baseline[prior.index]! - prior.cell.right - prior.cell.after
-      const deficit = Math.max(0, (prior.cell.preferredAfter ?? 0) - gap,
-        (prior.cell.preferredAdvance ?? 0) - (baseline[index]! - baseline[prior.index]!))
-      const span = cumulative[index]! - cumulative[prior.index]!
-      if (span > 0) for (let edge = prior.index + 1; edge <= index; edge++) {
+    if (prior) {
+      const advance = positions[index]! - positions[prior.index]! + increments[index]! - increments[prior.index]!
+      const wanted = Math.max(prior.cell.right + prior.cell.after + cell.left + cell.before + (prior.cell.preferredAfter ?? 0), prior.cell.preferredAdvance ?? 0)
+      const deficit = Math.max(0, wanted - advance)
+      const span = weights.slice(prior.index + 1, index + 1).reduce((sum, weight) => sum + weight, 0)
+      if (span > 0) for (let edge = prior.index + 1; edge <= index; edge++)
         demands[edge] = Math.max(demands[edge]!, deficit * weights[edge]! / span)
-      }
     }
     previous.set(cell.lane, { index, cell })
   }))
-  const needed = demands.reduce((sum, value) => sum + value, 0)
-  const budget = Math.min(free * .25, needed)
-  let adjustment = 0
-  return positions.map((position, index) => {
-    adjustment += needed ? demands[index]! * budget / needed : 0
-    return position + adjustment + (free - budget) * cumulative[index]! / total
+  const springs = natural.map((value, index) => {
+    const minimum = index > 0 && index < positions.length ? positions[index]! - positions[index - 1]! : 0
+    return { minimum, natural: minimum + value + demands[index]!, stretch: weights[index]! }
   })
+  const minimum = springs.reduce((sum, spring) => sum + spring.minimum, 0)
+  const solved = solveElasticSprings(springs, minimum + Math.max(0, free))
+  const additions = cumulative(solved.lengths.map((length, index) => length - springs[index]!.minimum))
+  return { positions: positions.map((position, index) => position + additions[index]!),
+    naturalExtra: solved.natural - minimum, force: solved.force, badness: solved.badness }
 }
 
 /**
- * Place columns at their minimum clearances, then distribute positive surplus.
+ * Measure hard collision limits, then fit natural springs to the requested width.
  * Each voice contributes constraints to the same time-column coordinates.
  * This is deliberately independent of source syntax, SVG and music objects.
  * fillEdges gives free bar-adjacent boundaries weight 1 in positive justification.
  */
-export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
+export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const laneSet = new Set<string>(), sparse = new Set<string>()
@@ -69,7 +90,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     if (cell.sparse) sparse.add(cell.lane)
   }
   const lanes = [...laneSet]
-  if ((!justify || width === Infinity) && !columns.some(column => column.fixedAfter !== undefined)) {
+  if (!fillEdges.natural && (!justify || width === Infinity) && !columns.some(column => column.fixedAfter !== undefined)) {
     // Minimum-width probes need only the running voice ends and the preceding
     // spring weights. Avoid materializing a column × voice matrix for every
     // overlapping line candidate; retain the same lane and arithmetic order.
@@ -136,6 +157,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
           left: Math.max(...occupied.map(({ cell, offset }) => cell.left - offset)),
           right: Math.max(...occupied.map(({ cell, offset }) => offset + cell.right)),
           afterStretch: occupied.at(-1)!.cell.afterStretch,
+          afterNatural: occupied.at(-1)!.cell.afterNatural,
           after: occupied.at(-1)!.cell.after,
           preferredAfter: occupied.at(-1)!.cell.preferredAfter,
           preferredAdvance: occupied.at(-1)!.cell.preferredAdvance === undefined ? undefined
@@ -166,15 +188,20 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     cumulative.push(cumulative[index - 1]! + weight)
   }
   const stretchWeight = cumulative.at(-1)! + (fillEdges.right ? 1 : 0)
-  if (justify && width !== Infinity) {
+  let naturalWidth: number | undefined, compressionPenalty: number | undefined
+  if (fillEdges.natural || justify && width !== Infinity) {
     const left = Math.min(...rows.flatMap((row, i) => row.filter(cell => cell.active !== false).map(cell => positions[i]! - cell.left)))
     const right = Math.max(...rows.flatMap((row, i) => row.filter(cell => cell.active !== false).map(cell => positions[i]! + cell.right)))
     const occupied = right - left
-    const shift = -left, free = Math.max(0, width - occupied)
+    const shift = -left, free = fillEdges.natural ? 0 : Math.max(0, width - occupied)
     const weights = cumulative.map((value, index) => value - (cumulative[index - 1] ?? 0))
     weights.push(fillEdges.right ? 1 : 0)
-    const filled = distributeSpacingSurplus(columns, positions, weights, free)
+    const measured = fitSpacingSprings(columns, positions, weights, free)
+    naturalWidth = occupied + measured.naturalExtra
+    compressionPenalty = measured.force < 0 ? measured.badness : 0
+    const filled = fillEdges.natural
+      ? fitSpacingSprings(columns, positions, weights, measured.naturalExtra).positions : measured.positions
     positions.forEach((_, index) => { positions[index] = filled[index]! + shift })
   }
-  return { positions, minimumWidth, stretchWeight }
+  return { positions, minimumWidth, stretchWeight, ...(naturalWidth === undefined ? {} : { naturalWidth, compressionPenalty }) }
 }

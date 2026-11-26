@@ -15,3 +15,18 @@ it('can supply nearby automatic plans by changing only the soft row cost', () =>
   // A plan cannot invent a row omitted by the collision-feasibility table.
   expect(planScoreLines([[{ end: 1, density: .4 }], [{ end: 2, density: .4 }]], { rowCost: 100 })).toEqual([1, 2])
 })
+
+it('compares compression against stretching over the complete following region', () => {
+  const candidates: LineCandidate[][] = [
+    [{ end: 1, density: .4, naturalDensity: .5, elasticBadness: .6 },
+      { end: 2, density: .8, naturalDensity: 1.1, elasticBadness: .04 }],
+    [{ end: 2, density: .4, naturalDensity: .6, elasticBadness: 0 },
+      { end: 3, density: .8, naturalDensity: 1, elasticBadness: 0 }],
+    [{ end: 3, density: .2, naturalDensity: .3, elasticBadness: 2 }],
+  ]
+  // Keeping two bars on the first line is locally cheaper, but leaves a
+  // severely stretched final line. The full-region optimum moves bar two.
+  expect(planScoreLines(candidates)).toEqual([1, 3])
+  candidates[2]![0]!.elasticBadness = 0
+  expect(planScoreLines(candidates)).toEqual([2, 3])
+})

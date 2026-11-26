@@ -1,3 +1,4 @@
+import { inheritElasticWidth } from './elastic-spacing.js'
 import { scoreRhythmicWeight } from './score-layout-policy.js'
 import { lyricSpacing } from './lyric-spacing.js'
 import { nativeStyle } from './native-style.js'
@@ -54,6 +55,7 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
   const stretch = duration > 0 ? durationScale : 1
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
     beforeStretch: stretch, afterStretch: stretch,
+    beforeNatural: stretch * nativeStyle.music * nativeStyle.naturalClearanceEm, afterNatural: stretch * nativeStyle.music * nativeStyle.naturalClearanceEm,
   }
 }
 
@@ -127,6 +129,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
     if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
+      previous.cell.afterNatural! *= nativeStyle.groupSpacingRatio
+      cell.beforeNatural! *= nativeStyle.groupSpacingRatio
       previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * nativeStyle.groupSpacingRatio
       if (previous.cell.preferredAdvance !== undefined) previous.cell.preferredAdvance *= nativeStyle.groupSpacingRatio
       cell.beforeStretch = (cell.beforeStretch ?? 1) * nativeStyle.groupSpacingRatio
@@ -138,7 +142,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     }
     previousByLane.set(cell.lane, { item, cell })
   }
-  // Reserve only minimum clearance. Surplus is allocated separately by weight.
+  // Hard ink reservations and natural spring clearances are measured separately.
   // Exterior ink stays flush with the line.
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
@@ -229,6 +233,7 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   const items = itemsFor(measures, options)
   const result = solveNativeSpacing(items)
+  const natural = solveNativeSpacing(items, Infinity, false, { natural: true })
   type Selection = { item: HorizontalItem; index: number }
   const byMeasure = new Map<NativeMeasure, Selection[]>()
   const byColumn = new Map<NativeColumn, Selection[]>()
@@ -250,9 +255,13 @@ function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOp
     if (!first || !last) continue
     const left = result.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
     const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
+    measure.naturalStart = natural.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
+    measure.naturalEnd = natural.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
     measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left
     measure.columns.forEach((column, index) => {
       const owned = byColumn.get(column) ?? []
+      column.naturalStart = index === 0 ? measure.naturalStart! : Math.min(...owned.map(({ item, index }) => natural.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
+      column.naturalEnd = index === measure.columns.length - 1 ? measure.naturalEnd! : Math.max(...owned.map(({ item, index }) => natural.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
       column.minimumStart = index === 0 ? measure.minimumStart! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
       column.minimumEnd = index === measure.columns.length - 1 ? measure.minimumEnd! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
     })
@@ -298,28 +307,30 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
 }
 
 export type NativeHorizontalSpacing = {
-  minimumWidth: number; stretchWeight: number
+  minimumWidth: number; stretchWeight: number; naturalWidth?: number
   equalCells?: { count: number; tailRight: number }
 }
 
 /** Measure the exact chain used for placement, including rigid groups, voice
  * placeholders, lyrics and visible boundary ink. Only needed for the last pair. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
-  const items = itemsFor(measures, options), solved = solveNativeSpacing(items)
+  const items = itemsFor(measures, options), solved = solveNativeSpacing(items, Infinity, false, { natural: true })
   if (!options.equalMeasures) return solved
   const ranges = equalMeasureRanges(items)
   if (!ranges.length) return solved
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
   const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
   const tail = ranges.at(-1)!.bar, tailRight = tail === undefined ? 0 : rightOf(tail)
-  const minimumCellWidth = Math.max(...ranges.map((range, index) => {
+  const cellWidths = ranges.map((range, index) => {
     const previous = ranges[index - 1]?.bar
-    return (previous === undefined ? 0 : rightOf(previous))
-      + solveNativeSpacing(items.slice(range.start, range.end)).minimumWidth
+    const outside = (previous === undefined ? 0 : rightOf(previous))
       + (range.bar === undefined ? 0 : leftOf(range.bar))
-  }))
-  return { minimumWidth: minimumCellWidth * ranges.length + tailRight, stretchWeight: solved.stretchWeight,
-    equalCells: { count: ranges.length, tailRight } }
+    const cell = solveNativeSpacing(items.slice(range.start, range.end), Infinity, false, { natural: true })
+    return { minimum: outside + cell.minimumWidth, natural: outside + (cell.naturalWidth ?? cell.minimumWidth) }
+  })
+  return { minimumWidth: Math.max(...cellWidths.map(cell => cell.minimum)) * ranges.length + tailRight,
+    naturalWidth: Math.max(...cellWidths.map(cell => cell.natural)) * ranges.length + tailRight,
+    stretchWeight: solved.stretchWeight, equalCells: { count: ranges.length, tailRight } }
 }
 
 /** Trial the preceding row's spacing, then choose section-ending justification. */
@@ -329,8 +340,7 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     const cellWidth = Math.max(0, previousWidth - previous.equalCells.tailRight) / previous.equalCells.count
     inherited = Math.max(current.minimumWidth, cellWidth * current.equalCells.count + current.equalCells.tailRight)
   } else {
-    const stretch = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
-    inherited = current.minimumWidth + stretch * current.stretchWeight
+    inherited = inheritElasticWidth(current, previous, previousWidth)
   }
   return lastLineWidth(current.minimumWidth, inherited, width,
     current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)

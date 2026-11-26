@@ -43,6 +43,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number): Nativ
       // final fragment and shift the rest of the score's global line plan.
       breakBefore: true, breakAfter: true,
       coreGapBefore: index === 0 ? measure.coreGapBefore : undefined,
+      naturalStart: first.naturalStart, naturalEnd: last.naturalEnd,
       minimumStart: first.minimumStart!, minimumEnd: last.minimumEnd!, minimum: last.minimumEnd! - first.minimumStart! }
   })
 }

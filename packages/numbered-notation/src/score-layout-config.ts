@@ -57,6 +57,7 @@ const numbered = {
   measureNumberPadding: 2,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
   groupSpacingRatio: 0.5,
+  naturalClearanceEm: .25,
   collisionGapRatio: 0.5,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
   defaultPageMargin: 32, minimumWidth: 320, minimumContentWidth: 40,
@@ -76,6 +77,7 @@ const staff = {
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
   music: 40 * staffScale,
+  spacingIncrementSpaces: 1.2,
 
   headerRowGap: 5, headerSideGap: 14, headerBottomGap: 7,
   headerWrapInset: 2, orderTopGap: 12, orderItemGap: 4,

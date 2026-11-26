@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { PreparedNumberedNotationScore, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { prepareStaffScore, prepareStaffMeasurementTask } from './staff-score.js'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
@@ -34,12 +34,18 @@ describe('one staff measurement task', () => {
 })
 
 
-it.each([
-  '5^^ | '.repeat(16),
-  '((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) | '.repeat(8),
-])('allows fewer staff rows for extended sounds and rapid groups without changing music size', async music => {
-  const score = analyzeM3N(`{4/4}\nN: ${music}`).score
+it('allows fewer staff rows for extended sounds without copying numbered sustain slots', async () => {
+  const score = analyzeM3N(`{4/4}\nN: ${'5^^ | '.repeat(16)}`).score
   const numbered = new PreparedNumberedNotationScore(score, { width: 640, pageMargin: 0 })
   const staff = await prepareStaffScore(score, { width: 640 })
   expect(staff.layoutInfo().lines.length).toBeLessThan(numbered.systemCount)
+})
+
+it('breaks rapid groups around natural spacing instead of packing three bars down to collision limits', async () => {
+  const music = '((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) | '.repeat(8)
+  const score = analyzeM3N(`{4/4}\nN: ${music}`).score
+  const size = scoreLayoutConfig.staff.music
+  const staff = await prepareStaffScore(score, { width: 640 })
+  expect(staff.layoutInfo().lines.map(line => line.measures.length)).toEqual([2, 2, 2, 2])
+  expect(scoreLayoutConfig.staff.music).toBe(size)
 })

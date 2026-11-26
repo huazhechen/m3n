@@ -1,4 +1,4 @@
-import { lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { inheritElasticWidth, elasticLineBadness, lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
 import { planScoreLines, type LineCandidate } from '@m3n/notation'
 import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
@@ -33,7 +33,7 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
     const key = `${spacing}:${extra}`
     let penalty = variants.get(key)
     if (penalty === undefined) {
-      penalty = staffReadingSpacing(preparation.measure(measure, false, hasBass, measureText), spacing, extra).reading.penalty
+      penalty = staffReadingSpacing(preparation.measure(measure, false, hasBass, measureText), spacing, extra).compressionPenalty
       variants.set(key, penalty)
     }
     return penalty
@@ -70,7 +70,7 @@ function describeStaffMeasure(measure: StaffMeasure, measureText: MeasureText): 
 }
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
   suppliedMinimum?: StaffMeasureMinimum, rowCost = 1): StaffLine[] {
-  const minimum = suppliedMinimum ?? createStaffMeasureMinimum(document.hasBass, measureText)
+  const minimum = suppliedMinimum ?? createStaffMeasureMinimum(document.hasBass, measureText, createStaffPreparation(document))
   const available = (width - scoreLayoutConfig.staff.contentEdgeInset) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
   const measureOne = (measure: StaffMeasure): MeasuredStaffMeasure => {
@@ -119,9 +119,15 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
         widestReading = Math.max(widestReading, member.reading)
         const minimum = equal ? widest * (stop - start) + group[start]!.head : sum + group[start]!.head
         if (minimum > available && stop > start + 1) break
+        const natural = Math.max(minimum, (equal ? widestReading * (stop - start) : reading) + group[start]!.head)
         result.push({ end: stop, density: minimum / available,
           penalty: localPenalty(group.slice(start, stop), minimum),
-          readingDensity: Math.max(minimum, (equal ? widestReading * (stop - start) : reading) + group[start]!.head) / available })
+          naturalDensity: natural / available,
+          // Retain the staff engine's established resistance to overcrowded
+          // reading spacing, now measured against the duration-based natural
+          // width. Otherwise the per-row cost would always favor compression.
+          elasticBadness: elasticLineBadness(minimum, natural, available)
+            + 100 * Math.max(0, natural / available - 1) ** 2 })
       }
       return result
     })
@@ -138,7 +144,8 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
   const last = lines.at(-1), previous = lines.at(-2)
   if (last && previous) {
     const inherited = equal ? Math.max(last.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * last.measures.length + last.measures[0]!.head)
-      : last.minimum + (previous.weight > 0 ? Math.max(0, previous.target - previous.minimum) / previous.weight : 0) * last.weight
+      : inheritElasticWidth({ minimumWidth: last.minimum, naturalWidth: last.reading, stretchWeight: last.weight },
+        { minimumWidth: previous.minimum, naturalWidth: previous.reading, stretchWeight: previous.weight }, previous.target)
     last.target = lastLineWidth(last.minimum, Math.max(inherited, Math.min(available, last.reading ?? 0)), available, equal ? 0 : last.minimum)
   }
   return lines
