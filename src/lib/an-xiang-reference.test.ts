@@ -92,10 +92,10 @@ it('corrects the chorus melody, restores the distinct lyrics and places every sy
   expect(events(bars[51]!)).toEqual([['6', 4]])
 })
 
-it('uses two eighth-note triplet groups and preserves the approved opening 1', () => {
+it('keeps four half-beat triplet groups and preserves the approved opening 1', () => {
   const tuplets = bars[45]!.events.filter(event => event.kind === 'tuplet')
-  expect(tuplets).toHaveLength(2)
-  expect(tuplets.map(event => [event.pitches.length, event.beats])).toEqual(Array(2).fill([3, 1]))
+  expect(tuplets).toHaveLength(4)
+  expect(tuplets.map(event => [event.pitches.length, event.beats])).toEqual(Array(4).fill([3, .5]))
   expect(events(bars[36]!).slice(0, 1)).toEqual([['1', .25]])
   expect(events(bars[36]!)[0]).toEqual(events(bars[36]!)[8])
 })
@@ -124,10 +124,10 @@ it('plays the simplified melody without extra attacks on the retained sustained 
   }
   // Repeated chord attacks are merged by the approved simplification.
   expect(actual.filter(note => note.start >= 156 && note.start < 159).map(note => note.start)).toEqual([156])
-  expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(1)
+  expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(2)
 })
 
-it('keeps every vocal and introduction pitch and timing, and substantially reduces the interlude note count', () => {
+it('keeps every vocal and introduction pitch and timing, and lightly reduces the interlude note count', () => {
   const beforeDocument = parseM3NDocument(beforeSource)
   const before = compileScorePerformance(beforeDocument), after = compileScorePerformance(document)
   const outsideInterlude = (note: { start: number }) => note.start < 144 || note.start >= 188
@@ -145,7 +145,7 @@ it('keeps every vocal and introduction pitch and timing, and substantially reduc
   const currentInterlude = after.notes.filter(note => !outsideInterlude(note))
   const previousInterlude = before.notes.filter(note => !outsideInterlude(note))
   expect(previousInterlude).toHaveLength(116)
-  expect(currentInterlude).toHaveLength(78)
+  expect(currentInterlude).toHaveLength(100)
   // Every retained pitch comes from the same PDF bar, including its A-key octave.
   const previousBars = beforeDocument.parts.get('score')!.melody.filter(bar => bar.events.length)
   const previousPitches = resolveScorePitches(previousBars), currentPitches = resolveScorePitches(bars)
@@ -163,5 +163,16 @@ it('retains the distinctive final-beat 32nd-note ascent from the uploaded image 
     ['3e', .125], ['6', .125], ['7', .125], ['1#e', .125],
     ['2e', .125], ['3e', .125], ['4#e', .125], ['5#e', .125],
   ])
-  expect(notes.slice(0, -8).reduce((sum, note) => sum + Number(note[1]), 0)).toBe(3)
+  expect(notes.slice(0, -8).reduce((sum, note) => sum + Number(note[1]), 0)).toBeCloseTo(3)
+})
+
+it('limits repeated-note merging to the rhythms explicitly shown in image interlude bars 3–5', () => {
+  // Image bar 3: half note tied to an eighth, followed by three eighths.
+  expect(events(bars[38]!).map(note => note[1])).toEqual([2, .5, .5, .5, .5])
+  expect(bars[38]!.events[0]!.tie).toBe(true)
+  // Image bar 4 sustains the repeated pitch for three beats. Keep the PDF
+  // ornamental final beat, rather than deleting it again.
+  expect(events(bars[39]!).map(note => note[1])).toEqual([3, .75, .125, .125])
+  // Image bar 5: half note, quarter note, two eighths; corrected PDF pitches.
+  expect(events(bars[40]!)).toEqual([['5#ee', 2], ['4#ee', 1], ['3ee', .5], ['2ee', .5]])
 })
