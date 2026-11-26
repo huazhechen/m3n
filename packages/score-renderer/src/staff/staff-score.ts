@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -224,6 +224,24 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
      * Used only against an already valid one-page width in production search. */
     canExceedQuality(minimum: number, candidateWidth = width) {
       return qualityUpperBound(candidateWidth) >= minimum
+    },
+    /** A page contains nonoverlapping stave cores with at least the minimum
+     * lyric-adjusted gap. Ignoring the header, all ink outside those cores and
+     * page insets gives an upper bound on rows per page, hence a lower bound on
+     * pages. This can certify losing multipage candidates before engraving. */
+    canBeatPageQuality(pageCount: number, quality: number, candidateWidth = width) {
+      if (settings.coreGap !== undefined) return pageCount === 1 ? qualityUpperBound(candidateWidth) >= quality : true
+      const coreHeight = scoreLayoutConfig.staff.music
+        + (projected.hasBass ? scoreLayoutConfig.staff.engine.initialBassY * STAFF_SCALE : 0)
+      const gap = minimumGap * scoreLyricGapScale(minimumGap)
+      const capacity = a4SourcePageHeight(candidateWidth) - 2 * margin
+      const rowsPerPage = Math.max(1, Math.floor((capacity + gap + 1e-6) / (coreHeight + gap)))
+      const trials = plans(candidateWidth), baselineRows = trials[0]!.lines.length
+      return trials.some(plan => {
+        if (plan.lines.length > baselineRows) return false
+        const lowerPages = Math.ceil(plan.lines.length / rowsPerPage)
+        return lowerPages < pageCount || lowerPages === pageCount && scoreHorizontalQuality(candidateWidth, plan.quality) >= quality
+      })
     },
     /** Continuous geometry without generating or mounting an SVG candidate. */
     continuousHeight(coreGap = settings.coreGap) {

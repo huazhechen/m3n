@@ -88,7 +88,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       }
       const task = await staffTask(document)
       let render!: StaffRender
-      const candidate = await staffMeasure.measureStaffWidth(document, width, { ...settings, interactive: false }, signal, { auditLayout, task, minimumQuality: best?.pageCount === 1 ? numberedLayoutScore(best) : undefined, onPrepared(value) { render = value } })
+      const candidate = await staffMeasure.measureStaffWidth(document, width, { ...settings, interactive: false }, signal, { auditLayout, task, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined, onPrepared(value) { render = value } })
       if (candidate.pageCount === 1) candidate.naturalHeight = render.continuousHeight()
       const previous = winners.get(document)?.candidate
       if (!sealed.has(document) && !candidate.error && !candidate.outside?.length && !candidate.overlaps?.length

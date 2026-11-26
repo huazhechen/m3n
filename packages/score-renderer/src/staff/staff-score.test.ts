@@ -96,6 +96,11 @@ describe('staff page packing', () => {
       expect(count).toBeGreaterThan(0)
       expect(prepared.layoutInfo(width).pages).toHaveLength(count)
       expect(prepared.pageCount(true, width)).toBe(count)
+      const quality = scoreHorizontalQuality(width, prepared.layoutInfo(width).quality)
+      for (const pages of [1, 2, count]) for (const threshold of [0, .5, 1.01]) {
+        if (!prepared.canBeatPageQuality(pages, threshold, width))
+          expect(count > pages || count === pages && quality < threshold).toBe(true)
+      }
     }
     expect((await prepareStaffScore(score, { width: 550 })).layoutInfo()).toEqual(prepared.layoutInfo(550))
     expect(score).toEqual(before)
