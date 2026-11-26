@@ -17,6 +17,24 @@ describe('line strain against available compression travel', () => {
   })
 })
 
+describe('moderate compression preference', () => {
+  it('preserves natural length, full compression and the unbounded stretch curve', () => {
+    expect(spacingStrainBadness(8, 16, 16, .25)).toBe(0)
+    expect(spacingStrainBadness(8, 16, 8, .25)).toBe(1)
+    expect(spacingStrainBadness(8, 16, 7.99, .25)).toBe(Infinity)
+    for (const width of [16, 20, 24, 160]) expect(spacingStrainBadness(8, 16, width, .25)).toBe(spacingStrainBadness(8, 16, width))
+  })
+  it('eases moderate compression continuously and increasingly penalises tighter gaps', () => {
+    expect(spacingStrainBadness(8, 16, 12, .25)).toBe(.109375)
+    expect(spacingStrainBadness(8, 16, 14, .25)).toBe(.0185546875)
+    const costs = Array.from({ length: 81 }, (_, i) => spacingStrainBadness(8, 16, 16 - i / 10, .25))
+    for (let i = 1; i < costs.length; i++) expect(costs[i]).toBeGreaterThan(costs[i - 1]!)
+    expect(spacingStrainBadness(108, 116, 112, .25)).toBe(.109375)
+    expect(spacingStrainBadness(80, 160, 120, .25)).toBe(.109375)
+    expect(Number.isFinite(spacingStrainBadness(16, 16, 20, .25))).toBe(true)
+  })
+})
+
 describe('bidirectional spacing springs', () => {
   const springs = [{ minimum: 10, natural: 20, stretch: 1 }, { minimum: 15, natural: 35, stretch: 2 }]
   it.each([25, 35, 55, 85])('fits %s units while retaining collision limits', width => {

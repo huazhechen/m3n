@@ -61,11 +61,14 @@ export function elasticLineBadness(minimum: number, natural: number, width: numb
 
 /** Normalize compression and extension by the available spring travel,
  * excluding rigid ink. A line below its collision minimum is never legal. */
-export function spacingStrainBadness(minimum: number, natural: number, width: number): number {
+export function spacingStrainBadness(minimum: number, natural: number, width: number, compressionWeight = 1): number {
   if (width < minimum) return Infinity
   const travel = Math.max(0, natural - minimum)
   if (!travel) return width === natural ? 0 : ((width - natural) / Math.max(1, natural)) ** 2
-  return ((width - natural) / travel) ** 2
+  const squared = ((width - natural) / travel) ** 2
+  // Ease moderate compression while retaining unit cost at the hard minimum.
+  // The default keeps the existing symmetric cost for other callers.
+  return width < natural ? compressionWeight * squared + (1 - compressionWeight) * squared ** 2 : squared
 }
 
 export type ElasticLine = { minimumWidth: number; naturalWidth?: number; stretchWeight: number }

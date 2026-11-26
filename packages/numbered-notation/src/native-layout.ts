@@ -207,11 +207,11 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         const target = Math.max(minWidth, available)
         candidates[index]!.push({ end: stop + 1, density: minWidth / available,
           naturalDensity: naturalWidth / available,
-          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target) })
+          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target, nativeStyle.compressionWeight) })
       }
     }
     let index = 0
-    for (const stop of planNativeLines(candidates, { rowCost: nativeStyle.lineCost })) {
+    for (const stop of planNativeLines(candidates)) {
       lines.push(group.slice(index, stop)); index = stop
     }
     begin = end

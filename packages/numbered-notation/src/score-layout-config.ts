@@ -44,7 +44,8 @@ const numbered = {
   // 固定的自然／最小净空；时值与组内比例由横向引擎换算。
   minimumNoteGap: 8,
   naturalNoteGap: 16,
-  lineCost: 0,
+  // Blend quadratic and quartic compression costs; full compression stays 1.
+  compressionWeight: 0.25,
   // 文字换行行高独立于音乐字号和核心间距。
   titleLineHeight: 36,
   subtitleLineHeight: 18,

@@ -18,7 +18,7 @@ it('scores endings at full width and rejects infeasible rows', () => {
       }
       return rows
     })
-    return planNativeLines(candidates, { rowCost: 0 })
+    return planNativeLines(candidates)
   }
   expect(plan(25, 40)).toEqual([3])
   expect(plan(30, 55)).toEqual([3])
@@ -43,7 +43,7 @@ function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][
 function score(rows: NativeLineCandidate[]) {
   return rows.reduce((sum, row, i) => {
     const difference = i ? row.density - rows[i - 1]!.density : 0
-    return sum + 1 + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
+    return sum + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
       + (row.penalty ?? 0) + difference ** 2
   }, 0)
 }
