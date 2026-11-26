@@ -15,6 +15,17 @@ const layout = (music: string, extra = {}) => layoutNativeScore(parseM3NDocument
 const annotations = (score: ReturnType<typeof layout>) => score.projection.glyphs.flatMap(glyph => glyph.annotationLayout ?? [])
 
 describe('native annotations', () => {
+  it('keeps an opening expression above a nearby continuation without changing their note anchors', () => {
+    const score = layout('{expression=Andante, dolce}1 {expression=legatiss.}2 3 4', { width: 320 })
+    const opening = annotations(score).find(item => item.text === 'Andante, dolce')!
+    const continuation = annotations(score).find(item => item.text === 'legatiss.')!
+    expect(opening.x + opening.width / 2).toBeGreaterThan(continuation.x - continuation.width / 2)
+    expect(opening.top - opening.height).toBeGreaterThan(continuation.top)
+    expect(opening.textX).toBeLessThan(continuation.textX)
+    const bare = layout('1 2 3 4', { width: 320 })
+    expect(score.projection.glyphs.map(glyph => glyph.x)).toEqual(bare.projection.glyphs.map(glyph => glyph.x))
+  })
+
   it('keeps instruction and expression distinct while combining only the expression with tempo', () => {
     const score = layout('1 {60qpm}{text=Switch breath}{expression=Largo}2 3 4')
     const items = annotations(score)

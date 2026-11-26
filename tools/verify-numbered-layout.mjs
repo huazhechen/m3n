@@ -91,6 +91,14 @@ try {
         const overlapsHost = host && Math.min(box.x + box.width, host.x + host.width) > Math.max(box.x, host.x) + 0.5
         if (!host || (overlapsHost && box.y + box.height > host.y + 1)) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
       }
+      if (file === 'ai_de_li_zan_01.m3n') {
+        const opening = annotations.find(node => node.textContent === 'Andante, dolce')
+        const continuation = annotations.find(node => node.textContent === 'legatiss.')
+        const a = opening && inkBounds(opening), b = continuation && inkBounds(continuation)
+        if (!a || !b || a.x < b.x + b.width && b.x < a.x + a.width && a.y + a.height >= b.y) {
+          issues.push({ file, width, paged, expressionOrder: 'opening must remain above the overlapping local continuation' })
+        }
+      }
       if (file === 'ban_yin_jie_kou_qin_ji_ben_gong_01.m3n') {
         for (const [section, instruction] of [['机能训练', '快速吹吸切换'], ['音阶模进训练', '音阶(替代音)']]) {
           const a = inkBounds(annotations.find(node => node.textContent === section))

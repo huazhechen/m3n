@@ -28,7 +28,10 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
   width: number, margin: number, local: boolean, coreTops?: ReadonlyMap<string, number>) {
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
   for (const kind of local ? ['expression', 'text', 'section'] as const : ['chord'] as const) {
-    for (const glyph of glyphs) {
+    // Place later expressions next to the music first, then earlier ones
+    // outside them. A local continuation must not rise above the opening
+    // tempo/expression merely because it occurs later in source order.
+    for (const glyph of kind === 'expression' ? [...glyphs].reverse() : glyphs) {
       const rawText = kind === 'chord' ? glyph.event?.chord : kind === 'text' ? glyph.event?.text : kind === 'expression' ? glyph.event?.expression
         : glyph.event?.sectionLabelBreakAfter ? glyph.event.sectionLabel : undefined
       if (!rawText || !glyph.annotations.includes(rawText)) continue
