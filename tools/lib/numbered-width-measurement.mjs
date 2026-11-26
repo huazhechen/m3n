@@ -27,7 +27,7 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
   if (!auditLayout) {
     const candidate = { width, pageCount: paged ? prepared.pageCount : 1, rows: prepared.systemCount,
       outside: [], overlaps: [], lineDensityVariation: quality.lineDensityVariation,
-      meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingCost: quality.spacingCost,
+      meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingMeanUnevenCost: quality.spacingMeanUnevenCost, spacingWorstUnevenCost: quality.spacingWorstUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingCost: quality.spacingCost,
       lineStretchCost: quality.lineStretchCost, lineUniformityCost: quality.lineUniformityCost,
       layoutCost: quality.layoutCost, fontSizeCost: quality.fontSizeCost, totalCost: quality.totalCost, lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
     if (!paged || prepared.pageCount === 1) {
@@ -59,7 +59,7 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
     const candidate = { width, timings, pageCount: pages.length,
       rows: pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0),
       ...inspectScorePages(pages, timings), lineDensityVariation: quality.lineDensityVariation,
-      meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingCost: quality.spacingCost,
+      meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingMeanUnevenCost: quality.spacingMeanUnevenCost, spacingWorstUnevenCost: quality.spacingWorstUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingCost: quality.spacingCost,
       lineStretchCost: quality.lineStretchCost, lineUniformityCost: quality.lineUniformityCost,
       layoutCost: quality.layoutCost, fontSizeCost: quality.fontSizeCost, totalCost: quality.totalCost, lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
     if (!paged && pages.length === 1) candidate.naturalHeight = pages[0].viewBox.baseVal.height

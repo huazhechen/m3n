@@ -21,11 +21,11 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
 
-/** Readability loss grows from zero at the largest font to 8 at the smallest. */
+/** Readability loss grows from zero at the largest font to 4 at the smallest. */
 export function scoreNumberedFontCost(width: number) {
   const config = scoreLayoutConfig.pageWidth
   const minimum = config.unit * config.minimumMultiple, maximum = config.unit * config.maximumMultiple
-  return 8 * Math.max(0, (width - minimum) / (maximum - minimum)) ** 2
+  return 4 * Math.max(0, (width - minimum) / (maximum - minimum)) ** 2
 }
 
 /** Break diagnostics and font/overflow costs; final physical spacing is scored separately. */
@@ -42,10 +42,13 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
 
 /** Shared physical spacing objective; 16px is common to both minimum tiers. */
 export function scoreNumberedSpacing(gaps: readonly number[]) {
-  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingCrampedCost: 0, spacingCost: 0 }
+  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingCost: 0 }
   const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
   const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
-  const spacingUnevenCost = gaps.reduce((sum, gap) => sum + (gap - meanRhythmicGap) ** 2, 0) / gaps.length / denominator
-  const spacingCrampedCost = 16 ** 2 / denominator
-  return { meanRhythmicGap, spacingUnevenCost, spacingCrampedCost, spacingCost: spacingUnevenCost + spacingCrampedCost }
+  const deviations = gaps.map(gap => (gap - meanRhythmicGap) ** 2 / denominator)
+  const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / gaps.length
+  const spacingWorstUnevenCost = Math.max(...deviations)
+  const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
+  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + (16 / Math.max(Number.EPSILON, gap)) ** 2, 0) / gaps.length
+  return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingCost: spacingUnevenCost + spacingCrampedCost }
 }

@@ -350,7 +350,11 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
 }
 
 /** Trial the preceding row's spacing, then choose section-ending justification. */
-export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: number, previous: NativeHorizontalSpacing, previousWidth: number) {
+export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: number, previous: NativeHorizontalSpacing, previousWidth: number, rhythmicGaps?: { current: number; reference: number }) {
+  // Compare final physical spacing, independently of the selected minimum tier.
+  // A compact preceding row must not make a normal-sized ending look short.
+  if (!current.equalCells && rhythmicGaps && rhythmicGaps.reference > 0
+    && rhythmicGaps.current <= rhythmicGaps.reference * 1.5) return Math.max(current.minimumWidth, width)
   let inherited: number
   if (current.equalCells && previous.equalCells) {
     const cellWidth = Math.max(0, previousWidth - previous.equalCells.tailRight) / previous.equalCells.count

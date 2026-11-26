@@ -40,8 +40,8 @@ export async function search(source, auditLayout = false, prune = false, localRe
   return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks || rowEnvelope ? '-page-bound' : '') + (rowEnvelope ? '-row-envelope-03' : '') }, textMeasureCalls: timings.textMeasureCalls ?? 0,
     textMeasureCacheHits: timings.textMeasureCacheHits ?? 0,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
-    meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingCost: best.spacingCost,
+    meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingMeanUnevenCost: best.spacingMeanUnevenCost, spacingWorstUnevenCost: best.spacingWorstUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingCost: best.spacingCost,
     layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
     outside: best.outside, overlaps: best.overlaps,
-    candidates: result.candidates.map(({ width, pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingCrampedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingCrampedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error })) }
+    candidates: result.candidates.map(({ width, pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error })) }
 }

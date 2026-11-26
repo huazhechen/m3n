@@ -557,6 +557,20 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const startsSection = (current: NativeSystem, previous: NativeSystem) => {
     return startsNativeSection(current.measures[0]!, previous.measures.at(-1))
   }
+  // Reference each section's terminal row to all preceding rows in that section,
+  // rather than to a possibly unusually tight immediate predecessor. This is
+  // horizontal metadata already computed for ranking, so no engraving is repeated.
+  const endingGapReferences = new Map<NativeSystem, number>()
+  let sectionGapSum = 0, sectionGapCount = 0
+  for (const system of systems) {
+    const previous = systems[system.index - 1], next = systems[system.index + 1]
+    if (previous && startsSection(system, previous)) { sectionGapSum = 0; sectionGapCount = 0 }
+    if (!next || startsSection(next, system)) {
+      if (sectionGapCount) endingGapReferences.set(system, sectionGapSum / sectionGapCount)
+    } else if (system.unitRhythmicGap !== undefined) {
+      sectionGapSum += system.unitRhythmicGap; sectionGapCount++
+    }
+  }
   const systemOf = new Map<NativeGlyph, number>()
   const placeSystem = (system: NativeSystem) => {
     const leading = arcLeading(system.measures)
@@ -566,7 +580,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const previous = systems[system.index - 1], next = systems[system.index + 1]
     if (previous && !startsSection(system, previous) && (!next || startsSection(next, system))) {
       width = nativeLastLineWidth(nativeHorizontalSpacing(system.measures, options), width,
-        nativeHorizontalSpacing(previous.measures, options), available - arcLeading(previous.measures))
+        nativeHorizontalSpacing(previous.measures, options), available - arcLeading(previous.measures),
+        system.unitRhythmicGap !== undefined && endingGapReferences.has(system)
+          ? { current: system.unitRhythmicGap, reference: endingGapReferences.get(system)! } : undefined)
     }
     const glyphs = placeNativeHorizontal(system.measures, options, x, width)
     for (const glyph of glyphs) systemOf.set(glyph, system.index)

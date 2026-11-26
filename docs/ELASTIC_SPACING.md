@@ -10,7 +10,7 @@
 
 固定宽度内两档分别生成完整横向候选图，按同一目标求全曲最优断行。候选行使用与渲染相同的独立约束链测量，不再用前缀差分估计行宽。强制换行禁止跨越该边界的候选行，但不截断全曲评分。已分片的不可拆对象仍遵守现有分片边界。
 
-设某行最小占宽为 `M`、可用宽度为 `W`，定义拉伸率 `r = max(0, 1-M/W)`，表示需要填充的宽度占整行的比例，不是间距相对原值的增长倍数。普通行必须满足 `M ≤ W`。末行也按铺满评分；实际绘制时才根据前行的单位权重拉伸量和既有阈值决定是否缩短。定义：
+设某行最小占宽为 `M`、可用宽度为 `W`，定义拉伸率 `r = max(0, 1-M/W)`，表示需要填充的宽度占整行的比例，不是间距相对原值的增长倍数。普通行必须满足 `M ≤ W`。末行也按铺满评分；实际绘制时，普通简谱末行若铺满后的单位节奏净空不超过同节其他行平均值的1.5倍，则撑满；其余情况根据前行的单位权重拉伸量和既有阈值决定是否缩短。等宽小节继续按继承的单元宽度判断。定义：
 
 ```js
 平均拉伸率 = 所有行拉伸率之和 / 行数
@@ -25,11 +25,11 @@
 
 ```js
 mean = average(gaps)
-variance = average(gaps.map(g => (g - mean) ** 2))
-spacingUnevenCost = variance / mean ** 2
-spacingCrampedCost = (16 / mean) ** 2
+deviations = gaps.map(g => ((g - mean) / mean) ** 2)
+spacingUnevenCost = average(deviations) + max(deviations)
+spacingCrampedCost = average(gaps.map(g => (16 / g) ** 2))
 spacingCost = spacingUnevenCost + spacingCrampedCost
-fontSizeCost = 8 * max(0, (版宽 - 528) / 240) ** 2
+fontSizeCost = 4 * max(0, (版宽 - 528) / 240) ** 2
 totalCost = spacingCost + fontSizeCost + overflowCost
 ```
 

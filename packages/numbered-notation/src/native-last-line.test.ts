@@ -17,6 +17,16 @@ describe('short final rows', () => {
     expect(ending.measures.at(-1)!.number).toBe(61)
     expect(ending.measures.at(-1)!.end).toBeCloseTo(672 - pageMargin, 6)
   })
+  it('fills a normal-spaced ending even after an unusually compact preceding row', () => {
+    const ending = { minimumWidth: 320, stretchWeight: 6 }
+    // The old surplus-only rule keeps this at 560/800; physical spacing is
+    // only 40% looser than the section average and should fill the row.
+    expect(nativeLastLineWidth(ending, 800, previous, 800, { current: 28, reference: 20 })).toBe(800)
+    expect(nativeLastLineWidth(ending, 800, previous, 800, { current: 30, reference: 20 })).toBe(800)
+    expect(nativeLastLineWidth(ending, 800, previous, 800, { current: 31, reference: 20 })).toBe(560)
+    expect(nativeLastLineWidth(ending, 800, previous, 800, { current: 28, reference: 0 })).toBe(560)
+  })
+
   it('inherits surplus per rhythm weight without scaling glyphs or minimum clearances', () => {
     expect(nativeLastLineWidth({ minimumWidth: 100, stretchWeight: 2 }, 800, previous, 800)).toBe(180)
   })
