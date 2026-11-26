@@ -3,9 +3,10 @@ import { expect, it } from 'vitest'
 import source from '../scores/g_xian_shang_de_yong_tan_diao_01.m3n?raw'
 import plan from '../../config/scorebook/editorial-plan.json'
 import categories from '../../config/scorebook/library-categories.json'
+import reference from './fixtures/air-on-g-string-reference.json'
 
-// Kuaiyuepu 4bFml142f, checked against its printed G-major score and
-// Mutopia BWV1068/bach-air (D-major violin part; twice the notated speed).
+// G-major arrangement: Kuaiyuepu 4bFml142f, corrected against Mutopia
+// BWV1068/bach-air. See docs/AIR_ON_G_STRING_AUDIT_2026-11-26.md.
 it('preserves the complete Air arrangement, chromatic notes and repeat endings without breaths', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
@@ -40,4 +41,42 @@ it('preserves the complete Air arrangement, chromatic notes and repeat endings w
   expect(categories.find(category => category.id === 'instrumental')?.files).toEqual(
     plan.entries.filter(entry => entry.section === 'instrumental').map(entry => entry.file),
   )
+})
+
+it('matches the reference melody, rhythm and tied attacks with four documented arrangement variants', () => {
+  const document = parseM3NDocument(source)
+  const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length > 0)
+  const pitches = resolveScorePitches(bars)
+  const natural: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }
+  const accidental: Record<string, number> = { '': 0, n: 0, s: 1, f: -1 }
+  const actual: number[][] = []
+  let onset = 0
+  let tied = false
+  // The arrangement writes the final two bars twice as repeat endings.
+  for (const bar of bars.slice(0, 36)) {
+    for (const event of bar.events) {
+      const [name, octave, alteration] = pitches.get(event)![0]!.split(':')
+      const midi = 12 * (Number(octave) + 1) + natural[name!]! + accidental[alteration!]!
+      if (tied) {
+        expect(actual.at(-1)![1]).toBe(midi)
+        actual.at(-1)![2]! += event.beats
+      } else {
+        actual.push([onset, midi, event.beats])
+      }
+      onset += event.beats
+      tied = event.tie
+    }
+  }
+  // Keep the G arrangement's measured ornament / simplified repeated note.
+  // These are editorial variants, not claims that the sources are identical.
+  const variantOnsets = new Set([14, 38.5, 39, 88, 139, 139.5])
+  const expected = reference.notes.filter(note => !variantOnsets.has(note[0]!)).concat([
+    [14, 64, .5], [14.5, 62, 1.5], // bar 4: measured upper appoggiatura
+    [38.5, 69, 1], // bar 10: two repeated eighths combined
+    [88, 71, .25], [88.25, 69, .25], // bar 23: measured B–A ornament
+    [139, 66, .75], [139.75, 67, .25], // bar 35: dotted cadence, trill omitted
+  ]).sort((a, b) => a[0]! - b[0]!)
+  expect(actual).toEqual(expected)
+  expect(bars.slice(36).map(bar => bar.events.map(event => [pitches.get(event), event.beats, event.tie])))
+    .toEqual(bars.slice(34, 36).map(bar => bar.events.map(event => [pitches.get(event), event.beats, event.tie])))
 })
