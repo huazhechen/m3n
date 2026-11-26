@@ -23,7 +23,7 @@ import { fixedDoPitch, fixedDoGrace, transposedNumberedKeyLabel } from './fixed-
 export type NativeDiagnostic = { code: string; message: string; severity: 'warning' | 'error'; sourceStart?: number; sourceEnd?: number }
 export type NativePitch = { degree: string; accidental: string; octave: number }
 export type NativeControl = { kind: 'key' | 'meter' | 'tempo' | 'section' | 'segno' | 'coda'; text: string; keyRows?: NativeKeyRow[]; meterGeometry?: NativeMeterGeometry; tempoGeometry?: NativeTempoGeometry; width: number; anchor: number; top: number; bottom: number; ink: NativeInk[]; x?: number; textInset?: number }
-export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section'; x: number; textX: number; top: number; width: number; height: number; baseline: number }
+export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'expression' | 'section'; x: number; textX: number; top: number; width: number; height: number; baseline: number }
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativeGracePitch[]
@@ -135,7 +135,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           state.key = displayKey; accidentals.clear()
         }
         controls.push(...settingsControls({...event,key:displayKey}))
-        const tempoIndex = event.text ? controls.findIndex(control => control.kind === 'tempo') : -1
+        const tempoIndex = event.expression ? controls.findIndex(control => control.kind === 'tempo') : -1
         const tempoAnnotation = tempoIndex >= 0 ? controls.splice(tempoIndex, 1)[0]!.text : undefined
         const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...(options.fixedDo ? nativeDisplayPitch(fixedDoGrace(pitch,event.key,event.octaveShift,options.transpose)) : numberedPitch(pitch,event.octaveShift)), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
@@ -165,7 +165,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const glyphControls = segment === 0 && slot === 0 ? controls : []
           const glyphMarks = segment === 0 && slot === 0 ? marks : []
           const glyphGraces = segment === 0 && slot === 0 ? graces : []
-          const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
+          const glyphAnnotations = segment === 0 && slot === 0 ? [event.chord, event.text, event.expression, event.sectionLabelBreakAfter ? event.sectionLabel : undefined].filter((value): value is string => Boolean(value)) : []
           const pitchWidth = sustain ? 2 * (nativeStyle.music * .2) + (nativeStyle.music * .09) : textWidth('0', nativeStyle.music, SCORE_NUMBER_FONT)
           const accidentalWidth = sustain ? 0 : Math.max(0, ...pitches.map(pitch => nativeAccidentalAdvance(pitch.accidental, nativeStyle.music, options.textMeasurer)))
           const durationBase = 2 ** Math.floor(Math.log2(writtenBeats))

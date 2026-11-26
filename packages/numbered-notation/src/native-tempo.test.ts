@@ -17,10 +17,10 @@ const unusual: TextMeasurer = { measureText(text, style) {
 
 describe('numeric tempo labels', () => {
   it('combines simultaneous direction and tempo above the music, preserving playback', () => {
-    const document = parseM3NDocument('{4/4}{120qpm}\nN: 1 2 | {60qpm}{text=Meno, quasi lento}3 4 |||')
+    const document = parseM3NDocument('{4/4}{120qpm}\nN: 1 2 | {60qpm}{expression=Meno, quasi lento}3 4 |||')
     const performance = compileScorePerformance(document)
     const layout = layoutNativeScore(document, { width: 528, paged: false })
-    const glyph = layout.projection.glyphs.find(g => g.event?.text === 'Meno, quasi lento')!
+    const glyph = layout.projection.glyphs.find(g => g.event?.expression === 'Meno, quasi lento')!
     expect(glyph.controls.some(control => control.kind === 'tempo')).toBe(false)
     expect(glyph.annotationLayout?.map(a => a.text)).toContain('Meno, quasi lento (60 BPM)')
     expect(compileScorePerformance(document)).toEqual(performance)

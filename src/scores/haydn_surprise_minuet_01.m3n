@@ -4,7 +4,7 @@
 {composer=海顿}
 {arranger=David Blackwell}
 {key=G} {3/4} {132qpm}
-N: {f}{lg}(1 2){/} | {lg}3 1{/} 5 | {lg}3 1{/} 1e | {lg}7 5{/} 4 | 2e 0 {lg}(5d 6d){/} |
+N: {expression=Allegro molto}{f}{lg}(1 2){/} | {lg}3 1{/} 5 | {lg}3 1{/} 1e | {lg}7 5{/} 4 | 2e 0 {lg}(5d 6d){/} |
 ---
 N: {lg}7d 5d{/} 2 | {lg}7d 5d{/} 4 | {lg}3 1{/} 1 | 1e 0 {mp}{lg}(1 2){/} | {lg}3 2 3{/} | 4^. |
 ---

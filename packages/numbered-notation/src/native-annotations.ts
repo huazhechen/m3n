@@ -27,12 +27,12 @@ export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, pai
 export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegion[], measurer: TextMeasurer,
   width: number, margin: number, local: boolean, coreTops?: ReadonlyMap<string, number>) {
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
-  for (const kind of local ? ['text', 'section'] as const : ['chord'] as const) {
+  for (const kind of local ? ['expression', 'text', 'section'] as const : ['chord'] as const) {
     for (const glyph of glyphs) {
-      const rawText = kind === 'chord' ? glyph.event?.chord : kind === 'text' ? glyph.event?.text
+      const rawText = kind === 'chord' ? glyph.event?.chord : kind === 'text' ? glyph.event?.text : kind === 'expression' ? glyph.event?.expression
         : glyph.event?.sectionLabelBreakAfter ? glyph.event.sectionLabel : undefined
       if (!rawText || !glyph.annotations.includes(rawText)) continue
-      const text = kind === 'text' && glyph.tempoAnnotation ? `${rawText} (${glyph.tempoAnnotation})` : rawText
+      const text = kind === 'expression' && glyph.tempoAnnotation ? `${rawText} (${glyph.tempoAnnotation})` : rawText
       const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
       const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT })
       const inkLeft = framed ? Math.min(0, metrics.inkLeft ?? 0) : metrics.inkLeft ?? 0

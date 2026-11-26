@@ -84,7 +84,7 @@ describe('staff layout contract', () => {
   })
 
   it('keeps text and numeric tempo in one movable group on the same line', () => {
-    const document = projectStaffDocument(analyzeM3N('{4/4}{120qpm}\nN: {text=Largo}1 2 {60qpm}{text=Meno, quasi lento}3 4 |||').score)
+    const document = projectStaffDocument(analyzeM3N('{4/4}{120qpm}\nN: {expression=Largo}1 2 {60qpm}{expression=Meno, quasi lento}3 4 |||').score)
     const measure = textMeasurer(), lines = planStaffLines(document, 528, false, measure, .25)
     const node = engraveStaffSystems(document, lines, 528, measure, .25, false)[0]!.node
     const geometry = new SvgGeometry(node, measure)
@@ -119,7 +119,7 @@ describe('staff layout contract', () => {
   })
 
   it.each([528, 768])('keeps combined tempo above explicit 8va on the initial and continuation systems at %s', width => {
-    const document = projectStaffDocument(analyzeM3N('{4/4}{60qpm}\nN: {8va}{text=Lento}1e 2e 3e 4e | {br}{72qpm}{text=Meno}5e 6e 7e 1ee{/} |||').score)
+    const document = projectStaffDocument(analyzeM3N('{4/4}{60qpm}\nN: {8va}{expression=Lento}1e 2e 3e 4e | {br}{72qpm}{expression=Meno}5e 6e 7e 1ee{/} |||').score)
     const measure = textMeasurer(), lines = planStaffLines(document, width, false, measure, .25)
     const systems = engraveStaffSystems(document, lines, width, measure, .25, false)
     expect(systems).toHaveLength(2)

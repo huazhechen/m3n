@@ -136,7 +136,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         // Initial rests defer a direction to the first sounding event in the
         // document. Keep its opening tempo caption together at the bar start.
         const openingDirectionIndex = member.measure.showTempo && firstSoundingIndex >= 0
-          && melodyEntries[firstSoundingIndex]!.item.event.text
+          && melodyEntries[firstSoundingIndex]!.item.event.expression
           && melodyEntries.slice(0, firstSoundingIndex + 1).every(entry => entry.item.event.tempo === melodyEntries[0]!.item.event.tempo)
           ? firstSoundingIndex : -1
         for (const [lane, entries] of model.entries.entries()) {
@@ -171,14 +171,15 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               }
             })
             const event = item.event
-            if (!(item.chord || event.text || event.sectionLabel || event.dynamic || event.prefix || event.navigation.length ||
+            if (!(item.chord || event.text || event.expression || event.sectionLabel || event.dynamic || event.prefix || event.navigation.length ||
               event.postfixes.some(value => /^f[1-5]$/.test(value)))) continue
             const cx = entry.notes[0]!.headLeft
             const top = Math.min(...entry.notes.flatMap(n => n.ys)) - engine.attachmentTopGap
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
             const combinedTempo = lane === 0 && (entryIndex === openingDirectionIndex
               || entryIndex > 0 && event.tempo !== undefined && event.tempo !== entries[entryIndex - 1]!.item.event.tempo)
-            if (event.text && !combinedTempo) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
+            if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
+            if (event.expression && !combinedTempo) measureNode.children.push(wrap(event.expression, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
             if (event.dynamic || event.prefix) {
               const value = event.dynamic ?? event.prefix!
@@ -194,12 +195,12 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           }
         }
         for (const nav of member.measure.source.navigation ?? []) addNavigation(nav, x + target - engine.navigationBarInset, engine.navigationY, measureNode)
-        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode, melodyEntries[openingDirectionIndex]?.item.event.text)
+        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode, melodyEntries[openingDirectionIndex]?.item.event.expression)
         for (const [i, entry] of model.entries[0]!.entries()) {
           const previous = model.entries[0]![i - 1]?.item.event.tempo
           const event = entry.item.event
           if (i > 0 && event.tempo !== undefined && event.tempo !== previous)
-            addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.headLeft, measureNode, event.text)
+            addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.headLeft, measureNode, event.expression)
         }
         if (member.measure.source.multiRest || member.measure.source.interlude) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = (model.staves[0]!.y + (staffMusicSize() * 1.5))

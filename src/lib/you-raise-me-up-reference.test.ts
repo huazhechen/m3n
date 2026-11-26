@@ -71,7 +71,7 @@ it('uses the requested common verse melody, image notes, Eb/E/F keys and final w
   expect(bars.flatMap((bar, index) => bar.events.flatMap((event, position) => event.tie ? [[index, position]] : []))).toEqual([])
   expect(document.intervals.filter(interval => interval.kind === 'lg').map(interval => [interval.start, interval.endStart]))
     .toEqual([[bars[12]!.events[3]!.sourceStart, bars[12]!.events[4]!.sourceStart]])
-  expect(source).toContain('{text=rit.}')
+  expect(source).toContain('{expression=rit.}')
 })
 
 it('plays both verses, the E-major chorus, the F-major return and the coda exactly once', () => {

@@ -5,7 +5,7 @@
 // 泛音段以单音及显式8va记实音，书写降低八度；速度数值为播放设置。
 // Largo
 {key=Dm} {4/4} {60qpm}
-N: {text=Largo}0^ (0 3d) (4d 3d) |
+N: {expression=Largo}0^ (0 3d) (4d 3d) |
 ---
 N: 3^~ (3 1) (1 2) |
 ---
@@ -41,7 +41,7 @@ N: ((4 3 3 2)) ((2 1 1 7d)) 3. (7d) |
 N: (7d 6d) (6d 5#d) 6d 0 :||
 ---
 // Allegro vivo
-N: {key=Dm} {2/4} {144qpm} ||: {text=Allegro vivo}(6 6e) (0 4e) |
+N: {key=Dm} {2/4} {144qpm} ||: {expression=Allegro vivo}(6 6e) (0 4e) |
 ---
 N: (0 3e) (0 1e) |
 ---
@@ -107,7 +107,7 @@ N: (7) 6 (5#) |
 N: 6 0 :||
 ---
 // Molto meno
-N: {key=D} {2/4} {72qpm} {text=Molto meno}1ee (5e. (5e)) |
+N: {key=D} {2/4} {72qpm} {expression=Molto meno}1ee (5e. (5e)) |
 ---
 N: (6e 5e) (4e 3e) |
 ---
@@ -140,7 +140,7 @@ N: (2e 1e) (1e 7) |
 N: 1e 0 |
 ---
 // Meno, quasi lento · 泛音旋律（实音）
-N: {key=D} {2/4} {66qpm} {text=Meno, quasi lento}{8va}1ee (5e. (5e)) |
+N: {key=D} {2/4} {66qpm} {expression=Meno, quasi lento}{8va}1ee (5e. (5e)) |
 ---
 N: (6e 5e) (4e 3e) |
 ---
@@ -173,7 +173,7 @@ N: (2e 1e) (1e 7) |
 N: 1e^{fermata}{/} |
 ---
 // Allegro vivace
-N: {key=Dm} {2/4} {152qpm} {text=Allegro vivace}((5 4# 5 7)) ((2e 4e 2e 7)) |
+N: {key=Dm} {2/4} {152qpm} {expression=Allegro vivace}((5 4# 5 7)) ((2e 4e 2e 7)) |
 ---
 N: ((5 4# 5 7)) ((2e 4e 2e 7)) |
 ---
@@ -202,7 +202,7 @@ N: ((3 4# 5# 6)) ((7 1e 2e 3e)) |
 N: ((4e 3e 2#e 3e)) ((2=e 3e 4#e 5#e)) |
 ---
 // Allegretto
-N: {key=D} {2/4} {120qpm} {text=Allegretto}(1ee 0) 0 |
+N: {key=D} {2/4} {120qpm} {expression=Allegretto}(1ee 0) 0 |
 ---
 N: 0^ |
 ---
@@ -238,7 +238,7 @@ N: (5e) 5e (5e~) |
 ---
 N: (5e) 5e (5) |
 ---
-N: {168qpm}{text=a tempo più presto}(1e) 1ee (6e~) |
+N: {168qpm}{expression=a tempo più presto}(1e) 1ee (6e~) |
 ---
 N: (6e) 5e (3e) |
 ---
@@ -254,7 +254,7 @@ N: (3e) 2e (1#e) |
 ---
 N: 2e~ (2e 0) |
 ---
-N: {184qpm}{text=Molto più vivo}((4e 5e 6e 5e)) ((4e 5e 6e 5e)) |
+N: {184qpm}{expression=Molto più vivo}((4e 5e 6e 5e)) ((4e 5e 6e 5e)) |
 ---
 N: ((4e 5e 6e 5e)) ((4e 6e 5e 4e)) |
 ---

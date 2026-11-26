@@ -21,6 +21,7 @@ export type ScoreEvent = {
   chord?: string
   prefix?: 'sfz'
   text?: string
+  expression?: string
   postfixes: string[]
   navigation: PlaybackNavigation[]
   octaveShift: number

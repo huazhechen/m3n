@@ -165,8 +165,8 @@ function convertTag(content: string, diagnostics: string[]) {
   if (name === '1') return `{key=${normalizeKey(value)}}`
   if (name === 'p' || name === 'mf' || name === 'ff' || name === 'f' && !value) return `{${name}}`
   if (name === 'sf') return '{sfz}'
-  if (name === 'dim') return '{text=dim.}'
-  if (name === 'cresc') return '{text=cresc.}'
+  if (name === 'dim') return '{expression=dim.}'
+  if (name === 'cresc') return '{expression=cresc.}'
   if (name === 'S' || name === 'start') return '{segno}'
   if (name.toLowerCase() === 'dc') return '{dc}'
   if (name.toLowerCase() === 'ds') return '{ds}'

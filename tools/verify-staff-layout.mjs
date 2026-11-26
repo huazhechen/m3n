@@ -20,12 +20,12 @@ const inputs = ['scores', 'works']
   )
   .filter((item) => selected(item.file))
 const fixtures = [
-  { file: 'fixture/tempo-caption', source: '{4/4}{120qpm}\nN: {text=Largo}0^ (0 1) 2 | {60qpm}{text=Meno}3 4 5 6 | 1 {90qpm}{text=Allegro}2 3 4 |||' },
-  { file: 'fixture/octave-tempo', source: '{4/4}{60qpm}\nN: {8va}{text=Lento}1e 2e 3e 4e | {br}{72qpm}{text=Meno}5e 6e 7e 1ee{/} |||' },
+  { file: 'fixture/tempo-caption', source: '{4/4}{120qpm}\nN: {expression=Largo}0^ (0 1) 2 | {60qpm}{expression=Meno}3 4 5 6 | 1 {90qpm}{expression=Allegro}2 3 4 |||' },
+  { file: 'fixture/octave-tempo', source: '{4/4}{60qpm}\nN: {8va}{expression=Lento}1e 2e 3e 4e | {br}{72qpm}{expression=Meno}5e 6e 7e 1ee{/} |||' },
   { file: 'fixture/metronome-beats', source: '{4/4}{120qpm}\nN: 1 2 3 4 | {3/8}{96qpm}(1 2 3) | {6/8}{72qpm}(1 2 3 4 5 6) |||' },
   { file: 'fixture/tie-meter', source: '{key=B}{9/8}\nN: 0 0 0 (7d 7d 2~) | {6/8}(2) 1~ 1. |||' },
-  { file: 'fixture/joined-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },
-  { file: 'fixture/split-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| {br} ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },
+  { file: 'fixture/joined-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| ||: {2/4}{144qpm}{expression=Allegro vivo}1 2 | 3 4 :||' },
+  { file: 'fixture/split-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| {br} ||: {2/4}{144qpm}{expression=Allegro vivo}1 2 | 3 4 :||' },
   { file: 'fixture/tuplet-groups', source: '{4/4}\nN: (([1 2 3:2]) ([4 5 6:2])) 1 2 3 | ([1 2 3 4 5:3]) 1 2 (3) | 1 2 3 ([0 0 3d:2]) |||' },
   { file: 'fixture/arpeggio-graces', source: '{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |||' },
   { file: 'fixture/bass-slur', source: '{4/4}\nN: 1e 2e 3e 4e |||\nB: {lg}1d 2d 3d 4d{/} |' },
@@ -83,11 +83,26 @@ for (const input of [...fixtures.filter(item => selected(item.file)), ...inputs]
     )
     entries.push({ file: input.file, ...result })
     console.log(input.file, result.pageCount, result.outside.length, result.overlaps.length)
-    if(result.outside.length||result.overlaps.length||screenshots){
+    if(result.outside.length||result.overlaps.length||screenshots||input.file.includes('ban_yin_jie_kou_qin_ji_ben_gong')){
       const svgs=await page.evaluate(({source,width,measureNumbers,settings})=>window.staffWidths.preview(source,width,{...settings,measureNumbers}),{...input,width,measureNumbers})
       const name=input.file.replaceAll('/','_')
       svgs.forEach((svg,i)=>writeFileSync(join(output,`${name}-${i+1}.svg`),svg))
       await page.screenshot({path:join(output,`${name}.png`),fullPage:true})
+      if (input.file.includes('ban_yin_jie_kou_qin_ji_ben_gong')) {
+        const order = await page.evaluate(() => {
+          const instruction = [...document.querySelectorAll('g.dir')].find(node => node.textContent === '快速吹吸切换')
+          const system = instruction?.closest('g.system')
+          const heading = [...system?.querySelectorAll('g.reh') ?? []].find(node => node.textContent === '机能训练')
+          const note = system?.querySelector('g.note')
+          const tempo = system?.querySelector('g.tempo')
+          if (!instruction || !heading || !note || !tempo || tempo.textContent.includes('快速吹吸切换')) return { ok: false, found: [!!instruction, !!heading, !!note, !!tempo] }
+          const boxes = [tempo, heading, instruction, note].map(node => node.getBoundingClientRect())
+          // Browser boxes include Bravura's full font ascent; use their centers
+          // for order and the independent painted-ink audit for collisions.
+          return { ok: boxes.slice(1).every((box, index) => boxes[index].top + boxes[index].bottom < box.top + box.bottom), boxes: boxes.map(box => ({ top: box.top, bottom: box.bottom })) }
+        })
+        if (!order.ok) throw new Error(`Practice instruction must stay between its section heading and first music, separate from tempo: ${JSON.stringify(order)}`)
+      }
     }
   } catch (error) {
     entries.push({ file: input.file, error: String(error) })

@@ -484,8 +484,8 @@ function validateBody(
         if (bass) diagnostics.push(lineMessage(token, '低音谱表内不能使用 br'))
         continue
       }
-      if (name === 'text') {
-        if (value.length === 0) diagnostics.push(lineMessage(token, 'text 的值不能为空'))
+      if (name === 'text' || name === 'expression') {
+        if (value.length === 0) diagnostics.push(lineMessage(token, `${name} 的值不能为空`))
         continue
       }
 

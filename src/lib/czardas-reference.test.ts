@@ -55,7 +55,7 @@ it('keeps the original three repeats and the complete D-minor/D-major form as a 
   }
   expect(document.subtitle).toBe('Csárdás')
   expect(source).not.toContain('延长休止')
-  expect([...source.matchAll(/\{text=([^}]+)\}/g)].map(match => match[1])).toEqual([
+  expect([...source.matchAll(/\{expression=([^}]+)\}/g)].map(match => match[1])).toEqual([
     'Largo', 'Allegro vivo', 'Molto meno', 'Meno, quasi lento',
     'Allegro vivace', 'Allegretto', 'a tempo più presto', 'Molto più vivo',
   ])

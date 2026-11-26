@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "7269e264615d5a82d35ffb88d2c0716a242b290e99ead8d8992d60025c279911",
+  "rendererSha256": "928fe616dc41ced9637aa211076648f1b10198e203ef78eff8f77a5f0f937a4d",
   "fontManifestSha256": "505d575321bc2346ef8eecd82ed70b5e3397ce0467f177c4a3d40b9d07456458",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -10,7 +10,7 @@
       "fontSha256": "baea280eec694545d836e45959bb674e4b0a024fc7f1c973c59893d110e47dd0"
     },
     "src/scores/ai_de_li_zan_01.m3n": {
-      "sourceSha256": "2d3988cc9894fc253f1e78b3b7ae326c32c3fa0c9b60934015fb22d6505904e9",
+      "sourceSha256": "caa5430d8ed2a9606d6e0138eef5bf7a2ef48d37067282bc12d3e64c3ceb2853",
       "font": "NotoSansSC-ca0432d08f84d00a.ttf",
       "fontSha256": "b21999e4581da004694cb5c3e8eb3adedee276fa546a007c3836d2dc83091317"
     },
@@ -130,7 +130,7 @@
       "fontSha256": "0e9adb64a2ca3c7184e076f6da3ab4f76f8cb202f1c6c12bbee83b21596e9efb"
     },
     "src/scores/haydn_surprise_minuet_01.m3n": {
-      "sourceSha256": "2b4fdfe9f5c08f6f00884e684c5bfea26b97d56590641304fc67c3cc0876fdc7",
+      "sourceSha256": "cf8d8de90014a64d9afc2ebbc855fbad14ebcb49b334479527b2624b2f794d3a",
       "font": "NotoSansSC-231401200ed1456b.ttf",
       "fontSha256": "e3b79f5b612cfdbe84ddff19a91025e69df27772d34018eb65760086b7385f49"
     },
@@ -215,7 +215,7 @@
       "fontSha256": "44bc55c4ac38d5611fbba22347a640be9344cf41e99b1d53e4a10f84a4f3f071"
     },
     "src/scores/meng_huan_qu_01.m3n": {
-      "sourceSha256": "037d6d887882d244c94279fd822bc2dc772b5c0e44a24bf84311c6851504645b",
+      "sourceSha256": "da3ff14faa70378b38b3640630bbf46229855b887d05fecda82131d6a709aedc",
       "font": "NotoSansSC-8bfac3f0d1e113be.ttf",
       "fontSha256": "9ed86775026585250f42cc80f243a05b70ab61dc988864b26515d8e75d656627"
     },
@@ -240,7 +240,7 @@
       "fontSha256": "3e45f124e9dc186063da05456e106d49328b56edb5aa9091608a5b983cf0adb4"
     },
     "src/scores/mozart_k545_01.m3n": {
-      "sourceSha256": "f31ab338fdbea76541c83464b7db8f4eefacc1c351a6739ea333056f84af15e0",
+      "sourceSha256": "d35d7c2d8f0dd54542312f22cb70915a3845e09333b16187be874b2fb699b946",
       "font": "NotoSansSC-c5c2b4bcc97f482f.ttf",
       "fontSha256": "04e3dcc08fd5735fba856b474648805108fbf2cb7e9d99f8aa841e6e93880149"
     },
@@ -375,7 +375,7 @@
       "fontSha256": "7e33b12ced6d4dc23deb57358ce585cfdd61c11c45c6b1c12b0fb9bce7336b90"
     },
     "src/scores/turkish_march_01.m3n": {
-      "sourceSha256": "56b492c7bd5ba469f3efe2293748021438b0316f81bee347c6e4f05718f60d44",
+      "sourceSha256": "7e855d47ab12e8599d1726054d6681a1db3ecad81e622ba36be5e3554f9d7a3f",
       "font": "NotoSansSC-534b9bc7e81edec7.ttf",
       "fontSha256": "5bb00fff6045c703b5a67e81705ffe486cad0acd0183074b47aecfbd7ae38efc"
     },
@@ -475,7 +475,7 @@
       "fontSha256": "b23427e52fca485d5b5c0debb44a1ffc83c2bf168eacc5f7dfa915078c422653"
     },
     "src/scores/you_raise_me_up_01.m3n": {
-      "sourceSha256": "ff4e7f19b2b88c6fcff1ef3e6b2b8e65f0d39a2c6db9ad82ab32361ae1db8927",
+      "sourceSha256": "dd30de6f3020310badbb060eb661549140d9acfe3a88b8102f0d2144f4875113",
       "font": "NotoSansSC-6d6a9f12e82e3b8f.ttf",
       "fontSha256": "e81f3ae63dabcfa820c39405de1f19d16c39ccbcce45d2a38048b65d78ee143a"
     },
@@ -500,7 +500,7 @@
       "fontSha256": "adfaedf5e9acf784e6f21d8b5afa55bd18b252d8e92d820e93fbcae0f8ae3e12"
     },
     "src/scores/zhi_ai_li_si_01.m3n": {
-      "sourceSha256": "c91de53a2c39f545948c2b00f1d806d5a420f3616e15c733491dbc17e4d1854e",
+      "sourceSha256": "096bee0dbc3346fea86cd26c6a94a2c4fbbf116277010e11be39c51caca78732",
       "font": "NotoSansSC-5b1ad070913412d8.ttf",
       "fontSha256": "ce8d059b839b9c4400d546cd4fe49ce3fd25c4eecf8de81021e88335d44efb25"
     },
@@ -585,7 +585,7 @@
       "fontSha256": "0f64e67f8e9442c2768b6bc5575a45b911c3b170bbe2390c73f927a7ced2a508"
     },
     "src/scores/cha_er_da_shi_01.m3n": {
-      "sourceSha256": "1ce00322cb28d9aae8d29b6b6f94af560254ece3e6e57a93615a738bbf1fe16a",
+      "sourceSha256": "e8a5edb2224a8c496af2f2b9f71533185f2d9f4a971426421582121e31a8de19",
       "font": "NotoSansSC-316c678e633e2848.ttf",
       "fontSha256": "a597ad0873549254d67ed2bb0bfaa149b618169308ec2a79b40bed5fd9d7b0e5"
     }

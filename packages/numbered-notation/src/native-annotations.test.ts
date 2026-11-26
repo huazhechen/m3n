@@ -15,6 +15,13 @@ const layout = (music: string, extra = {}) => layoutNativeScore(parseM3NDocument
 const annotations = (score: ReturnType<typeof layout>) => score.projection.glyphs.flatMap(glyph => glyph.annotationLayout ?? [])
 
 describe('native annotations', () => {
+  it('keeps instruction and expression distinct while combining only the expression with tempo', () => {
+    const score = layout('1 {60qpm}{text=Switch breath}{expression=Largo}2 3 4')
+    const items = annotations(score)
+    expect(items.find(item => item.kind === 'text')!.text).toBe('Switch breath')
+    expect(items.find(item => item.kind === 'expression')!.text).toContain('Largo (')
+  })
+
   it.each(['', '{p}', '{f}'])('keeps standalone headings at the same core gap with a nonoverlapping first-note mark: %s', mark => {
     const measurer = new DefaultTextMeasurer()
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\n===A{br}\nN: ||: ${mark}1 2 3 4eee :|||`), { ...options, textMeasurer: measurer })
