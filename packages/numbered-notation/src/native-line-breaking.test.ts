@@ -3,27 +3,7 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { describe, expect, it } from 'vitest'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
-import { spacingStrainBadness } from './elastic-spacing.js'
 
-it('scores endings at full width and rejects infeasible rows', () => {
-  const plan = (minimum: number, natural: number) => {
-    const candidates = Array.from({ length: 3 }, (_, start) => {
-      const rows: NativeLineCandidate[] = []
-      for (let end = start + 1; end <= 3; end++) {
-        const m = minimum * (end - start), n = natural * (end - start)
-        if (m > 100) break
-        const target = 100
-        rows.push({ end, density: m / 100, naturalDensity: n / 100,
-          elasticBadness: spacingStrainBadness(m, n, target) })
-      }
-      return rows
-    })
-    return planNativeLines(candidates)
-  }
-  expect(plan(25, 40)).toEqual([3])
-  expect(plan(30, 55)).toEqual([3])
-  expect(plan(34, 40)).toEqual([2, 3])
-})
 
 function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][] {
   return widths.map((_, start) => {
@@ -41,11 +21,10 @@ function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][
 // Independent exhaustive oracle: score complete partitions, without DP states
 // or pruning.
 function score(rows: NativeLineCandidate[]) {
-  return rows.reduce((sum, row, i) => {
-    const difference = i ? row.density - rows[i - 1]!.density : 0
-    return sum + Math.max(0, 1 - row.density) ** 2 + 100 * Math.max(0, row.density - 1) ** 2
-      + (row.penalty ?? 0) + difference ** 2
-  }, 0)
+  const stretches = rows.map(row => Math.max(0, 1 - row.density))
+  const mean = stretches.reduce((sum, value) => sum + value, 0) / Math.max(1, rows.length)
+  return rows.reduce((sum, row, index) => sum + stretches[index]! ** 2 + (stretches[index]! - mean) ** 2
+    + 100 * Math.max(0, row.density - 1) ** 2 + (row.penalty ?? 0), 0)
 }
 
 function enumerate(candidates: NativeLineCandidate[][], start = 0): NativeLineCandidate[][] {
@@ -62,12 +41,26 @@ function selected(candidates: NativeLineCandidate[][], ends: number[]) {
   })
 }
 
-describe('adjacent-row density planning', () => {
-  it('selects the lower adjacent-density cost without penalising changes in direction', () => {
+describe('full-score stretch planning', () => {
+  it('minimises whole-score variance rather than adjacent-row differences', () => {
     const candidates = candidatesFor([23, 45, 41, 38, 61, 34, 73, 16, 60, 60])
-    const adjacent = [2, 4, 6, 7, 9, 10], former = [2, 4, 6, 8, 9, 10]
-    expect(planNativeLines(candidates)).toEqual(adjacent)
-    expect(score(selected(candidates, adjacent))).toBeLessThan(score(selected(candidates, former)))
+    const result = planNativeLines(candidates)
+    const optimum = Math.min(...enumerate(candidates).map(score))
+    expect(score(selected(candidates, result))).toBeCloseTo(optimum, 12)
+  })
+
+  it('compares forced-break regions in one full-score objective', () => {
+    const candidates = candidatesFor([25, 35, 30, 25, 20, 45, 30, 25, 30])
+    // No candidate may cross the forced break after the fourth measure.
+    for (let start = 0; start < 4; start++) candidates[start] = candidates[start]!.filter(row => row.end <= 4)
+    const result = planNativeLines(candidates)
+    expect(result).toContain(4)
+    expect(score(selected(candidates, result))).toBeCloseTo(Math.min(...enumerate(candidates).map(score)), 12)
+  })
+
+  it('scores the last row as fully justified and forbids rows beyond hard minima', () => {
+    expect(planNativeLines(candidatesFor([34, 34, 34]))).toEqual([2, 3])
+    expect(planNativeLines(candidatesFor([25, 25, 25]))).toEqual([3])
   })
 
   it('balances Clarinet Polka section B into three rows of three measures at 720px with 0.6em spacing', () => {
@@ -103,7 +96,7 @@ describe('adjacent-row density planning', () => {
   it('matches exhaustive global scoring across varied widths and beat penalties', () => {
     let seed = 17
     const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
-    for (let trial = 0; trial < 100; trial++) {
+    for (let trial = 0; trial < 300; trial++) {
       const candidates = candidatesFor(Array.from({ length: 4 + trial % 7 }, () => 10 + Math.floor(random() * 100)), 70 + trial % 4 * 10)
       for (let start = 1; start < candidates.length; start++) if (random() < .3) for (const row of candidates[start]!) row.penalty = 1
       const before = structuredClone(candidates)

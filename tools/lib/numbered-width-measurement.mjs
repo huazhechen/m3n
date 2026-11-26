@@ -18,7 +18,8 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
   if (!auditLayout) {
     const candidate = { width, pageCount: paged ? prepared.pageCount : 1, rows: prepared.systemCount,
       outside: [], overlaps: [], lineDensityVariation: quality.lineDensityVariation,
-      lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
+      lineStretchCost: quality.lineStretchCost, lineUniformityCost: quality.lineUniformityCost,
+      layoutCost: quality.layoutCost, fontSizeCost: quality.fontSizeCost, totalCost: quality.totalCost, lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
     if (!paged || prepared.pageCount === 1) {
       const heightStarted = performance.now()
       candidate.naturalHeight = prepared.continuousHeight(settings.coreGap)
@@ -48,7 +49,8 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
     const candidate = { width, timings, pageCount: pages.length,
       rows: pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0),
       ...inspectScorePages(pages, timings), lineDensityVariation: quality.lineDensityVariation,
-      lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
+      lineStretchCost: quality.lineStretchCost, lineUniformityCost: quality.lineUniformityCost,
+      layoutCost: quality.layoutCost, fontSizeCost: quality.fontSizeCost, totalCost: quality.totalCost, lastLineSlack: quality.lastLineSlack, lineStretchPenalty: quality.lineStretchPenalty, meanLineDensity: quality.meanLineDensity, qualityScore: numberedLayoutScore({ width, ...quality }) }
     if (!paged && pages.length === 1) candidate.naturalHeight = pages[0].viewBox.baseVal.height
     if (paged && pages.length === 1 && !candidate.outside.length && !candidate.overlaps.length) {
       stage = performance.now()

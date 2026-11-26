@@ -6,7 +6,7 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js'
 import { NativeNumberedNotationScore, PreparedNumberedNotationScore } from './native-score.js'
 
-describe('tight 8/16px and loose 12/24px note spacing', () => {
+describe('tight 8px and loose 16px note spacing', () => {
   const options = { width: 320, pageMargin: 0, paged: true }
   const rows = (layout: ReturnType<typeof layoutNativeScore>) => layout.systems.map(system =>
     system.measures.map(measure => measure.columns.map(column => column.glyphs.map(glyph => [glyph.id, glyph.x]))))
@@ -15,7 +15,7 @@ describe('tight 8/16px and loose 12/24px note spacing', () => {
     const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/por_una_cabeza_01.m3n', import.meta.url), 'utf8'))
     const before = structuredClone(document), timings: Record<string, number> = {}
     const automatic = layoutNativeScore(document, { ...options, width: 540 }, timings)
-    expect([8, 12]).toContain(automatic.options.minimumNoteGap)
+    expect([8, 16]).toContain(automatic.options.minimumNoteGap)
     expect(timings.layoutTrials).toBe(2)
     expect(document).toEqual(before)
   })
@@ -24,7 +24,7 @@ describe('tight 8/16px and loose 12/24px note spacing', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + '(1 2 3 4 5 6 7 1e) | '.repeat(31))
     const settings = { ...options, width: 540 }
     const automatic = layoutNativeScore(document, settings)
-    expect([8, 12]).toContain(automatic.options.minimumNoteGap)
+    expect([8, 16]).toContain(automatic.options.minimumNoteGap)
     for (const coreGap of [undefined, 32]) {
       const continuous = layoutNativeScore(document, { ...settings, paged: false, coreGap })
       expect(rows(continuous)).toEqual(rows(automatic))

@@ -41,11 +41,9 @@ const numbered = {
   grace: 13,
 
   // 外层表情与导航文字保持独立字号。
-  // 固定的自然／最小净空；时值与组内比例由横向引擎换算。
+  // 紧／松两档最小净空；时值与组内比例由横向引擎换算。
   minimumNoteGap: 8,
-  noteGapCandidates: [8, 12] as readonly number[],
-  // Quadratic strain in both directions; stretch unit travel is a quarter of compression.
-  stretchTravelRatio: 0.25,
+  noteGapCandidates: [8, 16] as readonly number[],
   // 文字换行行高独立于音乐字号和核心间距。
   titleLineHeight: 36,
   subtitleLineHeight: 18,

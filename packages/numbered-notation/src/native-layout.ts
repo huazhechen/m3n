@@ -1,4 +1,3 @@
-import { spacingStrainBadness } from './elastic-spacing.js'
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeLayoutScore } from './native-quality.js'
@@ -21,7 +20,7 @@ import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-hea
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
-import { measureNativeHorizontal, nativeMeasureBars, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeHorizontalSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
@@ -41,7 +40,7 @@ export type NativeRenderOptions = {
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { coreGap?: number; index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { horizontalDensity?: number; coreGap?: number; index: number; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -157,65 +156,33 @@ function startsNativeSection(current: NativeMeasure, previous?: NativeMeasure): 
 }
 
 /** Break complete measures first, splitting oversized measures at time columns. */
-function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
+function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0, timings?: Record<string, number>): { measures: NativeMeasure[]; density: number }[] {
   const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
-  const lines: NativeMeasure[][] = []
+  const candidates: NativeLineCandidate[][] = Array.from({ length: fragments.length }, () => [])
   const ratio = options.wrapWidthRatio ?? 1
   for (let begin = 0; begin < fragments.length;) {
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
-    const group = fragments.slice(begin, end), candidates: NativeLineCandidate[][] = Array.from({ length: group.length }, () => [])
-    const endsSection = end === fragments.length || startsNativeSection(fragments[end]!, fragments[end - 1])
+    const group = fragments.slice(begin, end)
     const availableFor = (start: number) => Math.max(1, width * ratio - leading([group[start]!]))
-    const spacings = new Map<string, ReturnType<typeof nativeHorizontalSpacing>>()
-    const spacingFor = (start: number, stop: number) => {
-      const key = `${start}:${stop}`
-      let spacing = spacings.get(key)
-      if (!spacing) { spacing = nativeHorizontalSpacing(group.slice(start, stop), options); spacings.set(key, spacing) }
-      return spacing
-    }
-    // A bar merged into the next repeat opening reappears at a row end;
-    // changed boundary bars require the actual row constraint chain.
-    const boundaries = group.map((measure, index) => {
-      const joined = nativeMeasureBars(group, index), isolated = nativeMeasureBars([measure], 0)
-      return {
-        changedOpening: joined.opening !== isolated.opening,
-        changedClosing: joined.closing !== isolated.closing,
-      }
-    })
     for (let index = group.length - 1; index >= 0; index--) {
-      let minimum = 0, widestMinimum = 0, widestNatural = 0
       const available = availableFor(index)
       for (let stop = index; stop < group.length; stop++) {
-        const measure = group[stop]!, count = stop - index + 1
-        minimum += measure.minimum
-        widestMinimum = Math.max(widestMinimum, measure.minimum)
-        widestNatural = Math.max(widestNatural, (measure.naturalEnd ?? measure.minimumEnd ?? measure.minimum)
-          - (measure.naturalStart ?? measure.minimumStart ?? 0))
-        const equal = options.equalMeasures
-        let minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        const shortTail = stop === group.length - 1 && endsSection
-        const isolated = boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing || shortTail
-          ? spacingFor(index, stop + 1) : undefined
-        if (isolated) minWidth = isolated.minimumWidth
+        const count = stop - index + 1
+        // Use the same isolated constraint chain as rendering. Prefix differences
+        // retain exterior margins and can incorrectly reject a legal extra bar.
+        const minWidth = nativeHorizontalSpacing(group.slice(index, stop + 1), options).minimumWidth
         if (minWidth > available && count > 1) break
-        const naturalWidth = Math.max(minWidth, isolated?.naturalWidth ?? (equal ? widestNatural * count
-          : (measure.naturalEnd ?? measure.minimumEnd ?? minimum) - (group[index]!.naturalStart ?? group[index]!.minimumStart ?? 0)))
-        // Score every row at full width, including section and score endings.
-        // Placement may shorten a brief ending after the partition is chosen.
-        // Indivisible oversized events retain their collision-safe hard width.
-        const target = Math.max(minWidth, available)
-        candidates[index]!.push({ end: stop + 1, density: minWidth / available,
-          naturalDensity: naturalWidth / available,
-          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target, {
-            stretchTravelRatio: nativeStyle.stretchTravelRatio }) })
+        // Every row, including the final one, is scored at full width.
+        candidates[begin + index]!.push({ end: begin + stop + 1, density: minWidth / available })
       }
     }
-    let index = 0
-    for (const stop of planNativeLines(candidates)) {
-      lines.push(group.slice(index, stop)); index = stop
-    }
     begin = end
+  }
+  const lines: { measures: NativeMeasure[]; density: number }[] = []
+  let start = 0
+  for (const end of planNativeLines(candidates, timings)) {
+    lines.push({ measures: fragments.slice(start, end), density: candidates[start]!.find(row => row.end === end)!.density }); start = end
   }
   return lines
 }
@@ -261,29 +228,23 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const taskPreparationStarted = timings ? performance.now() : 0
   const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
-  // Both spacing tiers receive independent geometry and real A4 pagination.
-  // Continuous output chooses the same tier before its final repagination.
+  // Both tiers receive complete horizontal plans; only the cost winner is
+  // placed vertically. Continuous and paged modes select the same plan.
   const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
   if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
-    throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
-  let selected: NativeLayout | undefined, selectedScore = -Infinity
-  for (const { minimumNoteGap, trial } of trials) {
-    let candidate: NativeLayout
-    try { candidate = trial.complete() }
-    catch (error) {
-      if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
-        candidate = layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap }, timings, preparation)
-      else throw error
-    }
-    const score = nativeLayoutScore(candidate)
-    if (!selected || candidate.pages.length < selected.pages.length
-      || candidate.pages.length === selected.pages.length && score > selectedScore) {
-      selected = candidate; selectedScore = score
-    }
+    throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
+  // Select entirely from horizontal cost before doing any vertical placement.
+  // Font cost is identical for both tiers at this width. Ties retain tight.
+  const winner = trials.reduce((best, candidate) => candidate.trial.score > best.trial.score ? candidate : best)
+  let selected: NativeLayout
+  try { selected = winner.trial.complete() }
+  catch (error) {
+    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
+      selected = layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: winner.minimumNoteGap }, timings, preparation)
+    else throw error
   }
-  if (!selected) throw new Error('简谱间距候选为空。')
   const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
   if (timings) timings.repaginationMs = (timings.repaginationMs ?? 0) + performance.now() - repaginationStarted
@@ -414,9 +375,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       && firstByLane.get(relation.last.lane) === relation.last && !glyphs.includes(relation.first))
       .map(relation => nativeStyle.music * .45 * 1.2 - (relation.last.musicLeft ?? relation.last.left)))
   }
-  const lines = breakMeasures(projection.measures, available, options, arcLeading)
+  const lines = breakMeasures(projection.measures, available, options, arcLeading, timings)
   record('lineBreakMs')
-  const systems: NativeSystem[] = lines.map((measures, index) => ({ coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
+  const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   // Named sections are labels within a projected part; expanded performances
   // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
   const startsSection = (current: NativeSystem, previous: NativeSystem) => {
@@ -446,14 +407,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
-  // Width-quality pruning only needs the final row's painted right edge.
-  // Defer the other rows and vertical geometry until the candidate survives.
-  const lastSystem = systems.at(-1)
-  if (lastSystem) placeSystem(lastSystem)
-  record('horizontalPlacementMs')
   return { score: nativeLayoutScore({ options, margin, systems, pages: [] }), systemCount: systems.length, complete: () => {
   stageStarted = timings ? performance.now() : 0
-  for (const system of systems) if (system !== lastSystem) placeSystem(system)
+  for (const system of systems) placeSystem(system)
   record('horizontalPlacementMs')
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
+import { solveNativeSpacing, solveNativeMinimumSpacing, type SpacingCell } from './native-spacing.js'
 const cell = (lane = 'melody', overrides: Partial<SpacingCell> = {}): SpacingCell => ({ lane, left: 5, right: 5, before: 6, after: 6, ...overrides })
 describe('native spacing constraints', () => {
   it('lets lyric prefixes use space under bars while retaining lyric clearance across empty slots', () => {
@@ -128,4 +128,17 @@ describe('native spacing constraints', () => {
     expect(followed.positions[3]! - 5).toBeGreaterThanOrEqual(followed.positions[1]! + 50)
   })
 
+})
+
+it('minimum-only numbered spacing distributes positive surplus without natural compression', () => {
+  const columns = [1, 2, 3].map(() => ({ cells: [cell('melody', {
+    beforeNatural: 50, afterNatural: 50, preferredAdvance: 100,
+  })] }))
+  const minimum = solveNativeMinimumSpacing(columns)
+  const filled = solveNativeMinimumSpacing(columns, 100, true)
+  const below = solveNativeMinimumSpacing(columns, 10, true)
+  expect(filled).not.toHaveProperty('compressionPenalty')
+  expect(filled.positions[1]! - filled.positions[0]!).toBeGreaterThan(minimum.positions[1]! - minimum.positions[0]!)
+  expect(below.positions[1]! - below.positions[0]!).toBeGreaterThanOrEqual(minimum.positions[1]! - minimum.positions[0]!)
+  expect(filled.positions.at(-1)! + 5).toBeCloseTo(100)
 })

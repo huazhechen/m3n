@@ -14,20 +14,22 @@ const clearance = (measure: ReturnType<typeof project>, index: number) => {
   return right.x - left.x - left.glyphs[0]!.musicRight! - right.glyphs[0]!.musicLeft!
 }
 
-describe('16px natural / 8px minimum clearance', () => {
+describe('minimum-only 8px clearance', () => {
   it.each([
-    ['1 2', 8, 16],
-    ['(1 2)', 8 * Math.sqrt(.5) / 2, 16 * Math.sqrt(.5) / 2],
-    ['((1 2))', 2, 4],
-  ])('retains rhythm and grouping for %s', (notes, minimum, natural) => {
+    ['1 2', 8],
+    ['(1 2)', 8 * Math.sqrt(.5) / 2],
+    ['((1 2))', 2],
+  ])('retains rhythm and grouping for %s without compression', (notes, minimum) => {
     const measure = project(notes), options = { minimumNoteGap: 8 }
     const spacing = nativeHorizontalSpacing([measure], options)
     placeNativeHorizontal([measure], options, 0, spacing.minimumWidth)
     expect(clearance(measure, 0)).toBeCloseTo(minimum, 8)
-    placeNativeHorizontal([measure], options, 0, spacing.naturalWidth!)
-    expect(clearance(measure, 0)).toBeCloseTo(natural, 8)
-    placeNativeHorizontal([measure], options, 0, (spacing.minimumWidth + spacing.naturalWidth!) / 2)
-    expect(clearance(measure, 0)).toBeCloseTo((minimum + natural) / 2, 8)
+    for (const extra of [16, 32]) {
+      placeNativeHorizontal([measure], options, 0, spacing.minimumWidth + extra)
+      expect(clearance(measure, 0)).toBeCloseTo(minimum + extra, 8)
+    }
+    placeNativeHorizontal([measure], options, 0, spacing.minimumWidth / 2)
+    expect(clearance(measure, 0)).toBeCloseTo(minimum, 8)
   })
 })
 

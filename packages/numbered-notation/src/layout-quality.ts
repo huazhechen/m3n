@@ -20,3 +20,17 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   const minimumWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.minimumMultiple
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
+
+/** Numbered notation: full-width row slack plus full-score dispersion.
+ * Font loss uses the reciprocal of the established squared size factor. */
+export function scoreNumberedCost(width: number, densities: readonly number[]) {
+  const stretches = densities.map(density => Math.max(0, 1 - density))
+  const mean = stretches.reduce((sum, stretch) => sum + stretch, 0) / Math.max(1, stretches.length)
+  const lineStretchCost = stretches.reduce((sum, stretch) => sum + stretch ** 2, 0)
+  const lineUniformityCost = stretches.reduce((sum, stretch) => sum + (stretch - mean) ** 2, 0)
+  const overflowCost = densities.reduce((sum, density) => sum + 100 * Math.max(0, density - 1) ** 2, 0)
+  const layoutCost = lineStretchCost + lineUniformityCost + overflowCost
+  const minimumWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.minimumMultiple
+  const fontSizeCost = Math.max(0, (width / minimumWidth) ** 2 - 1)
+  return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost, totalCost: layoutCost + fontSizeCost }
+}

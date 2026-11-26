@@ -87,7 +87,7 @@ export function fitSpacingSprings(columns: readonly SpacingColumn[], positions: 
  * This is deliberately independent of source syntax, SVG and music objects.
  * fillEdges gives free bar-adjacent boundaries weight 1 in positive justification.
  */
-export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean } = {}): SpacingSolution {
+export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean; minimumOnly?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const laneSet = new Set<string>(), sparse = new Set<string>()
@@ -202,6 +202,12 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     const shift = -left, free = fillEdges.natural ? 0 : Math.max(0, width - occupied)
     const weights = cumulative.map((value, index) => value - (cumulative[index - 1] ?? 0))
     weights.push(fillEdges.right ? 1 : 0)
+    if (fillEdges.minimumOnly) {
+      // Numbered notation has only hard minima and positive justification.
+      const unit = stretchWeight > 0 ? free / stretchWeight : 0
+      positions.forEach((position, index) => { positions[index] = position + cumulative[index]! * unit + shift })
+      return { positions, minimumWidth, stretchWeight }
+    }
     const measured = fitSpacingSprings(columns, positions, weights, free)
     naturalWidth = occupied + measured.naturalExtra
     compressionPenalty = measured.force < 0 ? measured.badness : 0
@@ -210,4 +216,10 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     positions.forEach((_, index) => { positions[index] = filled[index]! + shift })
   }
   return { positions, minimumWidth, stretchWeight, ...(naturalWidth === undefined ? {} : { naturalWidth, compressionPenalty }) }
+}
+
+/** Numbered notation deliberately bypasses natural/soft spring requirements. */
+export function solveNativeMinimumSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false,
+  fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
+  return solveNativeSpacing(columns, width, justify, { ...fillEdges, minimumOnly: true })
 }

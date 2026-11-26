@@ -1,11 +1,9 @@
-import { inheritElasticWidth } from './elastic-spacing.js'
 import { scoreRhythmicWeight } from './score-layout-policy.js'
-import { lyricSpacing } from './lyric-spacing.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
-import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
+import { solveNativeMinimumSpacing as solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
@@ -53,11 +51,8 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
   // Rhythm alone determines stretch; ink and lyrics only constrain minima.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1
-  // Natural clearance is twice the selected minimum in both spacing tiers.
-  const naturalExtra = gapScale * nativeStyle.music * .5
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
     beforeStretch: stretch, afterStretch: stretch,
-    beforeNatural: stretch * naturalExtra, afterNatural: stretch * naturalExtra,
   }
 }
 
@@ -108,10 +103,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
       }
       }
-      const cells = column.glyphs.map(glyph => {
-        return { ...minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, (nativeStyle.music * .25), scale),
-          preferredAdvance: glyph.multiRest || glyph.beats > .5 ? undefined : nativeStyle.music * scoreRhythmicWeight(glyph.beats) }
-      })
+      const cells = column.glyphs.map(glyph => minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left,
+        glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, nativeStyle.music * .25, scale))
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A split measure has no visible closing bar until its final fragment.
@@ -131,10 +124,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
     if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
-      previous.cell.afterNatural! *= nativeStyle.groupSpacingRatio
-      cell.beforeNatural! *= nativeStyle.groupSpacingRatio
       previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * nativeStyle.groupSpacingRatio
-      if (previous.cell.preferredAdvance !== undefined) previous.cell.preferredAdvance *= nativeStyle.groupSpacingRatio
       cell.beforeStretch = (cell.beforeStretch ?? 1) * nativeStyle.groupSpacingRatio
       previous.cell.after *= nativeStyle.groupSpacingRatio
       cell.before *= nativeStyle.groupSpacingRatio
@@ -177,8 +167,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     for (const [tier, ink] of (glyph.lyricTiers ?? []).entries()) {
       if (!ink) continue
       item.cells.push({ lane: `${glyph.lane}:lyric:${tier}`, sparse: true,
-        left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0,
-        preferredAfter: lyricSpacing.preferredExtraGap })
+        left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
     }
   }
   // Multi-measure rest symbols form compact rigid blocks with adjacent bars.
@@ -235,7 +224,7 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   const items = itemsFor(measures, options)
   const result = solveNativeSpacing(items)
-  const natural = solveNativeSpacing(items, Infinity, false, { natural: true })
+  const natural = result
   type Selection = { item: HorizontalItem; index: number }
   const byMeasure = new Map<NativeMeasure, Selection[]>()
   const byColumn = new Map<NativeColumn, Selection[]>()
@@ -309,14 +298,14 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
 }
 
 export type NativeHorizontalSpacing = {
-  minimumWidth: number; stretchWeight: number; naturalWidth?: number
+  minimumWidth: number; stretchWeight: number
   equalCells?: { count: number; tailRight: number }
 }
 
 /** Measure the exact chain used for placement, including rigid groups, voice
- * placeholders, lyrics and visible boundary ink. Only needed for the last pair. */
+ * placeholders, lyrics and visible boundary ink. Shared by row planning and placement. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
-  const items = itemsFor(measures, options), solved = solveNativeSpacing(items, Infinity, false, { natural: true })
+  const items = itemsFor(measures, options), solved = solveNativeSpacing(items)
   if (!options.equalMeasures) return solved
   const ranges = equalMeasureRanges(items)
   if (!ranges.length) return solved
@@ -327,11 +316,10 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
     const previous = ranges[index - 1]?.bar
     const outside = (previous === undefined ? 0 : rightOf(previous))
       + (range.bar === undefined ? 0 : leftOf(range.bar))
-    const cell = solveNativeSpacing(items.slice(range.start, range.end), Infinity, false, { natural: true })
-    return { minimum: outside + cell.minimumWidth, natural: outside + (cell.naturalWidth ?? cell.minimumWidth) }
+    const cell = solveNativeSpacing(items.slice(range.start, range.end))
+    return outside + cell.minimumWidth
   })
-  return { minimumWidth: Math.max(...cellWidths.map(cell => cell.minimum)) * ranges.length + tailRight,
-    naturalWidth: Math.max(...cellWidths.map(cell => cell.natural)) * ranges.length + tailRight,
+  return { minimumWidth: Math.max(...cellWidths) * ranges.length + tailRight,
     stretchWeight: solved.stretchWeight, equalCells: { count: ranges.length, tailRight } }
 }
 
@@ -342,7 +330,8 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     const cellWidth = Math.max(0, previousWidth - previous.equalCells.tailRight) / previous.equalCells.count
     inherited = Math.max(current.minimumWidth, cellWidth * current.equalCells.count + current.equalCells.tailRight)
   } else {
-    inherited = inheritElasticWidth(current, previous, previousWidth)
+    const extra = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
+    inherited = current.minimumWidth + extra * current.stretchWeight
   }
   return lastLineWidth(current.minimumWidth, inherited, width,
     current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)

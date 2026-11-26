@@ -6,29 +6,30 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v21`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v22`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
+  if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
   if (candidate.qualityScore !== undefined) return candidate.qualityScore
   const variation = candidate.lineDensityVariation ?? 0
   const slack = candidate.lastLineSlack ?? 0
   return scoreHorizontalQuality(candidate.width, { lineDensityVariation: variation, lastLineSlack: slack, lineStretchPenalty: candidate.lineStretchPenalty })
 }
+// Across widths, paper use is the primary objective in both notations.
 const rank = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
+
 export class WidthSearchPruned extends Error {}
 
-// All penalties in the shared engine score are nonnegative. Even a perfect
-// layout at this width cannot exceed its type-size factor. A one-page winner
-// therefore certifies that lower-scoring widths cannot win, without assuming
-// anything about page-count monotonicity or smoothness between widths.
+// All horizontal costs are nonnegative. Once a one-page winner exists, font
+// loss alone certifies that a width cannot win. Multi-page winners cannot.
 export const widthQualityUpperBound = width => (widthMinimum / width) ** 2
 export function widthCannotWin(width, best) {
   return Boolean(best && best.pageCount === 1 && widthQualityUpperBound(width) < numberedLayoutScore(best))
 }
 
 export function chooseBestWidth(candidates) {
-  // First minimize pages, then use the same density / slack quality score as
-  // the online reader. Width is only a deterministic final tie breaker.
+  // First minimize paper use; then minimize horizontal cost plus font loss
+  // for numbered notation. Width is the deterministic final tie breaker.
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
@@ -73,7 +74,13 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     : widthCandidates
   for (const width of coarseOrder) await consider(width)
   const coarseBest = chooseBestWidth(candidates)
-  if (coarseBest) {
+  if (coarseBest?.totalCost !== undefined) {
+    // A break can improve abruptly in any coarse interval. Numbered notation
+    // visits the entire 6px grid, pruning only by the certified font-cost bound.
+    const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
+    for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4)
+      if (!measured.has(width)) await consider(width)
+  } else if (coarseBest) {
     const lower = Math.max(widthMinimum, coarseBest.width - widthStep)
     const upper = Math.min(widthMaximum, coarseBest.width + widthStep)
     const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])

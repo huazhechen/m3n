@@ -426,3 +426,22 @@ test('horizontal rejection uses the incumbent, preserves request counts and canc
     controller.abort(); throw new WidthSearchPruned()
   }, { prune: true, signal: controller.signal }), { name: 'AbortError' })
 })
+
+
+test('numbered additive cost ranks paper first and scans every 6px interval', async () => {
+  const measure = async width => ({ width, pageCount: width === 654 ? 1 : 2, rows: 9, outside: [], overlaps: [],
+    totalCost: width === 654 ? .6 : 1 + (width / 528) ** 2 - 1 })
+  const exhaustive = await selectBestWidth(measure)
+  const pruned = await selectBestWidth(measure, { prune: true })
+  assert.equal(exhaustive.best.width, 654)
+  assert.equal(exhaustive.best.pageCount, 1)
+  assert.equal(pruned.best.width, 654)
+  assert.equal(exhaustive.candidates.length, 41)
+  assert.ok(pruned.renderCache.skippedWidths.length > 0)
+})
+
+test('numbered additive score compares cost only after page count', () => {
+  const candidate = (width, pageCount, totalCost) => ({ width, pageCount, totalCost, outside: [], overlaps: [] })
+  assert.equal(chooseBestWidth([candidate(528, 1, .9), candidate(600, 4, .5)]).width, 528)
+  assert.equal(chooseBestWidth([candidate(600, 4, .5), candidate(594, 4, .5)]).width, 594)
+})
