@@ -27,7 +27,7 @@ export type NativeAnnotation = { text: string; kind: 'chord' | 'text' | 'section
 export type NativeGlyph = {
   event?: ScoreEvent; id: string; xmlId: string; measureId: string; staff: 'melody' | 'bass'; lane: string; slot: number
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativeGracePitch[]
-  lyrics: Map<number, LyricRowData>; lyricBaselines?: Map<number, number>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]
+  lyrics: Map<number, LyricRowData>; lyricBaselines?: Map<number, number>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]; tempoAnnotation?: string
   arpeggioLayout?: ReturnType<typeof nativeArpeggioGeometry>; markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number; lyricHyphenEnds?: Map<number, number>; lyricTiers?: ({ left: number; right: number } | undefined)[]
   tieTop?: number; musicInk?: NativeInk[]
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; interlude?: boolean; paragraph: string
@@ -135,6 +135,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           state.key = displayKey; accidentals.clear()
         }
         controls.push(...settingsControls({...event,key:displayKey}))
+        const tempoIndex = event.text ? controls.findIndex(control => control.kind === 'tempo') : -1
+        const tempoAnnotation = tempoIndex >= 0 ? controls.splice(tempoIndex, 1)[0]!.text : undefined
         const graces = event.postfixes.flatMap(mark => { const grace = parseM3NGrace(mark); return grace ? (parseM3NGroupPitches(grace.pitchSource) ?? []).map(pitch => ({ ...(options.fixedDo ? nativeDisplayPitch(fixedDoGrace(pitch,event.key,event.octaveShift,options.transpose)) : numberedPitch(pitch,event.octaveShift)), writtenBeats: 1 / 2 ** (grace.depth + 1) })) : [] })
         for (const mark of event.postfixes) if (!known.has(mark) && !parseM3NGrace(mark)) result.diagnostics.push({ code: 'NUMBERED_UNSUPPORTED_MARK', message: `简谱尚不支持标记 ${mark}`, severity: 'warning', sourceStart: event.sourceStart, sourceEnd: event.sourceEnd })
         const marks = event.postfixes.filter(mark => known.has(mark) && mark !== 'arp')
@@ -188,7 +190,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
           const id = ids.get(event)!
           const suffix = event.kind === 'tuplet' ? `-n${slot + 1}` : segment ? event.kind === 'rest' ? `-rest${segment + 1}` : `-sustain${segment + 1}` : ''
-          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: options.expandedDisplay ? id.replace(/-rend\d+$/, '') : id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: options.expandedDisplay ? [Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)] : undefined, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, graceLayout, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, lyricTiers, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
+          const glyph: NativeGlyph = { event, id: id + suffix, xmlId: options.expandedDisplay ? id.replace(/-rend\d+$/, '') : id, measureId: host.id, staff, lane, slot, time, beats, writtenBeats, sustain, pitches, pitchOffsets: metrics.offsets, graces: glyphGraces, lyrics: rows, passes: options.expandedDisplay ? [Number(/-rend(\d+)$/.exec(id)?.[1] ?? 1)] : undefined, controls: glyphControls, marks: glyphMarks, annotations: glyphAnnotations, tempoAnnotation: segment === 0 && slot === 0 ? tempoAnnotation : undefined, graceLayout, musicLeft, musicRight, musicTop, lyricLeft, lyricRight, lyricTiers, left, right, top, bottom, x: 0, y: 0, paragraph: `${partIndex}:${document.paragraphs?.find(paragraph => paragraph.start <= event.sourceStart && event.sourceStart < paragraph.end)?.id ?? '0'}` }
           if (event.postfixes.includes('arp') && event.kind === 'chord' && !sustain) {
             const body = unionNativeInk(painter.bodyPieces(glyph))
             glyph.arpeggioLayout = nativeArpeggioGeometry(body, options.textMeasurer)

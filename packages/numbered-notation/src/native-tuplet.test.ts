@@ -42,6 +42,19 @@ describe('native tuplet brackets', () => {
     expect(high.geometry).toEqual(plain.geometry)
   })
 
+  it.each([320, 600, 768])('aligns final adjacent brackets after clearing an incoming tie at %spx', width => {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 5d~ (([5d 7d 2:2])) (([4 5 7:2])) ((2e. (1e) 7. (6))) (5 4) |'), { width, paged: false })
+    for (const system of score.systems) {
+      const tuplets = system.relations.filter(r => r.kind === 'tuplet')
+      if (tuplets.length !== 2) continue
+      const first = system.relationLayout!.get(tuplets[0]!)!, second = system.relationLayout!.get(tuplets[1]!)!
+      expect(first.ink.top).toBeCloseTo(second.ink.top)
+      expect(first.ink.bottom).toBeCloseTo(second.ink.bottom)
+      const tie = system.relations.find(r => r.kind === 'tie')!
+      expect(first.ink.bottom).toBeLessThan(system.relationLayout!.get(tie)!.ink.top)
+      expect(system.lanes[0]!.top).toBeGreaterThanOrEqual(-first.ink.top)
+    }
+  })
   it('breaks alignment at ordinary notes and at system or lane boundaries', () => {
     const separated = brackets(layout('([1 2 3:2]) 4 ([5ee 6 7:2]) 1e'))
     expect(separated[0]!.geometry.baseline).toBeGreaterThan(separated[1]!.geometry.baseline)

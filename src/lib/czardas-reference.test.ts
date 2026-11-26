@@ -71,3 +71,11 @@ it('keeps the original three repeats and the complete D-minor/D-major form as a 
   expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
   expect(plan.sourceCount).toBe(plan.entries.length)
 })
+
+
+it('uses an explicit 8va only for the sixteen harmonic bars', () => {
+  expect(source.match(/\{8va\}/g)).toHaveLength(1)
+  for (const [index, bar] of bars.entries()) {
+    for (const event of bar.events) expect(event.octaveShift).toBe(index >= 65 && index <= 80 ? 1 : 0)
+  }
+})

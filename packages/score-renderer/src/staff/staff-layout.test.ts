@@ -48,6 +48,60 @@ describe('staff layout contract', () => {
     }
     expect(gaps[0]).toBeCloseTo(gaps[1]!)
   })
+  it.each([false, true])('places a changed meter after joined repeats, with a system break=%s', broken => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 :|| ||: {2/4} 1 2 |||').score)
+    expect(document.measures[1]!.joinsPreviousRepeat).toBe(true)
+    document.measures[1]!.force = broken
+    const measure = textMeasurer()
+    const lines = planStaffLines(document, 720, false, measure, .25)
+    const systems = engraveStaffSystems(document, lines, 720, measure, .25, false)
+    expect(systems).toHaveLength(broken ? 2 : 1)
+    const previous = findAll(systems[0]!.node, n => n.attributes.id === document.measures[0]!.id)[0]!
+    const currentSystem = systems.at(-1)!.node
+    const current = findAll(currentSystem, n => n.attributes.id === document.measures[1]!.id)[0]!
+    const bars = findAll(current, n => hasClass(n, 'staff-bar'))
+    const dots = findAll(bars[0]!, n => hasClass(n, 'm3n-music-glyph'))
+    expect(dots).toHaveLength(broken ? 2 : 4)
+    const previousBars = findAll(previous, n => hasClass(n, 'staff-bar'))
+    expect(nodes(previousBars[1]!).length === 0).toBe(!broken)
+    const signature = findAll(current, n => hasClass(n, 'staff-signature'))[0]!
+    const geometry = new SvgGeometry(currentSystem, measure)
+    if (!broken) expect(geometry.ink(signature).left - geometry.ink(bars[0]!).right).toBeGreaterThanOrEqual(9.9)
+    else expect(geometry.ink(signature).right).toBeLessThan(geometry.ink(bars[0]!).left)
+  })
+
+  it.each(['1 1 1 1', '1^^'].flatMap(music => [0, 180].map(extra => ({ music, extra }))))('balances music clearance for $music at surplus $extra', ({ music, extra }) => {
+    const document = projectStaffDocument(analyzeM3N(`{4/4}\nN: ${music} | ${music} |`).score)
+    const model = createStaffMeasure(document.measures[1]!, false, false, textMeasurer(), .25)
+    const width = model.minimum + extra, node = drawStaffMeasure(model, width, 0)
+    const geometry = new SvgGeometry(node, textMeasurer())
+    const heads = findAll(node, n => hasClass(n, 'notehead')).map(n => geometry.ink(n))
+    const closingBar = geometry.ink(findAll(node, n => hasClass(n, 'staff-bar'))[1]!)
+    const left = heads[0]!.left - 0.5
+    const right = closingBar.left - heads.at(-1)!.right
+    expect(left).toBeCloseTo(right, 3)
+    expect(left).toBeGreaterThanOrEqual(9.9)
+  })
+
+  it('keeps text and numeric tempo in one movable group on the same line', () => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}{120qpm}\nN: {text=Largo}1 2 {60qpm}{text=Meno, quasi lento}3 4 |||').score)
+    const measure = textMeasurer(), lines = planStaffLines(document, 528, false, measure, .25)
+    const node = engraveStaffSystems(document, lines, 528, measure, .25, false)[0]!.node
+    const geometry = new SvgGeometry(node, measure)
+    const tempos = findAll(node, n => hasClass(n, 'tempo'))
+    expect(tempos).toHaveLength(2)
+    expect(findAll(node, n => hasClass(n, 'dir'))).toHaveLength(0)
+    for (const tempo of tempos) {
+      const label = findAll(tempo, n => hasClass(n, 'tempo-direction'))[0]!
+      const numeric = findAll(tempo, n => hasClass(n, 'tempo-metronome'))[0]!
+      expect(geometry.ink(label).right).toBeLessThan(geometry.ink(numeric).left)
+      const texts = findAll(tempo, n => n.tagName === 'text' && !n.attributes['data-m3n-glyph'])
+      const direction = texts.find(n => n.children.some(c => typeof c === 'string' && /Largo|Meno/.test(c)))!
+      const number = texts.find(n => n.children.some(c => typeof c === 'string' && c.startsWith('=')))!
+      expect(direction.attributes.y).toBe(number.attributes.y)
+    }
+  })
+
   it('uses the stave rules as its core and expands gaps only for overlapping ink', () => {
     const makeSystem = (lyricX: number, withLyrics = true) => {
       const rules = [40, 50, 60, 70, 80].map(y => element('path', {

@@ -17,6 +17,7 @@ export type StaffMeasure = {
   source: ScoreMeasure; key: string; previousKey: string
   beatOffset?: number
   meterCount: number; meterUnit: number; tempo: number; showTempo: boolean; showMeter: boolean
+  joinsPreviousRepeat?: boolean
   force: boolean; section: boolean; fragment: boolean; lastFragment: boolean
 }
 export type StaffDocument = {
@@ -162,6 +163,11 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
       previousMeter = `${source.events.at(-1)?.meterCount ?? meterCount}/${source.events.at(-1)?.meterUnit ?? meterUnit}`; previousTempo = source.events.at(-1)?.tempo ?? tempo; previousBreak = Boolean(source.breakAfter)
     }
   }
+  for (let i = 1; i < measures.length; i++) {
+    const previous = measures[i - 1]!, current = measures[i]!
+    current.joinsPreviousRepeat = previous.id.split('-')[2] === current.id.split('-')[2]
+      && previous.source.right === 'rptend' && current.source.left === 'rptstart'
+  }
   return { score: display.score, measures, hasBass }
 }
 
@@ -187,6 +193,7 @@ export function splitStaffMeasure(measure: StaffMeasure, maximumBeats: number): 
     key: measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
     previousKey: i === 0 ? measure.previousKey : measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
     force: i === 0 && measure.force, section: i === 0 && measure.section,
+    joinsPreviousRepeat: i === 0 && measure.joinsPreviousRepeat,
     showTempo: i === 0 && measure.showTempo, showMeter: i === 0 && measure.showMeter,
     melody: measure.melody.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),
     bass: measure.bass.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),

@@ -20,6 +20,9 @@ const inputs = ['scores', 'works']
   )
   .filter((item) => selected(item.file))
 const fixtures = [
+  { file: 'fixture/tie-meter', source: '{key=B}{9/8}\nN: 0 0 0 (7d 7d 2~) | {6/8}(2) 1~ 1. |||' },
+  { file: 'fixture/joined-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },
+  { file: 'fixture/split-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| {br} ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },
   { file: 'fixture/tuplet-groups', source: '{4/4}\nN: (([1 2 3:2]) ([4 5 6:2])) 1 2 3 | ([1 2 3 4 5:3]) 1 2 (3) | 1 2 3 ([0 0 3d:2]) |||' },
   { file: 'fixture/arpeggio-graces', source: '{4/4}\nN: [1# 3 5:h]{arp}{ac(6 7)} 2 3 4 |||' },
   { file: 'fixture/bass-slur', source: '{4/4}\nN: 1e 2e 3e 4e |||\nB: {lg}1d 2d 3d 4d{/} |' },

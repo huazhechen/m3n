@@ -2,7 +2,7 @@
 {subtitle=Csárdás}
 {composer=Vittorio Monti}
 // 依据IMSLP #97352；不录钢琴伴奏、弓法、指法及小字号倚音。
-// 泛音段按实际发声音高记为单音；速度数值为播放设置。
+// 泛音段以单音及显式8va记实音，书写降低八度；速度数值为播放设置。
 // Largo
 {key=Dm} {4/4} {60qpm}
 N: {text=Largo}0^ (0 3d) (4d 3d) |
@@ -140,37 +140,37 @@ N: (2e 1e) (1e 7) |
 N: 1e 0 |
 ---
 // Meno, quasi lento · 泛音旋律（实音）
-N: {key=D} {2/4} {66qpm} {text=Meno, quasi lento}1eee (5ee. (5ee)) |
+N: {key=D} {2/4} {66qpm} {text=Meno, quasi lento}{8va}1ee (5e. (5e)) |
 ---
-N: (6ee 5ee) (4ee 3ee) |
+N: (6e 5e) (4e 3e) |
 ---
-N: (3ee 2ee) (2ee 4ee) |
+N: (3e 2e) (2e 4e) |
 ---
-N: 6ee^ |
+N: 6e^ |
 ---
-N: (6ee. (5ee)) (5ee 5ee) |
+N: (6e. (5e)) (5e 5e) |
 ---
-N: (7ee 6ee) (5ee 4ee) |
+N: (7e 6e) (5e 4e) |
 ---
-N: (4ee 3ee) (3ee 3bee) |
+N: (4e 3e) (3e 3be) |
 ---
-N: 3ee^ |
+N: 3e^ |
 ---
-N: 1eee (5ee. (5ee)) |
+N: 1ee (5e. (5e)) |
 ---
-N: (6ee 5ee) (4ee 3ee) |
+N: (6e 5e) (4e 3e) |
 ---
-N: (3ee 2ee) (2ee 4ee) |
+N: (3e 2e) (2e 4e) |
 ---
-N: 6ee^ |
+N: 6e^ |
 ---
-N: 1eee (5ee. (5ee)) |
+N: 1ee (5e. (5e)) |
 ---
-N: (6ee 5ee) (5ee 7e) |
+N: (6e 5e) (5e 7) |
 ---
-N: (2ee 1ee) (1ee 7e) |
+N: (2e 1e) (1e 7) |
 ---
-N: 1ee^{fermata} |
+N: 1e^{fermata}{/} |
 ---
 // Allegro vivace
 N: {key=Dm} {2/4} {152qpm} {text=Allegro vivace}((5 4# 5 7)) ((2e 4e 2e 7)) |

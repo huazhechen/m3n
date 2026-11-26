@@ -7,7 +7,7 @@ import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
 import { arrangeStaffSystem } from './system-layout.js'
-import { element, nodes, readXml, hasClass, SvgGeometry, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
+import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
 const style = scoreLayoutConfig.staff
 const engine = style.engine
@@ -94,7 +94,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   return lines.map((line, lineIndex) => {
     let bassY = engine.initialBassY
     for (let pass = 0; pass < 8; pass++) {
-      const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode) => {
+      const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode, direction?: string) => {
           const display = displayedTempo(qpm, meterCount, meterUnit)
           const tempo = element('g', { class: 'tempo' })
           const codes: Record<number, string> = { 1: 'noteheadWhole', 2: 'noteheadHalf', 4: 'noteheadBlack', 8: 'noteheadBlack', 16: 'noteheadBlack' }
@@ -107,7 +107,21 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           }
           if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + (staffMusicSize() / 4 * 1.6)), cy: String((staffMusicSize() / 4 * -3.1)), r: String((staffMusicSize() / 4 * 0.18)), fill: '#000' }))
           tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? (staffMusicSize() / 4 * 2.5) : (staffMusicSize() / 4 * 1.8)), (staffMusicSize() / 4 * -2.8), style.tempo, 'tempo-text')))
-          parent.children.push(tempo)
+          if (direction) {
+            const label = wrap(direction, tempoX, staffMusicSize() / 4 * -2.8, 'tempo-direction')
+            const geometry = new SvgGeometry(element('g', {}, [label, tempo]), measureText)
+            const a = geometry.ink(label), b = geometry.ink(tempo)
+            const gap = staffMusicSize() / 4 * .8
+            // Text is the primary indication; the metronome mark supplements
+            // it on the same baseline. Keep one movable collision envelope.
+            if (a.right - a.left + gap + b.right - b.left <= rawWidth - style.attachmentWrapInset / scale) {
+              translate(tempo, a.right + gap - b.left, 0)
+            } else {
+              translate(tempo, a.left - b.left, a.bottom + gap - b.top)
+            }
+            tempo.attributes.class = 'tempo-metronome'
+            parent.children.push(element('g', { class: 'tempo' }, [label, tempo]))
+          } else parent.children.push(tempo)
       }
       const node = element('g', { class: 'system' })
       const models: StaffMeasureLayout[] = []
@@ -119,12 +133,13 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       for (const [index, member] of line.measures.entries()) {
         const model = createStaffMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
         const target = document.score.equalMeasures ? (total - (line.measures[0]!.head - inset)) / line.measures.length + (index ? 0 : member.head - inset) : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
-        const measureNode = drawStaffMeasure(model, target, x)
+        const suppressEndRepeat = Boolean(line.measures[index + 1]?.measure.joinsPreviousRepeat)
+        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat)
         models.push(model)
         node.children.push(measureNode)
         for (const [lane, entries] of model.entries.entries()) {
           const staff = nodes(measureNode).filter(n => hasClass(n, 'staff'))[lane]!
-          for (const entry of entries) {
+          for (const [entryIndex, entry] of entries.entries()) {
             const item = entry.item
             if (endpoints.has(item.id)) anchors.set(item.id, { first: entry.notes[0]!, last: entry.notes.at(-1)!, item, measure: measureNode, staff })
             entry.notes.forEach((note, i) => {
@@ -159,7 +174,9 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const cx = entry.notes[0]!.headLeft
             const top = Math.min(...entry.notes.flatMap(n => n.ys)) - engine.attachmentTopGap
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
-            if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
+            const combinedTempo = lane === 0 && (entryIndex === 0 ? member.measure.showTempo
+              : event.tempo !== undefined && event.tempo !== entries[entryIndex - 1]!.item.event.tempo)
+            if (event.text && !combinedTempo) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
             if (event.dynamic || event.prefix) {
               const value = event.dynamic ?? event.prefix!
@@ -175,12 +192,12 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           }
         }
         for (const nav of member.measure.source.navigation ?? []) addNavigation(nav, x + target - engine.navigationBarInset, engine.navigationY, measureNode)
-        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode)
+        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode, model.entries[0]?.[0]?.item.event.text)
         for (const [i, entry] of model.entries[0]!.entries()) {
           const previous = model.entries[0]![i - 1]?.item.event.tempo
           const event = entry.item.event
           if (i > 0 && event.tempo !== undefined && event.tempo !== previous)
-            addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.headLeft, measureNode)
+            addTempo(event.tempo * tempoScale, event.meterCount ?? member.measure.meterCount, event.meterUnit ?? member.measure.meterUnit, entry.notes[0]!.headLeft, measureNode, event.text)
         }
         if (member.measure.source.multiRest || member.measure.source.interlude) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = (model.staves[0]!.y + (staffMusicSize() * 1.5))
@@ -190,7 +207,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         }
         // One spanning barline, redrawn after the final bass/lyric spacing pass.
         const y1 = (model.staves[0]!.y + staffMusicSize()), y2 = (model.staves.at(-1)!.y + (staffMusicSize() * 2))
-        if (member.measure.source.right !== 'invis') measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
+        if (member.measure.source.right !== 'invis' && !suppressEndRepeat) measureNode.children.push(element('g', { class: 'barLine' }, [element('path', { d: `M${x + target} ${y1} V${y2}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
         if ((member.measure.source.repeatCount ?? 2) > 2) measureNode.children.push(text(`×${member.measure.source.repeatCount}`, x + target - engine.navigationBarInset, engine.navigationY, style.repeatCount, 'repeatMark'))
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
@@ -235,11 +252,17 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           ...nodes(text(first ? `${ending}.` : '', left + engine.endingTextInset, engine.endingTextY, style.voltaLabel, 'ending')),
         ]))
       }
+      const tieGeometry = new SvgGeometry(node, measureText, true)
+      const tieSignatures = ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
+        .flatMap(staff => findAll(staff, n => hasClass(n, 'staff-signature') || hasClass(n, 'inline-signature'))
+          .flatMap(signature => tieGeometry.pieces(signature))))
       for (const tie of ties) {
         const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
         if (!first && !last) continue
         const a = first?.last, b = last?.first
-        ;(first?.staff ?? last!.staff).children.push(element('g', { class: 'tie' }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX, line.target - inset - engine.endingBarInset)))
+        const staff = first?.staff ?? last!.staff
+        staff.children.push(element('g', { class: 'tie' }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX,
+          line.target - inset - engine.endingBarInset, tieSignatures[staff.attributes['data-staff'] === 'bass' ? 1 : 0])))
       }
       const slurMusic: Array<Ink[] | undefined> = []
       for (const { interval, start, end } of intervals) {

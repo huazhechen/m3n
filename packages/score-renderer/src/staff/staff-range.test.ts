@@ -82,3 +82,25 @@ it.each([1, -1])('keeps short ties visible in both stem directions (%s)', direct
   expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2)
   expect(markup).toContain('fill="#000"')
 })
+
+
+it.each([1, -1])('bends ties around a crossed signature without detaching endpoints (%s)', direction => {
+  const document = projectStaffDocument(analyzeM3N('{2/4}\nN: 1~ 1 |||').score)
+  const model = createStaffMeasure(document.measures[0]!, true, false, textMeasurer(), .25)
+  drawStaffMeasure(model, 300, 0)
+  const [first, last] = model.entries[0]!.map(entry => entry.notes[0]!)
+  first!.direction = direction
+  const center = (first!.headRight + last!.headLeft) / 2
+  const obstacle = { left: center - 10, right: center + 10, top: first!.ys[0]! - 10, bottom: first!.ys[0]! + 10 }
+  const values = (obstacles: typeof obstacle[]) => xml(drawStaffTie(first, last, 0, 300, obstacles)[0]!)
+    .match(/d="([^"]+)"/)![1]!.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+  const before = values([]), after = values([obstacle])
+  expect(after.slice(0, 2)).toEqual(before.slice(0, 2))
+  expect(after.slice(6, 8)).toEqual(before.slice(6, 8))
+  for (const x of [obstacle.left, center, obstacle.right]) {
+    const t = (x - after[0]!) / (after[6]! - after[0]!), u = 1 - t
+    const inner = u ** 3 * after[1]! + 3 * u * u * t * after[11]! + 3 * u * t * t * after[9]! + t ** 3 * after[7]!
+    if (direction === 1) expect(inner).toBeLessThanOrEqual(obstacle.top - 3.99)
+    else expect(inner).toBeGreaterThanOrEqual(obstacle.bottom + 3.99)
+  }
+})

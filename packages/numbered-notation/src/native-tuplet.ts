@@ -4,8 +4,8 @@ import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { placedNativeControlInk } from './native-controls.js'
 
-/** Brackets use lane-relative coordinates so pagination only translates them. */
-export function nativeTupletGeometry(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer) {
+/** Adjacent rhythm brackets form one vertical alignment group. */
+export function nativeTupletPeers(relation: NativeRelation, system: NativeSystem) {
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     .filter(glyph => glyph.lane === relation.first.lane)
   const spans = system.relations.filter(item => item.kind === 'tuplet' && item.first.lane === relation.first.lane)
@@ -15,7 +15,14 @@ export function nativeTupletGeometry(relation: NativeRelation, system: NativeSys
   let first = current, last = current
   while (first > 0 && spans[first - 1]!.end + 1 === spans[first]!.start) first--
   while (last >= 0 && last + 1 < spans.length && spans[last]!.end + 1 === spans[last + 1]!.start) last++
-  const peers = current < 0 ? [relation] : spans.slice(first, last + 1).map(span => span.item)
+  return current < 0 ? [relation] : spans.slice(first, last + 1).map(span => span.item)
+}
+
+/** Brackets use lane-relative coordinates so pagination only translates them. */
+export function nativeTupletGeometry(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer) {
+  const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+    .filter(glyph => glyph.lane === relation.first.lane)
+  const peers = nativeTupletPeers(relation, system)
   const size = nativeStyle.music, fontSize = (nativeStyle.music * .7), hook = size * 0.18, gap = size * 0.14
   const stroke = Math.max((nativeStyle.music * .04), size * 0.055), halfStroke = stroke / 2
   const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT }).w / 2

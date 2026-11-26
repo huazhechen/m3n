@@ -6,7 +6,7 @@ import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
 import { nativeArcGeometry, nativeArcPath, type NativeArc } from './native-arc.js'
 import { prepareNativeArc, nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
-import { nativeTupletGeometry } from './native-tuplet.js'
+import { nativeTupletGeometry, nativeTupletPeers } from './native-tuplet.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSvgInk, nativeSvgPieces, type NativeInk } from './native-ink.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
@@ -84,6 +84,23 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           .filter(b => b.right > ink.left && b.left < ink.right)
         blockers.push(...obstacles, ...controls)
       }
+      if (relation.kind === 'tuplet') {
+        // An incoming tie can clear only one bracket. Compute the final lift
+        // for the complete adjacent group before placing any of its members.
+        for (const peer of nativeTupletPeers(relation, system)) {
+          const peerInk = nativeSvgInk(painter.relation(peer, system), measurer)
+          const peerBlockers = [...(system.relationLayout ?? [])]
+            .filter(([r, placed]) => r.kind !== 'inst' && r.kind !== 'tuplet' && r.first.lane === peer.first.lane
+              && placed.ink.right > peerInk.left && placed.ink.left < peerInk.right)
+            .map(([, placed]) => placed.ink)
+          const peerLabels = (system.decorationLayout ?? [])
+            .filter(label => label.lane === peer.first.lane && !label.svg.includes('data-m3n-role="measure-number"'))
+            .flatMap(label => nativeSvgPieces(label.svg, measurer))
+            .filter(label => label.right > peerInk.left && label.left < peerInk.right)
+          dy = Math.min(dy, ...[...peerBlockers, ...peerLabels]
+            .map(b => b.top - ((system.coreGap ?? nativeCoreGap()) * .1) - peerInk.bottom))
+        }
+      }
       const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
       // Continuations also clear the actual painted bar ink.
       if (hairpin) {
@@ -92,7 +109,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
-      dy = Math.min(0, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-((system.coreGap ?? nativeCoreGap()) * .1)-ink.bottom))
+      dy = Math.min(dy, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-((system.coreGap ?? nativeCoreGap()) * .1)-ink.bottom))
     }
     if (isArc) {
       const arc = initialArc!

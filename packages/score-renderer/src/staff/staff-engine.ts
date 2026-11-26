@@ -1,6 +1,6 @@
 import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing, distributeSpacingSurplus, scoreReadingWindows } from '@m3n/numbered-notation'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
-import { element, setNumericPath, type MeasureText, type XmlNode } from './layout-svg.js'
+import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
 import { staffCommandPath } from './staff-glyph-primitive.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
@@ -29,17 +29,21 @@ export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, 
     ...column.lyricRows.map(row => ({ lane: row.lane, left: row.left, right: row.after, before: 0, after: 0,
       preferredAfter: lyricSpacing.preferredExtraGap / STAFF_SCALE })),
   ] }))
-  const positions = distributeSpacingSurplus(columns, staffColumnSpacing(prepared.metrics, spacing).positions,
-    [0, ...prepared.weights], extra)
+  // Share the boundary spring equally instead of stretching only the tail.
+  // This also preserves duration room for a hairpin on the final event.
+  const edgeWeight = (prepared.weights.at(-1) ?? 1) / 2
+  const weights = [edgeWeight, ...prepared.weights.slice(0, -1), edgeWeight]
+  const base = staffColumnSpacing(prepared.metrics, spacing)
+  const occupied = prepared.metrics.start + base.minimumWidth + staffMusicSize() / 4 + prepared.metrics.endInset
+  const minimumSurplus = Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied)
+  const positions = distributeSpacingSurplus(columns, base.positions, weights, extra + minimumSurplus)
   const reading = scoreReadingWindows(positions.map((x, index) => ({ beat: prepared.onsets[index]!, x,
     preferredNext: preferredAdvance(index) })))
   return { positions, reading }
 }
 export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, reading = false): number {
-  const gap = spacing * engine.spacingUnit / STAFF_SCALE
-  let right = staffColumnSpacing(metrics, spacing, reading).minimumWidth
-  if (metrics.columns.length) right += gap / 2
-  return Math.max(engine.minimumMeasureWidth, metrics.start + right + staffMusicSize() / 8 + metrics.endInset,
+  const right = staffColumnSpacing(metrics, spacing, reading).minimumWidth
+  return Math.max(engine.minimumMeasureWidth, metrics.start + right + staffMusicSize() / 4 + metrics.endInset,
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
 }
 const columnSpacings = new WeakMap<StaffMeasureMetrics, Map<string, ReturnType<typeof solveScoreSpacing>>>()
@@ -52,7 +56,7 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, readi
     const gap = spacing * engine.spacingUnit / STAFF_SCALE
     solution = solveScoreSpacing(metrics.columns.map((column, index) => ({ cells: [
       { lane: 'music', left: Math.max(column.left + (index ? gap * column.beforeGap / 2 : 0), reading && index > 0 ? column.rhythmLeft : 0),
-        right: Math.max(column.after + gap * column.afterGap / 2, reading ? column.rhythmAfter : 0), before: 0, after: 0 },
+        right: Math.max(column.after + (index + 1 < metrics.columns.length ? gap * column.afterGap / 2 : 0), reading ? column.rhythmAfter : 0), before: 0, after: 0 },
       ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
     ] })))
     variants.set(key, solution)
@@ -247,7 +251,9 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     // closing bar. Reserve real ink clearance before the first glyph as well
     // as after the signature; the same width feeds line planning and drawing.
     if (!first && signature.symbols.length) {
-      const inset = staffMusicSize() / 8
+      const inset = measure.joinsPreviousRepeat
+        ? staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right + staffMusicSize() / 4
+        : staffMusicSize() / 4 * .55
       for (const symbol of signature.symbols) symbol.x += inset
       signature.width += inset
     }
@@ -384,10 +390,14 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     return column
   })
   const startGap = staffMusicSize() / 4
-  const start = measure.source.left?.startsWith('rpt')
+  const joined = Boolean(measure.joinsPreviousRepeat && !first)
+  const start = measure.source.left?.startsWith('rpt') && !joined
     ? repeatBarOffset(signatures) + staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right + startGap
     : Math.max(...signatures.map(s => s.width)) + startGap
-  const endInset = measure.source.right?.startsWith('rpt') ? (staffMusicSize() / 4 * 1.8) : measure.source.right === 'end' ? (staffMusicSize() / 4 * 0.7) : measure.source.right === 'dbl' ? (staffMusicSize() / 4 * 0.4) : 0
+      + (joined && signatures.every(s => !s.symbols.length)
+        ? staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right
+        : !first && signatures.every(s => !s.symbols.length) ? staffMusicSize() / 4 * .05 : 0)
+  const endInset = measure.source.right?.startsWith('rpt') ? staffMusicSize() / 4 * 1.35 - staffGlyphMetrics('repeatDot').left : staffMusicSize() / 4 * (measure.source.right === 'end' ? .55 : measure.source.right === 'dbl' ? .35 : measure.source.right === 'invis' ? 0 : .05)
   const multiRestWidth = measure.source.interlude ? (staffMusicSize() / 4 * 5.9) : measure.source.multiRest ? Math.max((staffMusicSize() / 4 * 4.3), measureText(String(measure.source.multiRest), scoreLayoutConfig.staff.restCount / STAFF_SCALE, true).width) + (staffMusicSize() / 4 * 1.6) : 0
   const weights = stretches.map((stretch, i) => i + 1 < stretches.length
     ? (stretch.after + stretches[i + 1]!.before) / 2 : stretch.after)
@@ -402,7 +412,7 @@ export type StaffBeam = { notes: StaffNoteAnchor[]; lane: number }
 export type StaffStave = { x: number; y: number; width: number; noteStartX: number }
 export type StaffMeasureLayout = {
   prepared: PreparedMeasure; staves: StaffStave[]; entries: Array<Array<{ item: StaffEvent; notes: StaffNoteAnchor[] }>>
-  measureText: MeasureText; beams: StaffBeam[]; minimum: number; metrics: StaffMeasureMetrics; start: number; endInset: number; measure: StaffMeasure; spacing: number
+  measureText: MeasureText; beams: StaffBeam[]; minimum: number; metrics: StaffMeasureMetrics; start: number; endInset: number; measure: StaffMeasure; spacing: number; joinedRepeat: boolean
 }
 export function createStaffMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY = engine.bassY,
   preparation: StaffPreparation = createStaffPreparation()): StaffMeasureLayout {
@@ -413,7 +423,7 @@ export function createStaffMeasure(measure: StaffMeasure, first: boolean, hasBas
   const beams = prepared.beams.map(beam => ({ lane: beam.lane, notes: beam.indices.map(i => entries[beam.lane]!.flatMap(entry => entry.notes)[i]!) }))
   for (const beam of beams) for (const note of beam.notes) note.beam = beam
   return { prepared, entries, beams, measureText, staves: [0, ...(hasBass ? [bassY] : [])].map(y => ({ x: 0, y, width: 0, noteStartX: 0 })),
-    metrics: prepared.metrics, minimum: staffMinimumAtSpacing(prepared.metrics, spacing), start: prepared.metrics.start, endInset: prepared.metrics.endInset, measure, spacing }
+    metrics: prepared.metrics, minimum: staffMinimumAtSpacing(prepared.metrics, spacing), start: prepared.metrics.start, endInset: prepared.metrics.endInset, measure, spacing, joinedRepeat: Boolean(measure.joinsPreviousRepeat && !first) }
 }
 export function staffLine(x1: number, y1: number, x2: number, y2: number, width = (staffMusicSize() / 4 * 0.1), cls?: string): XmlNode {
   const node = element('path', { stroke: '#000', 'stroke-width': String(width), fill: 'none', ...(cls ? { class: cls } : {}) })
@@ -439,7 +449,8 @@ export function drawStaffBar(type: string | undefined, x: number, y: number, lef
     if (bar === 'dbl') { rule(-(staffMusicSize() / 4 * 0.3)); rule(0) }
     else if (bar === 'end') { rule(-(staffMusicSize() / 4 * 0.5)); rule(-(staffMusicSize() / 4 * 0.1), (staffMusicSize() / 4 * 0.3)) }
     else if (bar.startsWith('rpt')) {
-      rule((left ? 1 : -1) * (staffMusicSize() / 4 * 0.1), (staffMusicSize() / 4 * 0.3)); rule((left ? 1 : -1) * (staffMusicSize() / 4 * 0.6))
+      if (bar === 'rptboth') { rule(0, staffMusicSize() / 4 * .3); rule(-staffMusicSize() / 4 * .6); rule(staffMusicSize() / 4 * .6) }
+      else { rule((left ? 1 : -1) * (staffMusicSize() / 4 * 0.1), (staffMusicSize() / 4 * 0.3)); rule((left ? 1 : -1) * (staffMusicSize() / 4 * 0.6)) }
       for (const sign of bar === 'rptboth' ? [-1, 1] : [left ? 1 : -1]) for (const dy of [(staffMusicSize() * 1.5) - (staffMusicSize() / 8), (staffMusicSize() * 1.5) + (staffMusicSize() / 8)])
         lines.push(staffGlyph('repeatDot', x + sign * (staffMusicSize() / 4 * 1.2) - (staffMusicSize() / 4 * 0.15), y + dy))
     } else rule(0)
@@ -601,7 +612,7 @@ function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, 
   }
   return element('g', { class: 'm3n-tuplet-label', 'data-m3n-below': String(below) }, [element('g', { class: 'tupletNum' }, children)])
 }
-export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number): XmlNode {
+export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false): XmlNode {
   const { prepared } = model
   const extra = Math.max(0, width - model.minimum)
   const readingSpacing = staffReadingSpacing(prepared, model.spacing, extra)
@@ -636,8 +647,8 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
   for (const [lane, stave] of model.staves.entries()) {
     const staff = element('g', { class: 'staff', 'data-staff': lane ? 'bass' : 'melody' })
     for (let i = 0; i < 5; i++) staff.children.push(staffLine(x, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, x + width, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, (staffMusicSize() / 4 * 0.1), 'staff-line'))
-    const leftBarX = x + (model.measure.source.left?.startsWith('rpt') ? repeatBarOffset(prepared.signatures) : 0)
-    staff.children.push(drawStaffBar(model.measure.source.left, leftBarX, stave.y, true), drawStaffBar(model.measure.source.right, x + width, stave.y),
+    const leftBarX = x + (!model.joinedRepeat && model.measure.source.left?.startsWith('rpt') ? repeatBarOffset(prepared.signatures) : 0)
+    staff.children.push(drawStaffBar(model.joinedRepeat ? 'rptboth' : model.measure.source.left, leftBarX, stave.y, true), drawStaffBar(suppressEndRepeat ? 'invis' : model.measure.source.right, x + width, stave.y),
       element('g', { class: 'staff-signature', id: `${model.measure.id}-signature-${lane}` }, drawSignature(prepared.signatures[lane]!, x, stave.y)))
     for (const entry of model.entries[lane]!) {
       const attrs: Record<string, string> = { id: entry.item.id, class: entry.item.event.kind }
@@ -660,14 +671,29 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
   return measureNode
 }
 /** Open ties use system boundaries; one ribbon is drawn for each chord member. */
-export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNoteAnchor | undefined, left: number, right: number): XmlNode[] {
+export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNoteAnchor | undefined, left: number, right: number, obstacles: readonly Ink[] = []): XmlNode[] {
   const note = first ?? last!
   const direction = -note.direction, count = Math.min(first?.ys.length ?? Infinity, last?.ys.length ?? Infinity)
   const curves: XmlNode[] = []
   for (let i = 0; i < count; i++) {
     const x1 = first ? first.headRight + (staffMusicSize() / 4 * 0.1) : left, x2 = last ? last.headLeft - (staffMusicSize() / 4 * 0.1) : right
     const y1 = (first?.ys[i] ?? last!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6), y2 = (last?.ys[i] ?? first!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6)
-    const height = direction * Math.min((staffMusicSize() / 4 * 1.6), Math.max((staffMusicSize() / 4 * 0.6), (x2 - x1) / 6)), dx = (x2 - x1) / 3
+    const space = staffMusicSize() / 4, thickness = space * .23
+    let rise = Math.min(space * 1.6, Math.max(space * .6, (x2 - x1) / 6))
+    // Keep the note attachments fixed while bending around a crossed
+    // key/meter signature. Cubic x is linear in t for these control points.
+    for (const obstacle of obstacles) {
+      if (obstacle.right <= x1 || obstacle.left >= x2 || x2 <= x1) continue
+      const a = Math.max(0, (obstacle.left - x1) / (x2 - x1))
+      const b = Math.min(1, (obstacle.right - x1) / (x2 - x1))
+      const factor = 3 * Math.min(a * (1 - a), b * (1 - b))
+      if (factor <= 0) continue
+      const ya = y1 + (y2 - y1) * a * a * (3 - 2 * a), yb = y1 + (y2 - y1) * b * b * (3 - 2 * b)
+      const needed = direction < 0 ? Math.max(ya, yb) - obstacle.top + space * .4
+        : obstacle.bottom + space * .4 - Math.min(ya, yb)
+      rise = Math.max(rise, needed / factor + thickness)
+    }
+    const height = direction * rise, dx = (x2 - x1) / 3
     const path = element('path', { fill: '#000', stroke: 'none' })
     setNumericPath(path, staffCommandPath([{ kind: 0, values: [x1, y1] },
       { kind: 3, values: [x1 + dx, y1 + height, x2 - dx, y2 + height, x2, y2] },

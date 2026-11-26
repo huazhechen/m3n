@@ -1,8 +1,8 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "599f5cf30dd4d77b13f2aa4cffaa5604a830366255b45f441924c2cdd7d3294d",
-  "fontManifestSha256": "35474eb13ec5f63cda7a60a2e16da4a932ec6f53a80e79986388ace1e681020d",
+  "rendererSha256": "af0d6d788b12afb71c530e9f945ddb0e336336e87d2aaa51de535ff9a89c503d",
+  "fontManifestSha256": "3df49fb0f070c6a12db8be630f1aaf56f748ccd0917d774f33183725f94043f3",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -585,9 +585,9 @@
       "fontSha256": "0f64e67f8e9442c2768b6bc5575a45b911c3b170bbe2390c73f927a7ced2a508"
     },
     "src/scores/cha_er_da_shi_01.m3n": {
-      "sourceSha256": "d76bb85339e4296a79b2b8298389069190affe9f6627a06324115ee1245d88cd",
-      "font": "NotoSansSC-16f7dcffe05a9c97.ttf",
-      "fontSha256": "7de578748e9a144adeee7d0c891f7bba2f87d0220073d6d6679a35e7eb816efa"
+      "sourceSha256": "1ce00322cb28d9aae8d29b6b6f94af560254ece3e6e57a93615a738bbf1fe16a",
+      "font": "NotoSansSC-316c678e633e2848.ttf",
+      "fontSha256": "a597ad0873549254d67ed2bb0bfaa149b618169308ec2a79b40bed5fd9d7b0e5"
     }
   }
 }

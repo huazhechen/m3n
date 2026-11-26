@@ -16,6 +16,16 @@ const unusual: TextMeasurer = { measureText(text, style) {
 } }
 
 describe('numeric tempo labels', () => {
+  it('combines simultaneous direction and tempo above the music, preserving playback', () => {
+    const document = parseM3NDocument('{4/4}{120qpm}\nN: 1 2 | {60qpm}{text=Meno, quasi lento}3 4 |||')
+    const performance = compileScorePerformance(document)
+    const layout = layoutNativeScore(document, { width: 528, paged: false })
+    const glyph = layout.projection.glyphs.find(g => g.event?.text === 'Meno, quasi lento')!
+    expect(glyph.controls.some(control => control.kind === 'tempo')).toBe(false)
+    expect(glyph.annotationLayout?.map(a => a.text)).toContain('Meno, quasi lento (60 BPM)')
+    expect(compileScorePerformance(document)).toEqual(performance)
+  })
+
   it('uses the meter denominator BPM in compound-meter headers and inline changes', () => {
     const document = parseM3NDocument('{key=D}{6/8}{80qpm}\nN: 1 2 {60qpm}3 4 5 6 |||')
     const layout = layoutNativeScore(document, { width: 800, paged: false })
