@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 112,
+  "sourceCount": 113,
   "sections": [
     {
       "id": "basics",
@@ -936,6 +936,14 @@
       "section": "pop",
       "group": "切分与延音",
       "reason": "双段主歌反复、密集切分、同音延音、间奏与渐慢尾声"
+    },
+    {
+      "id": "ta_shuo",
+      "file": "ta_shuo_01.m3n",
+      "title": "她说",
+      "section": "pop",
+      "group": "切分与延音",
+      "reason": "完整人声旋律、八分与十六分节奏、跨小节延音及副歌音区变奏"
     }
   ],
   "edition": "第七十五版",
