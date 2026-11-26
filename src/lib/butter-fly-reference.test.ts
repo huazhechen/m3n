@@ -1,45 +1,58 @@
-import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
+import { compileScorePerformance, formatM3N, parseM3NDocument, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
 import source from '../scores/butter_fly_01.m3n?raw'
+import reference from './fixtures/butter-fly-upload.json'
 
 const document = parseM3NDocument(source)
-const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
-
-// One-based written bars, including the opening rest bar; zero-based events.
-// Audited against the E-major numbered image linked in the score. Bar 10's
-// cross-bar C-sharp tie is supplied by the classic E-major vocal staff image.
-const ties: Record<number, number[]> = {
-  2: [7], 3: [4], 4: [7], 6: [6], 7: [3, 7], 9: [4],
-  10: [6], 11: [5], 12: [6], 14: [5], 15: [3, 7],
-  18: [4], 22: [4], 24: [3, 7], 25: [3], 28: [1],
-  29: [2, 6], 31: [3, 4, 7], 32: [4], 33: [3], 34: [7],
-  37: [2, 6], 39: [7], 40: [2, 6], 41: [3], 44: [0],
+const part = document.parts.get('score')!
+const bars = part.melody.filter(bar => bar.events.length)
+const semitones: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+const alterations: Record<string, number> = { '': 0, s: 1, f: -1, n: 0 }
+const midi = (pitch: string) => {
+  const [name, octave, accidental] = pitch.split(':')
+  return 12 * (Number(octave) + 1) + semitones[name!.toUpperCase()]! + alterations[accidental!]!
 }
 
-it('matches every pictured tie without joining separately articulated repeated notes', () => {
+it('matches every uploaded fixed-do melody pitch, octave, duration and tie in E-major movable do', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
-  expect(bars).toHaveLength(45)
-  for (const [index, bar] of bars.entries()) {
-    expect(bar.events.flatMap((event, position) => event.tie ? [position] : []), `bar ${index + 1}`)
-      .toEqual(ties[index + 1] ?? [])
-    expect(bar.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+  expect(document.key).toBe('E')
+  expect(document.tempo).toBe(106)
+  expect(bars).toHaveLength(44)
+  expect(part.bass.flatMap(bar => bar.events)).toEqual([])
+  const pitches = resolveScorePitches(bars)
+  for (const [index, measure] of reference.measures.entries()) {
+    const expected = measure.events.split(' ').map(token => {
+      const [name, duration] = token.split('/')
+      const match = /^([A-G])(#?)([0-9])$/.exec(name!)
+      return {
+        pitch: match ? 12 * (Number(match[3]) + 1) + semitones[match[1]!]! + (match[2] ? 1 : 0) : null,
+        beats: Number(duration!.replace('~', '')),
+        tie: duration!.endsWith('~'),
+      }
+    })
+    expect(bars[index]!.events.map(event => ({
+      pitch: pitches.get(event)?.[0] ? midi(pitches.get(event)![0]!) : null,
+      beats: event.beats,
+      tie: Boolean(event.tie),
+    })), `PDF measure ${measure.pdfMeasure}`).toEqual(expected)
+    expect(bars[index]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
+    expect(bars[index]!.events.every(event => event.pitches.length <= 1)).toBe(true)
   }
-  // The classical vocal sheet keeps separate syllables on these two F-sharps.
-  expect(bars[35]!.events.map(event => [event.pitches, event.beats, event.tie ?? false]))
-    .toEqual([[['1e'], 1.5, false], [['2e'], .5, false], [['2e'], 1, false], [['3e'], 1, false]])
 })
 
-it('sustains both repaired passages through both repeat passes', () => {
+it('keeps the existing two-pass route and the uploaded vocal ending without piano material', () => {
+  expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
+  expect(bars.filter(bar => bar.right === 'rptend')).toHaveLength(1)
+  const expanded = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(expanded).toHaveLength(86)
   const performance = compileScorePerformance(document)
-  expect(performance.beats).toBe(348)
-  expect(performance.notes).toHaveLength(348)
+  expect(performance.beats).toBe(344)
+  expect(performance.notes.find(note => note.start === 3.5)).toMatchObject({ pitch: 59, end: 4 })
+  // PDF 12→13 is G-sharp, never a tie from C-sharp into a rest.
   for (const offset of [0, 168]) {
-    const crossBar = performance.notes.find(note => note.start === 39.5 + offset)
-    expect(crossBar).toMatchObject({ pitch: 73, end: 40.5 + offset })
-    expect(performance.notes.some(note => note.start === 40 + offset)).toBe(false)
-    const threeEighths = performance.notes.find(note => note.start === 121.5 + offset)
-    expect(threeEighths).toMatchObject({ pitch: 76, end: 123 + offset })
-    expect(performance.notes.some(note => note.start === 122 + offset || note.start === 122.5 + offset)).toBe(false)
+    expect(performance.notes.find(note => note.start === 11.5 + offset)).toMatchObject({ pitch: 68, end: 12.5 + offset })
+    expect(performance.notes.some(note => note.start === 12 + offset)).toBe(false)
   }
+  expect(performance.notes.at(-1)).toMatchObject({ pitch: 76, start: 340, end: 342 })
 })

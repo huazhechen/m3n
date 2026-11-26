@@ -1,0 +1,183 @@
+{
+  "source": "/root/uploads/数码宝贝 Butterfly(总谱).pdf",
+  "sha256": "c1850ff93219a66f4dcb98b6c8ed0ada54eece07d659e2fbd07036e45e2237fe",
+  "convention": "Scientific pitches; /quarter-beats; ~ outgoing tie. Sixteenth note + rest pairs simplified to eighths per user instruction. Tied continuations retain their incoming accidental.",
+  "measures": [
+    {
+      "pdfMeasure": 10,
+      "events": "0/1 0/1 0/1 0/.5 B3/.5"
+    },
+    {
+      "pdfMeasure": 11,
+      "events": "G#4/.5 B4/.5 B4/.5 B4/.5 B4/.5 B4/.5 G#4/.5 C#5/.5"
+    },
+    {
+      "pdfMeasure": 12,
+      "events": "0/.5 B4/1 0/.5 0/1 E4/.5 G#4/.5~"
+    },
+    {
+      "pdfMeasure": 13,
+      "events": "G#4/.5 B4/.5 B4/.5 B4/.5 B4/.5 B4/.5 G#4/.5 C#5/.5"
+    },
+    {
+      "pdfMeasure": 14,
+      "events": "0/.5 D#5/1 0/.5 0/.5 G4/.5 F#4/.5 G4/.5"
+    },
+    {
+      "pdfMeasure": 15,
+      "events": "F#4/.5 E4/1.5 0/.5 E4/.5 E4/.5 G4/.5~"
+    },
+    {
+      "pdfMeasure": 16,
+      "events": "G4/.5 F#4/.5 E4/.5 A4/.5~ A4/.5 G#4/.5 F#4/.5 E4/.5~"
+    },
+    {
+      "pdfMeasure": 17,
+      "events": "E4/1.5 0/.5 0/1 0/1"
+    },
+    {
+      "pdfMeasure": 18,
+      "events": "0/1 0/1 0/1 0/1"
+    },
+    {
+      "pdfMeasure": 19,
+      "events": "G#4/.5 B4/.5 B4/.5 B4/.5 B4/.5 B4/.5 G#4/.5 C#5/.5"
+    },
+    {
+      "pdfMeasure": 20,
+      "events": "0/.5 B4/1 0/.5 0/1 E4/.5 G#4/.5~"
+    },
+    {
+      "pdfMeasure": 21,
+      "events": "G#4/.5 B4/.5 B4/.5 B4/.5~ B4/.5 G#4/.5 G#4/.5 C#5/.5~"
+    },
+    {
+      "pdfMeasure": 22,
+      "events": "C#5/.5 D#5/1 0/.5 0/.5 G4/.5 F#4/.5 G#4/.5"
+    },
+    {
+      "pdfMeasure": 23,
+      "events": "F#4/.5 E4/1.5 0/.5 E4/.5 E4/.5 G4/.5~"
+    },
+    {
+      "pdfMeasure": 24,
+      "events": "G4/.5 F#4/.5 E4/.5 A4/.5~ A4/.5 G#4/.5 F#4/.5 E4/.5~"
+    },
+    {
+      "pdfMeasure": 25,
+      "events": "E4/1.5 0/.5 0/1 0/1"
+    },
+    {
+      "pdfMeasure": 26,
+      "events": "0/1 0/1 0/.5 G#4/.5 G#4/.5 G#4/.5"
+    },
+    {
+      "pdfMeasure": 27,
+      "events": "E5/1 D#5/1 C#5/.5 B4/.5 0/.5 G#4/.5~"
+    },
+    {
+      "pdfMeasure": 28,
+      "events": "G#4/1 0/1 0/.5 G#4/.5 F#4/.5 G#4/.5"
+    },
+    {
+      "pdfMeasure": 29,
+      "events": "F#4/.5 E4/.5 E4/.5 C#4/.5 E4/.5 F#4/.5 G#4/.5 G#4/.5~"
+    },
+    {
+      "pdfMeasure": 30,
+      "events": "G#4/2 0/.5 G#4/.5 G#4/.5 G#4/.5"
+    },
+    {
+      "pdfMeasure": 31,
+      "events": "E5/1 D#5/1 C#5/.5 B4/.5 0/.5 G#4/.5~"
+    },
+    {
+      "pdfMeasure": 32,
+      "events": "G#4/1 0/1 0/1 G#4/.5 G#4/.5"
+    },
+    {
+      "pdfMeasure": 33,
+      "events": "A4/.5 G#4/.5 A4/.5 B4/.5 B4/.5 A4/.5 B4/.5 C5/.5~"
+    },
+    {
+      "pdfMeasure": 34,
+      "events": "C5/.5 B4/.5 C5/.5 D5/.5~ D5/2"
+    },
+    {
+      "pdfMeasure": 35,
+      "events": "B4/4"
+    },
+    {
+      "pdfMeasure": 36,
+      "events": "0/1 0/1 0/1 0/.5 C#5/.5"
+    },
+    {
+      "pdfMeasure": 37,
+      "events": "E5/1.5 F#5/.5~ F#5/1 G#5/.5 F#5/.5"
+    },
+    {
+      "pdfMeasure": 38,
+      "events": "F#5/1 G#5/.5 F#5/.5~ F#5/.5 E5/.5 D#5/.5 E5/.5~"
+    },
+    {
+      "pdfMeasure": 39,
+      "events": "E5/2 0/1 C#5/.5 E5/.5"
+    },
+    {
+      "pdfMeasure": 40,
+      "events": "G#5/.5 F#5/.5 0/.5 E5/.5 E5/.5 E5/.5 F#5/.5 F#5/.5"
+    },
+    {
+      "pdfMeasure": 41,
+      "events": "E5/1 0/.5 E5/.5~ E5/.5 D#5/.5 C#5/.5 B4/.5~"
+    },
+    {
+      "pdfMeasure": 42,
+      "events": "B4/.5 G#4/.5 G#4/.5 C#5/.5~ C#5/.5 0/.5 0/.5 C#5/.5"
+    },
+    {
+      "pdfMeasure": 43,
+      "events": "E5/.5 C#5/.5 E5/.5 C#5/.5 E5/.5 C#5/.5 C#5/.5 G#5/.5~"
+    },
+    {
+      "pdfMeasure": 44,
+      "events": "G#5/.5 G#5/.5 F#5/1 E5/.5 F#5/1 0/.5"
+    },
+    {
+      "pdfMeasure": 45,
+      "events": "E5/1.5 F#5/.5~ F#5/1 G#5/1"
+    },
+    {
+      "pdfMeasure": 46,
+      "events": "F#5/1 F#5/.5 F#5/.5~ F#5/.5 E5/.5 D#5/.5 E5/.5~"
+    },
+    {
+      "pdfMeasure": 47,
+      "events": "E5/2 0/1 C#5/.5 E5/.5"
+    },
+    {
+      "pdfMeasure": 48,
+      "events": "G#5/.5 F#5/1 F#5/.5 B5/.5 D#5/.5 D#5/.5 E5/.5"
+    },
+    {
+      "pdfMeasure": 49,
+      "events": "E5/1 0/.5 E5/.5~ E5/.5 D#5/.5 C#5/.5 B4/.5~"
+    },
+    {
+      "pdfMeasure": 50,
+      "events": "B4/.5 B4/.5 F#5/.5 F#5/.5 E5/1.5 0/.5"
+    },
+    {
+      "pdfMeasure": 51,
+      "events": "E5/3~ E5/.5 0/.5"
+    },
+    {
+      "pdfMeasure": 52,
+      "events": "D5/3 0/1"
+    },
+    {
+      "pdfMeasure": 53,
+      "events": "E5/2 0/1 0/1"
+    }
+  ]
+}
