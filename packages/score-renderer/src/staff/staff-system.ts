@@ -1,8 +1,9 @@
+import { staffTempoBeat } from './staff-tempo.js'
 import { staffSlur } from './staff-slur.js'
 import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
-import { staffMusicSize, staffGlyph, staffNavigationGlyph, type StaffGlyph } from './staff-music-font.js'
+import { staffMusicSize, staffGlyph, staffNavigationGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
@@ -97,16 +98,9 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode, direction?: string) => {
           const display = displayedTempo(qpm, meterCount, meterUnit)
           const tempo = element('g', { class: 'tempo' })
-          const codes: Record<number, string> = { 1: 'noteheadWhole', 2: 'noteheadHalf', 4: 'noteheadBlack', 8: 'noteheadBlack', 16: 'noteheadBlack' }
-          const glyph = [staffGlyph((codes[display.unit] ?? 'noteheadBlack') as StaffGlyph, tempoX, (staffMusicSize() / 4 * -3), (style.music * .8) / scale)]
-          tempo.children.push(...glyph)
-          if (display.unit !== 1) tempo.children.push(element('path', { d: `M${tempoX + (staffMusicSize() / 4 * 0.9)} ${(staffMusicSize() / 4 * -3.1)} v${-(staffMusicSize() / 4 * 2.4)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.13)), fill: 'none' }))
-          if (display.unit >= 8) {
-            const flags: Record<number, string> = { 8: 'flag8Up', 16: 'flag16Up', 32: 'flag32Up', 64: 'flag64Up' }
-            tempo.children.push(staffGlyph((flags[display.unit] ?? 'flag8Up') as StaffGlyph, tempoX + (staffMusicSize() / 4 * 0.9), (staffMusicSize() / 4 * -5.5), (style.music * .8) / scale))
-          }
-          if (display.dots) tempo.children.push(element('circle', { cx: String(tempoX + (staffMusicSize() / 4 * 1.6)), cy: String((staffMusicSize() / 4 * -3.1)), r: String((staffMusicSize() / 4 * 0.18)), fill: '#000' }))
-          tempo.children.push(...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, tempoX + (display.dots ? (staffMusicSize() / 4 * 2.5) : (staffMusicSize() / 4 * 1.8)), (staffMusicSize() / 4 * -2.8), style.tempo, 'tempo-text')))
+          const baseline = staffMusicSize() / 4 * -2.8
+          const beat = staffTempoBeat(display.unit, display.dots, tempoX, baseline, style.tempo / scale, measureText)
+          tempo.children.push(beat.node, ...nodes(text(`= ${Number(display.bpm.toFixed(2))}`, beat.textX, baseline, style.tempo, 'tempo-text')))
           if (direction) {
             const label = wrap(direction, tempoX, staffMusicSize() / 4 * -2.8, 'tempo-direction')
             const geometry = new SvgGeometry(element('g', {}, [label, tempo]), measureText)

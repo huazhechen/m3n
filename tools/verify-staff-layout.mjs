@@ -20,6 +20,7 @@ const inputs = ['scores', 'works']
   )
   .filter((item) => selected(item.file))
 const fixtures = [
+  { file: 'fixture/metronome-beats', source: '{4/4}{120qpm}\nN: 1 2 3 4 | {3/8}{96qpm}(1 2 3) | {6/8}{72qpm}(1 2 3 4 5 6) |||' },
   { file: 'fixture/tie-meter', source: '{key=B}{9/8}\nN: 0 0 0 (7d 7d 2~) | {6/8}(2) 1~ 1. |||' },
   { file: 'fixture/joined-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },
   { file: 'fixture/split-repeat-meter', source: '{4/4}\nN: 1 2 3 4 :|| {br} ||: {2/4}{144qpm}{text=Allegro vivo}1 2 | 3 4 :||' },

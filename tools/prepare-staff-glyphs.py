@@ -25,6 +25,15 @@ codes = {
     'ornamentTrill': 0xE566, 'ornamentShortTrill': 0xE56C,
     'segno': 0xE047, 'coda': 0xE048, 'wiggleArpeggiatoUp': 0xEAA9,
 }
+# Complete metronome notes use the font's own short stems and flag joins.
+for name, code in {
+    'metNoteWhole': 0xECA2, 'metNoteHalfUp': 0xECA3,
+    'metNoteQuarterUp': 0xECA5, 'metNote8thUp': 0xECA7,
+    'metNote16thUp': 0xECA9, 'metNote32ndUp': 0xECAB,
+    'metNote64thUp': 0xECAD, 'metNote128thUp': 0xECAF,
+    'metAugmentationDot': 0xECB7,
+}.items():
+    codes[name] = code
 for duration, code in zip([1, 2, 4, 8, 16, 32, 64, 128], range(0xE4E3, 0xE4EB)):
     codes[f'rest{duration}'] = code
 for i, duration in enumerate([8, 16, 32, 64, 128]):
