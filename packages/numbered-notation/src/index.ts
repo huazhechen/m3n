@@ -32,3 +32,11 @@ export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'
 export type { LyricWordSyllable } from './lyric-spacing.js'
 
 export { inheritElasticWidth, elasticLineBadness, solveElasticSprings, type SpacingSpring, type ElasticSpacing } from './elastic-spacing.js'
+
+// Notation-independent solvers shared by the numbered and staff adapters.
+export { planNativeLines as planScoreLinesGlobally, type NativeLineCandidate as ScoreLineCandidate } from './native-line-breaking.js'
+export { greedyNativeLines as greedyScoreLines, planNativeLinesWithinPages as planScoreLinesWithinPages } from './native-page-line-breaking.js'
+export { nativeWholeRowFeasibility as scoreWholeRowFeasibility } from './native-height-feasibility.js'
+export { prepareNativePagination as prepareScorePagination, type NativePageBlock as ScorePageBlock } from './native-pagination.js'
+export { nativeHeightEnvelope as scoreHeightEnvelope, mergeNativeHeightEnvelopes as mergeScoreHeightEnvelopes, nativeEnvelopeBlock as scoreEnvelopeBlock, type NativeHeightEnvelope as ScoreHeightEnvelope } from './native-height-envelope.js'
+export { scoreNumberedSpacing as scorePhysicalSpacing, scoreNumberedCost as scoreLayoutCosts } from './layout-quality.js'

@@ -13,10 +13,10 @@ export class NativeNumberedNotationScore {
   private constructor(private readonly document: ScoreDocument) {}
   static create(document: ScoreDocument) { return new NativeNumberedNotationScore(document) }
   pageCount(options: NativeRenderOptions): number {
-    return layoutNativeScore(this.document, { rowEnvelope: true, ...options }).pages.length
+    return layoutNativeScore(this.document, { numericLayout: true, rowEnvelope: true, ...options }).pages.length
   }
   render(options: NativeRenderOptions): string[] {
-    const layout = layoutNativeScore(this.document, { rowEnvelope: true, ...options })
+    const layout = layoutNativeScore(this.document, { numericLayout: true, rowEnvelope: true, ...options })
     this.diagnostics = [...layout.projection.diagnostics, ...validateScoreDocument(this.document).filter(diagnostic => diagnostic.code.startsWith('M3N_METER_')).map(diagnostic => ({ code: 'W_METER_MISMATCH', message: diagnostic.message, severity: 'warning' as const }))]
     return renderNativePages(layout)
   }
@@ -24,7 +24,7 @@ export class NativeNumberedNotationScore {
 
 /** Compact layout metrics for choosing among equally short page-width candidates. */
 export function numberedLayoutQuality(document: ScoreDocument, options: NativeRenderOptions) {
-  return nativeLayoutQuality(layoutNativeScore(document, { rowEnvelope: true, ...options, paged: true }))
+  return nativeLayoutQuality(layoutNativeScore(document, { numericLayout: true, rowEnvelope: true, ...options, paged: true }))
 }
 
 
@@ -38,8 +38,8 @@ export class PreparedNumberedNotationScore {
   readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
-  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number) {
-    this.layout = layoutNativeScore(document, { rowEnvelope: true, ...options, paged: true }, timings, minimumQuality)
+  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?:number) {
+    this.layout = layoutNativeScore(document, { numericLayout: true, rowEnvelope: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
     this.pageCount = this.layout.pages.length
     this.systemCount = this.layout.systems.length
     this.quality = nativeLayoutQuality(this.layout)
@@ -88,7 +88,7 @@ export function renderSharedNumberedNotationScores(documents: readonly ScoreDocu
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
   const minimum = Math.max(...documents.map(document => nativeCoreGap(document)))
-  const layouts = documents.map(document => layoutNativeScore(document, { rowEnvelope: true, ...options, paged: false, coreGap: minimum }))
+  const layouts = documents.map(document => layoutNativeScore(document, { numericLayout: true, rowEnvelope: true, ...options, paged: false, coreGap: minimum }))
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
   const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeSvgNumber(nativeContinuousPagination(layout, gap).heights[0] ?? 0)), scoreGap * (layouts.length - 1))

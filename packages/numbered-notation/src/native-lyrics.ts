@@ -3,11 +3,48 @@ import { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } 
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
-import type { TextMeasurer } from './native-measure.js'
+import type { TextMeasurer, TextMetrics } from './native-measure.js'
 import { NativeSymbols, attrs, line } from './native-symbols.js'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeSvgInk, unionNativeInk, type NativeInk } from './native-ink.js'
 import type { LyricRowData } from './lyrics.js'
+
+type LyricPieceCache={data:LyricRowData;x:number;baseline:number;next?:number;measurer:TextMeasurer;pieces:NativeInk[]}
+const placedPieces=new WeakMap<NativeGlyph,Map<number,LyricPieceCache>>()
+export type NativeLyricHeightCache=WeakMap<LyricRowData,{top:number;bottom:number}>
+const heightContexts=new WeakMap<TextMeasurer,NativeLyricHeightCache>()
+type LyricPreparation={placement?:{text:string;visible:boolean;half:number;center:number;prefixWidth:number};metrics?:TextMetrics;annotation?:TextMetrics;underline?:TextMetrics}
+const lyricPreparations=new WeakMap<NativeLyricHeightCache,WeakMap<LyricRowData,LyricPreparation>>()
+function lyricPreparation(data:LyricRowData,measurer:TextMeasurer):LyricPreparation|undefined {
+  const context=heightContexts.get(measurer)
+  if(!context)return undefined
+  let cache=lyricPreparations.get(context)
+  if(!cache){cache=new WeakMap();lyricPreparations.set(context,cache)}
+  let prepared=cache.get(data)
+  if(!prepared){prepared={};cache.set(data,prepared)}
+  return prepared
+}
+export function cacheNativeLyricHeights(measurer:TextMeasurer,cache:NativeLyricHeightCache){heightContexts.set(measurer,cache)}
+export function releaseNativeLyricHeights(measurer:TextMeasurer|undefined){if(measurer)heightContexts.delete(measurer)}
+function lyricHeight(data:LyricRowData,measurer:TextMeasurer) {
+  const cache=heightContexts.get(measurer),saved=cache?.get(data)
+  if(saved)return saved
+  const pieces=nativeLyricPieces(data,0,0,measurer)
+  const height={top:Math.min(...pieces.map(piece=>piece.top)),bottom:Math.max(...pieces.map(piece=>piece.bottom))}
+  cache?.set(data,height)
+  return height
+}
+/** Final row placement is read by core measurement and lane collision geometry.
+ * Reuse exact rounded primitives, invalidating on every placement input. */
+export function placedNativeLyricPieces(glyph:NativeGlyph,row:number,baseline:number,measurer:TextMeasurer):NativeInk[] {
+  let rows=placedPieces.get(glyph)
+  const data=glyph.lyrics.get(row)!,next=glyph.lyricHyphenEnds?.get(row),saved=rows?.get(row)
+  if(saved && saved.data===data && saved.x===glyph.x && saved.baseline===baseline && saved.next===next && saved.measurer===measurer)return saved.pieces
+  const pieces=nativeLyricPieces(data,glyph.x,baseline,measurer,next)
+  if(!rows){rows=new Map();placedPieces.set(glyph,rows)}
+  rows.set(row,{data,x:glyph.x,baseline,next,measurer,pieces})
+  return pieces
+}
 
 // Align the spoken text to its note. Opening and closing punctuation is
 // painted and measured, but does not move the word's alignment centre.
@@ -20,12 +57,17 @@ function lyricParts(text: string) {
 }
 
 function lyricPlacement(data: LyricRowData, x: number, measurer: TextMeasurer) {
+  const prepared=lyricPreparation(data,measurer)
+  if(prepared?.placement){const {text,visible,half,center,prefixWidth}=prepared.placement;return {text,visible,left:x-half-center-prefixWidth}}
   const text = data.texts.join(''), size = nativeStyle.lyric
   const visible = Boolean(text.replaceAll('\u200B', '').trim())
   const { prefix, body } = lyricParts(text)
   const bodyMetrics = measurer.measureText(body, { fontSize: size, fontFamily: SCORE_TEXT_FONT, textAlign: 'center' })
   const prefixMetrics = prefix ? measurer.measureText(prefix, { fontSize: size, fontFamily: SCORE_TEXT_FONT }) : undefined
-  const left = x - (bodyMetrics.advance ?? bodyMetrics.w) / 2 - (bodyMetrics.centerOffset ?? 0) - (prefixMetrics ? prefixMetrics.advance ?? prefixMetrics.w : 0)
+  // Keep the original arithmetic order when adding the variable note anchor.
+  const half=(bodyMetrics.advance ?? bodyMetrics.w)/2,center=bodyMetrics.centerOffset ?? 0,prefixWidth=prefixMetrics ? prefixMetrics.advance ?? prefixMetrics.w : 0
+  const left = x - half - center - prefixWidth
+  if(prepared)prepared.placement={text,visible,half,center,prefixWidth}
   return { text, visible, left }
 }
 
@@ -56,8 +98,11 @@ const unionLyricPieces = (pieces: NativeInk[]) => pieces.length ? unionNativeInk
 export function nativeLyricPieces(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer, nextLeft?: number): NativeInk[] {
   if (!data.texts.some(text => text.replaceAll('\u200B', '').trim()) && !data.annotation) return []
   const { text, visible, left } = lyricPlacement(data, x, measurer), size = nativeStyle.lyric
+  const prepared=lyricPreparation(data,measurer)
   const textInk = (value: string, at: number, end = false): NativeInk => {
-    const metrics = measurer.measureText(value, { fontSize: n(size), fontFamily: SCORE_TEXT_FONT, fontWeight: SCORE_TEXT_WEIGHT, fontStyle: 'normal' })
+    const key=end ? 'annotation' : 'metrics'
+    const metrics = prepared?.[key] ?? measurer.measureText(value, { fontSize: n(size), fontFamily: SCORE_TEXT_FONT, fontWeight: SCORE_TEXT_WEIGHT, fontStyle: 'normal' })
+    if(prepared)prepared[key]=metrics
     const origin = n(at) - (end ? metrics.advance ?? metrics.w : 0)
     return { left: origin + (metrics.inkLeft ?? 0), right: origin + (metrics.inkRight ?? metrics.w),
       top: n(baseline) - metrics.baseline, bottom: n(baseline) - metrics.baseline + (metrics.inkBottom ?? metrics.h) }
@@ -71,7 +116,8 @@ export function nativeLyricPieces(data: LyricRowData, x: number, baseline: numbe
       pieces.push({ left: n(h.left) - half, right: n(h.right) + half, top: n(h.y) - half, bottom: n(h.y) + half })
     }
     if (data.underlined) {
-      const metrics = measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
+      const metrics = prepared?.underline ?? measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
+      if(prepared)prepared.underline=metrics
       const stroke = size * (0.8 / 18.04), half = n(stroke) / 2
       const y = n(baseline + metrics.h - metrics.baseline + size * 0.1 + stroke / 2)
       pieces.push({ left: n(ink.left) - half, right: n(ink.right) + half, top: y - half, bottom: y + half })
@@ -109,6 +155,10 @@ export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number
  */
 export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measurer: TextMeasurer) {
   const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === lane.id)
+  if(!glyphs.some(glyph=>glyph.lyrics.size)) {
+    lane.bottom=Math.max(lane.bodyBottom ?? 0,lane.lyricBottom ?? lane.bodyBottom ?? 0)
+    return
+  }
   const tiers: {glyph:NativeGlyph;row:number}[][] = []
   const active = new Map<NativeGlyph,number[]>()
   for (const glyph of glyphs) {
@@ -124,7 +174,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     const boxes = tier.filter(({glyph,row}) => {
       const data = glyph.lyrics.get(row)!
       return data.annotation || data.texts.some(text => text.replaceAll('\u200B','').trim())
-    }).map(({glyph,row}) => unionLyricPieces(nativeLyricPieces(glyph.lyrics.get(row)!, glyph.x, 0, measurer)))
+    }).map(({glyph,row}) => lyricHeight(glyph.lyrics.get(row)!,measurer))
     // A placeholder-only tier still reserves an actual font row when a lower
     // verse is present. Its invisible glyph has no ink to measure itself.
     const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:SCORE_TEXT_FONT})

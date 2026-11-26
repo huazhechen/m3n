@@ -106,3 +106,27 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
   }
   return ends(best)
 }
+
+/** Shared sufficient-statistic hull; resource-constrained solvers additionally
+ * retain earlier, lower-height vertices when later vertices replace the hull. */
+export type NativeLineStatisticPlan = Plan
+export function nativeLineStateHull<T extends NativeLineStatisticPlan>(points: T[]): T[] { return hull(points) as T[] }
+
+/** Insert one point into an x-sorted lower hull without re-sorting its old
+ * vertices. Resource frontiers query the hull after every insertion. */
+export function insertNativeLineStateHull<T extends NativeLineStatisticPlan>(vertices:T[],point:T):boolean {
+  let low=0,high=vertices.length
+  while(low<high){const middle=(low+high)>>>1;if(vertices[middle]!.sum<point.sum)low=middle+1;else high=middle}
+  let index=low
+  const old=vertices[index]
+  if(old?.sum===point.sum) {
+    if(ordinate(point)>ordinate(old) || ordinate(point)===ordinate(old) && !earlier(point,old))return false
+    vertices.splice(index,1)
+  }
+  const cross=(a:T,b:T,c:T)=>(b.sum-a.sum)*(ordinate(c)-ordinate(a))-(ordinate(b)-ordinate(a))*(c.sum-a.sum)
+  if(index>0 && index<vertices.length && cross(vertices[index-1]!,point,vertices[index]!)<=0)return false
+  vertices.splice(index,0,point)
+  while(index>1 && cross(vertices[index-2]!,vertices[index-1]!,vertices[index]!)<=0){vertices.splice(index-1,1);index--}
+  while(index+2<vertices.length && cross(vertices[index]!,vertices[index+1]!,vertices[index+2]!)<=0)vertices.splice(index+1,1)
+  return true
+}

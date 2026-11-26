@@ -10,9 +10,9 @@ import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasure, drawStaffMeasure, drawStaffBar } from './staff-engine.js'
 
 const measureText = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
-function model(source: string) {
+function model(source: string, spacing = .25) {
   const measure = projectStaffDocument(analyzeM3N(source).score).measures[0]!
-  return createStaffMeasure(measure, true, false, measureText, 0.25)
+  return createStaffMeasure(measure, true, false, measureText, spacing)
 }
 
 describe('staff rhythm engraving', () => {
@@ -319,13 +319,13 @@ it('retains normal stems for flat beams and bounds shortened leap stems above th
 })
 
 
-it('keeps beat boundaries wider than the inside of a sixteenth-note beam at minimum width', () => {
-  const result = model('{2/4}\nN: ((5 5 5 5 5 5 5 5)) |||')
+it('keeps the same duration spacing inside and between beams at minimum width', () => {
+  const result = model('{2/4}\nN: ((5 5 5 5 5 5 5 5)) |||', .6)
   drawStaffMeasure(result, result.minimum, 0)
   const notes = result.entries[0]!.flatMap(entry => entry.notes)
   expect(result.beams.map(beam => beam.notes.length)).toEqual([4, 4])
   const gap = (a: number, b: number) => notes[b]!.headLeft - notes[a]!.headRight
-  expect(gap(3, 4)).toBeGreaterThan(gap(1, 2) * 2)
+  expect(gap(3, 4)).toBeCloseTo(gap(1, 2), 8)
   expect(gap(1, 2) * scoreLayoutConfig.staff.engine.scale).toBeGreaterThan(1)
 })
 
@@ -333,9 +333,8 @@ it('retains the slower voice spacing constraint at simultaneous onsets', () => {
   const document = projectStaffDocument(analyzeM3N('{2/4}\nN: ((1 1 1 1 1 1 1 1)) |||\nB: 1d 2d |||').score)
   const result = createStaffMeasure(document.measures[0]!, true, true, measureText, .25)
   const columns = result.prepared.metrics.columns
-  expect(columns[0]!.afterGap).toBe(1)
-  expect(columns[1]!.afterGap).toBeLessThan(1)
-  expect(columns[4]!.beforeGap).toBe(1)
+  expect(columns[0]!.naturalAdvance).toBeCloseTo(columns[1]!.naturalAdvance, 8)
+  expect(columns[4]!.naturalAdvance).toBeCloseTo(columns[0]!.naturalAdvance, 8)
 })
 
 
@@ -394,7 +393,7 @@ it('keeps a natural eighth-note advance independent of beam tightening', async (
   expect(result.prepared.metrics.columns[4]!.naturalAdvance / space).toBeCloseTo(3.58)
   const compressed = staffReadingSpacing(result.prepared, .25, 0)
   const relaxed = staffReadingSpacing(result.prepared, .25, 100)
-  expect(compressed.compressionPenalty).toBeGreaterThan(0)
+  expect(compressed.compressionPenalty).toBe(0)
   expect(relaxed.positions[1]! - relaxed.positions[0]!).toBeGreaterThan(compressed.positions[1]! - compressed.positions[0]!)
   expect(relaxed.compressionPenalty).toBe(0)
 })
@@ -405,4 +404,14 @@ it('uses one score-wide spacing basis for ordinary and split measure preparation
   const preparation = createStaffPreparation(document)
   const result = preparation.measure(document.measures[2]!, false, false, measureText)
   expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(3.58)
+})
+
+it.each([.6, 1.2])('uses %s staff spaces as the eighth-note minimum without compressing', async spacing => {
+  const { staffReadingSpacing } = await import('./staff-engine.js')
+  const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |', spacing)
+  const positions = staffReadingSpacing(result.prepared, spacing, 0).positions
+  const head = staffGlyphMetrics('noteheadBlack'), space = staffMusicSize() / 4
+  expect(positions[1]! - positions[0]! - (head.right - head.left)).toBeCloseTo(spacing * space, 8)
+  expect(positions[5]! - positions[4]! - (head.right - head.left)).toBeCloseTo(2 * spacing * space, 8)
+  expect(staffReadingSpacing(result.prepared, spacing, -100).positions).toEqual(positions)
 })

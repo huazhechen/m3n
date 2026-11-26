@@ -4,19 +4,19 @@ import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
 import { NativeSymbols, attrs, n, line } from './native-symbols.js'
-import { nativeArcGeometry, nativeArcPath, type NativeArc } from './native-arc.js'
+import { nativeArcGeometry, nativeArcPath, nativeArcObstacles, nativeRelationMembers, type NativeArc } from './native-arc.js'
 import { prepareNativeArc, nativeArcInkLift, nativeRibbonClearance, nativeRibbonRange } from './native-curve.js'
 import { nativeTupletGeometry, nativeTupletPeers } from './native-tuplet.js'
 import { placedNativeControlInk } from './native-controls.js'
-import { nativeSvgInk, nativeSvgPieces, type NativeInk } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 
-export type NativeRelationLayout = { svg: string; ink: NativeInk; arc?: NativeArc }
+export type NativeRelationLayout = { svg: string; ink: NativeInk; pieces?: NativeInk[]; arc?: NativeArc }
 class NativeRelationPainter extends NativeSymbols {
   constructor(measurer: TextMeasurer, private readonly systems: readonly NativeSystem[]) { super(measurer) }
   relation(relation: NativeRelation, system: NativeSystem, preparedArc?: NativeArc): string {
-    const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === relation.first.lane)
+    const members = nativeRelationMembers(system,relation.first.lane)
     const lane = system.lanes.find(lane => lane.id === relation.first.lane)
     if (!members.length || !lane) return ''
     if (relation.kind === 'inst') {
@@ -60,12 +60,46 @@ class NativeRelationPainter extends NativeSymbols {
 
 }
 
+/** Numeric primitives are also the input of final relation serialization. */
+function relationPieces(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer,
+  systems: readonly NativeSystem[], arc?: NativeArc): NativeInk[] {
+  if (arc) {
+    const range = nativeRibbonRange(arc, arc.left, arc.right)
+    return range ? [{ left: arc.left, right: arc.right, ...range }] : []
+  }
+  if (relation.kind === 'tuplet') return nativeTupletGeometry(relation, system, measurer).pieces
+  if (relation.kind === 'cresc' || relation.kind === 'decres') {
+    const segment = nativeHairpinSegments(relation, systems).find(segment => segment.system === system)
+    if (!segment) return []
+    const { left, right, startHalf, endHalf, stroke } = segment, half = n(stroke) / 2
+    return [-1, 1].map(sign => ({ left: n(left) - half, right: n(right) + half,
+      top: Math.min(n(sign * startHalf), n(sign * endHalf)) - half,
+      bottom: Math.max(n(sign * startHalf), n(sign * endHalf)) + half }))
+  }
+  const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+  const result: NativeInk[] = []
+  for (const [text, glyph, opening] of [['(', relation.first, true], [')', relation.last, false]] as const) {
+    if (!glyphs.includes(glyph)) continue
+    const metrics = measurer.measureText(text, { fontSize: nativeStyle.music, fontFamily: SCORE_NUMBER_FONT })
+    const baseline = nativeMusicAxis(measurer) + metrics.baseline - metrics.h / 2
+    const x = opening ? glyph.x - Math.max(glyph.musicLeft ?? glyph.left, glyph.inkLeft ?? 0) - metrics.w - glyph.parenthesisGap!
+      : glyph.x + Math.max(glyph.musicRight ?? glyph.right, glyph.inkRight ?? 0) + glyph.parenthesisGap!
+    result.push({ left: n(x) + (metrics.inkLeft ?? 0), right: n(x) + (metrics.inkRight ?? metrics.w),
+      top: n(baseline) - metrics.baseline, bottom: n(baseline) - metrics.baseline + (metrics.inkBottom ?? metrics.h) })
+  }
+  return result
+}
+
 /** Cache the final geometry, after clearing actual overlapping painted regions. */
 export function placeNativeRelation(relation: NativeRelation, system: NativeSystem, measurer: TextMeasurer, systems: readonly NativeSystem[] = [system]): NativeRelationLayout {
   const painter = new NativeRelationPainter(measurer,systems)
   const isArc = relation.kind === 'tie' || relation.kind === 'slur'
   const initialArc = isArc ? nativeArcGeometry(relation, system) : undefined
-  let svg = painter.relation(relation, system, initialArc), ink = nativeSvgInk(svg, measurer)
+  const numeric = Boolean(system.numericGeometry)
+  let pieces = numeric ? relationPieces(relation, system, measurer, systems, initialArc) : undefined
+  let svg = numeric ? '' : painter.relation(relation, system, initialArc)
+  let ink = pieces?.length ? unionNativeInk(pieces) : nativeSvgInk(svg, measurer)
+  let finalDy = 0
   let placedArc: NativeArc | undefined
   if (relation.kind !== 'inst') {
     const preceding = [...(system.relationLayout ?? [])].filter(([r, placed]) => r.kind !== 'inst' && r.first.lane === relation.first.lane && placed.ink.right > ink.left && placed.ink.left < ink.right)
@@ -76,7 +110,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     if (!isArc) {
       const blockers: { top: number }[] = [...preceding.map(([, placed]) => placed.ink), ...labels]
       if (relation.kind !== 'tuplet') {
-        const glyphs = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
+        const glyphs = nativeRelationMembers(system,relation.first.lane)
         const obstacles = glyphs
           .filter(g => g.x + (g.inkRight ?? g.musicRight ?? g.right) >= ink.left && g.x - (g.inkLeft ?? g.musicLeft ?? g.left) <= ink.right)
           .map(g => ({ top: -(g.musicTop ?? g.top) }))
@@ -88,7 +122,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
         // An incoming tie can clear only one bracket. Compute the final lift
         // for the complete adjacent group before placing any of its members.
         for (const peer of nativeTupletPeers(relation, system)) {
-          const peerInk = nativeSvgInk(painter.relation(peer, system), measurer)
+          const peerInk = numeric ? unionNativeInk(relationPieces(peer, system, measurer, systems)) : nativeSvgInk(painter.relation(peer, system), measurer)
           const peerBlockers = [...(system.relationLayout ?? [])]
             .filter(([r, placed]) => r.kind !== 'inst' && r.kind !== 'tuplet' && r.first.lane === peer.first.lane
               && placed.ink.right > peerInk.left && placed.ink.left < peerInk.right)
@@ -115,12 +149,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       const arc = initialArc!
       const bars = system.measures.flatMap((_, index) =>
         nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeBarPieces(bar.kind, bar.x, 0, measurer)))
-      const pieces = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
-        .filter(g => g.lane === relation.first.lane)
-        .flatMap(g => [
-          ...(g.musicInk ?? []).map(piece => ({ ...piece, left: g.x + piece.left, right: g.x + piece.right })),
-          ...g.controls.flatMap(placedNativeControlInk),
-        ])
+      const pieces = nativeArcObstacles(system,relation.first.lane)
       let lift = 0
       const compare = (a: typeof relation.first, b: typeof relation.first) => (a.event?.sourceStart ?? 0) - (b.event?.sourceStart ?? 0) || a.slot - b.slot || a.time - b.time
       for (const [peer, placed] of preceding) {
@@ -145,10 +174,20 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
       Object.defineProperty(placedArc, 'slicer', { value: dy ? prepareNativeArc(placedArc.commands) : arc.slicer })
 
     }
-    if (dy) {
+    finalDy = dy
+    if (dy && numeric) {
+      pieces = pieces!.map(piece => ({ ...piece, top: piece.top + dy, bottom: piece.bottom + dy }))
+      ink = unionNativeInk(pieces)
+    } else if (dy) {
       svg = `<g transform="translate(0 ${n(dy)})">${svg}</g>`
       ink = nativeSvgInk(svg, measurer)
     }
   }
-  return { svg, ink, arc: placedArc }
+  return { get svg() {
+    if (numeric && !svg) {
+      svg = painter.relation(relation, system, initialArc)
+      if (finalDy) svg = `<g transform="translate(0 ${n(finalDy)})">${svg}</g>`
+    }
+    return svg
+  }, ink, pieces, arc: placedArc }
 }

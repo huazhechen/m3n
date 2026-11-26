@@ -12,14 +12,20 @@ export const nativeInnerMark = (name: string) => nativeArticulation(name)
   || ['tr', 'prall', 'fermata', 'breath'].includes(name) || /^f[1-5]$/.test(name)
 export const nativeMarkRank = (name: string) => nativeArticulation(name) ? 0
   : /^(p{1,3}|f{1,3}|mp|mf|sfz)$/.test(name) || /^(cresc\.|dim\.|accel\.|rit\.)/.test(name) ? 2 : 1
+export function nativeMarkInk(name: string, measurer: TextMeasurer): NativeInk {
+  const create = () => Object.freeze(nativeSvgInk(new NativeSymbols(measurer).rawMark(name), measurer))
+  return measurer.fixedSymbol?.(`mark-ink:${name}`, create) ?? create()
+}
 /** Single-note marks sit inside relations, with articulations nearest the note.
  * Dynamics and expression text remain outside the enclosing relations.
  * Placement and SVG use the very same shapes, including italic text metrics. */
 export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer(), coreGap = nativeCoreGap(), bodyPieces?: readonly NativeInk[]) {
-  const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b)), painter = new NativeSymbols(measurer)
+  const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b))
   let top = bodyTop
   const items: NativeMarkPlacement[] = ordered.map((name, index) => {
-    const ink = nativeSvgInk(painter.rawMark(name), measurer), height = ink.bottom - ink.top
+    // Raw marks have no score coordinates. Share their parsed geometry with
+    // the task's font-revision cache, just like the other fixed symbols.
+    const ink = nativeMarkInk(name, measurer), height = ink.bottom - ink.top
     // A centered staccato only clears ink under its own horizontal footprint.
     // Keep the full body envelope for all other marks and for row occupancy.
     if (index === 0 && name === 'tip' && bodyPieces) {

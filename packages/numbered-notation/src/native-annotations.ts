@@ -6,6 +6,7 @@ import type { NativeSystem } from './native-layout.js'
 import type { NativeAnnotation } from './native-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativeArc } from './native-arc.js'
+import type { NativeInk } from './native-ink.js'
 import { nativeRibbonRange } from './native-curve.js'
 
 export type NativeRegion = { lane: string; left: number; right: number; top: number; arc?: NativeArc; headingClearance?: number }
@@ -18,6 +19,17 @@ export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, pai
   const { text, x, textX, baseline, width, height, top, kind } = annotation, framed = kind === 'section'
   const label = painter.text(text, textX, y + baseline, nativeStyle.annotation, SCORE_TEXT_FONT, { 'font-weight': framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT, ...meta, 'data-m3n-role': 'annotation' })
   return framed ? `<g data-m3n-role="annotation-frame"><rect${attrs({ x: x - width / 2 + nativeStyle.frameStroke / 2, y: y - top + nativeStyle.frameStroke / 2, width: width - nativeStyle.frameStroke, height: height - nativeStyle.frameStroke, stroke: '#000', 'stroke-width': nativeStyle.frameStroke, fill: 'none' })}/>${label}</g>` : label
+}
+
+/** Direct geometry for the same text/frame used by nativeAnnotationSvg. */
+export function nativeAnnotationPieces(annotation: NativeAnnotation, measurer: TextMeasurer): NativeInk[] {
+  const framed = annotation.kind === 'section'
+  const metrics = measurer.measureText(annotation.text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT,
+    fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT, fontStyle: 'normal' })
+  const text = { left: annotation.textX + (metrics.inkLeft ?? 0), right: annotation.textX + (metrics.inkRight ?? metrics.w),
+    top: annotation.baseline - metrics.baseline, bottom: annotation.baseline - metrics.baseline + (metrics.inkBottom ?? metrics.h) }
+  return framed ? [text, { left: annotation.x - annotation.width / 2, right: annotation.x + annotation.width / 2,
+    top: -annotation.top, bottom: -annotation.top + annotation.height }] : [text]
 }
 
 /** Local descriptions clear covered ink; standalone headings share the lane's

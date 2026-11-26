@@ -1,3 +1,5 @@
+import { paginateStaffRows } from './staff-row-pagination.js'
+import type { ScoreHeightEnvelope } from '@m3n/numbered-notation'
 import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap, balanceScorePageTail } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
@@ -16,7 +18,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
+export type StaffSystem = { envelope?: ScoreHeightEnvelope; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -452,6 +454,7 @@ export function paginateStaff(
   paged: boolean,
   maximum = scoreMaximumCoreGap(minimum),
 ): StaffPage[] {
+  if (systems.length && systems.every(system => system.envelope)) return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum)
   if (!paged) {
     const ys = positions(systems, headerHeight, minimum)
     return [

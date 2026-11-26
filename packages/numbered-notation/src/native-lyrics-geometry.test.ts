@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeLyricInk, nativeLyricSvg, nativeLyricPieces } from './native-lyrics.js'
+import { cacheNativeLyricHeights, nativeLyricInk, nativeLyricSvg, nativeLyricPieces } from './native-lyrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { NativeSymbols, line } from './native-symbols.js'
@@ -12,6 +12,16 @@ import { nativeSystemCore } from './native-core.js'
 
 const options = { width: 800, paged: false }
 const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||\nL: 春天在哪里 | 就在这里呀')
+it('reuses lyric preparation while preserving exact coordinate rounding', () => {
+  const cached=new DefaultTextMeasurer(),fresh=new DefaultTextMeasurer()
+  cacheNativeLyricHeights(cached,new WeakMap())
+  for(const data of [{texts:['“gyp！”'],passes:undefined,underlined:true,annotation:'1.2.'},{texts:['春'],passes:undefined},{texts:[''],passes:undefined,annotation:'3.'}]) {
+    for(let i=0;i<100;i++) {
+      const x=528*i/99+.00005,baseline=17.621*i/99-.00005
+      expect(nativeLyricPieces(data,x,baseline,cached)).toEqual(nativeLyricPieces(data,x,baseline,fresh))
+    }
+  }
+})
 describe('native lyric and music lower envelopes', () => {
   it.each([
     { texts: ['春'], passes: undefined },

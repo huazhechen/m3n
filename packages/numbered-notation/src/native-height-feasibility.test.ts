@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { nativeWholeRowFeasibility } from './native-height-feasibility.js'
+import { nativeCorePageLowerBound, nativeWholeRowFeasibility } from './native-height-feasibility.js'
 import { nativeEnvelopeBlock } from './native-height-envelope.js'
 import { prepareNativePagination, type NativePageBlock } from './native-pagination.js'
 import type { NativeLineCandidate } from './native-line-breaking.js'
@@ -33,4 +33,48 @@ it('matches exhaustive whole-row pagination including headers, lyrics, fixed gap
     }))
     for (const ceiling of [1, 2, 3, 4]) expect(feasible(restricted, ceiling), String(trial)).toBe(minimumPages <= ceiling)
   }
+})
+
+it('never rejects feasible primitive layouts when only some row shapes are resolved', () => {
+  let seed=79
+  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32}
+  for(let trial=0;trial<60;trial++) {
+    const count=5, graph:NativeLineCandidate[][]=Array.from({length:count},(_,start)=>
+      Array.from({length:Math.min(3,count-start)},(_,index)=>({end:start+index+1,density:.7})))
+    const actual=graph.map(rows=>new Map(rows.map(row=>{
+      const core={top:-6-random()*8,bottom:6+random()*10}
+      const ink=[0,1,2].map(index=>({left:index*60,right:index*60+45,top:core.top-random()*20,bottom:core.bottom+random()*30}))
+      return [row.end,{height:100,baseline:0,core,ink,resolvedInk:true} satisfies NativePageBlock]
+    })))
+    const bounds=actual.map(rows=>new Map([...rows].map(([end,block])=>[end,random()<.6?block:
+      {height:0,core:{top:0,bottom:0},ink:[],resolvedInk:false} satisfies NativePageBlock])))
+    const options={pageHeight:150,margin:0,gap:18,headerGap:15,ratio:.3,primitivePairs:true}
+    let witness:number[]=[]
+    const feasible=nativeWholeRowFeasibility(graph,(start,end)=>bounds[start]!.get(end)!,[],{...options,onWitness:ends=>{witness=ends}})
+    const paths=(start=0):number[][]=>start===count?[[]]:graph[start]!.flatMap(row=>paths(row.end).map(rest=>[row.end,...rest]))
+    const pages=Math.min(...paths().map(path=>{
+      let start=0
+      return prepareNativePagination(path.map(end=>{const block=actual[start]!.get(end)!;start=end;return block}),{wholeRows:false,nonCoreGapRatio:.3})(options).heights.length
+    }))
+    for(const ceiling of [1,2,3]) {
+      const accepted=feasible(graph,ceiling)
+      if(pages<=ceiling) expect(accepted).toBe(true)
+      if(accepted) expect(witness.at(-1)).toBe(count)
+    }
+  }
+})
+
+it('core-only page floors never exceed full primitive pagination',()=>{
+ let seed=473
+ const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32)
+ for(let trial=0;trial<100;trial++) {
+  const blocks:NativePageBlock[]=Array.from({length:20},()=>{
+   const top=-5-random()*35,bottom=5+random()*35
+   return {height:bottom-top,core:{top:top+3,bottom:bottom-3},gapBefore:random()*5,coreGapScale:random()<.5 ? .7 : 1,
+    ink:Array.from({length:4},()=>{const left=random()*200;return {left,right:left+10,top,bottom}})}
+  })
+  const options={pageHeight:180+random()*150,margin:10,gap:24,headerGap:19.2}
+  const actual=prepareNativePagination(blocks,{nonCoreGapRatio:.3})(options).heights.length
+  expect(nativeCorePageLowerBound(blocks,options)).toBeLessThanOrEqual(actual)
+ }
 })

@@ -4,6 +4,29 @@ import type { NativeRelation, NativeSystem } from './native-layout.js'
 import { prepareNativeArc, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 import { placedNativeControlInk } from './native-controls.js'
+import type { NativeGlyph } from './native-model.js'
+import type { NativeInk } from './native-ink.js'
+
+const relationContexts=new WeakMap<NativeSystem,Map<string,{members:NativeGlyph[];pieces?:NativeInk[]}>>()
+/** Coordinates and inner music stay fixed throughout the relation pass. */
+export function cacheNativeArcObstacles(system:NativeSystem){relationContexts.set(system,new Map())}
+export function releaseNativeArcObstacles(system:NativeSystem){relationContexts.delete(system)}
+export function nativeRelationMembers(system:NativeSystem,lane:string):NativeGlyph[] {
+  const cache=relationContexts.get(system),saved=cache?.get(lane)
+  if(saved)return saved.members
+  const members=system.measures.flatMap(measure=>measure.columns.flatMap(column=>column.glyphs)).filter(glyph=>glyph.lane===lane)
+  cache?.set(lane,{members});return members
+}
+export function nativeArcObstacles(system:NativeSystem,lane:string):NativeInk[] {
+  const members=nativeRelationMembers(system,lane),saved=relationContexts.get(system)?.get(lane)
+  if(saved?.pieces)return saved.pieces
+  const pieces=members.flatMap(glyph=>[
+    ...(glyph.musicInk ?? []).map(piece=>({...piece,left:glyph.x+piece.left,right:glyph.x+piece.right})),
+    ...glyph.controls.flatMap(placedNativeControlInk),
+  ])
+  if(saved)saved.pieces=pieces
+  return pieces
+}
 
 export type NativeArcCommand =
   | { op: 'M' | 'L'; x: number; y: number }
@@ -16,7 +39,7 @@ export type NativeArc = { commands: NativeArcCommand[]; left: number; right: num
  * Measurement and SVG consume the same geometry, including split-line tails.
  */
 export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem): NativeArc {
-  const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs)).filter(glyph => glyph.lane === relation.first.lane)
+  const members = nativeRelationMembers(system,relation.first.lane)
   const firstHere = members.includes(relation.first), lastHere = members.includes(relation.last)
   const selected = members.filter(glyph => relation.first.event && relation.last.event && glyph.event
     && relation.first.event.sourceStart <= glyph.event.sourceStart && glyph.event.sourceStart <= relation.last.event.sourceStart)
@@ -75,10 +98,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   }
   // Controls and side music clear only the actual ribbon intersections. A
   // meter's empty corners must not become a tall rectangular obstacle.
-  lift = nativeArcInkLift(commands, left, right, members.flatMap(glyph => [
-    ...(glyph.musicInk ?? []).map(piece => ({ ...piece, left: glyph.x + piece.left, right: glyph.x + piece.right })),
-    ...glyph.controls.flatMap(placedNativeControlInk),
-  ]), lift, slicer)
+  lift = nativeArcInkLift(commands, left, right, nativeArcObstacles(system,relation.first.lane), lift, slicer)
   if (lift > 0) commands = commands.map(command => {
     if (command.op === 'Z') return command
     if (command.op === 'C') return { ...command, y: command.y - lift, cy1: command.cy1 - lift, cy2: command.cy2 - lift }

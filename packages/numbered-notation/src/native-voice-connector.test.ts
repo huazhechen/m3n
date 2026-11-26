@@ -44,6 +44,17 @@ it('omits the bracket and joining rule when the bass is hidden', () => {
   expect(layout.systems.every(system => nativeVoiceConnectorSvg(system,layout.margin,textMeasurer)==='')).toBe(true)
 })
 
+it('reuses numeric sounding-body geometry without changing connector endpoints', () => {
+  const score = parseM3NDocument(source)
+  const layout = layoutNativeScore(score, { width: 600, paged: false, numericLayout: true, textMeasurer })
+  for (const system of layout.systems) {
+    const cached = nativeVoiceConnectorSvg(system, layout.margin, textMeasurer)
+    system.numericGeometry = false
+    expect(nativeVoiceConnectorSvg(system, layout.margin, textMeasurer)).toBe(cached)
+    system.numericGeometry = true
+  }
+})
+
 it.each([
   ['a high grace group', '1{ac(2e3e)}'],
   ['an accidental grace', '1{ac(4#d)}'],

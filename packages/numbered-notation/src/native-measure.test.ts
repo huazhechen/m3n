@@ -5,6 +5,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { bravuraGeometry } from './bravura.js'
 import { nativeSvgInk } from './native-ink.js'
 import { measureNativeControl } from './native-controls.js'
+import { nativeMarkInk } from './native-marks.js'
 
 const context = () => ({ font: '', textAlign: 'center', textBaseline: 'top', measureText() {
   return { width: 8.5, actualBoundingBoxLeft: 3, actualBoundingBoxRight: 13, actualBoundingBoxAscent: 9, actualBoundingBoxDescent: 2 }
@@ -116,6 +117,13 @@ it('shares immutable fixed symbol geometry only inside a task and resets it with
     cache.synchronizeFonts()
     expect(bravuraGeometry('dynamicForte',12,true,sameTask)).not.toBe(glyph)
     expect(timings).toMatchObject({fixedSymbolRequests:5,fixedSymbolCacheHits:1,fixedSymbolBuilds:4})
+    const mark = nativeMarkInk('mf', first)
+    expect(nativeMarkInk('mf', sameTask)).toBe(mark)
+    expect(mark).toEqual(nativeSvgInk(new NativeSymbols(first).rawMark('mf'), first))
+    expect(Object.isFrozen(mark)).toBe(true)
+    faces.add({status:'loaded'})
+    cache.synchronizeFonts()
+    expect(nativeMarkInk('mf',sameTask)).not.toBe(mark)
   } finally {vi.unstubAllGlobals()}
 })
 

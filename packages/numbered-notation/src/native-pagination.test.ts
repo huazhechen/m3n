@@ -125,6 +125,10 @@ it('reuses immutable ink constraints without retaining page membership or fitted
     for (const pageHeight of [Infinity, 300, 900, 300, Infinity]) for (const gap of [16, 24]) {
         const options = { pageHeight, margin: 12, gap, maxGap: gap * 1.1, elastic: true }
         expect(paginate(options)).toEqual(paginateNativeBlocks(blocks, options))
+        expect(prepareNativePagination(blocks,{immutableBlocks:true})(options)).toEqual(paginate(options))
+        // The same cached blocks can have different local indices in a new plan.
+        expect(prepareNativePagination(blocks.slice(2),{immutableBlocks:true})(options))
+          .toEqual(prepareNativePagination(blocks.slice(2))(options))
     }
     expect(() => paginate({ pageHeight: 40, margin: 12, gap: 16 })).toThrow('单个谱行')
 })
@@ -147,4 +151,30 @@ it('uses half the section core clearance for protruding decoration collisions', 
         ink: [{ left: 0, right: 20, top: 0, bottom: 20 }] };
     const result = prepareNativePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 28.8 });
     expect(result.positions[1]!.top - result.positions[0]!.top - 50).toBeCloseTo(18);
+});
+
+it('matches exhaustive primitive collisions even when a remote row reaches past its neighbours', () => {
+    let seed = 4721;
+    const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+    for (let trial = 0; trial < 80; trial++) {
+        const blocks = Array.from({ length: 12 }, () => ({
+            height: 200, baseline: 0, core: { top: -5, bottom: 5 },
+            ink: Array.from({ length: 8 }, () => {
+                const left = random() * 300, top = -10 - random() * 100;
+                return { left, right: left + 2 + random() * 30, top, bottom: 10 + random() * 100 };
+            }),
+        }));
+        const baselines: number[] = [];
+        for (const [index, block] of blocks.entries()) {
+            let baseline = 10 - Math.min(0, ...block.ink.map(piece => piece.top));
+            if (index) baseline = Math.max(baseline, baselines[index - 1]! + 10 + 24);
+            for (let before = 0; before < index; before++)
+                for (const above of blocks[before]!.ink) for (const below of block.ink)
+                    if (above.left < below.right && above.right > below.left)
+                        baseline = Math.max(baseline, baselines[before]! + above.bottom - below.top + 24 * .3);
+            baselines.push(baseline);
+        }
+        const actual = prepareNativePagination(blocks, { nonCoreGapRatio: .3 })({ pageHeight: Infinity, margin: 10, gap: 24 });
+        expect(actual.positions.map(position => position.top)).toEqual(baselines);
+    }
 });

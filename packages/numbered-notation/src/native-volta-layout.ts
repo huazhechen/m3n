@@ -12,7 +12,7 @@ import { nativeMusicAxis } from './native-axis.js'
 import { nativeRibbonRange } from './native-curve.js'
 
 /** Span identity survives both automatic wrapping and split source measures. */
-export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSystem, NativeRegion[]>, measurer: TextMeasurer, canvasWidth: number) {
+export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSystem, NativeRegion[]>, measurer: TextMeasurer, canvasWidth: number, selected?: ReadonlySet<NativeSystem>) {
   const entries = systems.flatMap(system => system.measures.map((measure, index) => ({ system, measure, index })))
   const spans: { begin: number; end: number; ending: string; group: number }[] = []
   for (let begin = 0; begin < entries.length;) {
@@ -27,6 +27,7 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
   if (!spans.length) return
   const halfBody = nativeNoteBody(measurer).width / 2
   for (const system of systems) {
+    if (selected && !selected.has(system)) continue
     if (!system.measures.some(measure => measure.source.ending)) continue
     const lane = system.lanes.find(lane => lane.id === 'melody')
     if (!lane) continue
@@ -74,7 +75,7 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
         for (const bound of overlaps) y = Math.min(y, bound.top - ((system.coreGap ?? nativeCoreGap()) * .07) - mark.bottom)
         for (const [, relation] of relations) {
           const pieces = relation.arc ? [nativeRibbonRange(relation.arc, mark.left, mark.right)].filter(bound => bound !== undefined)
-            : nativeSvgPieces(relation.svg, measurer).filter(bound => bound.right > mark.left && bound.left < mark.right)
+            : (relation.pieces ?? nativeSvgPieces(relation.svg, measurer)).filter(bound => bound.right > mark.left && bound.left < mark.right)
           for (const bound of pieces) y = Math.min(y, bound.top - ((system.coreGap ?? nativeCoreGap()) * .07) - mark.bottom)
         }
       }

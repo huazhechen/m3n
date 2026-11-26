@@ -210,11 +210,11 @@ describe('staff layout contract', () => {
     expect(systemDistance(plain, next, 28.8)).toBeCloseTo(54.4)
     expect(systemDistance(lyrics, next, 31.68, 28.8, 31.68)).toBeCloseTo(55.84)
   })
-  it('leaves a short final named section open instead of stretching it across the page', async () => {
+  it('fills a standalone named section without inheriting another section’s spacing', async () => {
     const render = await prepare('{4/4}\n===A\nN: 1 2 3 4 | 5 6 7 1e | 1 2 3 4 | 5 6 7 1e ||\n===Coda\nN: 1^^ |||', 600)
     const lines = render.layoutInfo().lines
     expect(lines).toHaveLength(2)
-    expect(lines[1]!.target).toBeLessThanOrEqual(lines[0]!.target * 0.6)
+    expect(lines[1]!.target).toBe(lines[0]!.target)
     expect(lines[1]!.target).toBeGreaterThanOrEqual(lines[1]!.minimum)
   })
   it('keeps middle-band final rows open when full stretch would differ too much', () => {
@@ -369,7 +369,7 @@ describe('staff layout contract', () => {
     expect(info.spacing).toBeGreaterThanOrEqual(0.25)
     for (const page of info.pages) {
       expect(page.gap).toBeGreaterThanOrEqual(19.2)
-      expect(page.gap).toBeLessThanOrEqual(21.12)
+      expect(page.gap).toBeLessThanOrEqual(21.12 + 1e-9)
       for (const system of page.systems) {
         expect(system.ink.top + system.y).toBeGreaterThanOrEqual(-1e-6)
         expect(system.ink.bottom + system.y).toBeLessThanOrEqual(page.height + 1e-6)
@@ -391,7 +391,7 @@ describe('staff layout contract', () => {
   })
   it('keeps continuous engraving available when the header and first system exceed A4', async () => {
     const render = await prepare(`{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`, 320)
-    expect(render.layoutInfo().spacing).toBe(0.25)
+    expect([.6, 1.2]).toContain(render.layoutInfo().spacing)
     expect(render.pageCount(false)).toBe(1)
     expect(() => render.pageCount(true)).toThrow('单个五线谱谱行')
     expect(() => render(true)).toThrow('单个五线谱谱行')

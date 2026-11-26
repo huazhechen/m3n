@@ -84,7 +84,10 @@ export function prepareNativeArc(commands: readonly NativeArcCommand[]) {
       : command.op === 'Q' ? [start,{x:command.cx,y:command.cy},end] : [start,end]
     const degree = points.length-1
     const derivatives = points.slice(1).map((p,i)=>({x:degree*(p.x-points[i]!.x),y:degree*(p.y-points[i]!.y)}))
-    return [{start,end,points,derivatives,xs:points.map(point=>point.x),left:Math.min(start.x,end.x)-1e-8,right:Math.max(start.x,end.x)+1e-8,
+    const xs=points.map(point=>point.x),[x0,x1,x2,x3]=xs
+    const polynomial=xs.length===4 ? [-x0!+3*x1!-3*x2!+x3!,3*x0!-6*x1!+3*x2!,3*(x1!-x0!),x0!]
+      : xs.length===3 ? [0,x0!-2*x1!+x2!,2*(x1!-x0!),x0!] : [0,0,x1!-x0!,x0!]
+    return [{start,end,points,derivatives,xs,polynomial,left:Math.min(start.x,end.x)-1e-8,right:Math.max(start.x,end.x)+1e-8,
       vertical:Math.abs(start.x-end.x)<1e-8,forward:start.x<end.x}]
   })
   const xs = commands.flatMap(command=>command.op==='Z'?[]:[command.x])
@@ -101,6 +104,31 @@ export function prepareNativeArc(commands: readonly NativeArcCommand[]) {
       if (x===edge.start.x) t=0
       else if (x===edge.end.x) t=1
       else {
+        // Newton locates the 32-bit binary-search cell. Verify its two edges
+        // using the original Bernstein arithmetic, then return exactly the
+        // same midpoint as the 32 bisections below. Difficult/degenerate
+        // curves fall back to that original search; precision is unchanged.
+        const [a,b,c,d]=edge.polynomial
+        let estimate=(x-edge.start.x)/(edge.end.x-edge.start.x)
+        for(let iteration=0;iteration<8;iteration++) {
+          const value=((a!*estimate+b!)*estimate+c!)*estimate+d!-x
+          const derivative=(3*a!*estimate+2*b!)*estimate+c!
+          const next=estimate-value/derivative
+          if(!Number.isFinite(next) || next<0 || next>1)break
+          const delta=Math.abs(next-estimate);estimate=next
+          if(delta<2**-40)break
+        }
+        const grid=2**32
+        let cell=Math.max(0,Math.min(grid-1,Math.floor(estimate*grid))),verified=false
+        for(let adjustment=0;adjustment<3;adjustment++) {
+          const before=(curveCoordinate(edge.points,cell/grid,'x')<x)===edge.forward
+          const after=(curveCoordinate(edge.points,(cell+1)/grid,'x')<x)===edge.forward
+          if(before && !after){verified=true;break}
+          cell+=before ? 1 : -1
+          if(cell<0 || cell>=grid)break
+        }
+        if(verified)t=(cell+.5)/grid
+        else {
         let low=0,high=1
         const [x0,x1,x2,x3]=edge.xs
         for(let iteration=0;iteration<32;iteration++) {
@@ -117,6 +145,7 @@ export function prepareNativeArc(commands: readonly NativeArcCommand[]) {
           else high=at
         }
         t=(low+high)/2
+        }
       }
       let slope=0
       if(slopes) {
@@ -190,9 +219,11 @@ export function nativeRibbonRange(ribbon: NativeRibbon, left: number, right: num
   if (a > b) return undefined
   const middle = (ribbon.left + ribbon.right) / 2
   const slicer = ribbon.slicer ?? prepareNativeArc(ribbon.commands)
-  const slices = [a, b, ...(middle > a && middle < b ? [middle] : [])]
-    .flatMap(x => { const slice = slicer.slice(x); return slice ? [slice] : [] })
-  return slices.length ? { top: Math.min(...slices.map(s => s.top)), bottom: Math.max(...slices.map(s => s.bottom)) } : undefined
+  const first = slicer.slice(a), last = slicer.slice(b)
+  const center = middle > a && middle < b ? slicer.slice(middle) : undefined
+  if (!first && !last && !center) return undefined
+  return { top: Math.min(first?.top ?? Infinity, last?.top ?? Infinity, center?.top ?? Infinity),
+    bottom: Math.max(first?.bottom ?? -Infinity, last?.bottom ?? -Infinity, center?.bottom ?? -Infinity) }
 }
 
 /** Bound the maximum difference between the real facing edges. Each interval

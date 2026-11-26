@@ -41,7 +41,7 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
 }
 
 /** Shared physical spacing objective; 16px is common to both minimum tiers. */
-export function scoreNumberedSpacing(gaps: readonly number[]) {
+export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16) {
   if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingCost: 0 }
   const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
   const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
@@ -49,6 +49,6 @@ export function scoreNumberedSpacing(gaps: readonly number[]) {
   const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / gaps.length
   const spacingWorstUnevenCost = Math.max(...deviations)
   const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
-  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + (16 / Math.max(Number.EPSILON, gap)) ** 2, 0) / gaps.length
+  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + (referenceGap / Math.max(Number.EPSILON, gap)) ** 2, 0) / gaps.length
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingCost: spacingUnevenCost + spacingCrampedCost }
 }

@@ -88,8 +88,8 @@ const staff = {
   attachmentStandaloneGap: 12, attachmentHorizontalGap: 3.5, attachmentFramePadding: 4, repeatMarkGap: 4,
   headingLeftInset: 0.5, edgeGap: 2, sectionGap: 12, pageInset: 2,
   minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
-  minimumNoteGap: 9,
-  noteGapCandidates: [9, 12, 15] as readonly number[],
+  minimumNoteGap: 0.6,
+  noteGapCandidates: [0.6, 1.2] as readonly number[],
   // 引擎缩放及独立排版距离；符干、符杠、谱线等在使用处按字体 em 推导。
   engine: {
     scale: staffScale,

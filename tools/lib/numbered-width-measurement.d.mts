@@ -3,5 +3,5 @@ import type { PreparedNumberedNotationScore, NumberedNotationRenderOptions } fro
 import type { WidthMeasurement } from '../scorebook-width.mjs'
 export type WidthTimings = Record<string, number | Record<string, number>>
 export function measureNumberedWidth(documentScore: ScoreDocument, width: number, options?: {
-  auditLayout?: boolean; minimumQuality?: number; signal?: AbortSignal; paged?: boolean; settings?: Partial<NumberedNotationRenderOptions>; host?: HTMLElement; afterMount?: (host: HTMLElement) => void
+  auditLayout?: boolean; minimumQuality?: number; maximumPageCount?: number; signal?: AbortSignal; paged?: boolean; settings?: Partial<NumberedNotationRenderOptions>; host?: HTMLElement; afterMount?: (host: HTMLElement) => void
 }): { candidate: WidthMeasurement & { timings: WidthTimings }; prepared: PreparedNumberedNotationScore }

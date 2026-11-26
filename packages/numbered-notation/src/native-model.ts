@@ -29,7 +29,7 @@ export type NativeGlyph = {
   time: number; beats: number; writtenBeats: number; sustain: boolean; pitches: NativePitch[]; pitchOffsets?: number[]; graces: NativeGracePitch[]
   lyrics: Map<number, LyricRowData>; lyricBaselines?: Map<number, number>; passes?: number[]; controls: NativeControl[]; marks: string[]; annotations: string[]; tempoAnnotation?: string
   arpeggioLayout?: ReturnType<typeof nativeArpeggioGeometry>; markLayout?: NativeMarkPlacement[]; annotationLayout?: NativeAnnotation[]; inkLeft?: number; inkRight?: number; musicBottom?: number; graceLayout?: ReturnType<typeof nativeGraceGeometry>; musicLeft?: number; musicRight?: number; musicTop?: number; lyricLeft?: number; lyricRight?: number; lyricHyphenEnds?: Map<number, number>; lyricTiers?: ({ left: number; right: number } | undefined)[]
-  tieTop?: number; musicInk?: NativeInk[]
+  tieTop?: number; coreInk?: NativeInk[]; musicInk?: NativeInk[]
   left: number; right: number; top: number; bottom: number; x: number; y: number; multiRest?: number; interlude?: boolean; paragraph: string
   instrumental?: boolean; parenthesisLeft?: number; parenthesisRight?: number; parenthesisGap?: number
 }
@@ -208,6 +208,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           glyph.musicRight = Math.max(glyph.musicRight ?? 0, ...glyph.markLayout.map(mark => mark.right))
           glyph.left = Math.max(glyph.left, glyph.musicLeft)
           glyph.right = Math.max(glyph.right, glyph.musicRight)
+          glyph.coreInk = painter.bodyPieces(glyph)
           glyph.musicInk = painter.musicPieces(glyph)
           const ink = unionNativeInk(glyph.musicInk)
           // Without side components or marks, the connection body is exactly
@@ -251,7 +252,8 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
         const glyph: NativeGlyph = { id: `m3n-rest-${partIndex + 1}-${host.index + 1}-${lane}`, xmlId: `m3n-rest-${partIndex + 1}-${host.index + 1}`, measureId: host.id, staff, lane, slot: 0, time: 0, beats: measure.interlude ? 0 : measure.multiRest! * count! * 4 / unit!, writtenBeats: 1, sustain: false, pitches: [numberedPitch('0')], graces: [], lyrics: new Map(), controls, marks: [], annotations: [], left: 0, right: 0, top: 0, bottom: 0, x: 0, y: 0, multiRest: measure.multiRest ?? 1, interlude: measure.interlude, paragraph: `${partIndex}:${paragraph}` }
         if (measure.navigation?.includes('segno')) glyph.controls.unshift(measureNativeControl('segno', '𝄋', options.textMeasurer))
         glyph.markLayout = []
-        const ink = unionNativeInk(painter.musicPieces(glyph))
+        glyph.coreInk = glyph.musicInk = painter.musicPieces(glyph)
+        const ink = unionNativeInk(glyph.musicInk)
         glyph.musicTop = -ink.top
         glyph.top = Math.max(-ink.top, ...glyph.controls.map(control => control.top))
         glyph.bottom = Math.max(ink.bottom, ...glyph.controls.map(control => control.bottom))
@@ -291,9 +293,11 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
 
 /** Copy only placement state. Musical inputs and measured local geometry remain
  * read-only; every spacing trial owns its glyphs, controls, marks and columns. */
-export function cloneNativeProjection(source: NativeProjection): NativeProjection {
+export function cloneNativeProjection(source: NativeProjection, selected?: ReadonlySet<NativeGlyph>): NativeProjection {
   const controls = new Map<NativeControl, NativeControl>()
-  const glyphs = new Map(source.glyphs.map(glyph => [glyph, {
+  const glyphs = new Map<NativeGlyph,NativeGlyph>(),copies:NativeGlyph[]=[]
+  for(const glyph of source.glyphs) {
+    const copy=selected && !selected.has(glyph) && !glyph.instrumental ? glyph : {
     ...glyph,
     controls: glyph.controls.map(control => {
       let copy = controls.get(control)
@@ -301,8 +305,10 @@ export function cloneNativeProjection(source: NativeProjection): NativeProjectio
       return copy
     }),
     markLayout: glyph.markLayout?.map(mark=>({...mark})),
-  }]))
-  return {...source, diagnostics:[...source.diagnostics], glyphs:source.glyphs.map(glyph=>glyphs.get(glyph)!),
-    measures:source.measures.map(measure=>({...measure, navigation:measure.navigation?.map(mark=>({...mark})),
+    }
+    glyphs.set(glyph,copy);copies.push(copy)
+  }
+  return {...source, diagnostics:[...source.diagnostics], glyphs:copies,
+    measures:source.measures.map(measure=>selected && measure.columns.every(column=>column.glyphs.every(glyph=>!selected.has(glyph) && !glyph.instrumental)) ? measure : ({...measure, navigation:measure.navigation?.map(mark=>({...mark})),
       columns:measure.columns.map(column=>({...column,glyphs:column.glyphs.map(glyph=>glyphs.get(glyph)!)}))}))}
 }

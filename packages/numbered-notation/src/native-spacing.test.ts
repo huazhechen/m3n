@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { solveNativeSpacing, solveNativeMinimumSpacing, type SpacingCell } from './native-spacing.js'
+import { cacheNativeMinimumSpacing, solveNativeSpacing, solveNativeMinimumSpacing, type SpacingCell, type SpacingColumn } from './native-spacing.js'
 const cell = (lane = 'melody', overrides: Partial<SpacingCell> = {}): SpacingCell => ({ lane, left: 5, right: 5, before: 6, after: 6, ...overrides })
+it('reuses minimum-spacing preparation with exact parity across widths and edge policies', () => {
+  let seed=7823
+  const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/2**32)
+  for(let trial=0;trial<80;trial++) {
+    const columns:SpacingColumn[]=Array.from({length:2+trial%13},()=>({cells:[cell('melody',{left:random()*20,right:random()*20,beforeStretch:random(),afterStretch:random()}),
+      ...(random()<.5 ? [cell('lyric',{sparse:true,left:random()*30,right:random()*30,beforeStretch:0,afterStretch:0})] : [])]}))
+    if(trial%3===0)columns[0]!.fixedAfter=27.321
+    const fresh=structuredClone(columns)
+    cacheNativeMinimumSpacing(columns)
+    for(const edges of [{},{left:true},{right:true},{left:true,right:true}])for(const width of [528,648,768,600,20]) {
+      expect(solveNativeMinimumSpacing(columns,width,true,edges)).toEqual(solveNativeMinimumSpacing(fresh,width,true,edges))
+    }
+  }
+})
 describe('native spacing constraints', () => {
   it('lets lyric prefixes use space under bars while retaining lyric clearance across empty slots', () => {
     const lyric = (left: number, right: number) => cell('lyric', { sparse: true, left, right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })

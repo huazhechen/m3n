@@ -41,9 +41,17 @@ function compare(a: Problem, b: Problem): number {
  * feasible paths. No row-count proxy, beam cap or quantized page height.
  * Worst-case work is exponential; instrumentation exposes that cost. */
 export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>, optimum: Measured<T>,
-  evaluate: (ends: number[]) => { pages: number; value?: T }, timings?: Record<string, number>, canFit?: (restricted: Graph, ceiling: number) => boolean): Measured<T> {
+  evaluate: (ends: number[]) => { pages: number; value?: T }, timings?: Record<string, number>, canFit?: (restricted: Graph, ceiling: number) => boolean, getFeasible?: () => Measured<T> | undefined, solveRestricted?: (graph: Graph, maximumCost: number) => number[] | undefined): Measured<T> {
   if (optimum.pages <= greedy.pages) return optimum
-  const incumbentCost = nativeLinePlanCost(graph, greedy.ends)
+  let incumbent = greedy, incumbentCost = nativeLinePlanCost(graph, greedy.ends)
+  const improve = () => {
+    const candidate = getFeasible?.()
+    if (!candidate || candidate.pages > greedy.pages) return
+    const cost = nativeLinePlanCost(graph,candidate.ends)
+    if (compare({prefix:[],excluded:[],ends:candidate.ends,cost}, {prefix:[],excluded:[],ends:incumbent.ends,cost:incumbentCost})<0) {
+      incumbent=candidate;incumbentCost=cost
+    }
+  }
   const queue: Problem[] = []
   const push = (problem: Problem) => {
     queue.push(problem)
@@ -86,8 +94,10 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
         if (timings) timings.pageBoundHeightPrunes = (timings.pageBoundHeightPrunes ?? 0) + 1
         continue
       }
+      improve()
       const started = timings ? performance.now() : 0
-      const ends = planNativeLines(restricted)
+      const ends = solveRestricted ? solveRestricted(restricted,incumbentCost) : planNativeLines(restricted)
+      if (!ends) continue
       if (timings) {
         timings.pageBoundDpSolves = (timings.pageBoundDpSolves ?? 0) + 1
         timings.pageBoundDpMs = (timings.pageBoundDpMs ?? 0) + performance.now() - started
@@ -96,16 +106,69 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
       if (cost <= incumbentCost + epsilon) push({ prefix, excluded, ends, cost })
     }
   }
+  improve()
   split({ prefix: [], excluded: [], ends: optimum.ends, cost: nativeLinePlanCost(graph, optimum.ends) })
   while (queue.length) {
+    improve()
     const problem = pop()
+    if (problem.cost>incumbentCost+epsilon) break
     if (timings) timings.pageBoundPaginationChecks = (timings.pageBoundPaginationChecks ?? 0) + 1
+    if ((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths && timings && (timings.pageBoundPaginationChecks ?? 0)%100===0)
+      console.log('page-search '+JSON.stringify({checks:timings.pageBoundPaginationChecks,cost:problem.cost,incumbentCost,queue:queue.length}))
     const measured = evaluate(problem.ends)
     if (measured.pages <= greedy.pages) {
       if (measured.value === undefined) throw new Error('分页可行方案缺少雕版结果。')
-      return { ends: problem.ends, pages: measured.pages, value: measured.value }
+      const candidate={ ends: problem.ends, pages: measured.pages, value: measured.value }
+      if(compare(problem,{prefix:[],excluded:[],ends:incumbent.ends,cost:incumbentCost})<0) incumbent=candidate
+      return incumbent
     }
     split(problem)
   }
-  return greedy
+  improve()
+  return incumbent
+}
+
+/** A feasible incumbent only: adjacent-row balancing never replaces the
+ * global solver or changes its objective/page ceiling. Strict improvements
+ * make this finite without a move cap. */
+export function improveFeasibleNativeLines<T>(graph: Graph, initial: Measured<T>,
+  evaluate: (ends:number[])=>{pages:number;value?:T}, timings?:Record<string,number>): Measured<T> {
+  let current=initial, cost=nativeLinePlanCost(graph,current.ends)
+  const pages=new Map<string,number>([[current.ends.join(':'),current.pages]])
+  for (;;) {
+    const neighbours: {ends:number[];cost:number}[]=[]
+    for(let index=0;index+1<current.ends.length;index++) {
+      const start=index ? current.ends[index-1]! : 0, end=current.ends[index+1]!
+      for(const row of graph[start]!) {
+        if(row.end===current.ends[index] || row.end>=end || !graph[row.end]!.some(next=>next.end===end)) continue
+        const ends=[...current.ends];ends[index]=row.end
+        const value=nativeLinePlanCost(graph,ends)
+        if(value<cost-epsilon) neighbours.push({ends,cost:value})
+      }
+    }
+    // Paired break moves can cross a height barrier that no single move can.
+    // This only tightens a verified incumbent; the exact search still proves it.
+    for(let index=0;index+2<current.ends.length;index++) {
+      const start=index ? current.ends[index-1]! : 0,end=current.ends[index+2]!
+      for(const first of graph[start]!)for(const second of graph[first.end] ?? []) {
+        if(second.end>=end || !graph[second.end]!.some(next=>next.end===end))continue
+        const ends=[...current.ends];ends[index]=first.end;ends[index+1]=second.end
+        const value=nativeLinePlanCost(graph,ends)
+        if(value<cost-epsilon)neighbours.push({ends,cost:value})
+      }
+    }
+    neighbours.sort((a,b)=>compare({...a,prefix:[],excluded:[]},{...b,prefix:[],excluded:[]}))
+    let improved=false
+    for(const candidate of neighbours) {
+      const key=candidate.ends.join(':')
+      if((pages.get(key) ?? 0)>initial.pages) continue
+      if(timings) timings.numericBalanceChecks=(timings.numericBalanceChecks ?? 0)+1
+      const measured=evaluate(candidate.ends);pages.set(key,measured.pages)
+      if(measured.pages>initial.pages || measured.value===undefined) continue
+      current={ends:candidate.ends,pages:measured.pages,value:measured.value};cost=candidate.cost;improved=true
+      if(timings) timings.numericBalanceMoves=(timings.numericBalanceMoves ?? 0)+1
+      break
+    }
+    if(!improved) return current
+  }
 }

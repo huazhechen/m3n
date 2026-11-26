@@ -41,3 +41,50 @@ it('reuses measure heights across widths without changing fresh-task pagination 
   expect(nativeLayoutQuality(cached)).toEqual(nativeLayoutQuality(fresh))
   expect(cached.systems.map(row => row.measures.map(measure => measure.id))).toEqual(fresh.systems.map(row => row.measures.map(measure => measure.id)))
 })
+
+it('keeps the opening expression below the actual header after cached-height placement', async () => {
+  const { readFileSync } = await import('node:fs')
+  const { nativeSvgPieces } = await import('./native-ink.js')
+  const { nativeCoreGap } = await import('./native-style.js')
+  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/ai_de_li_zan_01.m3n', import.meta.url), 'utf8'))
+  for (const width of [528, 552, 648]) {
+    const layout = layoutNativeScore(document, { width, paged: true, rowEnvelope: true, pageMargin: 0 })
+    const system = layout.systems[0]!
+    const glyph = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+      .find(glyph => glyph.annotationLayout?.some(item => item.text.includes('Andante')))!
+    const expression = glyph.annotationLayout!.find(item => item.text.includes('Andante'))!
+    const lane = system.lanes.find(lane => lane.id === glyph.lane)!
+    const expressionTop = system.top + lane.y - expression.top
+    const headerBottom = Math.max(...nativeSvgPieces(layout.pages[0]!.header!, layout.measurer).map(piece => piece.bottom))
+    expect(expressionTop - headerBottom).toBeGreaterThanOrEqual(nativeCoreGap(document) * .8 - 1e-6)
+  }
+})
+
+it('lets disjoint measure extras cross while retaining full core clearance', () => {
+  const core = { top: -10, bottom: 10 }
+  const upper = { height: 50, core, ink: [
+    { left: 0, right: 90, top: -10, bottom: 50 },
+    { left: 100, right: 200, top: -10, bottom: 10 },
+  ] }
+  const lower = { height: 10, core, ink: [
+    { left: 0, right: 90, top: -10, bottom: 10 },
+    { left: 100, right: 200, top: -50, bottom: 10 },
+  ] }
+  const options = { pageHeight: Infinity, margin: 0, gap: 20 }
+  const measures = prepareNativePagination([upper, lower], { wholeRows: false, nonCoreGapRatio: .3 })(options)
+  const rows = prepareNativePagination([upper, lower], { wholeRows: true, nonCoreGapRatio: .3 })(options)
+  expect(rows.heights[0]! - measures.heights[0]!).toBe(40)
+  expect(measures.positions[1]!.top - measures.positions[0]!.top).toBe(66)
+})
+
+it('reuses minimum-gap measure heights in rectangle mode across width searches', () => {
+  const document = parseM3NDocument('{4/4}\nN: ' + Array.from({ length: 24 }, () => '1 2 3 4 |').join(' '))
+  const layoutTask = new NativeLayoutTask(), timings: Record<string, number> = {}
+  const options = { paged: true, rowEnvelope: true, measureAvoidance: true, pageMargin: 0, textMeasurementCache: new NumberedTextMeasurementCache() }
+  layoutNativeScore(document, { ...options, width: 528, layoutTask })
+  const cached = layoutNativeScore(document, { ...options, width: 648, layoutTask }, timings)
+  const fresh = layoutNativeScore(document, { ...options, width: 648 })
+  expect(timings.measureHeightBuilds ?? 0).toBe(0)
+  expect(cached.pages.length).toBe(fresh.pages.length)
+  expect(nativeLayoutQuality(cached)).toEqual(nativeLayoutQuality(fresh))
+})

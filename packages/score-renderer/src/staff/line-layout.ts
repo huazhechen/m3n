@@ -1,14 +1,13 @@
-import { inheritElasticWidth, elasticLineBadness, lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation'
-import { planScoreLines, type LineCandidate } from '@m3n/notation'
-import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
+import { planScoreLinesGlobally, lastLineWidth, scoreLayoutConfig, type ScoreLineCandidate } from '@m3n/numbered-notation'
+import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
-export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number }
+export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number; unitRhythmicGap?: number }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; rhythmic?: (measure: StaffMeasure, first: boolean, spacing: number, extra: number) => { gap: number; weight: number }; weight?: (measure: StaffMeasure) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -38,6 +37,8 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
     }
     return penalty
   }
+  minimum.rhythmic = (measure, first, spacing, extra) => staffRhythmicSpacing(preparation.measure(measure, first, hasBass, measureText), spacing, extra)
+  minimum.weight = measure => preparation.measure(measure, false, hasBass, measureText).weights.reduce((sum, weight) => sum + weight, 0) || 1
   const descriptions = new WeakMap<StaffMeasure, StaffMeasureDescription>()
   minimum.describe = measure => {
     let description = descriptions.get(measure)
@@ -68,8 +69,8 @@ function describeStaffMeasure(measure: StaffMeasure, measureText: MeasureText): 
     beats: Math.max(...[measure.melody, measure.bass].map(lane => lane.reduce((n, e) => n + e.beats, 0))),
   }
 }
-export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
-  suppliedMinimum?: StaffMeasureMinimum, rowCost = 1): StaffLine[] {
+export function prepareStaffLineGraph(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
+  suppliedMinimum?: StaffMeasureMinimum) {
   const minimum = suppliedMinimum ?? createStaffMeasureMinimum(document.hasBass, measureText, createStaffPreparation(document))
   const available = (width - scoreLayoutConfig.staff.contentEdgeInset) / STAFF_SCALE
   const measured: MeasuredStaffMeasure[] = []
@@ -79,7 +80,7 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
     const label = measure.melody[0]?.event
     const { labelWidth, weight } = minimum.describe?.(measure) ?? describeStaffMeasure(measure, measureText)
     const inset = labelWidth && !label?.sectionLabelBreakAfter && labelWidth <= width / 2 ? labelWidth / STAFF_SCALE : 0
-    return { id: measure.id, measure, body, reading: minimum.preferred?.(measure, false, spacing) ?? body, head: solo - body + inset, inset, weight }
+    return { id: measure.id, measure, body, reading: minimum.preferred?.(measure, false, spacing) ?? body, head: solo - body + inset, inset, weight: minimum.weight?.(measure) ?? weight }
   }
   const visit = (measure: StaffMeasure, depth = 0) => {
     const item = measureOne(measure)
@@ -93,60 +94,62 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
     measured.push(item)
   }
   document.measures.forEach(m => visit(m))
-  const lines: StaffLine[] = []
-  for (let begin = 0; begin < measured.length;) {
-    let end = begin + 1
-    while (end < measured.length && !measured[end]!.measure.force) end++
-    const group = measured.slice(begin, end)
-    const minimumFor = (members: MeasuredStaffMeasure[]) => equal
-      ? Math.max(...members.map(m => m.body)) * members.length + members[0]!.head
-      : members.reduce((n, m) => n + m.body, 0) + members[0]!.head
-    const localPenalty = (members: MeasuredStaffMeasure[], minimumWidth: number) => {
-      if (!minimum.localReading) return 0
+  const minimumFor = (members: MeasuredStaffMeasure[]) => equal
+    ? Math.max(...members.map(m => m.body)) * members.length + members[0]!.head
+    : members.reduce((sum, m) => sum + m.body, 0) + members[0]!.head
+  const candidates: ScoreLineCandidate[][] = measured.map((_, start) => {
+    const rows: ScoreLineCandidate[] = []
+    for (let end = start + 1; end <= measured.length; end++) {
+      if (end > start + 1 && measured[end - 1]!.measure.force) break
+      const occupied = minimumFor(measured.slice(start, end))
+      if (occupied > available && end > start + 1) break
+      rows.push({ end, density: occupied / available })
+    }
+    return rows
+  })
+  const makeLines = (ends: number[], shorten = true, begin = 0) => {
+    const lines: StaffLine[] = []
+    let start = begin
+    for (const end of ends) {
+      const members = measured.slice(start, end), minimumWidth = minimumFor(members)
       const weight = members.reduce((sum, member) => sum + member.weight, 0)
-      const surplus = Math.max(0, available - minimumWidth)
-      return Math.min(.25, 4 * members.reduce((sum, member) => sum + minimum.localReading!(member.measure, spacing,
-        equal ? Math.max(0, (available - members[0]!.head) / members.length - member.body) : surplus * member.weight / weight), 0) / members.length)
-    }
-    const candidates: LineCandidate[][] = group.map((_, start) => {
-      const result: LineCandidate[] = []
-      let sum = 0, reading = 0, widest = -Infinity, widestReading = -Infinity
-      for (let stop = start + 1; stop <= group.length; stop++) {
-        const member = group[stop - 1]!
-        sum += member.body
-        reading += member.reading
-        widest = Math.max(widest, member.body)
-        widestReading = Math.max(widestReading, member.reading)
-        const minimum = equal ? widest * (stop - start) + group[start]!.head : sum + group[start]!.head
-        if (minimum > available && stop > start + 1) break
-        const natural = Math.max(minimum, (equal ? widestReading * (stop - start) : reading) + group[start]!.head)
-        result.push({ end: stop, density: minimum / available,
-          penalty: localPenalty(group.slice(start, stop), minimum),
-          naturalDensity: natural / available,
-          // Retain the staff engine's established resistance to overcrowded
-          // reading spacing, now measured against the duration-based natural
-          // width. Otherwise the per-row cost would always favor compression.
-          elasticBadness: elasticLineBadness(minimum, natural, available)
-            + 100 * Math.max(0, natural / available - 1) ** 2 })
+      const line: StaffLine = { measures: members, minimum: minimumWidth, reading: minimumWidth,
+        target: Math.max(available, minimumWidth), weight }
+      if (minimum.rhythmic) {
+        let gap = 0, weights = 0
+        members.forEach((member, index) => {
+          const cell = equal ? (line.target - members[0]!.head) / members.length - member.body
+            : (line.target - minimumWidth) * member.weight / weight
+          const result = minimum.rhythmic!(member.measure, index === 0, spacing, Math.max(0, cell))
+          gap += result.gap; weights += result.weight
+        })
+        if (weights > 0) line.unitRhythmicGap = gap / weights
       }
-      return result
-    })
-    let start = 0
-    for (const stop of planScoreLines(candidates, { rowCost })) {
-      const members = group.slice(start, stop), minimum = minimumFor(members)
-      const reading = equal ? Math.max(...members.map(member => member.reading)) * members.length + members[0]!.head
-        : members.reduce((sum, member) => sum + member.reading, 0) + members[0]!.head
-      lines.push({ measures: members, minimum, reading: Math.max(minimum, reading), localReadingPenalty: localPenalty(members, minimum), target: Math.max(available, minimum), weight: members.reduce((n, m) => n + m.weight, 0) })
-      start = stop
+      lines.push(line); start = end
     }
-    begin = end
+    // Section endings use the same actual-spacing safeguard as numbered music.
+    if (shorten) {
+      let sum = 0, count = 0
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]!, previous = lines[i - 1], next = lines[i + 1]
+        if (line.measures[0]!.measure.section) { sum = 0; count = 0 }
+        if ((!next || next.measures[0]!.measure.section) && previous && !line.measures[0]!.measure.section) {
+          const fill = count > 0 && !equal && line.unitRhythmicGap !== undefined && line.unitRhythmicGap <= 1.5 * sum / count
+          if (!fill) {
+            const inherited = equal ? Math.max(line.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * line.measures.length + line.measures[0]!.head)
+              : line.minimum + Math.max(0, previous.target - previous.minimum) / previous.weight * line.weight
+            line.target = lastLineWidth(line.minimum, inherited, available, equal ? 0 : line.minimum)
+          }
+        } else if (line.unitRhythmicGap !== undefined) { sum += line.unitRhythmicGap; count++ }
+      }
+    }
+    return lines
   }
-  const last = lines.at(-1), previous = lines.at(-2)
-  if (last && previous) {
-    const inherited = equal ? Math.max(last.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * last.measures.length + last.measures[0]!.head)
-      : inheritElasticWidth({ minimumWidth: last.minimum, naturalWidth: last.reading, stretchWeight: last.weight },
-        { minimumWidth: previous.minimum, naturalWidth: previous.reading, stretchWeight: previous.weight }, previous.target)
-    last.target = lastLineWidth(last.minimum, Math.max(inherited, Math.min(available, last.reading ?? 0)), available, equal ? 0 : last.minimum)
-  }
-  return lines
+  return { candidates, measured, makeLines }
+}
+
+export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,
+  suppliedMinimum?: StaffMeasureMinimum, _rowCost = 1): StaffLine[] {
+  const graph = prepareStaffLineGraph(document, width, equal, measureText, spacing, suppliedMinimum)
+  return graph.makeLines(planScoreLinesGlobally(graph.candidates))
 }

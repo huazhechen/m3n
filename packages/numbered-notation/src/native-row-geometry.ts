@@ -1,0 +1,88 @@
+import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
+import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
+import { nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'
+import type { NativeSystem } from './native-layout.js'
+import type { TextMeasurer } from './native-measure.js'
+import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
+import { nativeSystemCore } from './native-core.js'
+import { scoreLyricGapScale } from './score-layout-policy.js'
+import { nativeSvgPieces, type NativeInk } from './native-ink.js'
+import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
+import type { NativePageBlock } from './native-pagination.js'
+
+export type NativeAvoidance = 'row' | 'measure' | 'element'
+
+/** Consume the same placed primitives as drawing. No independently measured
+ * final heights: row-wide lyric baselines and dynamic relations are resolved. */
+export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, margin: number, gap: number,
+  avoidance: NativeAvoidance): NativePageBlock {
+  const height = placeNativeLanes(system), pieces = nativeLanePieces(system, measurer)
+  const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
+  const primitives = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece,
+    top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
+  primitives.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
+  let ink: NativeInk[] = primitives
+  if (avoidance === 'measure') {
+    const assigned = system.measures.map(() => [] as NativeInk[])
+    for (const piece of primitives) {
+      let indices = system.measures.flatMap((measure, index) => piece.right > measure.start && piece.left < measure.end ? [index] : [])
+      if (!indices.length) {
+        let nearest = 0, distance = Infinity
+        system.measures.forEach((measure, index) => {
+          const current = Math.max(measure.start - piece.right, piece.left - measure.end, 0)
+          if (current < distance) { distance = current; nearest = index }
+        })
+        indices = [nearest]
+      }
+      for (const index of indices) assigned[index]!.push(piece)
+    }
+    ink = assigned.filter(items => items.length).map(items => ({
+      left: Math.min(...items.map(piece => piece.left)), right: Math.max(...items.map(piece => piece.right)),
+      top: Math.min(...items.map(piece => piece.top)), bottom: Math.max(...items.map(piece => piece.bottom)),
+    }))
+  }
+  const boundaryInk = (system.decorationLayout ?? []).filter(item => !item.hidden && item.svg.includes('data-m3n-role="measure-number"'))
+    .flatMap(item => {
+      const y = system.lanes.find(lane => lane.id === item.lane)!.y
+      return nativeSvgPieces(item.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
+    })
+  return { resolvedInk: true, height, baseline: system.lanes[0]?.y ?? 0, core, ink, boundaryInk,
+    coreGapBefore: system.measures[0]?.coreGapBefore,
+    coreGapScale: system.lanes.some(lane => lane.rows.length) ? scoreLyricGapScale(gap) : 1 }
+}
+
+/** Optimistic page-feasibility bound. Retain first-lane lyric tiers, their shared music floor and the
+ * shallowest sounding-body top; omit all other lanes/attachments. Their
+ * real geometry can only require more space. This bound cannot reject a plan
+ * made feasible by horizontal interleaving. */
+export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: TextMeasurer, gap: number, horizontal?: { width: number; minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }): NativePageBlock {
+  const cloned = cloneNativeProjection({measures,glyphs:measures.flatMap(m=>m.columns.flatMap(c=>c.glyphs)),diagnostics:[],hasBass:false}).measures
+  const glyphs = cloned.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+  const ids = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a,b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))
+  const members = glyphs.filter(glyph => glyph.lane === ids[0])
+  const rows = [...new Set(members.flatMap(glyph => [...glyph.lyrics].filter(([,data]) => data.annotation || data.texts.some(text => text.replaceAll('\u200B','').trim())).map(([row]) => row)))].sort((a,b)=>a-b)
+  const lane = { id: ids[0] ?? 'melody', y: 0, top: 0, bottom: 0, lyricBottom: members.length ? Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom)) : 0, rows }
+  const system = { measures: cloned, lanes: [lane], coreGap: gap, numericGeometry: true, relations: [] } as unknown as NativeSystem
+  placeNativeLyrics(system, lane, measurer)
+  const bottom = Math.max(0, ...members.flatMap(glyph => [...(glyph.lyricBaselines ?? [])].flatMap(([row,baseline]) =>
+    nativeLyricPieces(glyph.lyrics.get(row)!,glyph.x,baseline,measurer).map(piece=>piece.bottom))))
+  const top = members.length ? Math.max(...members.map(glyph => Math.min(0, ...(glyph.coreInk ?? []).map(piece => piece.top)))) : 0
+  let core = { top, bottom }
+  if (horizontal) {
+    // With no dynamic profiles, each cell weight is affine in line width.
+    // Its weighted core is a ratio of affine functions and is monotone.
+    // Endpoints therefore bound every justified or shortened ending width.
+    const minimum = nativeHorizontalSpacing(cloned, horizontal).minimumWidth
+    placeNativeHorizontal(cloned, horizontal, 0, minimum)
+    const compact = nativeSystemCore(system, measurer)
+    placeNativeHorizontal(cloned, horizontal, 0, Math.max(minimum, horizontal.width))
+    const full = nativeSystemCore(system, measurer)
+    if (compact && full) core = { top: Math.max(compact.top, full.top), bottom: Math.min(compact.bottom, full.bottom) }
+  }
+  // Sounding ink has width-independent vertical extents. Keep these page
+  // edges even when a shortened ending's dynamic profiles are unresolved.
+  const music=members.flatMap(glyph=>glyph.musicInk ?? [])
+  const edge={top:Math.min(core.top,...music.map(piece=>piece.top)),bottom:Math.max(core.bottom,...music.map(piece=>piece.bottom))}
+  return { height: edge.bottom - edge.top, core, ink: [{ left: 0, right: 1, ...edge }], coreGapBefore: measures[0]?.coreGapBefore,
+    coreGapScale: glyphs.some(glyph=>[...glyph.lyrics.values()].some(data=>data.annotation || data.texts.some(text=>text.replaceAll('\u200B','').trim()))) ? scoreLyricGapScale(gap) : 1 }
+}

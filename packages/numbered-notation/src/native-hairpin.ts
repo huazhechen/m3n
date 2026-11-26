@@ -2,12 +2,17 @@ import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
 
 export type NativeHairpinSegment = { system: NativeSystem; left: number; right: number; startHalf: number; endHalf: number; stroke: number }
+const contexts=new WeakMap<readonly NativeSystem[],Map<NativeRelation,NativeHairpinSegment[]>>()
+export function cacheNativeHairpins(systems:readonly NativeSystem[]){contexts.set(systems,new Map())}
+export function releaseNativeHairpins(systems:readonly NativeSystem[]){contexts.delete(systems)}
 
 /** One continuous wedge, cut at the final system boundaries. Opening progress
  * follows engraved distance across all fragments, including page breaks.
  * Endpoints cover the host's measured music, including a single-event range.
  */
 export function nativeHairpinSegments(relation: NativeRelation, systems: readonly NativeSystem[]): NativeHairpinSegment[] {
+  const cache=contexts.get(systems),saved=cache?.get(relation)
+  if(saved)return saved
   const members = (system: NativeSystem) => system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
   const begin = systems.findIndex(system => members(system).includes(relation.first))
   const end = systems.findIndex(system => members(system).includes(relation.last))
@@ -28,9 +33,11 @@ export function nativeHairpinSegments(relation: NativeRelation, systems: readonl
   const total = ranges.reduce((sum,range) => sum+range.right-range.left,0)
   let distance = 0
   const half = (position: number) => size*.2*(relation.kind === 'decres' ? 1-position/total : position/total)
-  return ranges.map(range => {
+  const result=ranges.map(range => {
     const startHalf = half(distance)
     distance += range.right-range.left
     return {...range,startHalf,endHalf:half(distance),stroke}
   })
+  cache?.set(relation,result)
+  return result
 }

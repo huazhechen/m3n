@@ -6,11 +6,11 @@ import { inspectScorePages } from './score-geometry.mjs'
 /** One candidate measurement for reader, online PDF and local PDF. Fonts are
  * prepared once by the caller. Production reads layout metadata only; opt-in
  * audits mount SVG without changing the layout or its avoidance constraints. */
-export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, minimumQuality } = {}) {
+export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, minimumQuality, maximumPageCount } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
   let prepared
-  try { prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings, auditLayout ? undefined : minimumQuality) }
+  try { prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings, auditLayout || settings.numericLayout === false && maximumPageCount > 1 ? undefined : minimumQuality, auditLayout ? undefined : maximumPageCount) }
   catch (error) {
     if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') {
       timings.layoutMs = performance.now() - started

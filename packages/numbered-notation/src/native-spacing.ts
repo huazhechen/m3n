@@ -25,6 +25,11 @@ export type SpacingCell = {
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
 export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number; naturalWidth?: number; compressionPenalty?: number }
+type MinimumPlan={positions:number[];cumulative:number[];minimumWidth:number;stretchWeight:number;occupied:number;shift:number}
+  | {groups:SpacingColumn[];members:{group:number;offset:number}[]}
+const minimumPlans=new WeakMap<readonly SpacingColumn[],Map<string,MinimumPlan>>()
+/** Explicitly opt an immutable task-owned constraint chain into reuse. */
+export function cacheNativeMinimumSpacing(columns:readonly SpacingColumn[]){if(!minimumPlans.has(columns))minimumPlans.set(columns,new Map())}
 
 /** Fit a chain around its natural spacing. Hard-solution distances are
  * conservative collision limits, including sparse voices and lyric spans.
@@ -90,6 +95,18 @@ export function fitSpacingSprings(columns: readonly SpacingColumn[], positions: 
 export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean; minimumOnly?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
+  const plans=fillEdges.minimumOnly && !fillEdges.natural && justify && width!==Infinity ? minimumPlans.get(columns) : undefined
+  const planKey=`${fillEdges.left ?? false}:${fillEdges.right ?? false}`
+  const prepared=plans?.get(planKey)
+  if(prepared) {
+    if('groups' in prepared) {
+      const solved=solveNativeSpacing(prepared.groups,width,justify,fillEdges)
+      return {...solved,positions:prepared.members.map(member=>solved.positions[member.group]!+member.offset)}
+    }
+    const free=Math.max(0,width-prepared.occupied),unit=prepared.stretchWeight>0 ? free/prepared.stretchWeight : 0
+    return {positions:prepared.positions.map((position,index)=>position+prepared.cumulative[index]!*unit+prepared.shift),
+      minimumWidth:prepared.minimumWidth,stretchWeight:prepared.stretchWeight}
+  }
   const laneSet = new Set<string>(), sparse = new Set<string>()
   for (const column of columns) for (const cell of column.cells) {
     laneSet.add(cell.lane)
@@ -172,6 +189,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
       }) })
       start = end + 1
     }
+    if(plans){cacheNativeMinimumSpacing(groups);plans.set(planKey,{groups,members})}
     const solved = solveNativeSpacing(groups, width, justify, fillEdges)
     return { ...solved, positions: members.map(member => solved.positions[member.group]! + member.offset) }
   }
@@ -204,6 +222,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
     weights.push(fillEdges.right ? 1 : 0)
     if (fillEdges.minimumOnly) {
       // Numbered notation has only hard minima and positive justification.
+      plans?.set(planKey,{positions:[...positions],cumulative,minimumWidth,stretchWeight,occupied,shift})
       const unit = stretchWeight > 0 ? free / stretchWeight : 0
       positions.forEach((position, index) => { positions[index] = position + cumulative[index]! * unit + shift })
       return { positions, minimumWidth, stretchWeight }

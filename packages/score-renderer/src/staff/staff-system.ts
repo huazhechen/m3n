@@ -67,7 +67,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation?: StaffPreparation) {
+  preparation?: StaffPreparation, selectedLine?: number) {
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
@@ -92,7 +92,9 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       for (const child of e.children ?? []) if (intervalEndpoints.has(child.id)) lineOf.set(child.id, i)
     }
   }))
-  return lines.map((line, lineIndex) => {
+  return lines.map((line, lineIndex) => ({ line, lineIndex }))
+    .filter(({ lineIndex }) => selectedLine === undefined || lineIndex === selectedLine)
+    .map(({ line, lineIndex }) => {
     let bassY = engine.initialBassY
     for (let pass = 0; pass < 8; pass++) {
       const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode, direction?: string) => {

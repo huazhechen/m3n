@@ -1,7 +1,7 @@
-import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, greedyScoreLines, planScoreLinesWithinPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
-import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
+import { prepareStaffLineGraph, STAFF_SCALE, type StaffLine } from './line-layout.js'
 import { paginateStaff, type StaffSystem, type StaffPage } from './system-layout.js'
 import { staffHeader } from './staff-header.js'
 import { a4SourcePageHeight } from '../score-export.js'
@@ -9,6 +9,9 @@ import { needsStaffExpansion } from './display-score.js'
 import { resolveStaffText } from './svg-text.js'
 import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
+import { compareStaffAvoidance } from './staff-avoidance-comparison.js'
+import { staffGlyphMetrics } from './staff-music-font.js'
+import { staffMusicCentre, staffHeaderBlock } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
 
 const ns = 'http://www.w3.org/2000/svg'
@@ -27,7 +30,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
-  const minimumGap = scoreCoreGap(score)
+  const minimumGap = settings.coreGap ?? scoreCoreGap(score)
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {
@@ -41,32 +44,55 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
-  const horizontal = new Map<string, Array<{ spacing: number; lines: StaffLine[]; quality: ReturnType<typeof scoreLineQuality> }>>()
-  const plans = (candidateWidth: number, rowCost = 1) => {
-    validate(candidateWidth)
-    const key = `${candidateWidth}:${rowCost}`
-    let saved = horizontal.get(key)
-    if (saved) return saved
-    const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
-    const musicWidth = candidateWidth - 2 * margin - gutter - scoreLayoutConfig.staff.rightGutter
-    const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
-    saved = [0.25, ...scoreLayoutConfig.staff.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.staff.minimumNoteGap) / 48)].map(spacing => {
-      signal?.throwIfAborted()
-      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum, rowCost)
-      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
-        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
-      return { spacing, lines, quality }
-    })
-    horizontal.set(key, saved)
-    return saved
+  const referenceGap = scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.spacingIncrementSpaces
+  const availableAt = (candidateWidth: number) => candidateWidth - 2 * margin
+    - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter)
+    - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset
+  const qualityFor = (candidateWidth: number, lines: StaffLine[]) => {
+    const densities = lines.map(line => line.minimum * STAFF_SCALE / availableAt(candidateWidth))
+    const spacing = scorePhysicalSpacing(lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]), referenceGap)
+    const costs = scoreLayoutCosts(candidateWidth, densities)
+    return { ...scoreLineQuality(densities, lines.length ? Math.max(0, 1 - lines.at(-1)!.target * STAFF_SCALE / availableAt(candidateWidth)) : 0),
+      ...costs, ...spacing, totalCost: costs.fontSizeCost + costs.overflowCost + spacing.spacingCost }
   }
   type Layout = {
-    systems: StaffSystem[]; pages: StaffPage[]; fittedPages?: StaffPage[]; furniture: XmlNode[]
+    systems: StaffSystem[]; pages: StaffPage[]; engraved?: boolean; fittedPages?: StaffPage[]; furniture: XmlNode[]
     header: ReturnType<typeof staffHeader>; lines: StaffLine[]; spacing: number; paginationError?: Error
-    quality: ReturnType<typeof scoreLineQuality>
+    quality: ReturnType<typeof qualityFor>
   }
   const layouts = new Map<number, Layout>()
   const cache = new Map<boolean, { coreGap?: number; markup: string[] }>()
+  const heightCache = (spacing: number) => {
+    const key = `${spacing}:${Boolean(settings.measureNumbers)}`
+    let saved = measurements.heights.get(key)
+    if (saved) return saved
+    saved = new WeakMap()
+    const space = scoreLayoutConfig.staff.music / 4
+    for (const m of projected.measures) {
+      const prepared = measurements.preparation.measure(m, true, projected.hasBass, measure)
+      const core = { top: scoreLayoutConfig.staff.music - space * .05,
+        bottom: scoreLayoutConfig.staff.music * 2 + space * .05
+          + (projected.hasBass ? scoreLayoutConfig.staff.engine.initialBassY * STAFF_SCALE : 0) }
+      const ink = [core]
+      prepared.entries.forEach((entries, lane) => {
+        const dy = lane ? scoreLayoutConfig.staff.engine.initialBassY : 0
+        for (const entry of entries) for (const note of entry.notes) {
+          const glyph = staffGlyphMetrics(note.head, note.size)
+          for (const head of note.heads) ink.push({ top: (dy + head.y + glyph.top) * STAFF_SCALE,
+            bottom: (dy + head.y + glyph.bottom) * STAFF_SCALE })
+          for (const symbol of note.symbols) {
+            const glyph = staffGlyphMetrics(symbol.glyph, symbol.size)
+            ink.push({ top: (dy + symbol.y + glyph.top) * STAFF_SCALE, bottom: (dy + symbol.y + glyph.bottom) * STAFF_SCALE })
+          }
+        }
+      })
+      saved.set(m, scoreHeightEnvelope({ height: core.bottom, core,
+        ink: ink.map(box => ({ ...box, left: 0, right: 1 })) }, staffMusicCentre,
+        [m.melody, m.bass].some(lane => lane.some(event => event.lyrics.some(lyric => lyric.text.trim())))))
+    }
+    measurements.heights.set(key, saved)
+    return saved
+  }
   const layout = (candidateWidth: number): Layout => {
     validate(candidateWidth)
     const saved = layouts.get(candidateWidth)
@@ -77,57 +103,84 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const attempt = (spacing: number, rowCost = 1, incumbent?: Layout): Layout => {
-      signal?.throwIfAborted()
-      const { lines, quality } = plans(candidateWidth, rowCost).find(plan => plan.spacing === spacing)!
-      // A one-page incumbent cannot lose on page count. For multipage
-      // incumbents, complete every trial before comparing the page count.
-      if (incumbent?.pages.length === 1) {
-        const candidateScore = scoreHorizontalQuality(candidateWidth, quality)
-        const previousScore = scoreHorizontalQuality(candidateWidth, incumbent.quality)
-        if (lines.length > incumbent.lines.length || lines.length === incumbent.lines.length
-          && (candidateScore < previousScore || candidateScore === previousScore && spacing >= incumbent.spacing)) return incumbent
+    const trials = scoreLayoutConfig.staff.noteGapCandidates.map(spacing => {
+      const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const heights = heightCache(spacing)
+      const rowCache = new Map<string, StaffSystem>()
+      const rowFor = (start: number, end: number, target?: number) => {
+        const key = `${start}:${end}:${target ?? availableAt(candidateWidth) / STAFF_SCALE}`
+        let system = rowCache.get(key)
+        if (!system) {
+          const line = graph.makeLines([end], false, start)[0]!
+          if (target !== undefined) line.target = target
+          const prefix = start ? graph.makeLines([start], false) : []
+          const suffix = end < graph.measured.length ? graph.makeLines([graph.measured.length], false, end) : []
+          // Outside rows supply only relation endpoint order; engrave this row
+          // alone. Its geometry is independent of how that outside is broken.
+          system = engraveStaffSystems(projected, [...prefix, line, ...suffix], musicWidth, measure, spacing,
+            Boolean(settings.measureNumbers), tempoScale, measurements.preparation, prefix.length)[0]!
+          system.envelope = scoreHeightEnvelope({ height: system.ink.bottom, core: system.core, ink: [system.ink] },
+            staffMusicCentre, Boolean(system.hasLyrics))
+          rowCache.set(key, system)
+        }
+        return system
       }
-      const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale, measurements.preparation)
-      for (const system of systems) {
-        translate(system.node, gutter / STAFF_SCALE, 0)
-        system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))
-        system.spacingPieces = system.spacingPieces.map(piece => moveInk(piece, gutter, 0))
-        system.edgePieces = system.edgePieces.map(piece => ({ ...moveInk(piece, gutter, 0), gap: piece.gap }))
-        system.ink = moveInk(system.ink, gutter, 0)
-        system.core = moveInk(system.core, gutter, 0)
+      const systemsFor = (ends: number[]) => {
+        let start = 0
+        const lines = graph.makeLines(ends)
+        return ends.map((end, index) => { const system = rowFor(start, end, lines[index]!.target); start = end; return system })
       }
-      let pages: StaffPage[] = [], paginationError: Error | undefined
-      try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap) }
-      catch (error) {
-        if (!(error instanceof Error) || !error.message.includes('单个五线谱谱行')) throw error
-        paginationError = error
+      const evaluate = (ends: number[]) => {
+        signal?.throwIfAborted()
+        const systems = systemsFor(ends)
+        try { return { ends, pages: paginateStaff(systems, height, header.height, minimumGap, true, minimumGap).length, value: ends } }
+        catch (error) {
+          if (!(error instanceof Error) || !error.message.includes('单个谱行')) throw error
+          return { ends, pages: Infinity, value: ends }
+        }
       }
-      return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
+      const greedy = evaluate(greedyScoreLines(graph.candidates)), optimum = evaluate(planScoreLinesGlobally(graph.candidates))
+      const canFit = optimum.pages > greedy.pages ? scoreWholeRowFeasibility(graph.candidates,
+        (start, _end) => {
+          const original = graph.measured[start]!.measure
+          const envelope = heights.get(original) ?? heights.get(projected.measures.find(m => original.id.startsWith(m.id + '-fragment-'))!)!
+          // Only the invariant first staff is a safe lower bound. A canonical
+          // row's curves, lyrics and inter-staff expansion may overestimate.
+          const block = { ...staffHeaderBlock(scoreLayoutConfig.staff.music),
+            core: { top: 0, bottom: Math.min(scoreLayoutConfig.staff.music, envelope.coreAbove + envelope.coreBelow) },
+            coreGapScale: scoreLyricGapScale(minimumGap),
+            ...(start === 0 ? { coreGapBefore: 0 } : {}),
+            gapBefore: start > 0 && original.section ? scoreLayoutConfig.staff.sectionGap : 0 }
+          return block
+        }, [staffHeaderBlock(header.height)],
+        { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3 }) : undefined
+      const plan = planScoreLinesWithinPages(graph.candidates, greedy, optimum, evaluate, undefined, canFit)
+      const lines = graph.makeLines(plan.ends)
+      let rowStart = 0
+      const finalSystems = lines.map((line, index) => {
+        const end = plan.ends[index]!, system = rowFor(rowStart, end, line.target)
+        rowStart = end; return system
+      })
+      return { spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines), pages: plan.pages }
+    }).sort((a, b) => a.quality.spacingCost + a.quality.overflowCost - b.quality.spacingCost - b.quality.overflowCost || b.spacing - a.spacing)
+    const trial = trials.reduce((best, candidate) => candidate.pages < best.pages ? candidate : best)
+    // Candidate rows are already measured and cached at their actual width.
+    // Reuse the chosen row nodes for output as well as numeric pagination.
+    const systems = trial.proxies
+    for (const system of systems) {
+      translate(system.node, gutter / STAFF_SCALE, 0)
+      system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))
+      system.spacingPieces = system.spacingPieces.map(piece => moveInk(piece, gutter, 0))
+      system.edgePieces = system.edgePieces.map(piece => ({ ...moveInk(piece, gutter, 0), gap: piece.gap }))
+      system.ink = moveInk(system.ink, gutter, 0); system.core = moveInk(system.core, gutter, 0)
     }
-    let selected = attempt(0.25)
-    const consider = (candidate: Layout) => {
-      if (candidate.paginationError) return
-      const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
-      const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
-      if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
-        && (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
-        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing))) selected = candidate
+    let pages: StaffPage[] = [], paginationError: Error | undefined
+    try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap) }
+    catch (error) {
+      if (!(error instanceof Error) || !error.message.includes('单个谱行')) throw error
+      paginationError = new Error('单个五线谱谱行无法放入A4页面。')
     }
-    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.staff.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.staff.minimumNoteGap) / 48)) {
-      consider(attempt(spacing, 1, selected))
-    }
-    // Only a short final page warrants extra whole-score engraving trials.
-    // Alter the soft row cost, never collision minima or preferred advances.
-    if (!selected.paginationError && selected.pages.length > 1 && selected.pages.at(-1)!.systems.length <= 2) {
-      const spacing = selected.spacing
-      const readingPenalty = (candidate: Layout) => candidate.lines.reduce((sum, line) => sum + (line.localReadingPenalty ?? 0), 0) / Math.max(1, candidate.lines.length)
-      const limit = readingPenalty(selected) + .02
-      for (const rowCost of [.85, 1.15]) {
-        const candidate = attempt(spacing, rowCost)
-        if (readingPenalty(candidate) <= limit) consider(candidate)
-      }
-    }
+    const selected: Layout = { systems, pages, paginationError, furniture: [], header, lines: trial.lines, spacing: trial.spacing, quality: trial.quality, engraved: true }
     layouts.set(candidateWidth, selected)
     return selected
   }
@@ -214,36 +267,12 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return svg
     })
   }
-  // Include every row-cost variant: page-first selection can choose more
-  // rows than the baseline, and tail repair can change horizontal quality.
-  const allPlans = (candidateWidth: number) => [1, .85, 1.15].flatMap(rowCost => plans(candidateWidth, rowCost))
-  const qualityUpperBound = (candidateWidth: number) => Math.max(...allPlans(candidateWidth)
-    .map(plan => scoreHorizontalQuality(candidateWidth, plan.quality)))
+  const qualityUpperBound = (candidateWidth: number) => 1 / (1 + scoreLayoutCosts(candidateWidth, []).fontSizeCost)
   return Object.assign(render, {
-    qualityUpperBound(candidateWidth = width) {
-      return qualityUpperBound(candidateWidth)
-    },
-    /** Upper bound across every spacing trial, without vertical engraving.
-     * Used only against an already valid one-page width in production search. */
-    canExceedQuality(minimum: number, candidateWidth = width) {
-      return qualityUpperBound(candidateWidth) >= minimum
-    },
-    /** A page contains nonoverlapping stave cores with at least the minimum
-     * lyric-adjusted gap. Ignoring the header, all ink outside those cores and
-     * page insets gives an upper bound on rows per page, hence a lower bound on
-     * pages. This can certify losing multipage candidates before engraving. */
+    qualityUpperBound(candidateWidth = width) { return qualityUpperBound(candidateWidth) },
+    canExceedQuality(minimum: number, candidateWidth = width) { return qualityUpperBound(candidateWidth) >= minimum },
     canBeatPageQuality(pageCount: number, quality: number, candidateWidth = width) {
-      if (settings.coreGap !== undefined) return pageCount === 1 ? qualityUpperBound(candidateWidth) >= quality : true
-      const coreHeight = scoreLayoutConfig.staff.music
-        + (projected.hasBass ? scoreLayoutConfig.staff.engine.initialBassY * STAFF_SCALE : 0)
-      const gap = minimumGap * scoreLyricGapScale(minimumGap)
-      const capacity = a4SourcePageHeight(candidateWidth) - 2 * margin
-      const rowsPerPage = Math.max(1, Math.floor((capacity + gap + 1e-6) / (coreHeight + gap)))
-      const trials = allPlans(candidateWidth)
-      return trials.some(plan => {
-        const lowerPages = Math.ceil(plan.lines.length / rowsPerPage)
-        return lowerPages < pageCount || lowerPages === pageCount && scoreHorizontalQuality(candidateWidth, plan.quality) >= quality
-      })
+      return pageCount !== 1 || qualityUpperBound(candidateWidth) >= quality
     },
     /** Continuous geometry without generating or mounting an SVG candidate. */
     continuousHeight(coreGap = settings.coreGap) {
@@ -258,11 +287,27 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         pageCount: result.paginationError ? 0 : settings.coreGap === undefined ? result.pages.length : outputPages(result, true, candidateWidth).length,
       }
     },
+    /** Compare scalar row/measure avoidance without changing production layout. */
+    avoidanceComparison(candidateWidth = width) {
+      const result = layout(candidateWidth)
+      const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
+      return compareStaffAvoidance(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin,
+        result.header.height, minimumGap, measure, gutter)
+    },
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {
       const result = layout(candidateWidth)
       return {
         displayedEvents,
+        heightEnvelopeDiagnostics: result.systems.flatMap((system, index) => {
+          const envelope = system.envelope!
+          const above = Math.max(0, staffMusicCentre - envelope.coreAbove - envelope.extraAbove - system.ink.top)
+          const below = Math.max(0, system.ink.bottom - staffMusicCentre - envelope.coreBelow - envelope.extraBelow)
+          const coreAbove = Math.max(0, staffMusicCentre - envelope.coreAbove - system.core.top)
+          const coreBelow = Math.max(0, system.core.bottom - staffMusicCentre - envelope.coreBelow)
+          return above > 1e-6 || below > 1e-6 || coreAbove > 1e-6 || coreBelow > 1e-6
+            ? [{ row: index + 1, above, below, coreAbove, coreBelow, measures: result.lines[index]!.measures.map(m => m.id) }] : []
+        }),
         hasBass: projected.hasBass,
         spacing: result.spacing,
         quality: { ...result.quality },
@@ -279,6 +324,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           inkHeight: result.systems[index]!.ink.bottom - result.systems[index]!.ink.top,
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,
+          unitRhythmicGap: line.unitRhythmicGap,
           localReadingPenalty: line.localReadingPenalty ?? 0,
           measures: line.measures.map((m) => m.id),
         })),

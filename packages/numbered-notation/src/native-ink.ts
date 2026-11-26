@@ -8,8 +8,9 @@ import { transformNativeInk, type NativeMatrix } from './native-transform.js'
 /** Painted bounds, in baseline coordinates. Font size is never an ink height. */
 export type NativeInk = { left: number; right: number; top: number; bottom: number }
 export function unionNativeInk(boxes: NativeInk[]): NativeInk {
-  return { left: Math.min(...boxes.map(b => b.left)), right: Math.max(...boxes.map(b => b.right)),
-    top: Math.min(...boxes.map(b => b.top)), bottom: Math.max(...boxes.map(b => b.bottom)) }
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity
+  for(const box of boxes){left=Math.min(left,box.left);right=Math.max(right,box.right);top=Math.min(top,box.top);bottom=Math.max(bottom,box.bottom)}
+  return {left,right,top,bottom}
 }
 export function translateNativeInk(b: NativeInk, x: number, y: number): NativeInk {
   return { left: b.left + x, right: b.right + x, top: b.top + y, bottom: b.bottom + y }

@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing, fitSpacingSprings, scoreSpacingBasis, scoreNaturalAdvance, scoreReadingWindows } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreSpacingBasis, scoreNaturalAdvance, scoreReadingWindows } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -17,31 +17,51 @@ export function staffDuration(beats: number) {
 }
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
-  columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; beforeGap: number; afterGap: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
+  columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
+/** Hard rhythmic minima followed only by nonnegative stretching. */
 export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
-  const preferredAdvance = (index: number) => prepared.metrics.columns[index]!.naturalAdvance
-  const columns = prepared.metrics.columns.map((column, index) => ({ cells: [
-    { lane: 'reading', left: 0, right: 0, before: 0, after: 0,
-      preferredAdvance: preferredAdvance(index) },
-    ...column.lyricRows.map(row => ({ lane: row.lane, left: row.left, right: row.after, before: 0, after: 0,
-      preferredAfter: lyricSpacing.preferredExtraGap / STAFF_SCALE })),
-  ] }))
-  // Share the boundary spring equally instead of stretching only the tail.
-  // This also preserves duration room for a hairpin on the final event.
+  const base = staffColumnSpacing(prepared.metrics, spacing)
   const edgeWeight = (prepared.weights.at(-1) ?? 1) / 2
   const weights = [edgeWeight, ...prepared.weights.slice(0, -1), edgeWeight]
-  const base = staffColumnSpacing(prepared.metrics, spacing)
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
   const occupied = prepared.metrics.start + base.minimumWidth + staffMusicSize() / 4 + prepared.metrics.endInset
-  const minimumSurplus = Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied)
-  const elastic = fitSpacingSprings(columns, base.positions, weights, extra + minimumSurplus)
-  const positions = elastic.positions
+  const surplus = Math.max(0, extra) + Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied)
+  let offset = total > 0 ? surplus * weights[0]! / total : 0
+  const positions = base.positions.map((position, index) => {
+    const value = position + offset
+    offset += total > 0 ? surplus * weights[index + 1]! / total : 0
+    return value
+  })
   const reading = scoreReadingWindows(positions.map((x, index) => ({ beat: prepared.onsets[index]!, x,
-    preferredNext: preferredAdvance(index) })))
-  return { positions, reading, compressionPenalty: elastic.force < 0 ? elastic.badness : 0 }
+    preferredNext: prepared.metrics.columns[index]!.naturalAdvance })))
+  return { positions, reading, compressionPenalty: 0 }
 }
-export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, reading = false): number {
-  const right = staffColumnSpacing(metrics, spacing, reading).minimumWidth
+/** Final physical whitespace / LilyPond duration weights, in logical px.
+ * Boundary springs represent the last event's duration, not a free extra gap. */
+export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
+  const positions = staffReadingSpacing(prepared, spacing, extra).positions
+  const head = staffGlyphMetrics('noteheadBlack'), headWidth = head.right - head.left
+  const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
+  let gap = 0, weight = 0
+  for (let i = 0; i + 1 < positions.length; i++) {
+    const durationWeight = Math.max(0, (prepared.metrics.columns[i]!.naturalAdvance - headWidth) / increment)
+    if (!durationWeight) continue
+    gap += Math.max(0, positions[i + 1]! - positions[i]! - headWidth)
+    weight += durationWeight
+  }
+  // The two boundary springs together hold the duration of the final event.
+  const finalWeight = prepared.weights.at(-1) ?? 0
+  if (finalWeight > 0 && positions.length) {
+    const minimum = staffMinimumAtSpacing(prepared.metrics, spacing)
+    const end = minimum + Math.max(0, extra) - prepared.metrics.endInset
+    gap += Math.max(0, positions[0]!) + Math.max(0, end - prepared.metrics.start - positions.at(-1)! - headWidth)
+    weight += finalWeight
+  }
+  return { gap: gap * STAFF_SCALE, weight }
+}
+export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, _reading = false): number {
+  const right = staffColumnSpacing(metrics, spacing).minimumWidth
   return Math.max(engine.minimumMeasureWidth, metrics.start + right + staffMusicSize() / 4 + metrics.endInset,
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
 }
@@ -52,12 +72,20 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, readi
   const key = `${spacing}:${reading}`
   let solution = variants.get(key)
   if (!solution) {
-    const gap = spacing * engine.spacingUnit / STAFF_SCALE
-    solution = solveScoreSpacing(metrics.columns.map((column, index) => ({ cells: [
-      { lane: 'music', left: Math.max(column.left + (index ? gap * column.beforeGap / 2 : 0), reading && index > 0 ? column.rhythmLeft : 0),
-        right: Math.max(column.after + (index + 1 < metrics.columns.length ? gap * column.afterGap / 2 : 0), reading ? column.rhythmAfter : 0), before: 0, after: 0 },
-      ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
-    ] })))
+    const ordinaryHead = staffGlyphMetrics('noteheadBlack')
+    const headWidth = ordinaryHead.right - ordinaryHead.left
+    const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
+    solution = solveScoreSpacing(metrics.columns.map((column, index) => {
+      const previous = metrics.columns[index - 1]
+      const before = previous ? Math.max(0, (previous.naturalAdvance - headWidth) / increment) : 0
+      const after = Math.max(0, (column.naturalAdvance - headWidth) / increment)
+      const gap = staffMusicSize() / 4 * spacing
+      return { cells: [
+        { lane: 'music', left: column.left + gap * before / 2,
+          right: column.after + (index + 1 < metrics.columns.length ? gap * after / 2 : 0), before: 0, after: 0 },
+        ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
+      ] }
+    }))
     variants.set(key, solution)
   }
   return solution
@@ -324,33 +352,14 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     }
     return laneEntries
   })
-  // Group membership belongs to the lane, so another voice's finer onsets
-  // cannot split its beam. Only visible beamed neighbours share tight gaps.
-  const grouped = new Map<PreparedNote, { before: boolean; after: boolean }>()
-  for (const beam of beams) {
-    const notes = entries[beam.lane]!.flatMap(entry => entry.notes)
-    for (const [index, noteIndex] of beam.indices.entries()) grouped.set(notes[noteIndex]!, {
-      before: index > 0, after: index + 1 < beam.indices.length,
-    })
-  }
   const timed = entries.flatMap((lane, laneIndex) => lane.flatMap(entry => entry.notes.map((note, i) => ({ note, laneIndex,
     onset: entry.item.children ? entry.item.onset + i * entry.item.beats / entry.notes.length : entry.item.onset,
     duration: entry.item.children ? entry.item.beats / entry.notes.length : entry.item.beats }))))
   const onsets = [...new Set(timed.map(({ onset }) => Math.round(onset * 1e8) / 1e8))].sort((a, b) => a - b)
-  const stretches: Array<{ before: number; after: number }> = []
   const columns = onsets.map((onset, onsetIndex) => {
     const notes = timed.filter(value => Math.abs(value.onset - onset) < 1e-7)
-    const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, beforeGap: 0, afterGap: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
-    const stretch = { before: 0, after: 0 }
-    for (const { note, duration, laneIndex } of notes) {
-      const rhythm = scoreRhythmicWeight(duration), group = grouped.get(note)
-      const before = group?.before ? scoreLayoutConfig.numbered.groupSpacingRatio : 1
-      const after = group?.after ? scoreLayoutConfig.numbered.groupSpacingRatio : 1
-      column.beforeGap = Math.max(column.beforeGap, group?.before ? rhythm * before : 1)
-      column.afterGap = Math.max(column.afterGap, group?.after ? rhythm * after : 1)
-      // Synchronous voices share the strongest constraint, never their average.
-      stretch.before = Math.max(stretch.before, rhythm * before)
-      stretch.after = Math.max(stretch.after, rhythm * after)
+    const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
+    for (const { note, laneIndex } of notes) {
       const chord = note.item.chord ? measureText(note.item.chord, scoreLayoutConfig.staff.chord / STAFF_SCALE).width / 2 : 0
       column.left = Math.max(column.left, note.left, chord)
       column.after = Math.max(column.after, note.after, chord)
@@ -382,12 +391,11 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       }
     }
     const ordinaryHead = staffGlyphMetrics('noteheadBlack')
-    const duration = onsets[onsetIndex + 1] === undefined ? 0 : onsets[onsetIndex + 1]! - onset
+    const duration = (onsets[onsetIndex + 1] ?? Math.max(...entries.flatMap(lane => lane.map(entry => entry.item.onset + entry.item.beats)))) - onset
     column.naturalAdvance = duration > 0
       ? scoreNaturalAdvance(duration, basis, ordinaryHead.right - ordinaryHead.left, staffMusicSize() / 4 * style.spacingIncrementSpaces) : 0
     column.rhythmLeft = (ordinaryHead.right - ordinaryHead.left) / 2
     column.rhythmAfter = Math.max(0, column.naturalAdvance - column.rhythmLeft)
-    stretches.push(stretch)
     return column
   })
   const startGap = staffMusicSize() / 4
@@ -400,8 +408,9 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
         : !first && signatures.every(s => !s.symbols.length) ? staffMusicSize() / 4 * .05 : 0)
   const endInset = measure.source.right?.startsWith('rpt') ? staffMusicSize() / 4 * 1.35 - staffGlyphMetrics('repeatDot').left : staffMusicSize() / 4 * (measure.source.right === 'end' ? .55 : measure.source.right === 'dbl' ? .35 : measure.source.right === 'invis' ? 0 : .05)
   const multiRestWidth = measure.source.interlude ? (staffMusicSize() / 4 * 5.9) : measure.source.multiRest ? Math.max((staffMusicSize() / 4 * 4.3), measureText(String(measure.source.multiRest), scoreLayoutConfig.staff.restCount / STAFF_SCALE, true).width) + (staffMusicSize() / 4 * 1.6) : 0
-  const weights = stretches.map((stretch, i) => i + 1 < stretches.length
-    ? (stretch.after + stretches[i + 1]!.before) / 2 : stretch.after)
+  const headWidth = staffGlyphMetrics('noteheadBlack').right - staffGlyphMetrics('noteheadBlack').left
+  const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
+  const weights = columns.map(column => Math.max(0, (column.naturalAdvance - headWidth) / increment))
   return { entries, signatures, beams, metrics: { start, endInset, multiRestWidth, columns }, onsets, weights }
 }
 export type StaffNoteAnchor = {

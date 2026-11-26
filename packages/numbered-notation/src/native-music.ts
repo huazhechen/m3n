@@ -15,7 +15,7 @@ import type { NativeGlyph } from './native-model.js'
 /** Claim complete continuous runs one level at a time. Call with one lane in
  * one measure/system; the beat predicate remains shared with spacing. Local
  * note footprints stay valid subsets of these runs for relation clearance. */
-export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextMeasurer, paint = true) {
+export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextMeasurer, paint = true, options: {baseline?:number;claim?:boolean} = {}) {
   const claimed = new Map<NativeGlyph, Set<number>>()
   const counts = glyphs.slice(1).map((glyph, i) => nativeBeamCount(glyphs[i]!, glyph))
   const body = nativeNoteBody(measurer)
@@ -28,11 +28,11 @@ export function nativeBeamLayout(glyphs: readonly NativeGlyph[], measurer: TextM
       while (i + 1 < counts.length && counts[i + 1]! > level) i++
       const a = glyphs[first]!, b = glyphs[i + 1]!
       // The outside of each round cap ends at the reserved numeric body edge.
-      const left = a.x - body.width / 2 + body.beamStroke / 2, right = b.x + body.width / 2 - body.beamStroke / 2, y = a.y + body.beamY(level)
+      const left = a.x - body.width / 2 + body.beamStroke / 2, right = b.x + body.width / 2 - body.beamStroke / 2, y = (options.baseline ?? a.y) + body.beamY(level)
       if (paint) svg += line(left, y, right, y, body.beamStroke)
       const half = n(body.beamStroke)/2, x1 = n(left), x2 = n(right), baseline = n(y)
       pieces.push({left:Math.min(x1,x2)-half,right:Math.max(x1,x2)+half,top:baseline-half,bottom:baseline+half})
-      for (let member = first; member <= i + 1; member++) {
+      for (let member = first; options.claim!==false && member <= i + 1; member++) {
         const glyph = glyphs[member]!, levels = claimed.get(glyph) ?? new Set<number>()
         levels.add(level)
         claimed.set(glyph, levels)

@@ -5,11 +5,11 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 // jsdom has no SVG character-position API; compare engraving before browser
 // text resolution here. Full PDF parity covers real browser text placement.
 vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
-import { scoreHorizontalQuality, scoreLineQuality } from '@m3n/numbered-notation'
+import { scorePhysicalSpacing } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
-import { planStaffLines, STAFF_SCALE } from './line-layout.js'
+import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
@@ -30,26 +30,25 @@ describe('staff page packing', () => {
     }
   })
 
-  it('selects line density quality at least as good as the widest spacing at equal page count', async () => {
+  it('compares both minimum tiers using the same physical spacing objective', async () => {
     const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
-    const widest = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), 0.375)
-    const available = info.availableWidth
-    const quality = scoreLineQuality(widest.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
-      Math.max(0, 1 - widest.at(-1)!.target * STAFF_SCALE / available))
     expect(info.pageCount).toBe(1)
-    expect(info.spacing).toBeLessThanOrEqual(0.375)
-    expect(scoreHorizontalQuality(768, info.quality)).toBeGreaterThanOrEqual(scoreHorizontalQuality(768, quality))
+    for (const spacing of [.6, 1.2]) {
+      const lines = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
+      const quality = scorePhysicalSpacing(lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]), 8.4)
+      expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
+    }
   })
 
-  it('uses compact spacing when every candidate has the same horizontal quality', async () => {
+  it('uses the loose tier when every candidate has the same physical spacing quality', async () => {
     const render = await prepareStaffScore(analyzeM3N('{4/4}\nN: 1 2 3 4 |||').score, { width: 640 })
     const info = render.layoutInfo()
     expect(info.pageCount).toBe(1)
     expect(info.lines).toHaveLength(1)
     expect(info.quality.lineDensityVariation).toBe(0)
     expect(info.quality.lastLineSlack).toBe(0)
-    expect(info.spacing).toBe(0.25)
+    expect(info.spacing).toBe(1.2)
     expect(render.pageCount(false)).toBe(1)
     expect(render.pageCount(true)).toBe(1)
   })
@@ -96,7 +95,7 @@ describe('staff page packing', () => {
       expect(count).toBeGreaterThan(0)
       expect(prepared.layoutInfo(width).pages).toHaveLength(count)
       expect(prepared.pageCount(true, width)).toBe(count)
-      const quality = scoreHorizontalQuality(width, prepared.layoutInfo(width).quality)
+      const quality = 1 / (1 + prepared.layoutInfo(width).quality.totalCost)
       for (const pages of [1, 2, count]) for (const threshold of [0, .5, 1.01]) {
         if (!prepared.canBeatPageQuality(pages, threshold, width))
           expect(count > pages || count === pages && quality < threshold).toBe(true)
@@ -115,9 +114,9 @@ it('screens horizontal quality without changing a completed staff layout', async
     expect(render.canExceedQuality(1.01)).toBe(false)
     const actual = render.layoutInfo()
     expect(render.measurementInfo()).toEqual({ quality: actual.quality, rows: actual.lines.length, pageCount: actual.pageCount })
-    expect(render.qualityUpperBound()).toBeGreaterThanOrEqual(scoreHorizontalQuality(width, actual.quality))
+    expect(render.qualityUpperBound()).toBeGreaterThanOrEqual(1 / (1 + actual.quality.totalCost))
     expect(actual).toEqual((await prepareStaffScore(score, { width })).layoutInfo())
-    expect(render.canExceedQuality(scoreHorizontalQuality(width, actual.quality))).toBe(true)
+    expect(render.canExceedQuality(1 / (1 + actual.quality.totalCost))).toBe(true)
   }
 })
 it.each(['yan_hua_yi_leng_01', 'qing_niao_01'])('avoids an isolated final system in %s at fixed width', async name => {

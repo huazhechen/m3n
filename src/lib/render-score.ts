@@ -48,7 +48,7 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
   const { best } = await selectBestWidth(async (width, best) => {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal, minimumQuality: best?.pageCount === 1 ? numberedLayoutScore(best) : undefined }).candidate
+    return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined }).candidate
   }, { signal, prune: true, localRefine: true })
   return best.width
 }
@@ -61,7 +61,7 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
     await yieldToBrowser()
     signal?.throwIfAborted()
     return measureStaffWidth(scoreDocument, width, settings, signal, { task, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined })
-  }, { signal, prune: true })
+  }, { signal, prune: true, localRefine: true })
   return best.width
 }
 

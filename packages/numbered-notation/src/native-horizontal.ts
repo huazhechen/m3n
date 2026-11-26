@@ -3,7 +3,7 @@ import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
-import { solveNativeMinimumSpacing as solveNativeSpacing, type SpacingCell } from './native-spacing.js'
+import { cacheNativeMinimumSpacing, solveNativeMinimumSpacing, type SpacingCell } from './native-spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
@@ -29,6 +29,24 @@ export function nativeBarMetrics(kind: string | undefined) {
 
 type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
+const horizontalContexts=new WeakMap<HorizontalOptions,WeakMap<NativeMeasure[],HorizontalItem[]>>()
+export type NativeHorizontalTemplates = Map<string, { measures: NativeMeasure[]; items: HorizontalItem[] }>
+const horizontalTemplates=new WeakMap<HorizontalOptions,NativeHorizontalTemplates>()
+const horizontalSolutions=new WeakMap<HorizontalItem[],Map<string,ReturnType<typeof solveNativeMinimumSpacing>>>()
+/** Opt-in for one immutable projection/trial. Placing x/y does not change the
+ * constraint chain; another trial receives another context and fresh objects. */
+export function cacheNativeHorizontal(options:HorizontalOptions,templates?:NativeHorizontalTemplates){
+  horizontalContexts.set(options,new WeakMap())
+  if(templates)horizontalTemplates.set(options,templates)
+}
+const solveNativeSpacing:typeof solveNativeMinimumSpacing=(columns,width,justify,edges)=>{
+  const cache=horizontalSolutions.get(columns as HorizontalItem[])
+  if(!cache)return solveNativeMinimumSpacing(columns,width,justify,edges)
+  const key=`${width}:${justify}:${JSON.stringify(edges)}`
+  let solution=cache.get(key)
+  if(!solution){solution=solveNativeMinimumSpacing(columns,width,justify,edges);cache.set(key,solution)}
+  return solution
+}
 
 /** A repeat opening supplies the shared boundary; a wrap restores both ends. */
 export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
@@ -57,7 +75,32 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
 }
 
 /** Build one shared horizontal constraint chain, including zero-time bars. */
-function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
+function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures, readOnly = false): HorizontalItem[] {
+  const cache=surrounding===measures ? horizontalContexts.get(options) : undefined
+  const cached=cache?.get(measures)
+  if(cached)return cached
+  // The immutable constraint cells depend on music and the gap tier, not on
+  // page width. Rebind only the placement targets for this private projection.
+  const templates=cache && measures.every(measure=>!measure.continuation && measure.lastFragment) ? horizontalTemplates.get(options) : undefined
+  const templateKey=templates ? measures.map(measure=>measure.id).join(':') : undefined
+  const template=templateKey===undefined ? undefined : templates?.get(templateKey)
+  if(template && readOnly)return template.items
+  if(template) {
+    const measureMap=new Map(template.measures.map((measure,index)=>[measure,measures[index]!]))
+    const columnMap=new Map<NativeColumn,NativeColumn>(),controlMap=new Map<NativeControl,NativeControl>()
+    template.measures.forEach((measure,index)=>measure.columns.forEach((column,at)=>{
+      const target=measures[index]!.columns[at]!
+      columnMap.set(column,target)
+      column.glyphs.forEach((glyph,i)=>glyph.controls.forEach((control,j)=>controlMap.set(control,target.glyphs[i]!.controls[j]!)))
+    }))
+    const items=template.items.map(item=>({...item,measure:measureMap.get(item.measure)!,
+      navigationMeasure:item.navigationMeasure && measureMap.get(item.navigationMeasure),
+      column:item.column && columnMap.get(item.column),controlColumn:item.controlColumn && columnMap.get(item.controlColumn),
+      controls:item.controls?.map(control=>controlMap.get(control)!)}))
+    cache!.set(measures,items)
+    horizontalSolutions.set(items,horizontalSolutions.get(template.items)!)
+    return items
+  }
   const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / (nativeStyle.music * .5)
   const items: HorizontalItem[] = []
   const laneSet = new Set<string>()
@@ -205,6 +248,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       : next.column ? Math.max(...next.column.glyphs.map(glyph => glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)) : next.left
     item.fixedAfter = item.right + nativeStyle.inlineSectionGap + left
   }
+  if(cache){cache.set(measures,items);horizontalSolutions.set(items,new Map());cacheNativeMinimumSpacing(items)}
+  if(templateKey!==undefined)templates!.set(templateKey,{measures,items})
   return items
 }
 
@@ -305,7 +350,7 @@ export type NativeHorizontalSpacing = {
 /** Full-width, music-only clearance per rhythmic unit. Does not mutate placement
  * or subtract either tier's reserved minimum; short endings are scored full. */
 export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: HorizontalOptions, width: number): number | undefined {
-  const items = itemsFor(measures, options)
+  const items = itemsFor(measures, options, measures, true)
   const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
   const previous = new Map<string, { index: number; right: number; weight: number }>()
   let clearance = 0, weight = 0
@@ -331,7 +376,7 @@ export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: Horizo
 /** Measure the exact chain used for placement, including rigid groups, voice
  * placeholders, lyrics and visible boundary ink. Shared by row planning and placement. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
-  const items = itemsFor(measures, options), solved = solveNativeSpacing(items)
+  const items = itemsFor(measures, options, measures, true), solved = solveNativeSpacing(items)
   if (!options.equalMeasures) return solved
   const ranges = equalMeasureRanges(items)
   if (!ranges.length) return solved
@@ -365,6 +410,20 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
   }
   return lastLineWidth(current.minimumWidth, inherited, width,
     current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)
+}
+
+/** Pure counterpart of placement for cached-height pagination candidates. */
+export function nativeMeasureHorizontalRanges(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number) {
+  const items = itemsFor(measures, options)
+  const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
+  const ranges = new Map<NativeMeasure, { left: number; right: number }>()
+  items.forEach((item, index) => {
+    const left = x + positions[index]! - item.left, right = x + positions[index]! + item.right
+    const range = ranges.get(item.measure)
+    if (range) { range.left = Math.min(range.left, left); range.right = Math.max(range.right, right) }
+    else ranges.set(item.measure, { left, right })
+  })
+  return measures.map(measure => ranges.get(measure) ?? { left: x, right: x })
 }
 
 /** Justify a complete system, then publish event and measure positions. */

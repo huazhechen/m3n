@@ -81,7 +81,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     async measure(document: ScoreDocument, width: number, best?: WidthMeasurement | null): Promise<{ candidate: WidthMeasurement & { timings: WidthTimings }; prepared: PreparedBookScore }> {
       signal.throwIfAborted()
       if (!staff || !staffMeasure) {
-        const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: numberedSettings, minimumQuality: best?.pageCount === 1 ? numberedLayoutScore(best) : undefined })
+        const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: numberedSettings, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined })
         return { candidate: measured.candidate, prepared: deferredNumberedScore(document, { ...numberedSettings, width, pageMargin: 0 }, signal) }
       }
       const task = await staffTask(document)

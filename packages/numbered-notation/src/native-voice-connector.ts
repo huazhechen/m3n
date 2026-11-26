@@ -4,7 +4,7 @@ import { attrs, line, n } from './native-symbols.js'
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { NativeMusicPainter } from './native-music.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, unionNativeInk } from './native-ink.js'
 
 /** A bracket and a separate staff-joining rule, inside the reserved prefix.
  * The measured music envelopes supply the endpoints; lyrics do not extend it.
@@ -18,7 +18,8 @@ export function nativeVoiceConnectorSvg(system: NativeSystem, margin: number, me
   const painter = new NativeMusicPainter(measurer)
   const music = (id: string) => system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     .filter(glyph => glyph.lane === id)
-    .map(glyph => nativeSvgInk(painter.music({ ...glyph, x: 0, y: 0 }, undefined, true), measurer))
+    .map(glyph => system.numericGeometry && glyph.coreInk ? unionNativeInk(glyph.coreInk)
+      : nativeSvgInk(painter.music({ ...glyph, x: 0, y: 0 }, undefined, true), measurer))
   // A remote grace or expression must not extend the connector at the left
   // edge. Read the sounding bodies, including octave dots and duration beams.
   const top = melody.y + Math.min(...music(melody.id).map(ink => ink.top))
