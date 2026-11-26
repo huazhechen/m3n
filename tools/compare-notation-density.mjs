@@ -76,8 +76,9 @@ if (process.argv.includes('--bundle-only')) {
   for (const { file, path: inputPath, limit, width: fixedWidth } of inputs) {
     // A fresh browser releases native font caches, which survive page reloads.
     const browser = await chromium.launch({ headless: true,
-      args: ['--disable-gpu', '--single-process', '--no-zygote', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'],
-      executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync) })
+      // Chromium's single-process GPU path can crash on hosted Linux runners.
+      args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--max-old-space-size=256'],
+      executablePath: process.env.CHROMIUM_PATH || (process.env.CI ? undefined : ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)) })
     try {
       const page = await browser.newPage()
       await page.route(`${origin}/**`, route => new URL(route.request().url()).pathname === '/'

@@ -37,3 +37,5 @@ npm run prepare:scores
 完整字体全部字形的PDF子集验收按256字形分批执行，逐批释放fontkit字形缓存；单独运行 `npm run test:pdf-font:full`，无需浏览器。完整 `npm run check` 仍包含浏览器回归、完整字体验收和页面端到端检查。首次运行浏览器检查需执行 `npx playwright install chromium` 安装与Playwright匹配的Chromium；可通过 `CHROMIUM_PATH` 指定现有可用版本。上述重检查必须串行执行，并使用单worker、受限Node堆和总进程内存监控，遵守项目3GB上限。
 
 CI中的真实字体密度回归保留 `.tmp/notation-density/report.json` 与完整运行日志为 `notation-density-report` 构建附件，即使失败也上传。失败日志末尾同时写入工作流错误注解，墨迹检查会输出曲目、宽度、谱式及具体碰撞／越界，便于从通知追查；生成物摘要校验与密度门禁是不同步骤。
+
+密度回归逐曲启动并关闭浏览器，限制渲染进程数及JS堆；不使用 `--single-process`，该参数在GitHub Linux运行器的Chromium GPU通道初始化路径触发过崩溃。CI默认使用已安装的Playwright配套浏览器，本地仍可使用系统Chromium，`CHROMIUM_PATH` 可显式覆盖两者。浏览器崩溃与排版断言失败均保留失败状态，不以重试或放宽密度／碰撞阈值掩盖。
