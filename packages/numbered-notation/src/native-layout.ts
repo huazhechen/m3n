@@ -19,6 +19,7 @@ import { paginateNativeBlocks, prepareNativePagination, type NativePageBlock } f
 import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
+import { greedyNativeLines, planNativeLinesWithinPages } from './native-page-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { measureNativeHorizontal, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
@@ -28,6 +29,9 @@ import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSystemCore } from './native-core.js'
+import { nativeWholeRowFeasibility } from './native-height-feasibility.js'
+import { nativeMusicAxis } from './native-axis.js'
+import { nativeHeightEnvelope, mergeNativeHeightEnvelopes, nativeEnvelopeBlock, type NativeHeightEnvelope } from './native-height-envelope.js'
 
 export type NativeRenderOptions = {
   systemCjk?: boolean
@@ -35,7 +39,13 @@ export type NativeRenderOptions = {
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   textMeasurementCache?: NumberedTextMeasurementCache
   layoutTask?: NativeLayoutTask
-  pageMargin?: number; coreGap?: number; minimumNoteGap?: number; minimumNoteGapFloor?: number
+  pageMargin?: number; coreGap?: number
+  /** Experimental measured-page ceiling; off until its interactive cost is acceptable. */
+  pageConstrainedBreaks?: boolean
+  rowEnvelope?: boolean
+  /** Allows uncached parity measurements of the experimental solver. */
+  cachePageLineGeometry?: boolean
+  minimumNoteGap?: number; minimumNoteGapFloor?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
@@ -156,7 +166,7 @@ function startsNativeSection(current: NativeMeasure, previous?: NativeMeasure): 
 }
 
 /** Break complete measures first, splitting oversized measures at time columns. */
-function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0, timings?: Record<string, number>, rowMinimums?: Map<string, number>): { measures: NativeMeasure[]; density: number }[] {
+function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0, timings?: Record<string, number>, rowMinimums?: Map<string, number>, endsOverride?: readonly number[], planner?: (graph: NativeLineCandidate[][], fragments: NativeMeasure[]) => number[]): { lines: { measures: NativeMeasure[]; density: number }[]; ends: number[]; candidates: NativeLineCandidate[][] } {
   const graphStarted = timings ? performance.now() : 0
   const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
   const candidates: NativeLineCandidate[][] = Array.from({ length: fragments.length }, () => [])
@@ -196,11 +206,12 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
   const planningStarted = timings ? performance.now() : 0
   const lines: { measures: NativeMeasure[]; density: number }[] = []
   let start = 0
-  for (const end of planNativeLines(candidates, timings)) {
+  const ends = endsOverride ? [...endsOverride] : planner ? planner(candidates, fragments) : planNativeLines(candidates, timings)
+  for (const end of ends) {
     lines.push({ measures: fragments.slice(start, end), density: candidates[start]!.find(row => row.end === end)!.density }); start = end
   }
   if (timings) timings.linePlanningMs = (timings.linePlanningMs ?? 0) + performance.now() - planningStarted
-  return lines
+  return { lines, ends, candidates }
 }
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
@@ -208,7 +219,8 @@ type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | '
   columns: Array<{ minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number }>
 }>
 type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
-  horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>> }
+  horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
+  measureHeights?: Map<string, Map<string, NativeHeightEnvelope>>; rowHeights?: Map<string, Map<string, NativeHeightEnvelope>> }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
  * preparation is shared: every candidate/trial still owns its placement state.
@@ -249,7 +261,7 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
-  if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
+  if ((supplied.pageConstrainedBreaks !== true || supplied.rowEnvelope === true) && minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
   trials.sort((a, b) => a.trial.tierCost - b.trial.tierCost || b.minimumNoteGap - a.minimumNoteGap)
   let selected: NativeLayout | undefined, selectedCost = Infinity
@@ -258,7 +270,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     let candidate: NativeLayout
     try {
       if (timings) timings.completedLayoutTrials = (timings.completedLayoutTrials ?? 0) + 1
-      candidate = trial.complete()
+      candidate = (supplied.pageConstrainedBreaks !== true || supplied.rowEnvelope === true) ? trial.complete()
+        : completePageConstrainedTrial(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, trial, preparation, timings)
     }
     catch (error) {
       if (error instanceof Error && error.message.includes('单个谱行')) {
@@ -268,14 +281,16 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     }
     // Stretch magnitude shapes each tier's DP partition, but final ranking
     // uses actual pages first, then common physical spacing cost.
+    const candidateQuality = nativeLayoutQuality(candidate)
+    const candidateCost = candidateQuality.spacingCost + candidateQuality.overflowCost
     if (!selected || candidate.pages.length < selected.pages.length
-      || candidate.pages.length === selected.pages.length && (trial.tierCost < selectedCost
-        || trial.tierCost === selectedCost && minimumNoteGap > (selected.options.minimumNoteGap ?? 0))) {
-      selected = candidate; selectedCost = trial.tierCost
+      || candidate.pages.length === selected.pages.length && (candidateCost < selectedCost
+        || candidateCost === selectedCost && minimumNoteGap > (selected.options.minimumNoteGap ?? 0))) {
+      selected = candidate; selectedCost = candidateCost
     }
-    // Sorted remaining tiers cannot lower cost; one page is the absolute
+    // In legacy mode the sorted, unchanged plans cannot lower cost; one page is the absolute
     // page-count floor, so none can improve this candidate's lexicographic rank.
-    if (selected.pages.length === 1) {
+    if ((supplied.pageConstrainedBreaks !== true || supplied.rowEnvelope === true) && selected.pages.length === 1) {
       if (timings) timings.pageFloorTierPrunes = (timings.pageFloorTierPrunes ?? 0) + trials.length - trialIndex - 1
       break
     }
@@ -294,7 +309,47 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
 function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
   return prepareNativeScoreAtGap(document, supplied, timings, preparation).complete()
 }
-function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): { score: number; tierCost: number; systemCount: number; complete(): NativeLayout } {
+type NativePageTrialCache = { blocks: Map<string, NativePageBlock>; headers?: NativePageBlock[] }
+type NativeGapTrial = { score: number; tierCost: number; systemCount: number; ends: number[]; candidates: NativeLineCandidate[][]; complete(cache?: NativePageTrialCache, pageLimit?: number): NativeLayout }
+
+function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeRenderOptions, trial: NativeGapTrial,
+  preparation: NativeLayoutPreparation, timings?: Record<string, number>): NativeLayout {
+  const rowCache: NativePageTrialCache | undefined = supplied.cachePageLineGeometry === false ? undefined : { blocks: new Map() }
+  const greedyEnds = greedyNativeLines(trial.candidates)
+  if (greedyEnds.length === trial.ends.length && greedyEnds.every((end, index) => end === trial.ends[index])) {
+    if (timings) timings.pageBoundIdenticalPlans = (timings.pageBoundIdenticalPlans ?? 0) + 1
+    return trial.complete()
+  }
+  const measure = (ends: number[]) => {
+    const value = prepareNativeScoreAtGap(document, supplied, timings, preparation, ends).complete(rowCache)
+    return { ends, pages: value.pages.length, value }
+  }
+  const started = timings ? performance.now() : 0
+  let greedy: ReturnType<typeof measure>
+  try { greedy = measure(greedyEnds) }
+  catch (error) {
+    if (error instanceof Error && error.message.includes('单个谱行')) return trial.complete(rowCache)
+    throw error
+  }
+  if (timings) timings.pageBoundGreedyMs = (timings.pageBoundGreedyMs ?? 0) + performance.now() - started
+  let optimum = { ends: trial.ends, pages: Infinity, value: greedy.value }
+  try { const value = trial.complete(rowCache); optimum = { ends: trial.ends, pages: value.pages.length, value } }
+  catch (error) { if (!(error instanceof Error && error.message.includes('单个谱行'))) throw error }
+  if (timings && optimum.pages > greedy.pages) timings.pageBoundViolations = (timings.pageBoundViolations ?? 0) + 1
+  return planNativeLinesWithinPages(trial.candidates, greedy, optimum, ends => {
+    try {
+      const value = prepareNativeScoreAtGap(document, supplied, timings, preparation, ends).complete(rowCache, greedy.pages)
+      return { pages: value.pages.length, value }
+    } catch (error) {
+      const rejected = error as Error & { code?: string; pageCount?: number }
+      if (rejected.code === 'M3N_PAGE_BOUND_REJECTED') return { pages: rejected.pageCount! }
+      if (error instanceof Error && error.message.includes('单个谱行')) return { pages: Infinity }
+      throw error
+    }
+  }, timings).value
+}
+
+function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, endsOverride?: readonly number[], heightProbe = false): NativeGapTrial {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -418,7 +473,82 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   if (preparation) preparation.rowMinimums ??= new Map()
   let rowMinimums = preparation?.rowMinimums?.get(horizontalKey)
   if (preparation && !rowMinimums) preparation.rowMinimums!.set(horizontalKey, rowMinimums = new Map())
-  const lines = breakMeasures(projection.measures, available, options, arcLeading, timings, rowMinimums)
+  const heightKey = `${horizontalKey}:${options.coreGap ?? nativeCoreGap(document)}:${options.measureNumbers ?? false}:${margin}`
+  let measureHeights: Map<string, NativeHeightEnvelope> | undefined
+  let rowHeights: Map<string, NativeHeightEnvelope> | undefined
+  const planningHeaderBlocks = options.rowEnvelope ? header.blocks.map(block => ({ height: block.height, ink: nativeSvgPieces(block.svg, measurer) })) : undefined
+  if (options.rowEnvelope) {
+    if (preparation) { preparation.measureHeights ??= new Map(); preparation.rowHeights ??= new Map() }
+    measureHeights = preparation?.measureHeights?.get(heightKey)
+    if (!measureHeights) {
+      const heightStarted = timings ? performance.now() : 0
+      const probeWidth = Math.ceil(Math.max(768, ...projection.measures.map(measure =>
+        nativeHorizontalSpacing([measure], options).minimumWidth + arcLeading([measure]) + margin * 2)) + 64)
+      const probe = prepareNativeScoreAtGap(headerDocument, { ...options, rowEnvelope: false, pageConstrainedBreaks: false,
+        width: probeWidth, paged: false }, timings, preparation, undefined, true).complete()
+      measureHeights = new Map(probe.systems.map((system, index) => {
+        const block = probe.verticalBlocks[index + probe.headerBlocks.length]!
+        const centre = (block.baseline ?? 0) + nativeMusicAxis(measurer)
+        return [system.measures[0]!.id, nativeHeightEnvelope(block, centre, system.lanes.some(lane => lane.rows.length > 0))]
+      }))
+      preparation?.measureHeights?.set(heightKey, measureHeights)
+      if (timings) {
+        timings.measureHeightBuilds = (timings.measureHeightBuilds ?? 0) + measureHeights.size
+        timings.measureHeightPreparationMs = (timings.measureHeightPreparationMs ?? 0) + performance.now() - heightStarted
+      }
+    }
+    rowHeights = preparation?.rowHeights?.get(heightKey) ?? new Map()
+    preparation?.rowHeights?.set(heightKey, rowHeights)
+  }
+  const envelopeFor = (measures: NativeMeasure[]) => {
+    const key = measures.map(measure => measure.id).join(':')
+    let envelope = rowHeights!.get(key)
+    if (!envelope) {
+      envelope = mergeNativeHeightEnvelopes(measures.map(measure => {
+        const measured = measureHeights!.get(measure.id)
+        if (!measured) throw new Error('Missing independently engraved measure height')
+        if (timings) timings.measureHeightCacheHits = (timings.measureHeightCacheHits ?? 0) + 1
+        return measured
+      }))
+      rowHeights!.set(key, envelope)
+      if (timings) timings.rowHeightBuilds = (timings.rowHeightBuilds ?? 0) + 1
+    } else if (timings) timings.rowHeightCacheHits = (timings.rowHeightCacheHits ?? 0) + 1
+    return envelope
+  }
+  const blockFor = (measures: NativeMeasure[], centre = 0) => {
+    const envelope = envelopeFor(measures)
+    return { ...nativeEnvelopeBlock(envelope, options.width, centre), coreGapBefore: measures[0]?.coreGapBefore,
+      coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(nativeCoreGap(document)) : 1 }
+  }
+  const planner = options.rowEnvelope ? (graph: NativeLineCandidate[][], fragments: NativeMeasure[]) => {
+    const ends = planNativeLines(graph, timings), greedyEnds = greedyNativeLines(graph)
+    const measurePages = (plan: number[]) => {
+      const started = timings ? performance.now() : 0
+      let start = 0
+      const blocks = [...planningHeaderBlocks!, ...plan.map(end => {
+        const block = blockFor(fragments.slice(start, end)); start = end; return block
+      })]
+      const pages = prepareNativePagination(blocks, { wholeRows: true, nonCoreGapRatio: .3 })({
+        pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO), margin,
+        gap: options.coreGap ?? nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8 }).heights.length
+      if (timings) {
+        timings.cachedHeightPaginationChecks = (timings.cachedHeightPaginationChecks ?? 0) + 1
+        timings.cachedHeightPaginationMs = (timings.cachedHeightPaginationMs ?? 0) + performance.now() - started
+      }
+      return { ends: plan, pages, value: plan }
+    }
+    const greedy = measurePages(greedyEnds), optimum = measurePages(ends)
+    if (timings && optimum.pages > greedy.pages) timings.pageBoundViolations = (timings.pageBoundViolations ?? 0) + 1
+    if (optimum.pages <= greedy.pages) return ends
+    const canFit = nativeWholeRowFeasibility(graph, (start, end) => blockFor(fragments.slice(start, end)),
+      planningHeaderBlocks!, { pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO),
+        margin, gap: options.coreGap ?? nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8, ratio: .3 })
+    return planNativeLinesWithinPages(graph, greedy, optimum, measurePages, timings, canFit).value
+  } : undefined
+  const linePlan = heightProbe ? { lines: projection.measures.map(measure => ({ measures: [measure], density: 1 })),
+    ends: projection.measures.map((_, index) => index + 1), candidates: [] as NativeLineCandidate[][] }
+    : breakMeasures(projection.measures, available, options, arcLeading, timings, rowMinimums, endsOverride, planner)
+  const { lines } = linePlan
   record('lineBreakMs')
   const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, unitRhythmicGap: nativeUnitRhythmicGap(measures, options, available - arcLeading(measures)), coreGap: nativeCoreGap(document), index, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
   record('horizontalQualityMs')
@@ -453,10 +583,31 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   }
   const horizontal = { options, margin, systems, pages: [] }
   const quality = nativeLayoutQuality(horizontal)
-  return { score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, complete: () => {
+  return { score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit) => {
   stageStarted = timings ? performance.now() : 0
   for (const system of systems) placeSystem(system)
   record('horizontalPlacementMs')
+  // Arc fragments and endings are row-local. Hairpins depend on all segment
+  // lengths; split tuplets read external endpoints, so neither may reuse rows.
+  const cacheSafe = rowCache && !relations.some(relation => relation.kind === 'cresc' || relation.kind === 'decres'
+    || relation.kind === 'tuplet' && systemOf.get(relation.first) !== systemOf.get(relation.last))
+  const rowKeys = cacheSafe ? systems.map(system => JSON.stringify([
+    system.measures.map(measure => measure.id), system.arcContinuationLeft,
+    system.measures.map(measure => [measure.start, measure.end, measure.columns.map(column => column.x)]),
+  ])) : undefined
+  const headerBlocks = planningHeaderBlocks ?? rowCache?.headers ?? header.blocks.map(block => ({ height: block.height, ink: nativeSvgPieces(block.svg, measurer) }))
+  if (rowCache) rowCache.headers = headerBlocks
+  if (pageLimit !== undefined && rowKeys && rowKeys.every(key => rowCache!.blocks.has(key))) {
+    const cachedBlocks = [...headerBlocks, ...rowKeys.map(key => rowCache!.blocks.get(key)!)]
+    const pagination = prepareNativePagination(cachedBlocks)({ pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO),
+      margin, gap: options.coreGap ?? nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8 })
+    if (timings) timings.pageBoundCachedPaginationChecks = (timings.pageBoundCachedPaginationChecks ?? 0) + 1
+    if (pagination.heights.length > pageLimit) {
+      if (timings) timings.pageBoundCachedRejections = (timings.pageBoundCachedRejections ?? 0) + 1
+      throw Object.assign(new Error('Cached row geometry exceeds the greedy page ceiling'), {
+        code: 'M3N_PAGE_BOUND_REJECTED', pageCount: pagination.heights.length })
+    }
+  }
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
     const regions: NativeRegion[] = system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))
@@ -556,8 +707,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     placeNativeAnnotations(system, relationBounds.get(system)!, measurer, options.width, margin, true, coreTops)
   }
   record('decorationsLyricsMs')
-  const blocks = [...header.blocks.map(block=>({height:block.height, ink: nativeSvgPieces(block.svg, measurer)})), ...systems.map(system => {
+  const blocks = [...headerBlocks, ...systems.map(system => {
     const height = placeNativeLanes(system)
+    if (options.rowEnvelope) return blockFor(system.measures, (system.lanes[0]?.y ?? 0) + nativeMusicAxis(measurer))
     let geometryStarted = timings ? performance.now() : 0
     const pieces = nativeLanePieces(system, measurer)
     if (timings) { timings.laneInkMs = (timings.laneInkMs ?? 0) + performance.now() - geometryStarted; geometryStarted = performance.now() }
@@ -572,10 +724,12 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       })
     const hasLyrics = system.lanes.some(lane => lane.rows.length > 0)
     const coreGapScale = hasLyrics ? scoreLyricGapScale(nativeCoreGap(document)) : 1
-    return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, coreGapBefore: system.measures[0]?.coreGapBefore }
+    const block = { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, coreGapBefore: system.measures[0]?.coreGapBefore }
+    if (rowKeys) rowCache!.blocks.set(rowKeys[system.index]!, block)
+    return block
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
-    pagination: prepareNativePagination(blocks), verticalBlocks: blocks, headerBlocks: header.blocks }
+    pagination: prepareNativePagination(blocks, options.rowEnvelope ? { wholeRows: true, nonCoreGapRatio: .3 } : {}), verticalBlocks: blocks, headerBlocks: header.blocks }
   const gap = options.coreGap ?? (nativeCoreGap(document))
   const pageFitStarted = timings ? performance.now() : 0
   const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,

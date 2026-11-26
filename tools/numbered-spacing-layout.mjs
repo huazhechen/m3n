@@ -14,13 +14,13 @@ export async function initialize(fonts) {
   textMeasurementCache.synchronizeFonts()
 }
 
-export async function search(source, auditLayout = false, prune = false, localRefine = false) {
+export async function search(source, auditLayout = false, prune = false, localRefine = false, pageConstrainedBreaks = false, rowEnvelope = false) {
   const started = performance.now()
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
   const score = analysis.score
   await prepareNumberedNotationFonts(score)
-  const settings = { layoutTask: new NumberedLayoutTask(), textMeasurementCache }
+  const settings = { rowEnvelope, pageConstrainedBreaks: pageConstrainedBreaks || rowEnvelope, layoutTask: new NumberedLayoutTask(), textMeasurementCache }
   const searchStarted = performance.now()
   const timings = {}
   const accumulate = partial => {
@@ -37,7 +37,7 @@ export async function search(source, auditLayout = false, prune = false, localRe
   }, { prune: prune && !auditLayout, localRefine: localRefine && !auditLayout })
   const searchMs = performance.now() - searchStarted
   const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
-  return { timings, renderCache: result.renderCache, textMeasureCalls: timings.textMeasureCalls ?? 0,
+  return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks || rowEnvelope ? '-page-bound' : '') + (rowEnvelope ? '-row-envelope-03' : '') }, textMeasureCalls: timings.textMeasureCalls ?? 0,
     textMeasureCacheHits: timings.textMeasureCacheHits ?? 0,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
     meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingCost: best.spacingCost,

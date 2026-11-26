@@ -25,8 +25,12 @@ const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bund
 const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
 const localRefine = process.argv.includes('--local-refine')
+const rowEnvelope = process.argv.includes('--row-envelope')
+const pageConstrainedBreaks = process.argv.includes('--page-bound') || rowEnvelope
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
 if (checkpoint) {
+  assert.equal(Boolean(checkpoint.rowEnvelope), rowEnvelope, 'Cannot resume with a different row-envelope setting')
+  assert.equal(Boolean(checkpoint.pageConstrainedBreaks), pageConstrainedBreaks, 'Cannot resume with a different page-bound setting')
   assert.equal(checkpoint.sourceRoot, sourceRoot, 'Cannot resume against a different source root')
   assert.equal(checkpoint.rendererHash, rendererHash, 'Cannot resume after changing the renderer')
   assert.equal(checkpoint.auditLayout, auditLayout, 'Cannot resume with a different ink audit setting')
@@ -35,7 +39,7 @@ if (checkpoint) {
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
-const report = { sourceRoot, sourceRevision, rendererHash, auditLayout, prune, localRefine, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+const report = { sourceRoot, sourceRevision, rendererHash, auditLayout, prune, localRefine, rowEnvelope, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
 const browser = await chromium.launch({ executablePath, headless: true,
@@ -66,7 +70,7 @@ try {
     const sourceHash = createHash('sha256').update(source).digest('hex')
     const saved = report.entries.find(entry => entry.file === file)
     if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
-    const result = await page.evaluate(({ source, audit, prune, localRefine }) => m3n.search(source, audit, prune, localRefine), { source, audit: auditLayout, prune, localRefine })
+    const result = await page.evaluate(({ source, audit, prune, localRefine, rowEnvelope, pageConstrainedBreaks }) => m3n.search(source, audit, prune, localRefine, pageConstrainedBreaks, rowEnvelope), { source, audit: auditLayout, prune, localRefine, rowEnvelope, pageConstrainedBreaks })
     const previous = baseline?.entries.find(entry => entry.file === file)
     if (baseline) assert(previous && previous.sourceHash === sourceHash, `Baseline/source mismatch: ${file}`)
     const entry = { file, sourceHash, ...result, ...(previous ? { widthDelta: result.width - previous.width, pageDelta: result.pages - previous.pages } : {}) }

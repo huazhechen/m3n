@@ -53,7 +53,7 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
 
 /** One immutable horizontal layout: reuse normalized ink and pair constraints
  * across its spacing fit, paged output and continuous/shared-page probes. */
-export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
+export function prepareNativePagination(blocks: readonly NativePageBlock[], policy: { wholeRows?: boolean; nonCoreGapRatio?: number } = {}) {
   const normalized = blocks.map((block, index) => {
     const axis = block.baseline ?? 0
     const ink = (block.ink ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })).sort((a, b) => a.left - b.left)
@@ -68,6 +68,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
   // Each pair is measured once; fitting then evaluates scalar maxima only.
   const collisions = new Map<number, Map<number, number>>()
   const collisionDistance = (prior: Placed, item: typeof normalized[number]) => {
+    if (policy.wholeRows) return prior.lower - item.top
     let row = collisions.get(prior.index)
     if (!row) { row = new Map(); collisions.set(prior.index, row) }
     const cached = row.get(item.index)
@@ -89,9 +90,9 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
         const musicGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
         const separation = item.block.core && previous.block.core ? musicGap : headerGap
         baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
-        for (const prior of placed) {
+        for (const prior of policy.wholeRows ? [previous] : placed) {
           const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
-          baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + localGap * nativeStyle.collisionGapRatio)
+          baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + localGap * (policy.nonCoreGapRatio ?? nativeStyle.collisionGapRatio))
         }
         baseline += item.block.gapBefore ?? 0
       }
