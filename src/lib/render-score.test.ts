@@ -11,6 +11,7 @@ vi.mock('@m3n/score-renderer/staff', () => ({
   prepareStaffMeasurementTask: prepareStaffTask,
   prepareStaffScore: prepareStaff,
 }))
+vi.mock('@m3n/numbered-notation/fonts', () => ({ prepareNumberedNotationFonts: prepareFonts }))
 vi.mock('@m3n/numbered-notation', () => ({ prepareNumberedNotationFonts: prepareFonts, NumberedNotationScore: { create: createScore }, NumberedTextMeasurementCache: class {}, NumberedLayoutTask: class {} }))
 vi.mock('../../tools/lib/numbered-width-measurement.mjs', () => ({
   measureNumberedWidth: (document: ScoreDocument, width: number, { settings }: { settings: Record<string, unknown> }) => {

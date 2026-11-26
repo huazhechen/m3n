@@ -90,12 +90,12 @@ function install(font: ScoreFontResource, family: string) {
 }
 
 /** Choose the smallest preset covering this score before measuring any glyphs. */
-export async function prepareNumberedNotationFonts(value?: unknown): Promise<void> {
+export async function prepareNumberedNotationFonts(value?: unknown, options: { systemCjk?: boolean } = {}): Promise<void> {
   if (typeof document === 'undefined' || typeof FontFace === 'undefined') return
   const text = scoreFontText(value) + '演唱作词作曲音域：→'
-  const cjk = scoreCjkFont(text)
+  const cjk = options.systemCjk ? undefined : scoreCjkFont(text)
   await Promise.all([
     ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),
-    install(BRAVURA_FONTS[0], SCORE_MUSIC_FONT), install(cjk, SCORE_CJK_FONT),
+    install(BRAVURA_FONTS[0], SCORE_MUSIC_FONT), ...(cjk ? [install(cjk, SCORE_CJK_FONT)] : []),
   ])
 }

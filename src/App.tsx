@@ -1,3 +1,4 @@
+import { ResourceLoadingHost } from './components/ResourceLoadingDialog'
 import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
@@ -33,6 +34,7 @@ export default function App() {
   }, [])
   return (
     <AppErrorBoundary>
+      <ResourceLoadingHost />
       <Suspense fallback={<div className="page-status" role="status">正在加载...</div>}>
         {isH123Host() ? (
           <Routes><Route path="*" element={<ConverterPage />} /></Routes>

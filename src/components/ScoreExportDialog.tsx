@@ -1,3 +1,4 @@
+import { ResourceLoadingProgress } from './ResourceLoadingDialog'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { ScoreDocument } from '@m3n/notation'
 import { preloadScorePdf, downloadBlob, renderScoreCanvas, scoreFileName, frameScoreImage, wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
@@ -82,8 +83,8 @@ export const ScoreExportDialog = forwardRef<ScoreExportDialogRef, ScoreExportDia
           {(['png', 'pdf'] as const).map(format => <button key={format} type="button" disabled={isExporting || isPreviewing || Boolean(previewError)} title={format === 'pdf' ? '下载 A4 PDF' : undefined} onClick={() => void exportScore(format)}>{format.toUpperCase()}</button>)}
         </div>
         <div className="export-content">
-          {isPreviewing && <p role="status">正在排版预览…</p>}
-          {isExporting && <p role="status">{progress}</p>}
+          {isPreviewing && <ResourceLoadingProgress description="正在准备字体与排版预览…" progressLabel="打印预览进度" />}
+          {isExporting && <ResourceLoadingProgress description={progress} progressLabel="PNG 生成进度" />}
           {previewError && <p role="alert">{previewError}</p>}
           {exportError && <p className="export-error" role="alert">{exportError} 请重试下载。</p>}
           <div className="export-preview" aria-label="打印预览" aria-busy={isPreviewing}><div className="export-preview-paper"><div ref={previewRef} /></div></div></div>

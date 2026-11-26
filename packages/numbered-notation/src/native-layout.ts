@@ -30,6 +30,7 @@ import { placedNativeControlInk } from './native-controls.js'
 import { nativeSystemCore } from './native-core.js'
 
 export type NativeRenderOptions = {
+  systemCjk?: boolean
   fixedDo?: boolean; transpose?: number; tempoScale?: number
   paged: boolean; width: number; measureNumbers?: boolean; includeBass?: boolean; textMeasurer?: TextMeasurer
   textMeasurementCache?: NumberedTextMeasurementCache
@@ -208,7 +209,7 @@ export class NativeLayoutTask {
   preparationFor(document: ScoreDocument, options: NativeRenderOptions, cache: NumberedTextMeasurementCache): NativeLayoutPreparation {
     let variants = this.scores.get(document)
     if (!variants) { variants = new Map(); this.scores.set(document, variants) }
-    const key = JSON.stringify([options.fixedDo ?? false, options.transpose ?? 0, options.tempoScale ?? 1, options.includeBass ?? true])
+    const key = JSON.stringify([options.systemCjk ?? false, options.fixedDo ?? false, options.transpose ?? 0, options.tempoScale ?? 1, options.includeBass ?? true])
     let entry = variants.get(key)
     if (!entry || entry.cache !== cache || entry.revision !== cache.revision || entry.measurer !== options.textMeasurer) {
       entry = { cache, revision: cache.revision, measurer: options.textMeasurer, preparation: { header: new Map() }, headers: new Map() }
@@ -315,7 +316,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   let measurer = options.textMeasurer
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = window.document.createElement('canvas').getContext('2d')
-    if (context) measurer = new CanvasTextMeasurer(context, timings, options.textMeasurementCache, true)
+    if (context) measurer = new CanvasTextMeasurer(context, timings, options.textMeasurementCache, true, options.systemCjk)
   }
   measurer ??= new DefaultTextMeasurer()
   const projectionStarted = timings ? performance.now() : 0

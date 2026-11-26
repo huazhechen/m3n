@@ -8,6 +8,7 @@ import type { NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
 export type ScoreRenderInput = {
+  systemCjk?: boolean
   scoreDocument: ScoreDocument
   width?: number
   autoWidth?: boolean
@@ -42,7 +43,7 @@ type WidthSettings = Omit<ScoreRenderInput, 'scoreDocument' | 'width' | 'autoWid
 export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, settings: WidthSettings, signal?: AbortSignal) {
   const { prepareNumberedNotationFonts, NumberedTextMeasurementCache, NumberedLayoutTask } = await import('@m3n/numbered-notation')
   const { measureNumberedWidth } = await import('../../tools/lib/numbered-width-measurement.mjs')
-  await prepareNumberedNotationFonts(scoreDocument)
+  await prepareNumberedNotationFonts(scoreDocument, settings)
   const taskSettings = { ...settings, textMeasurementCache: settings.textMeasurementCache ?? new NumberedTextMeasurementCache(), layoutTask: new NumberedLayoutTask() }
   const { best } = await selectBestWidth(async (width, best) => {
     await yieldToBrowser()
@@ -105,6 +106,9 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   input.onPhase?.('loading-library')
   if (input.notationMode === 'staff') {
     const { prepareStaffScore } = await loadStaffResources(input.onPhase)
+    check(); input.onPhase?.('loading-fonts')
+    const { prepareNumberedNotationFonts } = await import('@m3n/numbered-notation/fonts')
+    await prepareNumberedNotationFonts(input.scoreDocument, input)
     check(); input.onPhase?.('layout')
     await yieldToPaint()
     check()
@@ -123,7 +127,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
   }
   const { NumberedNotationScore, prepareNumberedNotationFonts, NumberedTextMeasurementCache } = await import('@m3n/numbered-notation')
   check(); input.onPhase?.('loading-fonts')
-  await prepareNumberedNotationFonts(input.scoreDocument)
+  await prepareNumberedNotationFonts(input.scoreDocument, input)
   check(); input.onPhase?.('layout')
   await yieldToPaint()
   check()
@@ -134,7 +138,7 @@ export async function renderScoreInto(target: HTMLElement, input: ScoreRenderInp
     : input.width ?? DEFAULT_SCORE_WIDTH
   check()
   const score = NumberedNotationScore.create(input.scoreDocument)
-  const markup = score.render({ width, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap, textMeasurementCache }).join('')
+  const markup = score.render({ width, systemCjk: input.systemCjk, paged: input.paged, includeBass: input.includeBass, measureNumbers: input.measureNumbers, fixedDo: input.fixedDo, transpose: input.transpose, tempoScale: input.tempoScale, pageMargin: input.pageMargin ?? 0, coreGap: input.coreGap, textMeasurementCache }).join('')
   check()
   const restoreReading = preserveScoreReading(target, input.scoreDocument)
   target.innerHTML = markup

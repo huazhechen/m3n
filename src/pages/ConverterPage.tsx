@@ -38,6 +38,7 @@ export function ConverterPage() {
             ariaLabel="Happi123 source"
             onChange={setSource}
           />} preview={<ScoreRenderer
+            systemCjk
             isSourceUpdating={isAnalyzing}
             scoreDocument={analysis.score}
 

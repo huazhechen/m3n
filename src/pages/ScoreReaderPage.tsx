@@ -24,7 +24,7 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
   const navProps = collection === 'works' ? { libraryTo: basePath, libraryLabel: '独立作品' } : {}
   const orderedScores = useMemo(() => collection === 'works' ? works : sortScoresByCategory(presetScores), [collection, works])
   const score = orderedScores.find((item) => item.slug === slug)
-  const { source: scoreSource, status, error, retry } = useScoreSource(slug, collection)
+  const { source: scoreSource, status, error, retry, progress } = useScoreSource(slug, collection)
   useEffect(() => {
     if (collection !== 'works') return
     let cancelled = false
@@ -54,7 +54,7 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
     return () => { stopSwipe(); stopKeyboard() }
   }, [status, basePath, previousScore, nextScore, navigate])
 
-  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
+  if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} progress={progress} error={error} onRetry={retry} /></main>
 
   return (
     <main ref={readerRef} data-reader-immersive={immersive || undefined}>

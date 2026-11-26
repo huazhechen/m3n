@@ -161,6 +161,7 @@ export function NotationEditor({
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
         />} preview={<ScoreRenderer
+          systemCjk={!embedded}
           scoreId={scoreId}
           scoreDocument={analysis.score}
 

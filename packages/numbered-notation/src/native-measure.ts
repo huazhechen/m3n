@@ -1,4 +1,4 @@
-import { SCORE_MUSIC_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
+import { SCORE_MUSIC_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, scoreFontFamily } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { defaultBravuraCharacterMetrics } from './bravura-characters.js'
 /** Platform-independent text measurement contract used by the native engine. */
@@ -57,7 +57,7 @@ export class CanvasTextMeasurer implements TextMeasurer {
   private fontRevision = -1
   private requestedFont?: string
   private appliedFont?: string
-  constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>, private readonly cache?: NumberedTextMeasurementCache, private readonly shareMetrics = false) {}
+  constructor(private readonly context: CanvasRenderingContext2D, private readonly timings?: Record<string, number>, private readonly cache?: NumberedTextMeasurementCache, private readonly shareMetrics = false, private readonly systemCjk = false) {}
   fixedSymbol<T extends object>(key: string, create: () => T): T {
     if (this.timings) this.timings.fixedSymbolRequests = (this.timings.fixedSymbolRequests ?? 0) + 1
     const saved = this.cache?.readSymbol<T>(key)
@@ -76,8 +76,9 @@ export class CanvasTextMeasurer implements TextMeasurer {
   }
   private measureShared(text: string, style: TextStyle): TextMetrics {
     if (this.timings) this.timings.textMeasureRequests = (this.timings.textMeasureRequests ?? 0) + 1
-    const family = style.fontFamily ?? SCORE_TEXT_FONT
-    const weight = style.fontWeight ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : scoreLayoutConfig.fonts.regularWeight)
+    const requestedFamily = style.fontFamily ?? SCORE_TEXT_FONT
+    const family = scoreFontFamily(requestedFamily, this.systemCjk)
+    const weight = style.fontWeight ?? (requestedFamily === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : scoreLayoutConfig.fonts.regularWeight)
     const italic = style.fontStyle ?? 'normal'
     let current = this.lastStyle
     if (!current || current.family !== family || current.weight !== weight || current.size !== style.fontSize || current.italic !== italic) {

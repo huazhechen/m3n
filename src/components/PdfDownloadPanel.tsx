@@ -1,3 +1,4 @@
+import { ResourceLoadingProgress } from './ResourceLoadingDialog'
 import { useEffect, useRef, useState } from 'react'
 import { createScorePdf, downloadBlob, preloadScorePdf, scoreFileName } from '@m3n/score-renderer/view'
 
@@ -49,8 +50,8 @@ export function PdfDownloadPanel({ prepare, onClose, closeOnSuccess = false, tit
   }, [prepare, attempt, closeOnSuccess])
   return <>
     <h2 id={titleId}>导出 PDF</h2>
-    <p role="status" aria-live="polite">{error ? 'PDF 生成已停止。' : status}</p>
-    <progress aria-label="PDF 生成进度" max={progress.total || 1} value={progress.total ? progress.done : undefined} />
+    <ResourceLoadingProgress description={error ? 'PDF 生成已停止。' : status} progressLabel="PDF 生成进度"
+      max={progress.total || 1} value={progress.total ? progress.done : undefined} />
     {error && <p role="alert">{error}</p>}
     <div className="pdf-export-actions">
       <button type="button" onClick={() => { activeController.current?.abort(); onClose() }}>{finished || error ? '关闭' : '取消'}</button>

@@ -1,3 +1,4 @@
+import { ResourceLoadingDialog } from '../components/ResourceLoadingDialog'
 import { Link, useNavigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { scoreMetadataFromSource, type ScoreDiagnosticSeverity } from '@m3n/notation'
@@ -235,7 +236,7 @@ export function ScoresPage() {
           } else setExportingBook(true)
         }}
       ><NavActionIcon action={resourceState === 'loading' ? 'loading' : resourceState === 'error' ? 'retry' : 'print'} /><span className="nav-action-label">{resourceState === 'loading' ? '加载中' : resourceState === 'error' ? '重试加载' : '导出谱集'}</span></button>} />
-      {exportingBook && <Suspense fallback={<p role="status">正在加载谱集导出…</p>}><ScorebookExportDialog onClose={() => setExportingBook(false)} /></Suspense>}
+      {exportingBook && <Suspense fallback={<ResourceLoadingDialog title="准备导出谱集" description="正在加载谱集导出模块…" progressLabel="导出模块加载进度" onCancel={() => setExportingBook(false)} />}><ScorebookExportDialog onClose={() => setExportingBook(false)} /></Suspense>}
       <div className={`score-library${showIndex ? ' has-letter-index' : ''}`}>
         <section className="library-toolbar">
           <h1>乐谱库</h1>

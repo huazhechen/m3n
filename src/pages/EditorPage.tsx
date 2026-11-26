@@ -12,9 +12,9 @@ export function EditorPage({ collection = 'scores' }: { collection?: 'scores' | 
   const location = useLocation()
   const exampleSource: string | undefined = typeof location.state?.exampleSource === 'string' ? location.state.exampleSource : undefined
   const { scoreId } = useParams()
-  const { source, status, error, retry } = useScoreSource(scoreId ?? (exampleSource || collection === 'works' ? undefined : 'huan_le_song_01'), collection)
+  const { source, status, error, retry, progress } = useScoreSource(scoreId ?? (exampleSource || collection === 'works' ? undefined : 'huan_le_song_01'), collection, true)
   const navProps = collection === 'works' ? { libraryTo: '/works', libraryLabel: '独立作品' } : {}
-  if (status !== 'ready') return <main className="editor-page"><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
+  if (status !== 'ready') return <main className="editor-page"><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} progress={progress} error={error} onRetry={retry} /></main>
 
   return (
     <main className="editor-page">

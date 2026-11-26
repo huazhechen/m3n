@@ -118,3 +118,6 @@ body:has(> .floating-controls[data-immersive]) main { padding-bottom: calc(var(-
 @media (pointer: coarse) {
   .control-options .control-button { min-height: max(44px, var(--ui-control-size)); }
 }
+
+.resource-loading-progress progress { display: block; width: 100%; height: 1em; accent-color: #176e6e; }
+.export-content > .resource-loading-progress { margin: 8px 20px; }

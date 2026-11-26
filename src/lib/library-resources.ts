@@ -1,7 +1,7 @@
 export type BundleAsset = { url: string; bytes: number }
 export type LibraryBundles = { sources: BundleAsset; fonts: BundleAsset }
 export type LibraryResourceProgress = { completed: number; total: number; installing: boolean }
-export type LibraryResourceOptions = { signal?: AbortSignal; onProgress?: (progress: LibraryResourceProgress) => void }
+export type LibraryResourceOptions = { sourcesOnly?: boolean; signal?: AbortSignal; onProgress?: (progress: LibraryResourceProgress) => void }
 
 async function inflate(data: Uint8Array): Promise<Uint8Array> {
   const stream = new Blob([Uint8Array.from(data)]).stream().pipeThrough(new DecompressionStream('gzip'))
@@ -42,7 +42,7 @@ export function createLibraryResources(bundles: LibraryBundles) {
     report(loaded); notify()
     return inflate(bytes)
   }
-  function start() {
+  function start(sourcesOnly = false) {
     sourceRequest ??= (async () => {
       const data = await download(bundles.sources, bytes => { sourceBytes = bytes })
       const value: unknown = JSON.parse(new TextDecoder().decode(data))
@@ -51,6 +51,7 @@ export function createLibraryResources(bundles: LibraryBundles) {
       }
       sources = value as Record<string, string>
     })().catch(error => { sourceRequest = undefined; sourceBytes = 0; notify(); throw error })
+    if (sourcesOnly) return sourceRequest
     fontRequest ??= (async () => {
       const data = await download(bundles.fonts, bytes => { fontBytes = bytes })
       if (data.length < 4) throw new Error('字体包格式无效。')
@@ -78,25 +79,27 @@ export function createLibraryResources(bundles: LibraryBundles) {
     })().catch(error => { fontRequest = undefined; fontBytes = 0; notify(); throw error })
     return Promise.all([sourceRequest, fontRequest]).then(() => {})
   }
-  async function prepare({ signal, onProgress }: LibraryResourceOptions = {}) {
+  async function prepare({ signal, onProgress, sourcesOnly = false }: LibraryResourceOptions = {}) {
     signal?.throwIfAborted()
-    if (onProgress) { listeners.add(onProgress); onProgress(snapshot()) }
+    const report = onProgress ? (value: LibraryResourceProgress) => onProgress(sourcesOnly
+      ? { completed: sourceBytes, total: bundles.sources.bytes, installing: false } : value) : undefined
+    if (report) { listeners.add(report); report(snapshot()) }
     let abort: (() => void) | undefined
     try {
-      await Promise.race([start(), new Promise<never>((_, reject) => {
+      await Promise.race([start(sourcesOnly), new Promise<never>((_, reject) => {
         abort = () => reject(signal!.reason)
         signal?.addEventListener('abort', abort, { once: true })
       })])
       signal?.throwIfAborted()
     } finally {
-      if (onProgress) listeners.delete(onProgress)
+      if (report) listeners.delete(report)
       if (abort) signal?.removeEventListener('abort', abort)
     }
   }
   return {
     prepare,
     async source(path: string): Promise<string> {
-      await prepare()
+      await prepare({ sourcesOnly: true })
       if (!sources || !Object.hasOwn(sources, path)) throw new Error('乐谱包缺少曲目，请刷新页面重试。')
       return sources[path]
     },

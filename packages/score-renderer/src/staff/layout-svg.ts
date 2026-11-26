@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, SCORE_TEXT_FONT } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, SCORE_TEXT_FONT, scoreFontFamily } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 import { staffCharacterInk } from './staff-music-font.js'
@@ -87,10 +87,11 @@ export function translate(node: XmlNode, x: number, y: number) {
 }
 export type FontInk = { width: number; left: number; right: number; ascent: number; descent: number }
 export type MeasureText = (text: string, size: number, bold?: boolean, italic?: boolean, family?: string) => FontInk
-export function textMeasurer(): MeasureText {
+export function textMeasurer(systemCjk = false): MeasureText {
   const context = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null
   const cache = new Map<string, FontInk>()
   return (text, size, bold = false, italic = false, family = SCORE_TEXT_FONT) => {
+    family = scoreFontFamily(family, systemCjk)
     const key = `${family}:${size}:${bold}:${italic}:${text}`
     const saved = cache.get(key)
     if (saved) return saved

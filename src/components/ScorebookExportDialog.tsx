@@ -1,3 +1,4 @@
+import { ResourceLoadingProgress } from './ResourceLoadingDialog'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createScorePdf, downloadBlob, preloadScorePdf, scoreFileName } from '@m3n/score-renderer/view'
@@ -94,9 +95,10 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
       <p>记谱方式：{notationMode === 'staff' ? '五线谱' : '简谱'}。</p>
       <div role="status" aria-live="polite">
         {book ? <p>PDF 已准备好：{book.scoreCount} 首，共 {book.pageCount} 页，含 {book.sharedPages} 个合页。</p>
-          : <><p>第 {stage}/3 阶段：{['下载乐谱与字体', '排版乐谱', '生成 PDF'][stage - 1]}</p><p>{error ? '谱集生成已停止。' : status}</p><p className="scorebook-current-title">{progress.phase === 'downloading' ? '' : progress.title}</p></>}
+          : <><p>第 {stage}/3 阶段：{['下载乐谱与字体', '排版乐谱', '生成 PDF'][stage - 1]}</p><p className="scorebook-current-title">{progress.phase === 'downloading' ? '' : progress.title}</p></>}
       </div>
-      {!book && <progress aria-label="谱集生成进度" max={progress.total || 1} value={progress.total && !progress.indeterminate ? progress.completed : undefined} />}
+      {!book && <ResourceLoadingProgress description={error ? '谱集生成已停止。' : status} progressLabel="谱集生成进度"
+        max={progress.total || 1} value={progress.total && !progress.indeterminate ? progress.completed : undefined} />}
       {error && <p role="alert">{error}</p>}
       <div className="pdf-export-actions">
         <button type="button" onClick={onClose}>{book || error ? '关闭' : '取消'}</button>

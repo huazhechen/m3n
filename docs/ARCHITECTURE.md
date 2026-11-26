@@ -115,7 +115,7 @@ web app -> @m3n/score-renderer -> @m3n/notation
 
 为兼容 iPhone/iPad 的音频手势限制，播放及进度拖动入口在用户操作的同步调用栈中创建并恢复 AudioContext，再开始模块及音源加载；SpessaPlayer 接收并复用该上下文。暂停后继续播放同样先恢复上下文，避免 iOS 中断音频后无法续播。更换乐谱或离开页面时释放上下文，包括尚未完成播放器初始化的情况。
 
-乐谱的网页、预览、PNG和PDF统一使用 Barlow Semi Condensed、Bravura 与思源黑体（Noto Sans CJK SC）。西文和数字使用Barlow，音乐字形优先采用Bravura，中文使用思源黑体；小节线、减时线、弧线及渐强线仍由原生矢量几何生成。标题使用半粗Barlow，数字使用Medium，文字表情使用真实Italic字形。中文子集根据单曲谱源生成，显示前选择覆盖当前文本的最小预置子集；用户新文本超出预置覆盖时按需加载完整思源黑体。字体加载失败停止排版并允许重新加载，不再使用系统宋体或Times替代。字体来源与SIL OFL声明见 `public/licenses/barlow/`、`bravura/`、`noto-sans/`。
+乐谱的网页、预览、PNG和PDF统一使用 Barlow Semi Condensed、Bravura 与思源黑体（Noto Sans CJK SC）。西文和数字使用Barlow，音乐字形优先采用Bravura，中文使用思源黑体；小节线、减时线、弧线及渐强线仍由原生矢量几何生成。标题使用半粗Barlow，数字使用Medium，文字表情使用真实Italic字形。中文子集根据单曲谱源生成，显示前选择覆盖当前文本的最小预置子集；阅读及导出遇到预置覆盖之外的文本时按需加载完整思源黑体。编辑预览中文采用系统字体，仅加载西文与音乐字体，不下载思源黑体；字体选择按渲染任务传递，测量与SVG显示一致。字体加载失败停止排版并允许重新加载，不再使用系统宋体或Times替代。字体来源与SIL OFL声明见 `public/licenses/barlow/`、`bravura/`、`noto-sans/`。
 
 单曲“打印”弹窗保留PNG、PDF。预览与导出复用同一次测量；PNG把实际字体字形转为矢量路径后栅格化，避免独立SVG图片丢失浏览器字体。PDF逐字符沿用浏览器实测起点，按字体、字重及斜体选择同一字体资源，进一步按文档所用字形嵌入子集，保留Unicode映射、A4和网站链接。进度、取消与重试由 `PdfDownloadPanel` 提供。乐谱库通过按需加载的 `ScorebookExportDialog` 提供整本谱集导出；先选择五线谱或简谱，再生成对应PDF，不读取当前页面的记谱方式；`online-scorebook.ts` 读取装订配置，调用与阅读页相同的540～640px选宽函数，兼顾字号、谱行密度和末行留白，复用布局并按章节合页。弹窗一次完成排版和PDF生成，准备好后直接下载缓存的Blob，支持进度、取消和重试。网页沿用当前字体资源，不部署本地脚本生成的全库PDF文字子集。
 

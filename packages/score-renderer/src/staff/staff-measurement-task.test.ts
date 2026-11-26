@@ -18,11 +18,11 @@ describe('one staff measurement task', () => {
     }
     expect(JSON.stringify(score)).toBe(original)
   })
-  it('rejects sharing between scores, transpositions, tempo scales or bass settings', async () => {
+  it('rejects sharing between scores, transpositions, tempo scales, bass settings or Chinese fonts', async () => {
     const score = analyzeM3N(source).score, settings = { transpose: 2, tempoScale: 1.5, includeBass: false }
     const task = await prepareStaffMeasurementTask(score, settings)
     await expect(prepareStaffScore(score, { ...settings, width: 480 }, undefined, task)).resolves.toBeTypeOf('function')
-    for (const next of [{ ...settings, transpose: 0 }, { ...settings, tempoScale: 1 }, { ...settings, includeBass: true }])
+    for (const next of [{ ...settings, transpose: 0 }, { ...settings, tempoScale: 1 }, { ...settings, includeBass: true }, { ...settings, systemCjk: true }])
       await expect(prepareStaffScore(score, next, undefined, task)).rejects.toThrow('不能跨乐谱或排版设置复用')
     await expect(prepareStaffScore(analyzeM3N(source).score, settings, undefined, task)).rejects.toThrow('不能跨乐谱或排版设置复用')
   })

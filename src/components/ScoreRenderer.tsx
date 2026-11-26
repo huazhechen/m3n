@@ -40,6 +40,7 @@ import {
 type ScoreRendererProps = {
   sourceMap: ScoreSourceRange[]
   scoreDocument: ScoreDocument
+  systemCjk?: boolean
   scoreId?: string
   compact?: boolean
   playbackOnly?: boolean
@@ -122,6 +123,7 @@ function addInvalidMeasureHighlights(paper: HTMLElement, invalidMeasureIds: read
 
 export function ScoreRenderer({
   sourceMap,
+  systemCjk = false,
   scoreDocument,
   scoreId,
   compact = false,
@@ -294,7 +296,7 @@ export function ScoreRenderer({
         const selectedWidth = autoWidthSelectionRef.current
         const autoWidth = autoSearchWidth && !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
         const { message, width } = await renderScoreInto(paper, {
-          scoreDocument, width: requestedWidth ?? selectedWidth?.width, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
+          scoreDocument, systemCjk, width: requestedWidth ?? selectedWidth?.width, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
           onPhase: phase => { if (!cancelled) setRenderPhase(phase) },
         })
@@ -337,7 +339,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [autoSearchWidth, compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
+  }, [systemCjk, autoSearchWidth, compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -633,11 +635,13 @@ export function ScoreRenderer({
 
   return (
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
-      {renderPhase === 'loading-staff' && <ResourceLoadingDialog
-        title="加载五线谱资源"
-        description="正在加载五线谱所需资源，请稍候…"
-        progressLabel="五线谱资源加载进度"
-      />}
+      <ResourceLoadingDialog
+        active={isRendering}
+        loading={renderPhase !== null && renderPhase !== 'layout'}
+        title={notationMode === 'staff' ? '加载五线谱资源' : '加载乐谱资源'}
+        description={renderPhase === 'layout' ? '正在排版乐谱…' : renderPhase === 'loading-fonts' ? '正在准备乐谱字体…' : '正在加载乐谱渲染资源…'}
+        progressLabel="乐谱资源加载进度"
+      />
       {isPlayRequest && toneLoading && toneDownloadStarted && <PlaybackLoadingDialog
         tone={playbackTone}
         progress={toneProgress}

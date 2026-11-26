@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreHorizontalQuality, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { planStaffLines, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -13,6 +13,7 @@ import { engraveStaffSystems } from './staff-system.js'
 
 const ns = 'http://www.w3.org/2000/svg'
 export type StaffSettings = {
+  systemCjk?: boolean
   width?: number; transpose?: number; tempoScale?: number; measureNumbers?: boolean
   includeBass?: boolean; pageMargin?: number; coreGap?: number
   /** Detached exports have no pointer/reading hit targets. */
@@ -194,7 +195,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const markup = cache.get(paged)!.markup
     return markup.map((text) => {
       const host = document.createElement('div')
-      host.innerHTML = text
+      host.innerHTML = scoreSvgFontFamilies(text, settings.systemCjk)
       const svg = host.querySelector('svg')!
       svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
       resolveStaffText(svg, settings.measureNumbers, settings.interactive === false)
