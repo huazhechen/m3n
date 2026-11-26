@@ -54,3 +54,17 @@ it('rejects an extra-page loose tier before comparing physical spacing', () => {
   expect(automatic.options.minimumNoteGap).toBe(8)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(tight))
 })
+
+it('skips the other tier only after the cheapest tier reaches the one-page floor', () => {
+  const document = parseM3NDocument('{4/4}\nN: ' + Array(6).fill('1 2 3 4 |').join(' '))
+  const timings: Record<string, number> = {}
+  const automatic = layoutNativeScore(document, { ...options, width: 720 }, timings)
+  expect(automatic.pages).toHaveLength(1)
+  expect(timings.layoutTrials).toBe(2)
+  expect(timings.completedLayoutTrials).toBe(1)
+  expect(timings.pageFloorTierPrunes).toBe(1)
+  for (const minimumNoteGap of [8, 16]) {
+    const fixed = layoutNativeScore(document, { ...options, width: 720, minimumNoteGap })
+    expect(nativeLayoutQuality(automatic).spacingCost).toBeLessThanOrEqual(nativeLayoutQuality(fixed).spacingCost)
+  }
+})

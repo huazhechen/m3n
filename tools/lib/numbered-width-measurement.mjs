@@ -11,7 +11,16 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
   const started = performance.now(), timings = {}
   let prepared
   try { prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings, auditLayout ? undefined : minimumQuality) }
-  catch (error) { if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') throw new WidthSearchPruned(); throw error }
+  catch (error) {
+    if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') {
+      timings.layoutMs = performance.now() - started
+      timings.totalMs = timings.layoutMs
+      const pruned = new WidthSearchPruned()
+      pruned.timings = { ...timings }
+      throw pruned
+    }
+    throw error
+  }
   signal?.throwIfAborted()
   timings.layoutMs = performance.now() - started
   const quality = prepared.quality

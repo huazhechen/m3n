@@ -244,18 +244,22 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const taskPreparationStarted = timings ? performance.now() : 0
   const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
-  // Both tiers receive complete horizontal plans and virtual A4 pagination.
+  // Both tiers receive complete horizontal plans; page bounds can skip engraving.
   // Paper use wins before physical spacing cost; continuous and paged modes agree.
   const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
   if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
+  trials.sort((a, b) => a.trial.tierCost - b.trial.tierCost || b.minimumNoteGap - a.minimumNoteGap)
   let selected: NativeLayout | undefined, selectedCost = Infinity
   let oversized: { error: Error; minimumNoteGap: number } | undefined
-  for (const { minimumNoteGap, trial } of trials) {
+  for (const [trialIndex, { minimumNoteGap, trial }] of trials.entries()) {
     let candidate: NativeLayout
-    try { candidate = trial.complete() }
+    try {
+      if (timings) timings.completedLayoutTrials = (timings.completedLayoutTrials ?? 0) + 1
+      candidate = trial.complete()
+    }
     catch (error) {
       if (error instanceof Error && error.message.includes('单个谱行')) {
         oversized ??= { error, minimumNoteGap }; continue
@@ -268,6 +272,12 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       || candidate.pages.length === selected.pages.length && (trial.tierCost < selectedCost
         || trial.tierCost === selectedCost && minimumNoteGap > (selected.options.minimumNoteGap ?? 0))) {
       selected = candidate; selectedCost = trial.tierCost
+    }
+    // Sorted remaining tiers cannot lower cost; one page is the absolute
+    // page-count floor, so none can improve this candidate's lexicographic rank.
+    if (selected.pages.length === 1) {
+      if (timings) timings.pageFloorTierPrunes = (timings.pageFloorTierPrunes ?? 0) + trials.length - trialIndex - 1
+      break
     }
   }
   if (!selected) {

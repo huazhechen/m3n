@@ -22,7 +22,7 @@ export const widthCandidates: number[]
 export const widthSearchStrategy: string
 export function chooseBestWidth(candidates: WidthMeasurement[]): WidthMeasurement | null
 export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 'totalCost' | 'lineDensityVariation' | 'lastLineSlack' | 'lineStretchPenalty' | 'qualityScore'>): number
-export class WidthSearchPruned extends Error {}
+export class WidthSearchPruned extends Error { timings?: Record<string, number | Record<string, number>> }
 export function widthQualityUpperBound(width: number, numbered?: boolean): number
 export function widthCannotWin(width: number, best: Pick<WidthMeasurement, "width" | "totalCost" | "pageCount" | "qualityScore" | "lineDensityVariation" | "lastLineSlack" | "lineStretchPenalty"> | null): boolean
 export function probeWidthCandidates(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{

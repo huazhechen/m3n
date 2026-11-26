@@ -22,16 +22,23 @@ export async function search(source, auditLayout = false, prune = false) {
   await prepareNumberedNotationFonts(score)
   const settings = { layoutTask: new NumberedLayoutTask(), textMeasurementCache }
   const searchStarted = performance.now()
-  const result = await selectBestWidth((width, best) => measureNumberedWidth(score, width, { settings,
-    minimumQuality: prune && !auditLayout && best?.pageCount === 1 ? numberedLayoutScore(best) : undefined }).candidate,
-    { prune: prune && !auditLayout })
   const timings = {}
-  for (const candidate of result.candidates) for (const [key, value] of Object.entries(candidate.timings ?? {}))
-    if (typeof value === 'number') timings[key] = key.includes('Maximum') ? Math.max(timings[key] ?? 0, value) : (timings[key] ?? 0) + value
+  const accumulate = partial => {
+    for (const [key, value] of Object.entries(partial ?? {}))
+      if (typeof value === 'number') timings[key] = key.includes('Maximum') ? Math.max(timings[key] ?? 0, value) : (timings[key] ?? 0) + value
+  }
+  const result = await selectBestWidth((width, best) => {
+    try {
+      const measured = measureNumberedWidth(score, width, { settings,
+        minimumQuality: prune && !auditLayout && best?.pageCount === 1 ? numberedLayoutScore(best) : undefined })
+      accumulate(measured.candidate.timings)
+      return measured.candidate
+    } catch (error) { accumulate(error.timings); throw error }
+  }, { prune: prune && !auditLayout })
   const searchMs = performance.now() - searchStarted
   const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
-  return { timings, renderCache: result.renderCache, textMeasureCalls: result.candidates.reduce((sum, c) => sum + (c.timings?.textMeasureCalls ?? 0), 0),
-    textMeasureCacheHits: result.candidates.reduce((sum, c) => sum + (c.timings?.textMeasureCacheHits ?? 0), 0),
+  return { timings, renderCache: result.renderCache, textMeasureCalls: timings.textMeasureCalls ?? 0,
+    textMeasureCacheHits: timings.textMeasureCacheHits ?? 0,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
     meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingCost: best.spacingCost,
     layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
