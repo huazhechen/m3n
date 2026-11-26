@@ -18,6 +18,10 @@ it('preserves the complete Air arrangement, chromatic notes and repeat endings w
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length > 0)
   expect(bars).toHaveLength(38)
   expect(bars.map(bar => bar.events.reduce((beats, event) => beats + event.beats, 0))).toEqual(Array(38).fill(4))
+  // Neither reference part marks a slur in bar 11; its G4 tie remains.
+  expect(document.intervals.filter(interval => interval.kind === 'lg' && bars[10]!.events.some(
+    event => event.sourceStart >= interval.start! && event.sourceStart <= interval.endStart!,
+  ))).toEqual([])
   const pitches = resolveScorePitches(bars)
   const notes = (bar: number) => bars[bar - 1]!.events.map(event => [pitches.get(event)?.[0], event.beats])
   // The later HJczl1Q9t upload omits these four bars; retain the complete phrase.
