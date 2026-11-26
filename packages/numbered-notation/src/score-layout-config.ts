@@ -72,7 +72,7 @@ const staffScale = 0.7
 const staff = {
   ...typography,
   annotationLineHeight: 20,
-  tempo: typography.text, chord: typography.annotation, dynamic: typography.expression,
+  tempo: typography.annotation, chord: typography.annotation, dynamic: typography.expression,
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
   music: 40 * staffScale,

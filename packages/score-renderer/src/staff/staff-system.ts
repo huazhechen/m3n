@@ -105,7 +105,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const label = wrap(direction, tempoX, staffMusicSize() / 4 * -2.8, 'tempo-direction')
             const geometry = new SvgGeometry(element('g', {}, [label, tempo]), measureText)
             const a = geometry.ink(label), b = geometry.ink(tempo)
-            const gap = staffMusicSize() / 4 * .8
+            const gap = style.tempo * .4 / scale
             // Text is the primary indication; the metronome mark supplements
             // it on the same baseline. Keep one movable collision envelope.
             if (a.right - a.left + gap + b.right - b.left <= rawWidth - style.attachmentWrapInset / scale) {
@@ -131,6 +131,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat)
         models.push(model)
         node.children.push(measureNode)
+        const melodyEntries = model.entries[0] ?? []
+        const firstSoundingIndex = melodyEntries.findIndex(entry => entry.item.event.kind !== 'rest')
+        // Initial rests defer a direction to the first sounding event in the
+        // document. Keep its opening tempo caption together at the bar start.
+        const openingDirectionIndex = member.measure.showTempo && firstSoundingIndex >= 0
+          && melodyEntries[firstSoundingIndex]!.item.event.text
+          && melodyEntries.slice(0, firstSoundingIndex + 1).every(entry => entry.item.event.tempo === melodyEntries[0]!.item.event.tempo)
+          ? firstSoundingIndex : -1
         for (const [lane, entries] of model.entries.entries()) {
           const staff = nodes(measureNode).filter(n => hasClass(n, 'staff'))[lane]!
           for (const [entryIndex, entry] of entries.entries()) {
@@ -168,8 +176,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const cx = entry.notes[0]!.headLeft
             const top = Math.min(...entry.notes.flatMap(n => n.ys)) - engine.attachmentTopGap
             if (item.chord) measureNode.children.push(text(item.chord, cx, top, style.chord, 'harm'))
-            const combinedTempo = lane === 0 && (entryIndex === 0 ? member.measure.showTempo
-              : event.tempo !== undefined && event.tempo !== entries[entryIndex - 1]!.item.event.tempo)
+            const combinedTempo = lane === 0 && (entryIndex === openingDirectionIndex
+              || entryIndex > 0 && event.tempo !== undefined && event.tempo !== entries[entryIndex - 1]!.item.event.tempo)
             if (event.text && !combinedTempo) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
             if (event.dynamic || event.prefix) {
@@ -186,7 +194,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
           }
         }
         for (const nav of member.measure.source.navigation ?? []) addNavigation(nav, x + target - engine.navigationBarInset, engine.navigationY, measureNode)
-        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode, model.entries[0]?.[0]?.item.event.text)
+        if (member.measure.showTempo) addTempo(member.measure.tempo, member.measure.meterCount, member.measure.meterUnit, x + model.start, measureNode, melodyEntries[openingDirectionIndex]?.item.event.text)
         for (const [i, entry] of model.entries[0]!.entries()) {
           const previous = model.entries[0]![i - 1]?.item.event.tempo
           const event = entry.item.event
