@@ -173,5 +173,14 @@ it('limits repeated-note merging to the rhythms explicitly shown in image interl
   // ornamental final beat, rather than deleting it again.
   expect(events(bars[39]!).map(note => note[1])).toEqual([3, .75, .125, .125])
   // Image bar 5: half note, quarter note, two eighths; corrected PDF pitches.
-  expect(events(bars[40]!)).toEqual([['5#ee', 2], ['4#ee', 1], ['3ee', .5], ['2ee', .5]])
+  expect(events(bars[40]!)).toEqual([['7e', 2], ['6e', 1], ['5e', .5], ['4e', .5]])
+})
+
+it('writes the PDF modulation at bar 39 and restores C at both vocal entrances', () => {
+  expect(bars.slice(36, 47).map(bar => bar.events[0]!.key)).toEqual(['C', 'C', ...Array(9).fill('A')])
+  expect(bars[4]!.events[0]!.key).toBe('C')
+  expect(bars[47]!.events[0]!.key).toBe('C')
+  const played = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
+  expect(played[47]!.events[0]!.key).toBe('C')
+  expect(played[75]!.events[0]!.key).toBe('C')
 })
