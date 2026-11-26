@@ -1,10 +1,11 @@
 import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
+import { createHash } from 'node:crypto'
 import source from '../scores/hou_hui_wu_qi_01.m3n?raw'
 import categories from '../../config/scorebook/library-categories.json'
 import plan from '../../config/scorebook/editorial-plan.json'
 
-it('keeps the PDF vocal rhythm, register, modulation and changed closing meter', () => {
+it('keeps the PDF vocal rhythm, lowered octave, modulation and changed closing meter', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   const score = parseM3NDocument(source)
@@ -40,4 +41,16 @@ it('sings the screenshot lyrics in order, including both chorus verses and the f
   const c1 = '在每个繁星抛弃银河的夜里我会告别告诉我自己因为我不知道我也不想知道和相聚之间的距离'
   const c2 = '在每个银河坠入山谷的梦里我会醒来也忘记梦境因为你不知道你也不会知道逝去的就已经失去'
   expect(sung).toBe(a + b + c1 + b + c2 + a + b)
+})
+
+it('lowers every played note one octave and places the final jing after the rests', () => {
+  const score = parseM3NDocument(source)
+  const notes = compileScorePerformance(score).notes.map(n => [n.start, n.end, n.pitch])
+  expect(createHash('sha256').update(JSON.stringify(notes)).digest('hex')).toBe('251ecaa66d181f7926abbbe6e4e02abeb733b12ec2a0dfe2fe1a53d09841a92d')
+  const bars = score.parts.get('score')!.melody.filter(bar => bar.events.length)
+  const lyrics = deriveScoreInteraction(score).lyricsByEvent
+  const text = (event: typeof bars[number]['events'][number]) => (lyrics.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')
+  expect(bars.at(-3)!.events.map(text)).toEqual(['这', ''])
+  expect(bars.at(-2)!.events.map(text)).toEqual(['', '', '', '竟', '是', '结'])
+  expect(bars.at(-1)!.events.map(text)).toEqual(['', '局', ''])
 })
