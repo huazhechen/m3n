@@ -7,7 +7,9 @@ import reference from './fixtures/an-xiang-pdf-reference.json'
 // PDF pitches retain their printed C/A keys; compare concert MIDI pitches so
 // transcribing the A section in C cannot conceal an octave or accidental error.
 const semitones = [0, 2, 4, 5, 7, 9, 11]
-const expectedInstrumental = reference.bars.map(bar => bar.notes.split(' ').map(token => {
+const expectedInstrumental = reference.bars.map(bar => bar.notes.split(' ').map((printedToken, index) => {
+  // User edition: replace PDF bar 37's opening rest with the same 1 as beat 3.
+  const token = bar.number === 37 && index === 0 ? '1/.25' : printedToken
   const [pitch, length] = token.split('/')
   const beats = length && length in reference.durationCodes
     ? reference.durationCodes[length as keyof typeof reference.durationCodes] : Number(length ?? 1)
@@ -82,4 +84,40 @@ it('corrects the chorus melody, restores the distinct lyrics and places every sy
   expect(events(bars[50]!)).toEqual([['5', 2], ['6', 2]])
   expect(bars[50]!.events[1]!.tie).toBe(true)
   expect(events(bars[51]!)).toEqual([['6', 4]])
+})
+
+it('splits both sextuplets into four triplets without changing their sixteenth-note timing', () => {
+  const tuplets = bars[45]!.events.filter(event => event.kind === 'tuplet')
+  expect(tuplets).toHaveLength(4)
+  expect(tuplets.map(event => [event.pitches.length, event.beats])).toEqual(Array(4).fill([3, .5]))
+  expect(events(bars[36]!).slice(0, 1)).toEqual([['1', .25]])
+  expect(events(bars[36]!)[0]).toEqual(events(bars[36]!)[8])
+})
+
+it('plays each PDF tied continuation without a new attack and preserves the untied repeated chords', () => {
+  let cursor = 144 // First ending: the instrumental section starts at written bar 37.
+  let continuation = false
+  const expected: Array<{ start: number; end: number; pitch: number }> = []
+  for (const note of expectedInstrumental.slice(4).flat()) {
+    const start = cursor
+    cursor += note.beats
+    if (note.midi !== null) {
+      if (continuation) {
+        expect(expected.at(-1)!.pitch).toBe(note.midi)
+        expected.at(-1)!.end = cursor
+      } else expected.push({ start, end: cursor, pitch: note.midi })
+    }
+    continuation = note.tie
+  }
+  const actual = compileScorePerformance(document).notes.filter(note => note.start >= 144 && note.start < 188)
+  expect(actual).toHaveLength(expected.length)
+  for (const [index, note] of actual.entries()) {
+    expect(note.pitch).toBe(expected[index]!.pitch)
+    expect(note.start).toBeCloseTo(expected[index]!.start)
+    expect(note.end).toBeCloseTo(expected[index]!.end)
+  }
+  // PDF bar 40's first two chords are black and untied: keep both attacks.
+  expect(actual.filter(note => note.start >= 156 && note.start < 159).map(note => note.start)).toEqual([156, 157])
+  // Four gray continuations (PDF 39, 41, 42, 45) must not create extra attacks.
+  expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(4)
 })
