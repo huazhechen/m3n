@@ -36,7 +36,7 @@ test('BPM settings use a new key and never reinterpret stored speed percentages'
 })
 
 test('BPM settings accept the full range and reject invalid stored values', () => {
-  for (const value of [10, 137, 240]) {
+  for (const value of [10, 137, 240, 300, 360]) {
     localStorage.setItem(PLAYBACK_BPM_KEY, String(value))
     expect(readPlaybackBpm()).toBe(value)
   }
@@ -45,7 +45,7 @@ test('BPM settings accept the full range and reject invalid stored values', () =
     expect(readPlaybackBpm()).toBeNull()
   }
   expect(clampPlaybackBpm(1)).toBe(10)
-  expect(clampPlaybackBpm(999)).toBe(240)
+  expect(clampPlaybackBpm(999)).toBe(360)
 })
 
 

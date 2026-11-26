@@ -9,7 +9,9 @@ describe('score MIDI playback', () => {
     expect(playbackRateAtBpm(10, 120)).toBeCloseTo(1 / 12)
     expect(playbackRateAtBpm(240, 60)).toBe(4)
     expect(playbackRateAtBpm(1, 120)).toBeCloseTo(1 / 12)
-    expect(playbackRateAtBpm(300, 120)).toBe(2)
+    expect(playbackRateAtBpm(300, 120)).toBe(2.5)
+    expect(playbackRateAtBpm(360, 120)).toBe(3)
+    expect(playbackRateAtBpm(999, 120)).toBe(3)
     expect(() => playbackRateAtBpm(NaN, 120)).toThrow()
   })
   it('keeps seeks just before the end of a sequence', () => {

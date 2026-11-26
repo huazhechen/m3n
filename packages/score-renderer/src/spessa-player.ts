@@ -18,7 +18,7 @@ export function seekTimeAtProgress(duration: number, progress: number) {
 /** BPM uses the MIDI time signature's denominator, matching the metronome. */
 export function playbackRateAtBpm(bpm: number, initialBpm: number) {
   if (!Number.isFinite(bpm) || !Number.isFinite(initialBpm) || initialBpm <= 0) throw new Error('播放速度无效。')
-  return Math.max(10, Math.min(240, bpm)) / initialBpm
+  return Math.max(10, Math.min(360, bpm)) / initialBpm
 }
 
 type PlayerListener = {

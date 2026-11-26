@@ -85,5 +85,7 @@ it('steps to adjacent even BPM values and disables buttons at the limits', () =>
   render(10)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="降低播放速度"]')!.disabled).toBe(true)
   render(240)
+  expect(host.querySelector<HTMLButtonElement>('[aria-label="提高播放速度"]')!.disabled).toBe(false)
+  render(360)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="提高播放速度"]')!.disabled).toBe(true)
 })

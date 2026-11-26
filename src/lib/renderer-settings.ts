@@ -32,7 +32,7 @@ export function stepScoreWidth(width: number, direction: -1 | 1) {
 }
 
 export const PLAYBACK_BPM_MIN = 10
-export const PLAYBACK_BPM_MAX = 240
+export const PLAYBACK_BPM_MAX = 360
 
 export function clampPlaybackBpm(value: number) {
   return Math.max(PLAYBACK_BPM_MIN, Math.min(PLAYBACK_BPM_MAX, Math.round(value)))
