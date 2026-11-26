@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 113,
+  "sourceCount": 114,
   "sections": [
     {
       "id": "basics",
@@ -944,6 +944,14 @@
       "section": "pop",
       "group": "切分与延音",
       "reason": "完整人声旋律、八分与十六分节奏、跨小节延音及副歌音区变奏"
+    },
+    {
+      "id": "hou_hui_wu_qi",
+      "file": "hou_hui_wu_qi_01.m3n",
+      "title": "后会无期",
+      "section": "pop",
+      "group": "切分与延音",
+      "reason": "6/8复拍子、跨小节延音、多段歌词与降B至B升调，结尾9/8变拍"
     }
   ],
   "edition": "第七十五版",
