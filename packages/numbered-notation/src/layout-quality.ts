@@ -21,8 +21,8 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
 
-/** Numbered notation: full-width row slack plus full-score dispersion.
- * Font loss uses the reciprocal of the established squared size factor. */
+/** Keep the DP objective separate from the final ranking objective.
+ * Stretch magnitude shapes breaks; only dispersion and font loss rank them. */
 export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const stretches = densities.map(density => Math.max(0, 1 - density))
   const mean = stretches.reduce((sum, stretch) => sum + stretch, 0) / Math.max(1, stretches.length)
@@ -32,5 +32,5 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
   const layoutCost = lineStretchCost + lineUniformityCost + overflowCost
   const minimumWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.minimumMultiple
   const fontSizeCost = Math.max(0, (width / minimumWidth) ** 2 - 1)
-  return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost, totalCost: layoutCost + fontSizeCost }
+  return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost, totalCost: lineUniformityCost + overflowCost + fontSizeCost }
 }

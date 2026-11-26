@@ -235,7 +235,8 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation) }))
   if (minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
-  // Select entirely from horizontal cost before doing any vertical placement.
+  // Select by full-score dispersion before doing any vertical placement.
+  // Stretch magnitude already shaped each tier's DP partition, but is not ranked.
   // Font cost is identical for both tiers at this width. Ties retain tight.
   const winner = trials.reduce((best, candidate) => candidate.trial.score > best.trial.score ? candidate : best)
   let selected: NativeLayout

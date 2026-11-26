@@ -12,7 +12,7 @@ export async function search(source, auditLayout = false) {
   const result = await selectBestWidth(width => measureNumberedWidth(score, width, { settings }).candidate)
   const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
   return { width: best.width, pages: best.pageCount, rows: best.rows,
-    layoutCost: best.layoutCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
+    layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
     outside: best.outside, overlaps: best.overlaps,
-    candidates: result.candidates.map(({ width, pageCount, rows, layoutCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, layoutCost, fontSizeCost, totalCost, error })) }
+    candidates: result.candidates.map(({ width, pageCount, rows, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error })) }
 }
