@@ -353,6 +353,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
 }
 export type StaffNoteAnchor = {
   prepared: PreparedNote; x: number; ys: number[]; headLeft: number; headRight: number; direction: number
+  durationEndX?: number
   stemX: number; stemEnd: number; beam?: StaffBeam
 }
 export type StaffBeam = { notes: StaffNoteAnchor[]; lane: number }
@@ -567,12 +568,27 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     cumulative += prepared.weights[i]!
     return position
   })
+  const duration = Math.max(0, ...model.entries.flatMap(lane => lane.map(entry => entry.item.onset + entry.item.beats)))
+  // Range marks end at the event's time boundary, including space occupied by
+  // a sustained note. Interpolate shared columns so a longer note can end
+  // between events in the other staff without borrowing its entire column.
+  const timeX = (beat: number) => {
+    const next = prepared.onsets.findIndex(onset => onset >= beat - 1e-7)
+    if (next === 0) return positions[0]!
+    const before = next < 0 ? positions.length - 1 : next - 1
+    const end = next < 0 ? x + width - model.endInset : positions[next]!
+    const endBeat = next < 0 ? duration : prepared.onsets[next]!
+    const fraction = Math.min(1, Math.max(0, (beat - prepared.onsets[before]!) / (endBeat - prepared.onsets[before]! || 1)))
+    return positions[before]! + (end - positions[before]!) * fraction
+  }
   for (const [lane, stave] of model.staves.entries()) {
     stave.x = x; stave.width = width; stave.noteStartX = x + model.start
     for (const entry of model.entries[lane]!) for (const [i, note] of entry.notes.entries()) {
       const onset = entry.item.children ? entry.item.onset + i * entry.item.beats / entry.notes.length : entry.item.onset
       const column = prepared.onsets.findIndex(value => Math.abs(value - onset) < 1e-7)
       positionNote(note, positions[column]!, stave.y)
+      const beats = entry.item.beats / entry.notes.length
+      note.durationEndX = Math.max(note.headRight, timeX(onset + beats) - staffMusicSize() / 8)
     }
   }
   model.beams.forEach(positionBeam)

@@ -44,15 +44,31 @@ it('uses the bow rise to clear a central obstacle without lifting both endpoints
   const geometry = new SvgGeometry(shape, textMeasurer())
   const path = nodes(shape)[0]!
   const baseline = Number(/^M\S+ (\S+)/.exec(path.attributes.d!)![1])
+  const coordinates = path.attributes.d!.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+  const lowerRise = baseline - coordinates[9]!
   const gap = scoreLayoutConfig.staff.attachmentGap / scoreLayoutConfig.staff.engine.scale
   // A straight line above the obstacle would require a negative baseline.
   expect(baseline).toBeGreaterThan(0)
   for (const x of [90, 100, 110]) {
     const t = x / 200
-    const lowerEdge = baseline - 3 * (staffMusicSize() / 4 * 1.2) * t * (1 - t)
+    const lowerEdge = baseline - 3 * lowerRise * t * (1 - t)
     expect(obstacle.top - lowerEdge).toBeGreaterThanOrEqual(gap - 1e-6)
   }
   expect(geometry.ink(shape).bottom).toBeCloseTo(baseline)
+})
+
+it('gives long phrases a visible bounded bow while keeping short slurs compact', () => {
+  const space = staffMusicSize() / 4
+  const heights = [3, 20, 80, 300].map(span => {
+    const shape = staffSlur(0, span * space, 100, [])
+    const ink = new SvgGeometry(shape, textMeasurer()).ink(shape)
+    return ink.bottom - ink.top
+  })
+  expect(heights[0]!).toBeLessThan(space)
+  expect(heights[1]!).toBeGreaterThan(heights[0]!)
+  expect(heights[2]!).toBeGreaterThan(heights[1]!)
+  expect(heights[3]!).toBeCloseTo(heights[2]!)
+  expect(heights[3]!).toBeLessThan(2 * space)
 })
 
 

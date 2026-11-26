@@ -5,7 +5,11 @@ import { staffMusicSize } from './staff-music-font.js'
 /** A tapered bow clears local ink with its lower curved edge. */
 export function staffSlur(left: number, right: number, staffTop: number, obstacles: readonly Ink[]) {
   if (right <= left) return element('g', { class: 'slur' })
-  const height = (staffMusicSize() / 4 * 1.4), thickness = staffMusicSize() / 4 * .2
+  const space = staffMusicSize() / 4, span = (right - left) / space
+  // Short bows remain compact; long phrases gain a bounded rise instead of
+  // looking like a horizontal rule. Scale the ribbon with the same frame.
+  const height = space * Math.min(2.4, Math.max(.9, .75 + .22 * Math.sqrt(span)))
+  const thickness = space * Math.min(.28, .22 + .004 * span)
   // Clear the lower edge of the actual bow at each obstacle's x span.
   // Raising the whole baseline above every obstacle and then adding
   // the bow height reserves the same vertical clearance twice.
@@ -15,7 +19,7 @@ export function staffSlur(left: number, right: number, staffTop: number, obstacl
     const lowerRise = 3 * (height - thickness) * Math.min(a * (1 - a), b * (1 - b))
     return p.top - scoreLayoutConfig.staff.attachmentGap / scoreLayoutConfig.staff.engine.scale + lowerRise
   }))
-  const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + (staffMusicSize() / 4 * 0.2)} ${left + (right - left) / 3} ${y - height + (staffMusicSize() / 4 * 0.2)} ${left} ${y} Z`, fill: '#000' })
+  const path = element('path', { d: `M${left} ${y} C${left + (right - left) / 3} ${y - height} ${right - (right - left) / 3} ${y - height} ${right} ${y} C${right - (right - left) / 3} ${y - height + thickness} ${left + (right - left) / 3} ${y - height + thickness} ${left} ${y} Z`, fill: '#000' })
   // The controls divide x evenly, so x is linear in t and the two
   // edges are y - 3*h*t*(1-t). Bound short slices exactly; a volta
   // number near an endpoint must not avoid the curve's distant peak.
@@ -25,7 +29,7 @@ export function staffSlur(left: number, right: number, staffTop: number, obstacl
     const peak = Math.max(a, Math.min(b, 0.5))
     return { left: left + (right - left) * a, right: left + (right - left) * b,
       top: y - 3 * height * peak * (1 - peak),
-      bottom: y - 3 * (height - (staffMusicSize() / 4 * 0.2)) * Math.min(a * (1 - a), b * (1 - b)) }
+      bottom: y - 3 * (height - thickness) * Math.min(a * (1 - a), b * (1 - b)) }
   })
   path.pathInk = { d: path.attributes.d!, boxes }
   return element('g', { class: 'slur' }, [path])

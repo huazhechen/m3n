@@ -244,7 +244,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
           if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam', { 'data-m3n-staff': String(lane) }))
           else {
-            const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc', endX = Math.max(left + (staffMusicSize() / 4 * 0.4), right)
+            const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc'
+            const endX = Math.max(left + (staffMusicSize() / 4 * 0.4), b?.last.durationEndX ?? right)
             const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
             parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (staffMusicSize() / 4 * 0.5)} L${left} ${y} L${endX} ${y + (staffMusicSize() / 4 * 0.5)}` : `M${left} ${y - (staffMusicSize() / 4 * 0.5)} L${endX} ${y} L${left} ${y + (staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
           }
