@@ -3,11 +3,12 @@ import { expect, it } from 'vitest'
 import source from '../scores/ta_shuo_01.m3n?raw'
 import categories from '../../config/scorebook/library-categories.json'
 import plan from '../../config/scorebook/editorial-plan.json'
+import pitchReference from './fixtures/ta-shuo-pitches.json'
 
 it('preserves the uploaded Ta Shuo vocal line, including its second-verse and final-chorus variants', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   const document = parseM3NDocument(source)
-  expect(document.tempo).toBe(152)
+  expect(document.tempo).toBe(86)
   const part = document.parts.get('score')!
   const bars = part.melody.filter(bar => bar.events.length)
   const pitches = resolveScorePitches(bars)
@@ -20,7 +21,7 @@ it('preserves the uploaded Ta Shuo vocal line, including its second-verse and fi
   expect(part.bass.flatMap(bar => bar.events)).toEqual([])
   expect(bars.flatMap(bar => bar.events).every(event => event.pitches.length <= 1)).toBe(true)
   expect(notes(10)).toEqual([['rest', 1], ['c:5:', .5], ['c:5:', .5], ['b:4:', .5], ['b:4:', .5], ['g:4:', .5], ['c:4:', .5]])
-  expect(notes(13)[0]).toEqual(['g:5:', 3])
+  expect(notes(13)[0]).toEqual(['g:4:', 3])
   expect(notes(55)).toEqual([['g:4:', 3], ['d:5:', .5], ['c:5:', .5]])
   expect(notes(30).slice(0, 3)).toEqual([['e:5:', .25], ['d:5:', .25], ['c:5:', 1.5]])
   expect(notes(80)[0]).toEqual(['e:5:', 1])
@@ -35,4 +36,18 @@ it('preserves the uploaded Ta Shuo vocal line, including its second-verse and fi
   expect(categories.find(category => category.id === 'pop')!.files).toContain('ta_shuo_01.m3n')
   expect(plan.entries.find(entry => entry.id === 'ta_shuo')).toMatchObject({ file: 'ta_shuo_01.m3n', section: 'pop' })
   expect(plan.sourceCount).toBe(plan.entries.length)
+})
+
+it('matches every vocal pitch and octave independently read from the uploaded PDF', () => {
+  const document = parseM3NDocument(source)
+  const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+  const pitches = resolveScorePitches(bars)
+  const degree = ['c', 'd', 'e', 'f', 'g', 'a', 'b']
+  expect(bars).toHaveLength(pitchReference.measures.length)
+  for (const [index, reference] of pitchReference.measures.entries()) {
+    const expected = reference.pitches.split(' ').map(pitch => pitch === '0' ? 'rest' :
+      `${degree[Number(pitch[0]) - 1]}:${pitch.endsWith('e') ? 5 : 4}:`)
+    expect(bars[index]!.events.map(event => pitches.get(event)?.[0] ?? 'rest'),
+      `PDF measure ${reference.pdfMeasure}, vocal measure ${index + 1}`).toEqual(expected)
+  }
 })

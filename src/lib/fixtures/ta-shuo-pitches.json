@@ -1,0 +1,351 @@
+{
+  "source": "她说_弹唱版_林俊杰_.pdf",
+  "sourceSha256": "90e94c152cdc350855d0ed5189e66b174e88be93d23adcb166105ddfcef43258",
+  "method": "Manual reading of every Voice note and its octave dot; rests and tied continuation notes retained. Independent of the M3N parser output.",
+  "measures": [
+    {
+      "pdfMeasure": 10,
+      "pitches": "0 1e 1e 7 7 5 1"
+    },
+    {
+      "pdfMeasure": 11,
+      "pitches": "6 0"
+    },
+    {
+      "pdfMeasure": 12,
+      "pitches": "0 1e 1e 7 7 5 1"
+    },
+    {
+      "pdfMeasure": 13,
+      "pitches": "5 0"
+    },
+    {
+      "pdfMeasure": 14,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 15,
+      "pitches": "2e 0"
+    },
+    {
+      "pdfMeasure": 16,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 17,
+      "pitches": "2e 1e 3e"
+    },
+    {
+      "pdfMeasure": 18,
+      "pitches": "0 1e 1e 2e 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 19,
+      "pitches": "6e 0"
+    },
+    {
+      "pdfMeasure": 20,
+      "pitches": "0 1e 1e 2e 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 21,
+      "pitches": "5e 3e 2e"
+    },
+    {
+      "pdfMeasure": 22,
+      "pitches": "2e 1e 1e 0 1e 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 23,
+      "pitches": "2e 0"
+    },
+    {
+      "pdfMeasure": 24,
+      "pitches": "0 1e 1e 7 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 25,
+      "pitches": "4e 3e 4e 3e 4e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 26,
+      "pitches": "3e 5e 5e 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 27,
+      "pitches": "6e 1e 7 6 7 1e 6e"
+    },
+    {
+      "pdfMeasure": 28,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 29,
+      "pitches": "5e 7 6 5 6 7 5e"
+    },
+    {
+      "pdfMeasure": 30,
+      "pitches": "3e 2e 1e 0 2e 3e"
+    },
+    {
+      "pdfMeasure": 31,
+      "pitches": "4e 3e 4e 3e 4e 2e 3e"
+    },
+    {
+      "pdfMeasure": 32,
+      "pitches": "4e 3e 4e 3e 4e 5e"
+    },
+    {
+      "pdfMeasure": 33,
+      "pitches": "5e 4e 3e 3e 0"
+    },
+    {
+      "pdfMeasure": 34,
+      "pitches": "0 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 35,
+      "pitches": "6e 1e 7 6 7 1e 7"
+    },
+    {
+      "pdfMeasure": 36,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 37,
+      "pitches": "5e 5e 3e 5e 3e 5e 6e"
+    },
+    {
+      "pdfMeasure": 38,
+      "pitches": "3e 3e 3e 2e 2e 3e 4e"
+    },
+    {
+      "pdfMeasure": 39,
+      "pitches": "4e 0"
+    },
+    {
+      "pdfMeasure": 40,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 41,
+      "pitches": "2e 1e"
+    },
+    {
+      "pdfMeasure": 42,
+      "pitches": "1e 0 0"
+    },
+    {
+      "pdfMeasure": 52,
+      "pitches": "0 1e 1e 7 7 5 1"
+    },
+    {
+      "pdfMeasure": 53,
+      "pitches": "6 0"
+    },
+    {
+      "pdfMeasure": 54,
+      "pitches": "0 1e 1e 7 7 5 1"
+    },
+    {
+      "pdfMeasure": 55,
+      "pitches": "5 2e 1e"
+    },
+    {
+      "pdfMeasure": 56,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 57,
+      "pitches": "2e 0"
+    },
+    {
+      "pdfMeasure": 58,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 59,
+      "pitches": "2e 1e 3e"
+    },
+    {
+      "pdfMeasure": 60,
+      "pitches": "0 1e 1e 2e 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 61,
+      "pitches": "6e 0"
+    },
+    {
+      "pdfMeasure": 62,
+      "pitches": "0 1e 1e 2e 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 63,
+      "pitches": "5e 3e 2e"
+    },
+    {
+      "pdfMeasure": 64,
+      "pitches": "2e 1e 1e 0 1e 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 65,
+      "pitches": "2e 0"
+    },
+    {
+      "pdfMeasure": 66,
+      "pitches": "0 1e 1e 7 1e 2e 1e"
+    },
+    {
+      "pdfMeasure": 67,
+      "pitches": "4e 3e 4e 3e 4e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 68,
+      "pitches": "3e 5e 5e 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 69,
+      "pitches": "6e 1e 7 6 7 1e 6e"
+    },
+    {
+      "pdfMeasure": 70,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 71,
+      "pitches": "5e 7 6 5 6 7 5e"
+    },
+    {
+      "pdfMeasure": 72,
+      "pitches": "3e 2e 1e 0 2e 3e"
+    },
+    {
+      "pdfMeasure": 73,
+      "pitches": "4e 3e 4e 3e 4e 2e 3e"
+    },
+    {
+      "pdfMeasure": 74,
+      "pitches": "4e 3e 4e 3e 4e 5e"
+    },
+    {
+      "pdfMeasure": 75,
+      "pitches": "5e 4e 3e 3e 0"
+    },
+    {
+      "pdfMeasure": 76,
+      "pitches": "0 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 77,
+      "pitches": "6e 1e 7 6 7 1e 7"
+    },
+    {
+      "pdfMeasure": 78,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 79,
+      "pitches": "5e 5e 3e 5e 3e 5e 6e"
+    },
+    {
+      "pdfMeasure": 80,
+      "pitches": "3e 3e 3e 2e 2e 3e 4e"
+    },
+    {
+      "pdfMeasure": 81,
+      "pitches": "4e 0"
+    },
+    {
+      "pdfMeasure": 82,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 83,
+      "pitches": "2e 1e"
+    },
+    {
+      "pdfMeasure": 84,
+      "pitches": "1e 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 85,
+      "pitches": "6e 1e 7 6 7 1e 6e"
+    },
+    {
+      "pdfMeasure": 86,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 87,
+      "pitches": "5e 7 6 5 6 7 5e"
+    },
+    {
+      "pdfMeasure": 88,
+      "pitches": "3e 2e 1e 0 2e 3e"
+    },
+    {
+      "pdfMeasure": 89,
+      "pitches": "4e 3e 4e 3e 4e 2e 3e"
+    },
+    {
+      "pdfMeasure": 90,
+      "pitches": "4e 3e 4e 3e 4e 5e"
+    },
+    {
+      "pdfMeasure": 91,
+      "pitches": "5e 4e 3e 3e 0"
+    },
+    {
+      "pdfMeasure": 92,
+      "pitches": "0 0 3e 4e 5e 1e"
+    },
+    {
+      "pdfMeasure": 93,
+      "pitches": "6e 1e 7 6 7 1e 7"
+    },
+    {
+      "pdfMeasure": 94,
+      "pitches": "5e 0 2e 3e 4e 3e"
+    },
+    {
+      "pdfMeasure": 95,
+      "pitches": "5e 5e 3e 5e 3e 5e 6e"
+    },
+    {
+      "pdfMeasure": 96,
+      "pitches": "6e 3e 3e 2e 2e 3e 4e"
+    },
+    {
+      "pdfMeasure": 97,
+      "pitches": "4e 0"
+    },
+    {
+      "pdfMeasure": 98,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 99,
+      "pitches": "2e 1e"
+    },
+    {
+      "pdfMeasure": 100,
+      "pitches": "1e 0 1e 2e"
+    },
+    {
+      "pdfMeasure": 101,
+      "pitches": "3e 4e 4e"
+    },
+    {
+      "pdfMeasure": 102,
+      "pitches": "0 1e 1e 7 7 1e 2e"
+    },
+    {
+      "pdfMeasure": 103,
+      "pitches": "2e 0 2e"
+    },
+    {
+      "pdfMeasure": 104,
+      "pitches": "1e"
+    }
+  ]
+}
