@@ -41,9 +41,10 @@ const numbered = {
   grace: 13,
 
   // 外层表情与导航文字保持独立字号。
-  // 自动选距按候选进行整曲评分；minimumNoteGap 是基础候选。
-  minimumNoteGap: 9,
-  noteGapCandidates: [9, 12, 15] as readonly number[],
+  // 固定的自然／最小净空；时值与组内比例由横向引擎换算。
+  minimumNoteGap: 8,
+  naturalNoteGap: 16,
+  lineCost: 0,
   // 文字换行行高独立于音乐字号和核心间距。
   titleLineHeight: 36,
   subtitleLineHeight: 18,
@@ -57,7 +58,6 @@ const numbered = {
   measureNumberPadding: 2,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
   groupSpacingRatio: 0.5,
-  naturalClearanceEm: .25,
   collisionGapRatio: 0.5,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
   defaultPageMargin: 32, minimumWidth: 320, minimumContentWidth: 40,
@@ -89,6 +89,8 @@ const staff = {
   attachmentStandaloneGap: 12, attachmentHorizontalGap: 3.5, attachmentFramePadding: 4, repeatMarkGap: 4,
   headingLeftInset: 0.5, edgeGap: 2, sectionGap: 12, pageInset: 2,
   minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
+  minimumNoteGap: 9,
+  noteGapCandidates: [9, 12, 15] as readonly number[],
   // 引擎缩放及独立排版距离；符干、符杠、谱线等在使用处按字体 em 推导。
   engine: {
     scale: staffScale,

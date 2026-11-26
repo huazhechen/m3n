@@ -59,6 +59,15 @@ export function elasticLineBadness(minimum: number, natural: number, width: numb
   return solveElasticSprings([spring], Math.max(0, width)).badness
 }
 
+/** Normalize compression and extension by the available spring travel,
+ * excluding rigid ink. A line below its collision minimum is never legal. */
+export function spacingStrainBadness(minimum: number, natural: number, width: number): number {
+  if (width < minimum) return Infinity
+  const travel = Math.max(0, natural - minimum)
+  if (!travel) return width === natural ? 0 : ((width - natural) / Math.max(1, natural)) ** 2
+  return ((width - natural) / travel) ** 2
+}
+
 export type ElasticLine = { minimumWidth: number; naturalWidth?: number; stretchWeight: number }
 /** A short final line inherits the preceding line's spring pressure, including
  * compression. Uniform natural clearances retain the established tail width. */

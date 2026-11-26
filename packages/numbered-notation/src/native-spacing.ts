@@ -39,7 +39,13 @@ export function fitSpacingSprings(columns: readonly SpacingColumn[], positions: 
     const lanes = new Set([...left, ...right].map(cell => cell.lane))
     for (const lane of lanes) {
       const a = left.find(cell => cell.lane === lane), b = right.find(cell => cell.lane === lane)
-      const desired = ((a?.afterNatural ?? 0) + (b?.beforeNatural ?? 0)) / 2
+      const clearance = ((a?.afterNatural ?? 0) + (b?.beforeNatural ?? 0)) / 2
+      // Lyrics or another voice may already open this interval beyond the
+      // music's own natural target. Reuse that space instead of adding the
+      // musical allowance on top of the strongest hard constraint.
+      const desired = a && b && edge < positions.length
+        ? Math.max(0, a.right + a.after + b.left + b.before + clearance - (positions[edge]! - positions[edge - 1]!))
+        : clearance
       natural[edge] = Math.max(natural[edge]!, weights[edge]! > 0 ? desired : 0)
     }
   }

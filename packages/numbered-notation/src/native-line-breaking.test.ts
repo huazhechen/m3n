@@ -3,6 +3,27 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { describe, expect, it } from 'vitest'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
+import { spacingStrainBadness } from './elastic-spacing.js'
+
+it('scores endings at full width and rejects infeasible rows', () => {
+  const plan = (minimum: number, natural: number) => {
+    const candidates = Array.from({ length: 3 }, (_, start) => {
+      const rows: NativeLineCandidate[] = []
+      for (let end = start + 1; end <= 3; end++) {
+        const m = minimum * (end - start), n = natural * (end - start)
+        if (m > 100) break
+        const target = 100
+        rows.push({ end, density: m / 100, naturalDensity: n / 100,
+          elasticBadness: spacingStrainBadness(m, n, target) })
+      }
+      return rows
+    })
+    return planNativeLines(candidates, { rowCost: 0 })
+  }
+  expect(plan(25, 40)).toEqual([3])
+  expect(plan(30, 55)).toEqual([3])
+  expect(plan(34, 40)).toEqual([2, 3])
+})
 
 function candidatesFor(widths: number[], capacity = 100): NativeLineCandidate[][] {
   return widths.map((_, start) => {

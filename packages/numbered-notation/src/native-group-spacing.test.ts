@@ -1,6 +1,6 @@
 import { parseM3NDocument } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
-import { measureNativeHorizontal, nativeBarMetrics, placeNativeHorizontal } from './native-horizontal.js'
+import { measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { projectNativeScore } from './native-model.js'
 
@@ -13,6 +13,23 @@ const clearance = (measure: ReturnType<typeof project>, index: number) => {
   const left = measure.columns[index]!, right = measure.columns[index + 1]!
   return right.x - left.x - left.glyphs[0]!.musicRight! - right.glyphs[0]!.musicLeft!
 }
+
+describe('16px natural / 8px minimum clearance', () => {
+  it.each([
+    ['1 2', 8, 16],
+    ['(1 2)', 8 * Math.sqrt(.5) / 2, 16 * Math.sqrt(.5) / 2],
+    ['((1 2))', 2, 4],
+  ])('retains rhythm and grouping for %s', (notes, minimum, natural) => {
+    const measure = project(notes), options = { minimumNoteGap: 8 }
+    const spacing = nativeHorizontalSpacing([measure], options)
+    placeNativeHorizontal([measure], options, 0, spacing.minimumWidth)
+    expect(clearance(measure, 0)).toBeCloseTo(minimum, 8)
+    placeNativeHorizontal([measure], options, 0, spacing.naturalWidth!)
+    expect(clearance(measure, 0)).toBeCloseTo(natural, 8)
+    placeNativeHorizontal([measure], options, 0, (spacing.minimumWidth + spacing.naturalWidth!) / 2)
+    expect(clearance(measure, 0)).toBeCloseTo((minimum + natural) / 2, 8)
+  })
+})
 
 describe('absolute group boundary clearance', () => {
   it.each(['([123:2]) ([234:2]) ([345:2]) ([456:2])', '((1234)) ((2345)) ((3456)) ((4567))'])('reserves 9px between short-note groups: %s', notes => {

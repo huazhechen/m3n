@@ -7,6 +7,13 @@ const lyric = (lane = 'verse1'): SpacingCell => ({ lane, sparse: true, left: 9, 
 
 describe('natural reading spacing', () => {
   const columns = [{ cells: [music, lyric()] }, { cells: [music, lyric()] }, { cells: [music] }]
+  it('reuses lyric clearance already wider than the music natural target', () => {
+    const note = { ...music, beforeNatural: 8, afterNatural: 8 }
+    const columns = [{ cells: [note, lyric()] }, { cells: [note, lyric()] }]
+    const natural = solveNativeSpacing(columns, Infinity, false, { natural: true })
+    // Music wants 8px ink + 8px clearance; lyrics need 18px ink + 2px.
+    expect(natural.positions[1]! - natural.positions[0]!).toBeCloseTo(20, 8)
+  })
   it('opens a tight lyric interval while retaining total width', () => {
     const fit = fitSpacingSprings(columns, [9, 27, 50], [0, .1, 4, 0], 20)
     expect(fit.positions[1]! - fit.positions[0]!).toBeGreaterThan(18 + 20 * .1 / 4.1)

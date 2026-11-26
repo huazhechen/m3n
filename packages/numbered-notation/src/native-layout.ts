@@ -1,4 +1,4 @@
-import { elasticLineBadness } from './elastic-spacing.js'
+import { spacingStrainBadness } from './elastic-spacing.js'
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeLayoutScore } from './native-quality.js'
@@ -151,6 +151,11 @@ function reserveInstrumentalEndpoints(relations: NativeRelation[], projection: N
   }
 }
 
+function startsNativeSection(current: NativeMeasure, previous?: NativeMeasure): boolean {
+  return !previous || current.part !== previous.part
+    || !current.continuation && current.source.events.some(event => event.sectionLabel)
+}
+
 /** Break complete measures first, splitting oversized measures at time columns. */
 function breakMeasures(measures: NativeMeasure[], width: number, options: NativeRenderOptions, leading: (measures: NativeMeasure[]) => number = () => 0): NativeMeasure[][] {
   const fragments = measures.flatMap(measure => splitNativeMeasure(measure, width * (options.wrapWidthRatio ?? 1)))
@@ -160,6 +165,15 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     let end = begin + 1
     while (end < fragments.length && !fragments[end]!.breakBefore && !fragments[end - 1]!.breakAfter) end++
     const group = fragments.slice(begin, end), candidates: NativeLineCandidate[][] = Array.from({ length: group.length }, () => [])
+    const endsSection = end === fragments.length || startsNativeSection(fragments[end]!, fragments[end - 1])
+    const availableFor = (start: number) => Math.max(1, width * ratio - leading([group[start]!]))
+    const spacings = new Map<string, ReturnType<typeof nativeHorizontalSpacing>>()
+    const spacingFor = (start: number, stop: number) => {
+      const key = `${start}:${stop}`
+      let spacing = spacings.get(key)
+      if (!spacing) { spacing = nativeHorizontalSpacing(group.slice(start, stop), options); spacings.set(key, spacing) }
+      return spacing
+    }
     // A bar merged into the next repeat opening reappears at a row end;
     // changed boundary bars require the actual row constraint chain.
     const boundaries = group.map((measure, index) => {
@@ -171,7 +185,7 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
     })
     for (let index = group.length - 1; index >= 0; index--) {
       let minimum = 0, widestMinimum = 0, widestNatural = 0
-      const available = Math.max(1, width * ratio - leading([group[index]!]))
+      const available = availableFor(index)
       for (let stop = index; stop < group.length; stop++) {
         const measure = group[stop]!, count = stop - index + 1
         minimum += measure.minimum
@@ -180,19 +194,26 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
           - (measure.naturalStart ?? measure.minimumStart ?? 0))
         const equal = options.equalMeasures
         let minWidth = equal ? widestMinimum * count : measure.minimumEnd !== undefined && group[index]!.minimumStart !== undefined ? measure.minimumEnd - group[index]!.minimumStart! : minimum
-        const isolated = boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing
-          ? nativeHorizontalSpacing(group.slice(index, stop + 1), options) : undefined
+        const shortTail = stop === group.length - 1 && endsSection
+        const isolated = boundaries[index]!.changedOpening || boundaries[stop]!.changedClosing || shortTail
+          ? spacingFor(index, stop + 1) : undefined
         if (isolated) minWidth = isolated.minimumWidth
         if (minWidth > available && count > 1) break
         const naturalWidth = Math.max(minWidth, isolated?.naturalWidth ?? (equal ? widestNatural * count
           : (measure.naturalEnd ?? measure.minimumEnd ?? minimum) - (group[index]!.naturalStart ?? group[index]!.minimumStart ?? 0)))
+        // Score every row at full width, including section and score endings.
+        // Placement may shorten a brief ending after the partition is chosen.
+        // Indivisible oversized events retain their collision-safe hard width.
+        const target = Math.max(minWidth, available)
         candidates[index]!.push({ end: stop + 1, density: minWidth / available,
           naturalDensity: naturalWidth / available,
-          elasticBadness: elasticLineBadness(minWidth, naturalWidth, available) })
+          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target) })
       }
     }
     let index = 0
-    for (const stop of planNativeLines(candidates)) { lines.push(group.slice(index, stop)); index = stop }
+    for (const stop of planNativeLines(candidates, { rowCost: nativeStyle.lineCost })) {
+      lines.push(group.slice(index, stop)); index = stop
+    }
     begin = end
   }
   return lines
@@ -239,54 +260,19 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   const taskPreparationStarted = timings ? performance.now() : 0
   const preparation = supplied.layoutTask?.preparationFor(document, supplied, cache) ?? { header: new Map() }
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
-  // Explicit spacing remains a fixed engraving override. Automatic spacing is
-  // selected against the same virtual A4 pages in continuous and paged views;
-  // custom vertical gaps must not change the horizontal line breaks.
-  if (supplied.minimumNoteGap !== undefined) return layoutNativeScoreAtGap(document, supplied, timings, supplied.layoutTask ? preparation : undefined)
-  const minimumCoreGap = nativeCoreGap(document)
-  const horizontalTrials = new Map<number, ReturnType<typeof prepareNativeScoreAtGap>>()
-  if (minimumQuality !== undefined) {
-    for (const minimumNoteGap of [nativeStyle.minimumNoteGap, ...nativeStyle.noteGapCandidates.slice(1).reverse()]) {
-      horizontalTrials.set(minimumNoteGap, prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap }, timings, preparation))
-    }
-    if ([...horizontalTrials.values()].every(trial => trial.score < minimumQuality))
-      throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
-  }
-  let baseline: NativeLayout
-  try {
-    baseline = horizontalTrials.get(nativeStyle.minimumNoteGap)?.complete() ?? layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap: nativeStyle.minimumNoteGap }, timings, preparation)
-  } catch (error) {
-    // Continuous engraving still supports a single row taller than A4.
-    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
-      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: nativeStyle.minimumNoteGap }, timings)
-    }
+  // One natural/minimum pair replaces the old 9/12/15px trials. A virtual
+  // A4 layout still keeps horizontal geometry identical in both output modes.
+  const options = { ...supplied, paged: true, coreGap: nativeCoreGap(document),
+    minimumNoteGap: supplied.minimumNoteGap ?? nativeStyle.minimumNoteGap }
+  const trial = prepareNativeScoreAtGap(document, options, timings, preparation)
+  if (minimumQuality !== undefined && trial.score < minimumQuality)
+    throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
+  let selected: NativeLayout
+  try { selected = trial.complete() }
+  catch (error) {
+    if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行'))
+      return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: options.minimumNoteGap }, timings, preparation)
     throw error
-  }
-  let selected = baseline
-  let selectedScore = nativeLayoutScore(selected)
-  for (const minimumNoteGap of nativeStyle.noteGapCandidates.slice(1).reverse()) {
-    let candidate: NativeLayout
-    try {
-      const trial = horizontalTrials.get(minimumNoteGap)
-      if (trial) {
-        if (selected.pages.length === 1 && (trial.systemCount > selected.systems.length || trial.systemCount === selected.systems.length
-          && (trial.score < selectedScore || trial.score === selectedScore && minimumNoteGap >= selected.options.minimumNoteGap!))) continue
-        candidate = trial.complete()
-      } else candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation, { layout: selected, score: selectedScore })
-    } catch (error) {
-      // Wider spacing can make a decorated row too tall for one A4 page.
-      // Other layout failures remain visible instead of becoming fallbacks.
-      if (error instanceof Error && error.message.includes('单个谱行')) continue
-      throw error
-    }
-    const score = nativeLayoutScore(candidate)
-    if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
-      && (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
-      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!))) {
-      selected = candidate
-      selectedScore = score
-    }
   }
   const repaginationStarted = timings ? performance.now() : 0
   repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
@@ -294,10 +280,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   return selected
 }
 
-function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, selection?: { layout: NativeLayout; score: number }): NativeLayout {
-  return prepareNativeScoreAtGap(document, supplied, timings, preparation, selection).complete()
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
+  return prepareNativeScoreAtGap(document, supplied, timings, preparation).complete()
 }
-function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, selection?: { layout: NativeLayout; score: number }): { score: number; systemCount: number; complete(): NativeLayout } {
+function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): { score: number; systemCount: number; complete(): NativeLayout } {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -424,9 +410,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   // Named sections are labels within a projected part; expanded performances
   // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
   const startsSection = (current: NativeSystem, previous: NativeSystem) => {
-    const first = current.measures[0]!
-    return first.part !== previous.measures.at(-1)!.part
-      || !first.continuation && first.source.events.some(event => event.sectionLabel)
+    return startsNativeSection(current.measures[0]!, previous.measures.at(-1))
   }
   const systemOf = new Map<NativeGlyph, number>()
   const placeSystem = (system: NativeSystem) => {
@@ -452,26 +436,11 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
-  // Quality reads every row's unplaced minima, and only the final row's
-  // painted right edge. Place that row first; losing trials never need the
-  // other rows' glyphs, bars or lane geometry.
+  // Width-quality pruning only needs the final row's painted right edge.
+  // Defer the other rows and vertical geometry until the candidate survives.
   const lastSystem = systems.at(-1)
   if (lastSystem) placeSystem(lastSystem)
   record('horizontalPlacementMs')
-  // Gap ranking uses only horizontal rows and quality. A losing trial cannot
-  // become the winner through vertical fitting, so do not build its curves,
-  // lyric envelopes and page collision geometry. The baseline still receives
-  // full validation, and every replacement must complete the same engraving.
-  if (selection?.layout.pages.length === 1) {
-    const score = nativeLayoutScore({ options, margin, systems, pages: [] })
-    const previous = selection.layout
-    const wins = systems.length < previous.systems.length || systems.length === previous.systems.length
-      && (score > selection.score || score === selection.score && minimumNoteGap < previous.options.minimumNoteGap!)
-    if (!wins) {
-      if (timings) timings.horizontalRejectedTrials = (timings.horizontalRejectedTrials ?? 0) + 1
-      return { score: selection.score, systemCount: previous.systems.length, complete: () => previous }
-    }
-  }
   return { score: nativeLayoutScore({ options, margin, systems, pages: [] }), systemCount: systems.length, complete: () => {
   stageStarted = timings ? performance.now() : 0
   for (const system of systems) if (system !== lastSystem) placeSystem(system)

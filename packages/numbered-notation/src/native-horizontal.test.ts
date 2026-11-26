@@ -51,7 +51,7 @@ describe('native spacing and measured note envelopes', () => {
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
-        expect(result.systems.map(system => system.measures.length)).toEqual([4, 4, 4, 5]);
+        expect(result.systems.map(system => system.measures.length)).toEqual([4, 5, 4, 4]);
     });
     it('counts the repeat opening once across a section boundary', () => {
         // Keep this regression independent of song edits that remove local repeats.
@@ -67,7 +67,8 @@ describe('native spacing and measured note envelopes', () => {
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/canon_01.m3n', import.meta.url), 'utf8'), 320, narrowSpacing);
-        expect(result.systems).toHaveLength(44);
+        // Full-width ending costs rebalance the earlier rows as well.
+        expect(result.systems).toHaveLength(45);
         expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
             .toEqual([[51], [52], [53, 54, 55], [56, 57, 58], [59, 60, 61]]);
     });
@@ -115,7 +116,7 @@ describe('native spacing and measured note envelopes', () => {
             expect(left - heading.x! - heading.width).toBeCloseTo(12, 8);
             // Minimum-width measurement must reserve the same rigid edge.
             const projection = projectNativeScore(parseM3NDocument(source), { textMeasurer: measurer });
-            measureNativeHorizontal(projection.measures, {});
+            measureNativeHorizontal(projection.measures, { minimumNoteGap: 9 });
             expect(projection.measures[1]!.minimum).toBeCloseTo(measure.minimum, 8);
         }
     });

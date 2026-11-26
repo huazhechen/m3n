@@ -50,7 +50,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
     const musicWidth = candidateWidth - 2 * margin - gutter - scoreLayoutConfig.staff.rightGutter
     const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
-    saved = [0.25, ...scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)].map(spacing => {
+    saved = [0.25, ...scoreLayoutConfig.staff.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.staff.minimumNoteGap) / 48)].map(spacing => {
       signal?.throwIfAborted()
       const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum, rowCost)
       const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
@@ -114,7 +114,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         && (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
         && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing))) selected = candidate
     }
-    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
+    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.staff.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.staff.minimumNoteGap) / 48)) {
       consider(attempt(spacing, 1, selected))
     }
     // Only a short final page warrants extra whole-score engraving trials.

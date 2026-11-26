@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { solveElasticSprings } from './elastic-spacing.js'
+import { solveElasticSprings, spacingStrainBadness } from './elastic-spacing.js'
 import { scoreNaturalAdvance, scoreSpacingBasis } from './score-layout-policy.js'
+
+describe('line strain against available compression travel', () => {
+  it('rejects a line below the minimum and prices the fraction of available travel', () => {
+    expect(spacingStrainBadness(8, 16, 7.99)).toBe(Infinity)
+    expect(spacingStrainBadness(8, 16, 8)).toBe(1)
+    expect(spacingStrainBadness(8, 16, 12)).toBe(.25)
+    expect(spacingStrainBadness(8, 16, 16)).toBe(0)
+    expect(spacingStrainBadness(8, 16, 20)).toBe(.25)
+    expect(spacingStrainBadness(8, 16, 160)).toBeGreaterThan(1)
+  })
+  it('does not dilute compression cost with rigid ink or engraving scale', () => {
+    expect(spacingStrainBadness(108, 116, 112)).toBe(.25)
+    expect(spacingStrainBadness(80, 160, 120)).toBe(.25)
+  })
+})
 
 describe('bidirectional spacing springs', () => {
   const springs = [{ minimum: 10, natural: 20, stretch: 1 }, { minimum: 15, natural: 35, stretch: 2 }]
