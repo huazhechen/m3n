@@ -61,7 +61,7 @@ export function nativeSystemCore(system: NativeSystem, measurer: TextMeasurer): 
     for (const column of columns) for (const glyph of column.glyphs) for (const [row, baseline] of glyph.lyricBaselines ?? []) {
       const data = glyph.lyrics.get(row)
       if (!data || !(data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) continue
-      const ink = unionNativeInk(nativeLyricPieces(data, glyph.x, baseline, measurer))
+      const ink = unionNativeInk(nativeLyricPieces(data, glyph.x, baseline, measurer, glyph.lyricHyphenEnds?.get(row)))
       core.top = Math.min(core.top, ink.top); core.bottom = Math.max(core.bottom, ink.bottom)
     }
     cores.push({ top: core.top + lane.y, bottom: core.bottom + lane.y })

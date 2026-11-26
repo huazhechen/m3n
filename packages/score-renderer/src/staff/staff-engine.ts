@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, lyricSpacing, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing } from '@m3n/numbered-notation'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -331,6 +331,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
         const underline = lyric.underlined ? style.lyricUnderlineHalfWidth / STAFF_SCALE : 0
         const left = half - Math.min(0, ink.left, -underline) - center + padding
         const after = Math.max(half + underline, ink.right - half) + center + padding
+          + (hasLyricHyphen(lyric) ? lyricHyphenAdvance(lyricSpacing.fontSize) / STAFF_SCALE : 0)
         column.lyricLeft = Math.max(column.lyricLeft, left)
         column.lyricAfter = Math.max(column.lyricAfter, after)
         const lane = `lyrics-${laneIndex}-${lyric.verseIndex}`
@@ -631,7 +632,7 @@ export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNote
     const path = element('path', { fill: '#000', stroke: 'none' })
     setNumericPath(path, staffCommandPath([{ kind: 0, values: [x1, y1] },
       { kind: 3, values: [x1 + dx, y1 + height, x2 - dx, y2 + height, x2, y2] },
-      { kind: 3, values: [x2 - dx, y2 + height - direction * (staffMusicSize() / 4 * 0.15), x1 + dx, y1 + height - direction * (staffMusicSize() / 4 * 0.15), x1, y1] }, { kind: 4, values: [] }]))
+      { kind: 3, values: [x2 - dx, y2 + height - direction * (staffMusicSize() / 4 * 0.23), x1 + dx, y1 + height - direction * (staffMusicSize() / 4 * 0.23), x1, y1] }, { kind: 4, values: [] }]))
     curves.push(path)
   }
   return curves

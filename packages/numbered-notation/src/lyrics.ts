@@ -1,7 +1,8 @@
 import { measurePlaybackPasses, parsePassRange, type ScoreDocument, type ScoreEvent, type ScoreLyricBlock } from '@m3n/notation'
+import type { LyricWordSyllable } from './lyric-spacing.js'
 type LyricTarget = { event: ScoreEvent; slot: number; tie: boolean }
 type LyricPosition = { index: number; passage: number }
-export type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string; underlined?: boolean }
+export type LyricRowData = { texts: string[]; passes: ReadonlySet<number> | undefined; annotation?: string; underlined?: boolean; word?: LyricWordSyllable }
 export type LyricsByEvent = Map<ScoreEvent, Map<number, Map<number, LyricRowData>>>
 
 const phraseKey = (block: ScoreLyricBlock) => `${block.targetStart}:${block.targetEnd}`
@@ -128,7 +129,11 @@ export function lyricsByEvent(document: ScoreDocument): LyricsByEvent {
       const rows = slots.get(target.slot) ?? new Map<number, LyricRowData>()
       const data = rows.get(row) ?? { texts: [], passes: undefined }
       const printed = printedSyllables.get(data) ?? new Set<object>()
-      if (!printed.has(syllable)) data.texts.push(syllable.text)
+      if (!printed.has(syllable)) {
+        data.texts.push(syllable.text)
+        if (data.texts.length === 1 && syllable.wordpos) data.word = syllable
+        else delete data.word
+      }
       printed.add(syllable)
       printedSyllables.set(data, printed)
       data.underlined = syllable.underlined

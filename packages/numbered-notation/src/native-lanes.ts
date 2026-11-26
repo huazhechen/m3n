@@ -24,7 +24,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
         for (const annotation of coreOnly ? [] : glyph.annotationLayout ?? []) add(nativeAnnotationSvg(annotation, 0, painter))
         for (const [row, baseline] of glyph.lyricBaselines ?? []) {
           const data = glyph.lyrics.get(row)
-          if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) pieces.push(...nativeLyricPieces(data, glyph.x, baseline, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
+          if (data && (data.texts.some(text => text.replaceAll('\u200B', '').trim()) || data.annotation)) pieces.push(...nativeLyricPieces(data, glyph.x, baseline, measurer, glyph.lyricHyphenEnds?.get(row)).filter(ink => ink.right > ink.left && ink.bottom > ink.top))
         }
       }
       pieces.push(...beams.pieces)

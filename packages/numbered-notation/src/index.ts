@@ -14,7 +14,7 @@ export { NativeLayoutTask as NumberedLayoutTask } from './native-layout.js'
 
 export { sortedNativeInkSeparation as sortedInkSeparation } from './native-ink-separation.js'
 
-export { lyricSpacing } from './lyric-spacing.js'
+export { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenMetrics, lyricHyphenGeometry, lyricHyphenAdvance } from './lyric-spacing.js'
 
 export { scoreLayoutConfig } from './score-layout-config.js'
 export { lastLineWidth } from './last-line-width.js'
@@ -25,3 +25,5 @@ export { solveNativeSpacing as solveScoreSpacing } from './native-spacing.js'
 export { scoreRhythmicWeight, scoreAttachmentHeight, scoreNavigationGlyphHeight, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from './score-layout-policy.js'
 
 export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'
+
+export type { LyricWordSyllable } from './lyric-spacing.js'

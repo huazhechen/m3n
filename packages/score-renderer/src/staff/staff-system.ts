@@ -1,5 +1,5 @@
 import { staffSlur } from './staff-slur.js'
-import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
 import { staffMusicSize, staffGlyph, staffNavigationGlyph, type StaffGlyph } from './staff-music-font.js'
@@ -111,6 +111,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       }
       const node = element('g', { class: 'system' })
       const models: StaffMeasureLayout[] = []
+      const lyricAnchors: Array<{ lyric: StaffEvent['lyrics'][number]; verse: XmlNode; lane: number; y: number; left: number; right: number }> = []
       const anchors = new Map<string, { first: StaffNoteAnchor; last: StaffNoteAnchor; item: StaffEvent; measure: XmlNode; staff: XmlNode }>()
       const inset = line.measures[0]!.inset
       const total = line.target - inset
@@ -142,7 +143,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
                 cx ??= (note.headLeft + note.headRight) / 2
                 const value = lyric.kind === 'extender' ? '_' : lyric.text.replaceAll('~', ' ')
                 const syl = staffLyricDrawing(value, cx, (model.staves[lane]!.y + (staffMusicSize() * 2)) + engine.lyricInitialOffset, Boolean(lyric.underlined && lyric.kind === 'text'), measureText, preparation?.lyricTexts)
-                staff.children.push(element('g', attrs, [syl]))
+                const verse = element('g', attrs, [syl])
+                staff.children.push(verse)
+                if (lyric.kind === 'text' && lyric.wordpos && value.trim()) {
+                  const metrics = measureText(value, lyricSpacing.fontSize / scale)
+                  const left = cx - metrics.width / 2
+                  lyricAnchors.push({ lyric, verse, lane, y: model.staves[lane]!.y + staffMusicSize() * 2 + engine.lyricInitialOffset,
+                    left: left + metrics.left, right: left + metrics.right })
+                }
               }
             })
             const event = item.event
@@ -186,6 +194,16 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if ((member.measure.source.repeatCount ?? 2) > 2) measureNode.children.push(text(`×${member.measure.source.repeatCount}`, x + target - engine.navigationBarInset, engine.navigationY, style.repeatCount, 'repeatMark'))
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
+      }
+      // Add word connectors before vertical verse packing, so the text and
+      // its hyphen move together and share measurement/painting geometry.
+      for (const [index, anchor] of lyricAnchors.entries()) {
+        if (!hasLyricHyphen(anchor.lyric)) continue
+        const next = lyricAnchors.slice(index + 1).find(other => other.lane === anchor.lane && other.lyric.verseIndex === anchor.lyric.verseIndex)
+        const edge = next && connectsLyricWord(anchor.lyric, next.lyric) ? next.left : undefined
+        const h = lyricHyphenGeometry(anchor.right, anchor.y, lyricSpacing.fontSize / scale, edge)
+        anchor.verse.children.push(element('line', { class: 'lyric-hyphen', x1: String(h.left), x2: String(h.right),
+          y1: String(h.y), y2: String(h.y), stroke: '#000', 'stroke-width': String(h.stroke), 'stroke-linecap': 'round' }))
       }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {
         const glyph = nav === 'segno' || nav === 'coda' ? [staffNavigationGlyph(nav, x, y)] : []

@@ -2,10 +2,10 @@
 import { expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
-import { createStaffMeasure, drawStaffMeasure } from './staff-engine.js'
+import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE } from './staff-engine.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { planStaffLines } from './line-layout.js'
-import { findAll, hasClass, SvgGeometry, textMeasurer } from './layout-svg.js'
+import { findAll, hasClass, SvgGeometry, textMeasurer, xml } from './layout-svg.js'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
@@ -66,4 +66,19 @@ it('retains duration coverage on every system of a crossing hairpin and on both 
       expect(ink.right - ink.left).toBeGreaterThan(100)
     }
   }
+})
+
+// At the cubic midpoint a ribbon has 3/4 of its control thickness. Test
+// actual visible width, rather than merely checking the configured constant.
+it.each([1, -1])('keeps short ties visible in both stem directions (%s)', direction => {
+  const document = projectStaffDocument(analyzeM3N('{2/4}\nN: 1~ 1 |||').score)
+  const model = createStaffMeasure(document.measures[0]!, true, false, textMeasurer(), .25)
+  drawStaffMeasure(model, 300, 0)
+  const [first, last] = model.entries[0]!.map(entry => entry.notes[0]!)
+  first!.direction = direction
+  const markup = xml(drawStaffTie(first, last, 0, 300)[0]!)
+  const d = /d="([^"]+)"/.exec(markup)![1]!
+  const values = d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
+  expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2)
+  expect(markup).toContain('fill="#000"')
 })

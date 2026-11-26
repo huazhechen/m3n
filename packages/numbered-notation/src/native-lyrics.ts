@@ -1,5 +1,5 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
-import { lyricSpacing } from './lyric-spacing.js'
+import { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from './lyric-spacing.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout.js'
 import type { NativeGlyph } from './native-model.js'
@@ -29,7 +29,7 @@ function lyricPlacement(data: LyricRowData, x: number, measurer: TextMeasurer) {
   return { text, visible, left }
 }
 
-function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer, meta: Record<string, string | number | undefined> = {}) {
+function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer, meta: Record<string, string | number | undefined> = {}, nextLeft?: number) {
   const { text, visible, left } = lyricPlacement(data, x, measurer)
   if (!visible && !data.annotation) return ''
   const painter = new NativeSymbols(measurer), size = nativeStyle.lyric
@@ -40,6 +40,11 @@ function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer
     const ink = nativeSvgInk(svg, measurer)
     svg += line(ink.left, y, ink.right, y, stroke)
   }
+  if (visible && hasLyricHyphen(data.word)) {
+    const ink = nativeLyricPieces({ ...data, word: undefined, annotation: undefined }, x, baseline, measurer)[0]!
+    const h = lyricHyphenGeometry(ink.right, baseline, size, nextLeft)
+    svg += `<g data-m3n-role="lyric" class="lyric-hyphen">${line(h.left, h.y, h.right, h.y, h.stroke)}</g>`
+  }
   if (data.annotation) svg += painter.text(data.annotation, left - lyricSpacing.horizontalPadding * 2, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
   return svg
 }
@@ -48,7 +53,7 @@ const unionLyricPieces = (pieces: NativeInk[]) => pieces.length ? unionNativeInk
 /** Painted lyric primitives directly from the painter's text/line geometry.
  * Round coordinates exactly as SVG serialization does; interaction attributes
  * have no ink and need not be emitted and parsed during layout. */
-export function nativeLyricPieces(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer): NativeInk[] {
+export function nativeLyricPieces(data: LyricRowData, x: number, baseline: number, measurer: TextMeasurer, nextLeft?: number): NativeInk[] {
   if (!data.texts.some(text => text.replaceAll('\u200B', '').trim()) && !data.annotation) return []
   const { text, visible, left } = lyricPlacement(data, x, measurer), size = nativeStyle.lyric
   const textInk = (value: string, at: number, end = false): NativeInk => {
@@ -61,6 +66,10 @@ export function nativeLyricPieces(data: LyricRowData, x: number, baseline: numbe
   if (visible) {
     const ink = textInk(text, left)
     pieces.push(ink)
+    if (hasLyricHyphen(data.word)) {
+      const h = lyricHyphenGeometry(ink.right, baseline, size, nextLeft), half = n(h.stroke) / 2
+      pieces.push({ left: n(h.left) - half, right: n(h.right) + half, top: n(h.y) - half, bottom: n(h.y) + half })
+    }
     if (data.underlined) {
       const metrics = measurer.measureText(text, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
       const stroke = size * (0.8 / 18.04), half = n(stroke) / 2
@@ -90,7 +99,7 @@ export function nativeLyricInk(data: LyricRowData, measurer: TextMeasurer) {
 export function nativeLyricSvg(glyph: NativeGlyph, row: number, baseline: number, system: number, measurer: TextMeasurer): string {
   const data = glyph.lyrics.get(row)!
   const meta = { 'data-m3n-id': glyph.xmlId, 'data-m3n-tuplet-slot': glyph.event?.kind === 'tuplet' ? glyph.slot : undefined, 'data-m3n-rendition': row + 1, 'data-m3n-passes': [...(data.passes ?? [row + 1])].join('-'), 'data-m3n-system': system, 'data-m3n-measure': glyph.measureId }
-  return `<g${attrs({ ...meta, 'data-m3n-role': 'lyric-fragment' })}>${lyricFragment(data, glyph.x, baseline, measurer, meta)}</g>`
+  return `<g${attrs({ ...meta, 'data-m3n-role': 'lyric-fragment' })}>${lyricFragment(data, glyph.x, baseline, measurer, meta, glyph.lyricHyphenEnds?.get(row))}</g>`
 }
 
 /** Pack the rows present at each musical slot into measured visual tiers.
@@ -129,5 +138,19 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
   for (const glyph of glyphs) glyph.lyricBaselines = new Map([...glyph.lyrics.keys()].sort((a, b) => a - b).map(row => [
     row, baselines[Math.max(0,active.get(glyph)!.indexOf(row))] ?? bottom,
   ]))
+  // Per-glyph placement belongs to this layout, never to shared lyric data.
+  for (const [index, glyph] of glyphs.entries()) {
+    glyph.lyricHyphenEnds = undefined
+    for (const [row, data] of glyph.lyrics) {
+      if (!hasLyricHyphen(data.word)) continue
+      const next = glyphs.slice(index + 1).find(other =>
+        other.lyrics.get(row)?.texts.some(value => value.replaceAll('\u200B', '').trim()))
+      const nextData = next?.lyrics.get(row)
+      if (!next || !nextData || !connectsLyricWord(data.word, nextData.word)
+        || glyph.lyricBaselines?.get(row) !== next.lyricBaselines?.get(row)) continue
+      const ink = nativeLyricPieces({ ...nextData, word: undefined, annotation: undefined }, next.x, 0, measurer)[0]!
+      ;(glyph.lyricHyphenEnds ??= new Map()).set(row, ink.left)
+    }
+  }
   lane.bottom = Math.max(lane.bodyBottom ?? 0, bottom)
 }
