@@ -1,5 +1,5 @@
 {
-  "description": "按用户逐小节校订的Solo实音参考。第3小节只补5e经过音；第4小节按PDF跑句，末拍改3长音；第5小节按PDF音序并高八度；第6、7小节保留原版本；第8、9小节按PDF46—47原音高与节奏。谱源统一用8va并反向换算写音，过渡不受影响。",
+  "description": "按用户逐小节校订的Solo实音参考。第3小节只补5e经过音；第4小节按PDF跑句，末拍改3长音；第5小节恢复吉他谱并保留此前高八度音区；第6、7小节保留原版本；第8、9小节按PDF46—47音序与节奏并升高八度。谱源统一用8va并反向换算写音，过渡不受影响。",
   "bars": [
     {
       "number": 39,
@@ -28,8 +28,8 @@
     {
       "number": 43,
       "key": "A",
-      "basis": "PDF pitches and rhythm, retain the previous upper register",
-      "notes": "6/.5 3/.25 7b/.25 3/.25 1#e/.25 5e/.25 3/.25 1e/.25 5e/.25 3e/.25 7be/.25 6e/.75 5e/.25"
+      "basis": "guitar, one octave up; restore the rest and original guitar run",
+      "notes": "0/.5 3/.25 7b/.25 6/.25 1#e/.25 7b/.25 3e/.25 1#e/.25 5e/.25 3e/.25 6e/.25 5e/.75 6e/.125 3e/.125"
     },
     {
       "number": 44,
@@ -46,14 +46,14 @@
     {
       "number": 46,
       "key": "A",
-      "basis": "PDF, original sounding pitches and sextuplets",
-      "notes": "2e/2 4d/s 5d/s 7d/s 2/s 4/s 5/s 2/s 4/s 5/s 7/s 2e/s 4e/s"
+      "basis": "PDF pitches and rhythm, raised one octave",
+      "notes": "2ee/2 4/s 5/s 7/s 2e/s 4e/s 5e/s 2e/s 4e/s 5e/s 7e/s 2ee/s 4ee/s"
     },
     {
       "number": 47,
       "key": "A",
-      "basis": "PDF, original sounding pitch",
-      "notes": "5e/4"
+      "basis": "PDF pitches and rhythm, raised one octave",
+      "notes": "5ee/4"
     }
   ]
 }

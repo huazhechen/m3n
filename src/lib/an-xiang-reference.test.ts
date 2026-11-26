@@ -142,18 +142,18 @@ it('plays the guitar melody without extra attacks on tied sustained notes', () =
   expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(2)
 })
 
-it('restores the requested PDF runs, passing note and two-bar ending while retaining upper registers', () => {
+it('retains restored PDF runs, guitar bar five and the octave-raised two-bar ending', () => {
   expect(events(bars[39]!).slice(-2)).toEqual([['5', .25], ['4', .25]])
   expect(events(bars[40]!)).toHaveLength(24)
   expect(bars[40]!.events.some(event => event.kind === 'tuplet')).toBe(false)
   expect(events(bars[40]!).at(-1)).toEqual(['3d', 1])
-  expect(events(bars[41]!).slice(0, 4)).toEqual([['6d', .5], ['3d', .25], ['7bd', .25], ['3d', .25]])
+  expect(events(bars[41]!).slice(0, 4)).toEqual([['0', .5], ['3d', .25], ['7bd', .25], ['6d', .25]])
   const tuplets = bars.slice(42, 45).flatMap(bar => bar.events.filter(event => event.kind === 'tuplet'))
   expect(tuplets.map(event => [event.pitches, event.beats])).toEqual([
     [['2', '3', '4'], 1], [['5#', '6', '7'], 1], [['7', '1e', '1#e'], 2],
-    [['4dd', '5dd', '7dd', '2d', '4d', '5d'], 1], [['2d', '4d', '5d', '7d', '2', '4'], 1],
+    [['4d', '5d', '7d', '2', '4', '5'], 1], [['2', '4', '5', '7', '2e', '4e'], 1],
   ])
-  expect(events(bars[45]!)).toEqual([['5', 4]])
+  expect(events(bars[45]!)).toEqual([['5e', 4]])
   expect(bars.slice(35, 46).map(bar => bar.events[0]!.octaveShift)).toEqual([0, 0, ...Array(9).fill(1)])
   expect(bars[46]!.events[0]!.octaveShift).toBe(0)
 })
