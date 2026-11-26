@@ -7,7 +7,7 @@ import reference from './fixtures/air-on-g-string-reference.json'
 
 // G-major arrangement: Kuaiyuepu 4bFml142f, corrected against Mutopia
 // BWV1068/bach-air. See docs/AIR_ON_G_STRING_AUDIT_2026-11-26.md.
-it('preserves the complete Air arrangement, chromatic notes and repeat endings without breaths', () => {
+it('preserves the complete Air arrangement, chromatic notes and simple repeats without breaths', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   expect(source).not.toContain('{breath}')
@@ -16,8 +16,8 @@ it('preserves the complete Air arrangement, chromatic notes and repeat endings w
   const document = parseM3NDocument(source)
   expect(document.key).toBe('G')
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length > 0)
-  expect(bars).toHaveLength(38)
-  expect(bars.map(bar => bar.events.reduce((beats, event) => beats + event.beats, 0))).toEqual(Array(38).fill(4))
+  expect(bars).toHaveLength(36)
+  expect(bars.map(bar => bar.events.reduce((beats, event) => beats + event.beats, 0))).toEqual(Array(36).fill(4))
   // Neither reference part marks a slur in bar 11; its G4 tie remains.
   expect(document.intervals.filter(interval => interval.kind === 'lg' && bars[10]!.events.some(
     event => event.sourceStart >= interval.start! && event.sourceStart <= interval.endStart!,
@@ -34,12 +34,12 @@ it('preserves the complete Air arrangement, chromatic notes and repeat endings w
   expect(notes(6).slice(2, 6)).toEqual([['f:4:n', .5], ['e:4:', .5], ['a:4:', .5], ['g:4:s', .5]])
   expect(notes(17)[0]).toEqual(['d:4:s', .5])
   expect(notes(31).at(-1)).toEqual(['f:5:n', .5])
-  expect(bars.slice(-4).map(bar => bar.ending)).toEqual(['1', '1', '2', '2'])
+  expect(bars.every(bar => !bar.ending)).toBe(true)
+  expect(bars.at(-1)!.events[0]!.postfixes).toContain('fermata')
   expect(notes(35)).toEqual([
     ['g:4:', .25], ['f:4:s', .25], ['e:4:', 1], ['f:4:s', .5],
     ['g:4:', 1], ['f:4:s', .5], ['g:4:', .5],
   ])
-  expect(notes(37)).toEqual(notes(35))
   expect(compileScorePerformance(document).beats).toBe(288)
   const file = 'g_xian_shang_de_yong_tan_diao_01.m3n'
   expect(plan.sourceCount).toBe(plan.entries.length)
@@ -49,7 +49,7 @@ it('preserves the complete Air arrangement, chromatic notes and repeat endings w
   )
 })
 
-it('matches the reference melody, rhythm and tied attacks with the documented repeated-note simplification', () => {
+it('matches the reference melody, rhythm and tied attacks and every slur in the violin reference', () => {
   const document = parseM3NDocument(source)
   const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length > 0)
   const pitches = resolveScorePitches(bars)
@@ -58,8 +58,8 @@ it('matches the reference melody, rhythm and tied attacks with the documented re
   const actual: number[][] = []
   let onset = 0
   let tied = false
-  // The arrangement writes the final two bars twice as repeat endings.
-  for (const bar of bars.slice(0, 36)) {
+  const timedEvents: Array<{ start: number; time: number }> = []
+  for (const bar of bars) {
     for (const event of bar.events) {
       const [name, octave, alteration] = pitches.get(event)![0]!.split(':')
       const midi = 12 * (Number(octave) + 1) + natural[name!]! + accidental[alteration!]!
@@ -69,17 +69,16 @@ it('matches the reference melody, rhythm and tied attacks with the documented re
       } else {
         actual.push([onset, midi, event.beats])
       }
+      timedEvents.push({ start: event.sourceStart, time: onset })
       onset += event.beats
       tied = event.tie
     }
   }
-  // Grace notes are omitted; main-note pitch and duration match the reference.
-  // Bar 10 combines the reference's two repeated A4 eighths into one quarter.
-  const variantOnsets = new Set([38.5, 39])
-  const expected = reference.notes.filter(note => !variantOnsets.has(note[0]!)).concat([
-    [38.5, 69, 1],
-  ]).sort((a, b) => a[0]! - b[0]!)
-  expect(actual).toEqual(expected)
-  expect(bars.slice(36).map(bar => bar.events.map(event => [pitches.get(event), event.beats, event.tie])))
-    .toEqual(bars.slice(34, 36).map(bar => bar.events.map(event => [pitches.get(event), event.beats, event.tie])))
+  // Omitted ornaments do not change the reference main notes or their attacks.
+  expect(actual).toEqual(reference.notes)
+  const slurs = document.intervals.filter(interval => interval.kind === 'lg').map(interval => {
+    const covered = timedEvents.filter(event => event.start >= interval.start! && event.start <= interval.endStart!)
+    return [covered[0]!.time, covered.at(-1)!.time]
+  })
+  expect(slurs).toEqual(reference.slurs)
 })
