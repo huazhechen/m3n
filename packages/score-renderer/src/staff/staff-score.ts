@@ -54,9 +54,9 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const attempt = (spacing: number): Layout => {
+    const attempt = (spacing: number, rowCost = 1): Layout => {
       signal?.throwIfAborted()
-      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum, rowCost)
       const systems = engraveStaffSystems(projected, lines, musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale, measurements.preparation)
       for (const system of systems) {
         translate(system.node, gutter / STAFF_SCALE, 0)
@@ -78,13 +78,27 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
-    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
-      const candidate = attempt(spacing)
-      if (candidate.paginationError) continue
+    const consider = (candidate: Layout) => {
+      if (candidate.paginationError) return
       const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
       const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
-      if (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
-        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing)) selected = candidate
+      if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+        && (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
+        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing))) selected = candidate
+    }
+    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
+      consider(attempt(spacing))
+    }
+    // Only a short final page warrants extra whole-score engraving trials.
+    // Alter the soft row cost, never collision minima or preferred advances.
+    if (!selected.paginationError && selected.pages.length > 1 && selected.pages.at(-1)!.systems.length <= 2) {
+      const spacing = selected.spacing
+      const readingPenalty = (candidate: Layout) => candidate.lines.reduce((sum, line) => sum + (line.localReadingPenalty ?? 0), 0) / Math.max(1, candidate.lines.length)
+      const limit = readingPenalty(selected) + .02
+      for (const rowCost of [.85, 1.15]) {
+        const candidate = attempt(spacing, rowCost)
+        if (readingPenalty(candidate) <= limit) consider(candidate)
+      }
     }
     layouts.set(candidateWidth, selected)
     return selected
@@ -184,6 +198,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         spacing: result.spacing,
         quality: { ...result.quality },
         headerHeight: result.header.height,
+        pageFit: {
+          minimumHeight: paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, minimumGap, false)[0]!.height,
+          capacity: a4SourcePageHeight(candidateWidth) - 2 * margin - scoreLayoutConfig.staff.pageInset,
+          pageRows: result.pages.map(page => page.systems.length),
+        },
         availableWidth: candidateWidth - 2 * margin - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter) - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset,
         pageCount: result.paginationError ? 0 : outputPages(result, true, candidateWidth).length,
         lines: result.lines.map((line, index) => ({
@@ -191,6 +210,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           inkHeight: result.systems[index]!.ink.bottom - result.systems[index]!.ink.top,
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,
+          localReadingPenalty: line.localReadingPenalty ?? 0,
           measures: line.measures.map((m) => m.id),
         })),
         pages: (result.paginationError ? [] : outputPages(result, true, candidateWidth)).map((page) => ({

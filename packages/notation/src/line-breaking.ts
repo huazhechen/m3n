@@ -30,6 +30,7 @@ function transition(previous: Row, current: Row) {
  * and may be merged. No invented neighbours at the ends. */
 export function planScoreLines(
   candidates: readonly (readonly LineCandidate[])[],
+  options: { rowCost?: number } = {},
 ): number[] {
   const count = candidates.length
   if (!count) return []
@@ -40,7 +41,7 @@ export function planScoreLines(
         ...row,
         id: id++,
         cost:
-          1 +
+          (options.rowCost ?? 1) +
           Math.max(0, 1 - row.density) ** 2 +
           100 * Math.max(0, Math.max(row.density, row.readingDensity ?? row.density) - 1) ** 2 +
           (row.penalty ?? 0),

@@ -255,8 +255,9 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
       throw error
     }
     const score = nativeLayoutScore(candidate)
-    if (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
-      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!)) {
+    if (candidate.pages.length < selected.pages.length || candidate.pages.length === selected.pages.length
+      && (candidate.systems.length < selected.systems.length || candidate.systems.length === selected.systems.length
+      && (score > selectedScore || score === selectedScore && candidate.options.minimumNoteGap! < selected.options.minimumNoteGap!))) {
       selected = candidate
       selectedScore = score
     }

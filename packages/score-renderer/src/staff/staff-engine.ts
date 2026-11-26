@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, scoreRhythmicWeight, solveScoreSpacing, distributeSpacingSurplus, scoreReadingWindows } from '@m3n/numbered-notation'
 import type { StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -18,6 +18,22 @@ export function staffDuration(beats: number) {
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
   columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; beforeGap: number; afterGap: number; rhythmLeft: number; rhythmAfter: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
+}
+export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
+  const preferredAdvance = (index: number) => prepared.onsets[index + 1] !== undefined
+    && prepared.onsets[index + 1]! - prepared.onsets[index]! <= .5 + 1e-7
+    ? prepared.metrics.columns[index]!.rhythmAfter + prepared.metrics.columns[index + 1]!.rhythmLeft : 0
+  const columns = prepared.metrics.columns.map((column, index) => ({ cells: [
+    { lane: 'reading', left: 0, right: 0, before: 0, after: 0,
+      preferredAdvance: preferredAdvance(index) },
+    ...column.lyricRows.map(row => ({ lane: row.lane, left: row.left, right: row.after, before: 0, after: 0,
+      preferredAfter: lyricSpacing.preferredExtraGap / STAFF_SCALE })),
+  ] }))
+  const positions = distributeSpacingSurplus(columns, staffColumnSpacing(prepared.metrics, spacing).positions,
+    [0, ...prepared.weights], extra)
+  const reading = scoreReadingWindows(positions.map((x, index) => ({ beat: prepared.onsets[index]!, x,
+    preferredNext: preferredAdvance(index) })))
+  return { positions, reading }
 }
 export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, reading = false): number {
   const gap = spacing * engine.spacingUnit / STAFF_SCALE
@@ -562,13 +578,9 @@ function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, 
 }
 export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number): XmlNode {
   const { prepared } = model
-  const extra = Math.max(0, width - model.minimum), weight = prepared.weights.reduce((sum, n) => sum + n, 0)
-  let cumulative = 0
-  const positions = staffColumnSpacing(prepared.metrics, model.spacing).positions.map((minimum, i) => {
-    const position = x + model.start + minimum + extra * cumulative / (weight || 1)
-    cumulative += prepared.weights[i]!
-    return position
-  })
+  const extra = Math.max(0, width - model.minimum)
+  const readingSpacing = staffReadingSpacing(prepared, model.spacing, extra)
+  const positions = readingSpacing.positions.map(position => x + model.start + position)
   const duration = Math.max(0, ...model.entries.flatMap(lane => lane.map(entry => entry.item.onset + entry.item.beats)))
   // Range marks end at the event's time boundary, including space occupied by
   // a sustained note. Interpolate shared columns so a longer note can end
@@ -593,7 +605,9 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     }
   }
   model.beams.forEach(positionBeam)
-  const measureNode = element('g', { id: model.measure.id, class: 'measure' })
+  const measureNode = element('g', { id: model.measure.id, class: 'measure',
+    'data-m3n-reading-ratio': String(readingSpacing.reading.worstRatio),
+    'data-m3n-reading-penalty': String(readingSpacing.reading.penalty) })
   for (const [lane, stave] of model.staves.entries()) {
     const staff = element('g', { class: 'staff', 'data-staff': lane ? 'bass' : 'melody' })
     for (let i = 0; i < 5; i++) staff.children.push(staffLine(x, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, x + width, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, (staffMusicSize() / 4 * 0.1), 'staff-line'))

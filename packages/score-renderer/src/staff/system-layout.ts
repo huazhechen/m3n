@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap, balanceScorePageTail } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry,
@@ -471,6 +471,18 @@ export function paginateStaff(
       page.ys = ys
     }
   }
+  let first = 0
+  const groups = pages.map(page => {
+    const group = { first, end: first + page.systems.length }
+    first = group.end
+    return group
+  })
+  const balanced = balanceScorePageTail(groups, (first, end) => {
+    const members = systems.slice(first, end)
+    const ys = positions(members, first === 0 ? headerHeight : pageInset, minimum)
+    return members.every((system, index) => system.ink.bottom + ys[index]! <= height - pageInset + 1e-6)
+  }, (first, end) => end - first)
+  balanced.forEach((group, index) => { pages[index]!.systems = systems.slice(group.first, group.end) })
   for (const [index, page] of pages.entries()) {
     let lo = minimum,
       hi = Math.max(minimum, maximum)

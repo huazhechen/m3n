@@ -82,3 +82,15 @@ describe('staff page packing', () => {
     expect(score).toEqual(before)
   }, 120_000)
 })
+
+it.each(['yan_hua_yi_leng_01', 'qing_niao_01'])('avoids an isolated final system in %s at fixed width', async name => {
+  const score = analyzeM3N(readFileSync(`../../src/scores/${name}.m3n`, 'utf8')).score
+  const before = structuredClone(score)
+  const prepared = await prepareStaffScore(score, { width: 640 })
+  const info = prepared.layoutInfo()
+  expect(info.pages.length).toBeGreaterThan(0)
+  if (info.pages.length > 1) expect(info.pages.at(-1)!.systems.length).toBeGreaterThanOrEqual(2)
+  expect(info.pageFit.pageRows.reduce((sum, count) => sum + count, 0)).toBe(info.lines.length)
+  expect(info.lines.every(line => Number.isFinite(line.localReadingPenalty))).toBe(true)
+  expect(score).toEqual(before)
+}, 30_000)
