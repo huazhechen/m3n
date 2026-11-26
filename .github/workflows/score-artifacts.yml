@@ -17,4 +17,26 @@ jobs:
       - name: Verify collision detector coverage
         run: M3N_MEMORY_LIMIT_MB=1750 python3 tools/run-low-memory.py node --test tools/native-ink-collisions.test.mjs
       - name: Verify notation density with real fonts
-        run: M3N_MEMORY_LIMIT_MB=1750 python3 tools/run-low-memory.py node tools/compare-notation-density.mjs --regression
+        id: density
+        run: |
+          mkdir -p .tmp
+          set -o pipefail
+          M3N_MEMORY_LIMIT_MB=1750 python3 tools/run-low-memory.py node tools/compare-notation-density.mjs --regression 2>&1 | tee .tmp/notation-density.log
+      - name: Annotate density failure
+        if: failure() && steps.density.outcome == 'failure'
+        shell: python
+        run: |
+          from pathlib import Path
+          log = Path('.tmp/notation-density.log').read_text()
+          detail = log[-12000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print(f'::error title=Notation density failure::{detail}')
+      - name: Upload notation density report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notation-density-report
+          path: |
+            .tmp/notation-density/report.json
+            .tmp/notation-density.log
+          include-hidden-files: true
+          if-no-files-found: ignore

@@ -141,7 +141,13 @@ if (process.argv.includes('--bundle-only')) {
         entries.push({ file, width, staffMusic, ...(coreGap === undefined ? {} : { coreGap }), ...result })
         writeReport()
         console.log(`${file} ${width}px${staffMusic ? ` staff ${staffMusic}px` : ''}: numbered ${result.numbered.pages}p/${result.numbered.rows} rows; staff ${result.staff.pages}p/${result.staff.rows} rows`)
-        if ([result.numbered, result.staff].some(value => value.outside.length || value.overlaps.length)) process.exitCode = 1
+        for (const notation of ['numbered', 'staff']) {
+          const { outside, overlaps } = result[notation]
+          if (!outside.length && !overlaps.length) continue
+          console.error(`Ink audit failed: ${file} ${width}px ${notation}: ${outside.length} outside, ${overlaps.length} overlaps`)
+          console.error(JSON.stringify({ outside, overlaps }, null, 2))
+          process.exitCode = 1
+        }
       }
     } finally { await browser.close() }
   }
