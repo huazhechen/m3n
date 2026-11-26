@@ -23,7 +23,7 @@ const expectedInstrumental = pianoBars.map(bar => bar.notes.split(' ').map(token
     + (accidental === '#' ? 1 : accidental === 'b' ? -1 : 0) + octave * 12
   return { midi, beats, tie: tie === '~' }
 })).concat(guitar.bars.map(bar => bar.notes.map(note => ({
-  midi: note.string === 0 ? null : [0, 64, 59, 55, 50, 45, 40][note.string]! + note.fret + note.bendSemitones,
+  midi: note.string === 0 ? null : [0, 64, 59, 55, 50, 45, 40][note.string]! + note.fret + note.bendSemitones + guitar.octaveShift * 12,
   beats: note.beats, tie: note.tie,
 }))))
 const document = parseM3NDocument(source)
@@ -32,8 +32,9 @@ const events = (bar: typeof bars[number]) => bar.events.flatMap(event => event.k
   ? event.pitches.map(pitch => [pitch, event.beats / event.pitches.length])
   : [[event.pitches[0] ?? '0', event.beats]])
 
-it('matches the piano introduction and transition plus uploaded guitar Solo in concert pitch, rhythm and ties', () => {
+it('matches the piano introduction and transition plus uploaded guitar Solo raised one octave in concert pitch, rhythm and ties', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
+  expect(source).not.toMatch(/\{8v[ab]\}/)
   expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['C', 4, 4, 70])
   expect(bars).toHaveLength(50)
   expect(bars.map(bar => bar.events.reduce((sum, event) => sum + event.beats, 0))).toEqual(Array(50).fill(4))
@@ -118,7 +119,7 @@ it('places 留 in the first sixteenth of the original piano transition and prese
 })
 
 it('plays the guitar melody without extra attacks on tied sustained notes', () => {
-  let cursor = 140 // Written bar 36: vocal quarter followed by instrumental notes.
+  let cursor = 140 // Written bar 36: vocal sixteenth followed by instrumental notes.
   let continuation = false
   const expected: Array<{ start: number; end: number; pitch: number }> = []
   for (const note of expectedInstrumental.slice(4).flat()) {
@@ -139,22 +140,22 @@ it('plays the guitar melody without extra attacks on tied sustained notes', () =
     expect(note.start).toBeCloseTo(expected[index]!.start)
     expect(note.end).toBeCloseTo(expected[index]!.end)
   }
-  // Guitar bar 3 holds the full-bend F#5 target for three beats (written bar 39).
+  // Guitar bar 3 holds the full-bend F#6 target for three beats (written bar 39).
   expect(actual.filter(note => note.start >= 152 && note.start < 155).map(note => note.start)).toEqual([152])
   expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(3)
 })
 
 it('retains the guitar chromatic passing notes and three triplet groups', () => {
   expect(events(bars[40]!)).toHaveLength(23)
-  expect(events(bars[40]!).slice(0, 4)).toEqual([['3', .25], ['5', .25], ['4', .125], ['3', .125]])
-  expect(events(bars[40]!).at(-1)).toEqual(['3d', 1])
-  expect(events(bars[41]!).slice(0, 5)).toEqual([['0', .5], ['3d', .25], ['7bd', .25], ['6d', .25], ['1#', .25]])
-  expect(events(bars[41]!).slice(-3)).toEqual([['5', .75], ['6', .125], ['3', .125]])
+  expect(events(bars[40]!).slice(0, 4)).toEqual([['3e', .25], ['5e', .25], ['4e', .125], ['3e', .125]])
+  expect(events(bars[40]!).at(-1)).toEqual(['3', 1])
+  expect(events(bars[41]!).slice(0, 5)).toEqual([['0', .5], ['3', .25], ['7b', .25], ['6', .25], ['1#e', .25]])
+  expect(events(bars[41]!).slice(-3)).toEqual([['5e', .75], ['6e', .125], ['3e', .125]])
   const triplets = bars.slice(42, 44).flatMap(bar => bar.events.filter(event => event.kind === 'tuplet'))
   expect(triplets.map(event => [event.pitches, event.beats])).toEqual([
-    [['2', '3', '4'], 1], [['5#', '6', '7'], 1], [['7', '1e', '1#e'], 2],
+    [['2e', '3e', '4e'], 1], [['5#e', '6e', '7e'], 1], [['7e', '1ee', '1#ee'], 2],
   ])
-  expect(events(bars[44]!)).toEqual([['2e', 4]])
+  expect(events(bars[44]!)).toEqual([['2ee', 4]])
 })
 
 it('writes the guitar modulation at bar 38 and restores C at both vocal entrances', () => {
