@@ -7,6 +7,7 @@ import { chromium } from '@playwright/test'
 
 const root = resolve(import.meta.dirname, '..')
 const argument = name => process.argv.find(value => value.startsWith(`--${name}=`))?.slice(name.length + 3)
+const sourceRoot = resolve(argument('source-root') ?? join(root, 'src'))
 const output = resolve(argument('output') ?? '.tmp/numbered-spacing/report.json')
 const baselinePath = argument('baseline') ?? (process.argv.includes('--check') ? join(root, 'config/numbered-spacing-baseline.json') : undefined)
 const baseline = baselinePath ? JSON.parse(readFileSync(baselinePath, 'utf8')) : undefined
@@ -14,7 +15,7 @@ const bundle = join(dirname(output), 'bundle'), origin = 'http://numbered-spacin
 mkdirSync(bundle, { recursive: true })
 writeFileSync(join(bundle, 'entry.ts'), `export * from ${JSON.stringify(join(root, 'tools/numbered-spacing-layout.mjs'))};\n`)
 execFileSync(process.execPath, [join(root, 'tools/build-numbered-audit-bundle.mjs'), bundle], { stdio: 'inherit' })
-const scores = ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(root, 'src', scope))
+const scores = ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(sourceRoot, scope))
   .filter(file => file.endsWith('.m3n')).sort().map(file => `${scope}/${file}`))
   .filter(file => !argument('score') || file.includes(argument('score')))
 assert(scores.length, 'No scores selected')
@@ -22,15 +23,17 @@ const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bund
 const auditLayout = process.argv.includes('--audit')
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
 if (checkpoint) {
+  assert.equal(checkpoint.sourceRoot, sourceRoot, 'Cannot resume against a different source root')
   assert.equal(checkpoint.rendererHash, rendererHash, 'Cannot resume after changing the renderer')
   assert.equal(checkpoint.auditLayout, auditLayout, 'Cannot resume with a different ink audit setting')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
-const report = { rendererHash, auditLayout, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
+const report = { sourceRoot, sourceRevision, rendererHash, auditLayout, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
 for (const file of scores) {
-  const source = readFileSync(join(root, 'src', file), 'utf8')
+  const source = readFileSync(join(sourceRoot, file), 'utf8')
   const sourceHash = createHash('sha256').update(source).digest('hex')
   const saved = report.entries.find(entry => entry.file === file)
   if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
