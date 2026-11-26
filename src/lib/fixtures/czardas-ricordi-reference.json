@@ -1,0 +1,4497 @@
+{
+  "source": "https://imslp.org/wiki/Special:ImagefromIndex/97352",
+  "edition": "Ricordi, plate 102595, violin part (2 pages)",
+  "pdfSha256": "530ffc6729658f79d9eee237bea901f9dc9f77b29fc232f7701669925cd8bc79",
+  "uploadSha256": "e9c345094546c8e8f1b9f339a9f9dc071e0774a0a6361aae1720ca23492d3ef5",
+  "policy": "Concert-pitch single melody; omit introductory accompaniment-only rests, grace notes, bowings and chord doublings. Artificial fourth harmonics use sounding pitch (stopped pitch +24). Keep measured runs and original repeats.",
+  "bars": [
+    {
+      "section": "Largo",
+      "bar": 1,
+      "beats": 4,
+      "events": [
+        [
+          null,
+          2,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ],
+        [
+          58,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 2,
+      "beats": 4,
+      "events": [
+        [
+          69,
+          2,
+          true
+        ],
+        [
+          69,
+          0.5,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          67,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 3,
+      "beats": 4,
+      "events": [
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          70,
+          2,
+          true
+        ],
+        [
+          70,
+          0.5,
+          false
+        ],
+        [
+          58,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 4,
+      "beats": 4,
+      "events": [
+        [
+          58,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ],
+        [
+          61,
+          0.5,
+          false
+        ],
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          67,
+          0.5,
+          false
+        ],
+        [
+          67,
+          0.5,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          61,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 5,
+      "beats": 4,
+      "events": [
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.25,
+          false
+        ],
+        [
+          61,
+          0.25,
+          false
+        ],
+        [
+          62,
+          0.25,
+          false
+        ],
+        [
+          64,
+          0.25,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ],
+        [
+          58,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 6,
+      "beats": 4,
+      "events": [
+        [
+          69,
+          2,
+          true
+        ],
+        [
+          69,
+          0.5,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          67,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 7,
+      "beats": 4,
+      "events": [
+        [
+          65,
+          0.5,
+          false
+        ],
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          70,
+          2,
+          true
+        ],
+        [
+          70,
+          0.5,
+          false
+        ],
+        [
+          58,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 8,
+      "beats": 4,
+      "events": [
+        [
+          58,
+          0.5,
+          false
+        ],
+        [
+          57,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          61,
+          0.5,
+          false
+        ],
+        [
+          67,
+          1.5,
+          false
+        ],
+        [
+          64,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo",
+      "bar": 9,
+      "beats": 4,
+      "events": [
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          61,
+          0.5,
+          false
+        ],
+        [
+          62,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 1,
+      "beats": 4,
+      "events": [
+        [
+          60,
+          1,
+          true
+        ],
+        [
+          60,
+          0.16666666666666666,
+          false
+        ],
+        [
+          64,
+          0.16666666666666666,
+          false
+        ],
+        [
+          67,
+          0.16666666666666666,
+          false
+        ],
+        [
+          70,
+          0.16666666666666666,
+          false
+        ],
+        [
+          72,
+          0.16666666666666666,
+          false
+        ],
+        [
+          76,
+          0.16666666666666666,
+          false
+        ],
+        [
+          79,
+          0.375,
+          false
+        ],
+        [
+          77,
+          0.125,
+          false
+        ],
+        [
+          76,
+          0.375,
+          false
+        ],
+        [
+          74,
+          0.125,
+          false
+        ],
+        [
+          72,
+          0.5,
+          false
+        ],
+        [
+          70,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 2,
+      "beats": 4,
+      "events": [
+        [
+          70,
+          0.5,
+          false
+        ],
+        [
+          69,
+          0.5,
+          false
+        ],
+        [
+          69,
+          0.75,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 3,
+      "beats": 4,
+      "events": [
+        [
+          57,
+          1,
+          true
+        ],
+        [
+          57,
+          0.16666666666666666,
+          false
+        ],
+        [
+          61,
+          0.16666666666666666,
+          false
+        ],
+        [
+          64,
+          0.16666666666666666,
+          false
+        ],
+        [
+          67,
+          0.16666666666666666,
+          false
+        ],
+        [
+          69,
+          0.16666666666666666,
+          false
+        ],
+        [
+          73,
+          0.16666666666666666,
+          false
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          69,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 4,
+      "beats": 4,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          1,
+          false
+        ],
+        [
+          77,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 5,
+      "beats": 4,
+      "events": [
+        [
+          77,
+          1,
+          false
+        ],
+        [
+          70,
+          1,
+          true
+        ],
+        [
+          70,
+          0.125,
+          false
+        ],
+        [
+          76,
+          0.125,
+          false
+        ],
+        [
+          77,
+          0.125,
+          false
+        ],
+        [
+          76,
+          0.125,
+          false
+        ],
+        [
+          75,
+          0.125,
+          false
+        ],
+        [
+          76,
+          0.125,
+          false
+        ],
+        [
+          77,
+          0.125,
+          false
+        ],
+        [
+          76,
+          0.125,
+          false
+        ],
+        [
+          79,
+          0.3333333333333333,
+          false
+        ],
+        [
+          77,
+          0.3333333333333333,
+          false
+        ],
+        [
+          76,
+          0.3333333333333333,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 6,
+      "beats": 4,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          69,
+          0.5,
+          false
+        ],
+        [
+          69,
+          1,
+          true
+        ],
+        [
+          69,
+          0.5,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.375,
+          false
+        ],
+        [
+          70,
+          0.125,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 7,
+      "beats": 4,
+      "events": [
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          67,
+          0.25,
+          false
+        ],
+        [
+          67,
+          0.25,
+          false
+        ],
+        [
+          65,
+          0.25,
+          false
+        ],
+        [
+          65,
+          0.25,
+          false
+        ],
+        [
+          64,
+          0.25,
+          false
+        ],
+        [
+          69,
+          1.5,
+          false
+        ],
+        [
+          64,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Largo · 华彩乐句",
+      "bar": 8,
+      "beats": 4,
+      "events": [
+        [
+          64,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          62,
+          0.5,
+          false
+        ],
+        [
+          61,
+          0.5,
+          false
+        ],
+        [
+          62,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          86,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ],
+        [
+          82,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          null,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ],
+        [
+          77,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          true
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          77,
+          0.5,
+          false
+        ],
+        [
+          76,
+          1,
+          false
+        ],
+        [
+          75,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          1,
+          true
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 15,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo",
+      "bar": 16,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          1,
+          true
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          77,
+          1,
+          true
+        ],
+        [
+          77,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 15,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivo · 第二主题",
+      "bar": 16,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          1,
+          false
+        ],
+        [
+          81,
+          0.75,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          79,
+          0.5,
+          false
+        ],
+        [
+          78,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.5,
+          false
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          75,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.75,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ],
+        [
+          88,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          88,
+          0.75,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.5,
+          false
+        ],
+        [
+          79,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.5,
+          false
+        ],
+        [
+          78,
+          0.5,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          1,
+          false
+        ],
+        [
+          81,
+          0.75,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          79,
+          0.5,
+          false
+        ],
+        [
+          78,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.5,
+          false
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          75,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          0.75,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 15,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Molto meno",
+      "bar": 16,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          98,
+          1,
+          false
+        ],
+        [
+          93,
+          0.75,
+          false
+        ],
+        [
+          93,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          91,
+          0.5,
+          false
+        ],
+        [
+          90,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          90,
+          0.5,
+          false
+        ],
+        [
+          88,
+          0.5,
+          false
+        ],
+        [
+          88,
+          0.5,
+          false
+        ],
+        [
+          91,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          0.75,
+          false
+        ],
+        [
+          93,
+          0.25,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          97,
+          0.5,
+          false
+        ],
+        [
+          95,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          91,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          91,
+          0.5,
+          false
+        ],
+        [
+          90,
+          0.5,
+          false
+        ],
+        [
+          90,
+          0.5,
+          false
+        ],
+        [
+          89,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          90,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          98,
+          1,
+          false
+        ],
+        [
+          93,
+          0.75,
+          false
+        ],
+        [
+          93,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          91,
+          0.5,
+          false
+        ],
+        [
+          90,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          90,
+          0.5,
+          false
+        ],
+        [
+          88,
+          0.5,
+          false
+        ],
+        [
+          88,
+          0.5,
+          false
+        ],
+        [
+          91,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          98,
+          1,
+          false
+        ],
+        [
+          93,
+          0.75,
+          false
+        ],
+        [
+          93,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          95,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          93,
+          0.5,
+          false
+        ],
+        [
+          85,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 15,
+      "beats": 2,
+      "events": [
+        [
+          88,
+          0.5,
+          false
+        ],
+        [
+          86,
+          0.5,
+          false
+        ],
+        [
+          86,
+          0.5,
+          false
+        ],
+        [
+          85,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Meno, quasi lento · 泛音旋律（实音）",
+      "bar": 16,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          70,
+          0.25,
+          false
+        ],
+        [
+          72,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          1,
+          true
+        ],
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          68,
+          0.25,
+          false
+        ],
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          77,
+          1,
+          true
+        ],
+        [
+          77,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          82,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          69,
+          0.25,
+          false
+        ],
+        [
+          71,
+          0.25,
+          false
+        ],
+        [
+          73,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          77,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegro vivace",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          82,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          85,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 1,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 2,
+      "beats": 2,
+      "events": [
+        [
+          null,
+          2,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 3,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          86,
+          1,
+          false
+        ],
+        [
+          83,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 4,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.5,
+          false
+        ],
+        [
+          81,
+          1,
+          false
+        ],
+        [
+          78,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 5,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 6,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          true
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 7,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 8,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 9,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.5,
+          false
+        ],
+        [
+          76,
+          1,
+          false
+        ],
+        [
+          75,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 10,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          1,
+          true
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 11,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 12,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 13,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 14,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 15,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 16,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 17,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          81,
+          1,
+          false
+        ],
+        [
+          81,
+          0.5,
+          true
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 18,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          0.5,
+          false
+        ],
+        [
+          81,
+          1,
+          false
+        ],
+        [
+          69,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 19,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          86,
+          1,
+          false
+        ],
+        [
+          83,
+          0.5,
+          true
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 20,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.5,
+          false
+        ],
+        [
+          81,
+          1,
+          false
+        ],
+        [
+          78,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 21,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          74,
+          1,
+          false
+        ],
+        [
+          73,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 22,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          1,
+          true
+        ],
+        [
+          74,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 23,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 24,
+      "beats": 2,
+      "events": [
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          74,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 25,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.5,
+          false
+        ],
+        [
+          76,
+          1,
+          false
+        ],
+        [
+          75,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 26,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          1,
+          true
+        ],
+        [
+          76,
+          0.5,
+          false
+        ],
+        [
+          null,
+          0.5,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 27,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 28,
+      "beats": 2,
+      "events": [
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 29,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 30,
+      "beats": 2,
+      "events": [
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 31,
+      "beats": 2,
+      "events": [
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          75,
+          0.25,
+          false
+        ],
+        [
+          76,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          78,
+          0.25,
+          false
+        ],
+        [
+          79,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 32,
+      "beats": 2,
+      "events": [
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          80,
+          0.25,
+          false
+        ],
+        [
+          81,
+          0.25,
+          false
+        ],
+        [
+          83,
+          0.25,
+          false
+        ],
+        [
+          85,
+          0.25,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 33,
+      "beats": 2,
+      "events": [
+        [
+          86,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 34,
+      "beats": 2,
+      "events": [
+        [
+          81,
+          1,
+          false
+        ],
+        [
+          null,
+          1,
+          false
+        ]
+      ]
+    },
+    {
+      "section": "Allegretto",
+      "bar": 35,
+      "beats": 2,
+      "events": [
+        [
+          62,
+          2,
+          false
+        ]
+      ]
+    }
+  ],
+  "correctionsVsFluteMidi": [
+    {
+      "writtenBar": 130,
+      "violinMidi": 62,
+      "fluteMidi": 74,
+      "reason": "Original final half-note is D4; flute arrangement raises it to D5."
+    }
+  ]
+}

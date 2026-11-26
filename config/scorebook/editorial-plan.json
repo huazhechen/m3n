@@ -1,6 +1,6 @@
 {
   "title": "Max的半音阶口琴乐谱集",
-  "sourceCount": 114,
+  "sourceCount": 115,
   "sections": [
     {
       "id": "basics",
@@ -408,6 +408,14 @@
       "section": "instrumental",
       "group": "巴洛克快板与装饰音",
       "reason": "b小调高音旋律、十六分及三十二分音符、跨小节延音与两段反复"
+    },
+    {
+      "id": "cha_er_da_shi",
+      "file": "cha_er_da_shi_01.m3n",
+      "title": "查尔达什舞曲",
+      "section": "instrumental-large",
+      "group": "浪漫派舞曲与快速音型",
+      "reason": "Ricordi小提琴版核心旋律、慢快交替、半音经过及泛音实音"
     },
     {
       "id": "second_waltz",
