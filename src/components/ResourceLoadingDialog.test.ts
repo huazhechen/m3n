@@ -20,10 +20,10 @@ afterEach(() => {
   container.remove()
   vi.useRealTimers()
 })
-function render(title: string, loading = true, active = true) {
+function render(title: string, loading = true, active = true, delayMs?: number) {
   act(() => root.render(createElement('div', null,
     createElement(ResourceLoadingHost),
-    createElement(ResourceLoadingDialog, { title, loading, active, description: '准备资源', progressLabel: '资源进度' }))))
+    createElement(ResourceLoadingDialog, { title, loading, active, delayMs, description: '准备资源', progressLabel: '资源进度' }))))
 }
 const tick = (ms: number) => act(() => { vi.advanceTimersByTime(ms) })
 
@@ -60,4 +60,21 @@ it('shares one modal across source/render handoffs and keeps background dismissa
   render('下一次下载')
   tick(350)
   expect(document.querySelector('dialog[open] h2')?.textContent).toBe('下一次下载')
+})
+
+it('shows layout and notation switching immediately and keeps the same dialog until finished', () => {
+  render('正在排版乐谱', true, true, 0)
+  tick(0)
+  const dialog = document.querySelector('dialog[open]')!
+  expect(dialog).not.toBeNull()
+  render('准备五线谱', true, true, 0)
+  expect(document.querySelector('dialog[open]')).toBe(dialog)
+  render('正在排版乐谱', true, true, 0)
+  expect(document.querySelector('dialog[open]')).toBe(dialog)
+  render('完成', false, false, 0)
+  tick(150)
+  expect(document.querySelector('dialog')).toBeNull()
+  render('准备简谱', true, true, 0)
+  tick(0)
+  expect(document.querySelector('dialog[open] h2')?.textContent).toBe('准备简谱')
 })

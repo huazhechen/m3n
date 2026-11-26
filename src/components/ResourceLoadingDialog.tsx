@@ -21,6 +21,7 @@ type LoadingTask = {
   progressLabel: string
   value?: number
   onCancel?: () => void
+  delayMs?: number
   active?: boolean
   loading?: boolean
   error?: string
@@ -65,7 +66,7 @@ export function ResourceLoadingHost() {
 }
 
 function ResourceLoadingModal({ title, description, progressLabel, value, onCancel,
-  active = true, loading = true, error, onRetry, backgroundLabel = '后台加载',
+  active = true, loading = true, error, onRetry, backgroundLabel = '后台加载', delayMs = 350,
 }: LoadingTask) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -75,9 +76,9 @@ function ResourceLoadingModal({ title, description, progressLabel, value, onCanc
   useEffect(() => {
     if (!active) { setVisible(false); setDismissed(false); return }
     if (dismissed || !loading) return
-    const timer = setTimeout(() => setVisible(true), 350)
+    const timer = setTimeout(() => setVisible(true), delayMs)
     return () => clearTimeout(timer)
-  }, [active, loading, dismissed])
+  }, [active, loading, dismissed, delayMs])
   useEffect(() => {
     const dialog = dialogRef.current
     if (!visible || !active || dismissed || !dialog) return

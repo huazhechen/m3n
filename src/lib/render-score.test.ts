@@ -57,6 +57,8 @@ describe('font and layout progress', () => {
     expect(phases).toEqual(['loading-library', 'loading-fonts', 'layout'])
     expect(createScore).not.toHaveBeenCalled()
     paint!(0)
+    expect(createScore).not.toHaveBeenCalled()
+    paint!(16)
     // requestAnimationFrame runs before paint; calculation must also wait for the next task.
     expect(createScore).not.toHaveBeenCalled()
     await rejected
@@ -76,6 +78,8 @@ describe('font and layout progress', () => {
     await layout.promise
     controller.abort()
     paint!(0)
+    expect(createScore).not.toHaveBeenCalled()
+    paint!(16)
     await rejected
     expect(createScore).not.toHaveBeenCalled()
   })

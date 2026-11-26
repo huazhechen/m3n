@@ -637,10 +637,10 @@ export function ScoreRenderer({
     <section className={compact ? 'score-card score-renderer compact' : 'score-card score-renderer'}>
       <ResourceLoadingDialog
         active={isRendering}
-        loading={renderPhase !== null && renderPhase !== 'layout'}
-        title={notationMode === 'staff' ? '加载五线谱资源' : '加载乐谱资源'}
+        delayMs={0}
+        title={renderPhase === 'layout' ? '正在排版乐谱' : notationMode === 'staff' ? '准备五线谱' : '准备简谱'}
         description={renderPhase === 'layout' ? '正在排版乐谱…' : renderPhase === 'loading-fonts' ? '正在准备乐谱字体…' : '正在加载乐谱渲染资源…'}
-        progressLabel="乐谱资源加载进度"
+        progressLabel="乐谱准备进度"
       />
       {isPlayRequest && toneLoading && toneDownloadStarted && <PlaybackLoadingDialog
         tone={playbackTone}

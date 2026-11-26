@@ -34,7 +34,7 @@ const yieldToBrowser = () => new Promise<void>(resolve => {
 
 // A phase update needs a paint before synchronous layout can occupy the main thread.
 const yieldToPaint = () => new Promise<void>(resolve => {
-  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setTimeout(resolve, 0))
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))
   else setTimeout(resolve, 0)
 })
 
