@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseBestWidth, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates, refineSharedWidths } from './scorebook-packing.mjs'
 
 test('the shared online and offline search uses eleven 24px levels from 528–768px', () => {
@@ -331,4 +331,98 @@ test('shared refinement is bounded by 528–624px and propagates cancellation', 
   await assert.rejects(refineSharedWidths(refinementEntries(), async (_work, width) => {
     controller.abort(); return candidate(width, 300)
   }, { signal: controller.signal }), { name: 'AbortError' })
+})
+
+test('quality bounds prune only certified losers, including nonmonotonic pagination and narrow refinement wins', async () => {
+  for (const winner of [528, 552, 624, 744]) {
+    const measure = async width => candidate(width, 200, width < winner || width === winner + 6 ? 2 : 1,
+      { lineDensityVariation: width === winner - 6 ? .01 : .15, lastLineSlack: .1 })
+    const exhaustive = await selectBestWidth(measure)
+    const pruned = await selectBestWidth(measure, { prune: true })
+    assert.deepEqual(pruned.best, exhaustive.best)
+    assert(pruned.renderCache.requests <= exhaustive.renderCache.requests)
+    for (const width of pruned.renderCache.skippedWidths) {
+      assert((528 / width) ** 2 < numberedLayoutScore(pruned.best))
+    }
+  }
+  // One-page incumbents cannot certify a wider width with an equal upper bound.
+  const ties = await selectBestWidth(async width => candidate(width, 200, 1,
+    { qualityScore: width === 528 ? (528 / 552) ** 2 : (528 / width) ** 2 }), { prune: true })
+  assert(ties.candidates.some(c => c.width === 552))
+  const multi = await selectBestWidth(async width => candidate(width, undefined, 2), { prune: true })
+  assert.equal(multi.renderCache.skippedWidths.length, 0)
+})
+
+test('audited search retains all candidates even when pruning was requested', async () => {
+  const result = await probeWidthCandidates(async width => candidate(width, 200), {
+    prune: true, verify: async () => ({}),
+  })
+  assert.equal(result.renderCache.requests, 14)
+  assert.deepEqual(result.renderCache.skippedWidths, [])
+})
+
+test('hierarchical search fills the original 24px grid before 6px refinement, retaining isolated winners', async () => {
+  const widths = []
+  const measure = async width => {
+    widths.push(width)
+    // A single winning width between the 48px samples must not be lost.
+    return candidate(width, 200, width === 600 ? 1 : 2)
+  }
+  const result = await selectBestWidth(measure, { prune: true })
+  assert.deepEqual(widths.slice(0, 6), [528, 576, 624, 672, 720, 768])
+  assert.equal(result.best.width, 600)
+  assert(widths.includes(552) && widths.includes(600))
+  assert(widths.slice(11).every(width => width % 6 === 0))
+})
+
+test('lazy solo and shared searches preserve exhaustive packing across adversarial canonical scores', async () => {
+  let state = 14215
+  const random = () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 2 ** 32 }
+  for (let trial = 0; trial < 60; trial++) {
+    const tables = Array.from({ length: 6 }, () => new Map(Array.from({ length: 41 }, (_, i) => {
+      const width = 528 + 6 * i
+      return [width, candidate(width, 80 + random() * 470, random() < .2 ? 2 : 1, {
+        lineDensityVariation: random() * .4, lastLineSlack: random() * .5,
+        lineStretchPenalty: random() * .06, overlaps: random() < .03 ? ['ink'] : [],
+      })]
+    })))
+    const full = [], lazy = [], requests = new Set()
+    for (const [index, table] of tables.entries()) {
+      const a = await selectBestWidth(async width => table.get(width))
+      const b = await selectBestWidth(async width => table.get(width), { prune: true })
+      assert.deepEqual(b.best, a.best)
+      const settings = { title: String(index), section: index < 4 ? 'basics' : 'next', sharePage: index !== 3 || trial % 3 !== 0 }
+      full.push({ ...settings, candidates: a.candidates })
+      lazy.push({ ...settings, candidates: b.candidates })
+      for (const c of b.candidates) requests.add(`${index}:${c.width}`)
+    }
+    const movableSections = trial % 2 ? new Set(['basics']) : new Set()
+    await refineSharedWidths(full, async (work, width) => tables[Number(work.title)].get(width), { movableSections })
+    await refineSharedWidths(lazy, async (work, width) => {
+      const key = `${work.title}:${width}`
+      assert(!requests.has(key), 'same score and width must never be measured twice')
+      requests.add(key)
+      return tables[Number(work.title)].get(width)
+    }, { movableSections, prune: true })
+    const a = optimizeScorebook(full, movableSections), b = optimizeScorebook(lazy, movableSections)
+    assert.deepEqual(b.groups, a.groups)
+    assert.deepEqual(b.metrics, a.metrics)
+    assert.deepEqual(b.entries.map(e => e.title), a.entries.map(e => e.title))
+    assert.deepEqual(lazy.map(e => chooseBestWidth(e.candidates)), full.map(e => chooseBestWidth(e.candidates)))
+  }
+})
+
+
+test('horizontal rejection uses the incumbent, preserves request counts and cancellation', async () => {
+  const result = await selectBestWidth(async (width, best) => {
+    if (best && width !== 534) throw new WidthSearchPruned()
+    return candidate(width, 200, 1, { lineDensityVariation: .5 })
+  }, { prune: true })
+  assert.equal(result.best.width, 528)
+  assert.equal(result.candidates.length, 2)
+  assert(result.renderCache.requests > result.candidates.length)
+  const controller = new AbortController()
+  await assert.rejects(selectBestWidth(async () => {
+    controller.abort(); throw new WidthSearchPruned()
+  }, { prune: true, signal: controller.signal }), { name: 'AbortError' })
 })

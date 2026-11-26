@@ -13,7 +13,10 @@ export function downloadBlob(blob: Blob, fileName: string) {
 }
 
 export type ScorePdfPhase = 'loading' | 'fonts' | 'pages' | 'saving'
-export type ScorePdfOptions = { fullPage?: boolean; scoreUrl?: string; textFont?: Uint8Array; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void }
+export type ScorePdfOptions = { fullPage?: boolean; scoreUrl?: string; textFont?: Uint8Array; signal?: AbortSignal; onPhase?: (phase: ScorePdfPhase) => void
+  /** Transfer detached pages that have no preview consumer to the exporter. */
+  consumePages?: boolean
+}
 let pdfModule: ReturnType<typeof importPdfModule> | undefined
 const importPdfModule = () => import('./score-pdf.js')
 

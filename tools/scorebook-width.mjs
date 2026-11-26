@@ -15,6 +15,16 @@ export function numberedLayoutScore(candidate) {
   return scoreHorizontalQuality(candidate.width, { lineDensityVariation: variation, lastLineSlack: slack, lineStretchPenalty: candidate.lineStretchPenalty })
 }
 const rank = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
+export class WidthSearchPruned extends Error {}
+
+// All penalties in the shared engine score are nonnegative. Even a perfect
+// layout at this width cannot exceed its type-size factor. A one-page winner
+// therefore certifies that lower-scoring widths cannot win, without assuming
+// anything about page-count monotonicity or smoothness between widths.
+export const widthQualityUpperBound = width => (widthMinimum / width) ** 2
+export function widthCannotWin(width, best) {
+  return Boolean(best && best.pageCount === 1 && widthQualityUpperBound(width) < numberedLayoutScore(best))
+}
 
 export function chooseBestWidth(candidates) {
   // First minimize pages, then use the same density / slack quality score as
@@ -23,34 +33,54 @@ export function chooseBestWidth(candidates) {
 }
 
 /** Search coarse levels, then refine within the winning level’s neighbors. */
-export async function probeWidthCandidates(measure, { verify, signal } = {}) {
+export async function probeWidthCandidates(measure, { verify, signal, prune = false } = {}) {
   const candidates = []
+  const skippedWidths = []
+  let requests = 0
+  let best = null
   let verifiedWidths = 0
   const probe = async width => {
     signal?.throwIfAborted()
+    requests++
     let result
     try {
-      result = { width, ...await measure(width) }
+      result = { width, ...await measure(width, best) }
       if (verify && safe(result)) {
         verifiedWidths++
         result = { ...result, ...await verify(width, result) }
       }
-    } catch (error) { result = { width, error: error.message } }
+    } catch (error) {
+      signal?.throwIfAborted()
+      if (prune && !verify && error instanceof WidthSearchPruned) { skippedWidths.push(width); return }
+      result = { width, error: error.message }
+    }
     signal?.throwIfAborted()
     candidates.push(result)
+    if (safe(result) && (!best || rank(result, best) < 0)) best = result
   }
-  for (const width of widthCandidates) await probe(width)
+  const consider = async width => {
+    signal?.throwIfAborted()
+    // Audits intentionally visit every original candidate, including losers.
+    if (prune && !verify && widthCannotWin(width, best)) skippedWidths.push(width)
+    else await probe(width)
+  }
+  // Find a strong incumbent at 48px intervals before filling the original
+  // 24px grid. Every omitted level still needs the same strict upper-bound
+  // proof; line breaks are not monotone, so a local winning interval alone
+  // cannot justify discarding other coarse levels.
+  const coarseOrder = prune && !verify
+    ? [...widthCandidates.filter((_, index) => index % 2 === 0), ...widthCandidates.filter((_, index) => index % 2 === 1)]
+    : widthCandidates
+  for (const width of coarseOrder) await consider(width)
   const coarseBest = chooseBestWidth(candidates)
   if (coarseBest) {
     const lower = Math.max(widthMinimum, coarseBest.width - widthStep)
     const upper = Math.min(widthMaximum, coarseBest.width + widthStep)
-    const measured = new Set(candidates.map(candidate => candidate.width))
-    for (let width = lower; width <= upper; width += widthStep / 4) {
-      if (!measured.has(width)) await probe(width)
-    }
+    const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
+    for (let width = lower; width <= upper; width += widthStep / 4) if (!measured.has(width)) await consider(width)
   }
-  return { candidates, renderCache: { strategy: widthSearchStrategy, requests: candidates.length,
-    uniqueWidths: candidates.length, hits: 0, verifiedWidths } }
+  return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
+    uniqueWidths: requests, hits: 0, verifiedWidths, skippedWidths } }
 }
 
 /** Run the common discrete width search and reject a score with no safe candidate. */

@@ -386,7 +386,7 @@ export function arrangeStaffSystem(
       .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'staff-clef' ? style.music * .1 : style.edgeGap })))
   return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
 }
-const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, number>>()
+const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, { collision: number; edgeCollision: number }>>()
 const orderedInk = new WeakMap<StaffSystem, Ink[]>()
 function sortedSpacing(system: StaffSystem): Ink[] {
   let sorted = orderedInk.get(system)
@@ -399,22 +399,23 @@ function systemInkDistance(previous: StaffSystem, next: StaffSystem, gap: number
     following = new WeakMap()
     distances.set(previous, following)
   }
-  let collision = following.get(next)
-  if (collision === undefined) {
+  let distance = following.get(next)
+  if (distance === undefined) {
     const upper = sortedSpacing(previous), lower = sortedSpacing(next)
-    collision = sortedInkSeparation(upper, lower)
+    let collision = sortedInkSeparation(upper, lower)
     // The sweep skips degenerate intervals. Check only those remaining
     // pairs with the staff solver's original strict point-overlap semantics.
     for (const a of upper) if (a.right <= a.left)
       for (const b of lower) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
     for (const b of lower) if (b.right <= b.left)
       for (const a of upper) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
-    following.set(next, collision)
+    let edgeCollision = -Infinity
+    for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + b.gap)
+    for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + a.gap)
+    distance = { collision, edgeCollision }
+    following.set(next, distance)
   }
-  let edgeCollision = -Infinity
-  for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + b.gap)
-  for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + a.gap)
-  return Math.max(collision + gap / 2, edgeCollision)
+  return Math.max(distance.collision + gap / 2, distance.edgeCollision)
 }
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number, minimum = gap, maximum = gap): number {
   const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
@@ -471,6 +472,9 @@ export function paginateStaff(
       page.ys = ys
     }
   }
+  // Width search only needs page membership at the minimum gap. Stretching
+  // within those pages cannot affect that membership and is deferred to output.
+  if (maximum <= minimum) return pages
   for (const [index, page] of pages.entries()) {
     let lo = minimum,
       hi = Math.max(minimum, maximum)

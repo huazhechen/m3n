@@ -20,16 +20,21 @@ export { wrapNativeText }
 export type NativeHeaderPreparation = Map<string, unknown>
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = (nativeCoreGap(document) * .8), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = (nativeCoreGap(document) * .8), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation, commonPreparation?: NativeHeaderPreparation) {
   const once = <T>(key: string, create: () => T): T => {
     if (!preparation) return create()
     if (preparation.has(key)) return preparation.get(key) as T
     const value = create(); preparation.set(key,value); return value
   }
+  const common = <T>(key: string, create: () => T): T => {
+    if (!commonPreparation) return once(key, create)
+    if (commonPreparation.has(key)) return commonPreparation.get(key) as T
+    const value = create(); commonPreparation.set(key, value); return value
+  }
   const available = width - 2 * margin
   const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
   const title = once('title',()=>wrapNativeText(document.title, available - nativeStyle.headerWrapInset, nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
-  const headerContent = once('content',()=>numberedHeaderContent(document))
+  const headerContent = common('content',()=>numberedHeaderContent(document))
   const subtitleBlocks = once('subtitles',()=>headerContent.subtitles.map(text => wrapNativeText(text, available - nativeStyle.headerWrapInset, nativeStyle.subtitle, measurer)))
   const subtitle = subtitleBlocks.flat()
   const painter = new NativeSymbols(measurer)
@@ -59,13 +64,16 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
   }).join('')
   const creditsHeight = creditBottom
-  const signatures = [measureNativeControl('key', options.fixedDo ? '1=C' : transposedNumberedKeyLabel(document.key,options.transpose), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
+  const signatures = common('signatures', () => {
+    const signatures = [measureNativeControl('key', options.fixedDo ? '1=C' : transposedNumberedKeyLabel(document.key,options.transpose), measurer), measureNativeControl('meter', `${document.meterCount}/${document.meterUnit}`, measurer)]
   if (document.hasExplicitTempo) {
     signatures.push(measureNativeTempo({ unit: document.meterUnit, bpm: document.tempo * document.meterUnit / 4 * (options.tempoScale ?? 1) }, measurer))
   }
+    return signatures
+  })
   let signatureX = margin
   const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.signatureItemGap; return raw })
-  const range = numberedPitchRange(document,options)
+  const range = common('pitch-range', () => numberedPitchRange(document,options))
   if (range) {
     const size = nativeStyle.text
     const axis = nativeMusicAxis(measurer)
@@ -127,7 +135,8 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const creditsTop = sideTop + creditOffset
   const orderRows: { top: number; height: number; items: NativeOrderItem[] }[] = []
   let orderBottom = sideTop + sidesHeight
-  for (const [index, names] of numberedOrderLines(sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')), available, measurer, nativeStyle.text).entries()) {
+  const labels = common('order-labels', () => sectionOrderLabels(document,key=>transposedNumberedKeyLabel(key,options.transpose).replaceAll('#','♯').replaceAll('b','♭')))
+  for (const [index, names] of once('order-lines', () => numberedOrderLines(labels, available, measurer, nativeStyle.text)).entries()) {
     const labels = [{ text: index ? '→' : '演奏顺序：', framed: false }, ...names.flatMap((name, index) => [
       ...(index ? [{ text: '→', framed: false }] : []), { text: name, framed: true },
     ])]

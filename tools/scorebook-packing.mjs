@@ -1,5 +1,5 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
-import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, widthCandidates, widthMinimum, widthCannotWin, widthQualityUpperBound } from './scorebook-width.mjs'
 
 // Keep at least 1.25 default core gaps between scores (currently 36 logical px); never compress this to fit more works.
 export const sharedScoreGap = scoreLayoutConfig.scorebook.sharedScoreGap
@@ -10,6 +10,8 @@ export const packingPolicy = Object.freeze({ targetFill: .75, sparseBelow: .65, 
   sparseWeight: 8, crowdedWeight: 6, balanceWeight: 1, pageWeight: 1 })
 const safe = candidate => !candidate.error && candidate.pageCount > 0 && !candidate.outside.length && !candidate.overlaps.length
 const capacity = width => Math.floor(width * 273 / 186)
+const candidateAt = (entry, width) => entry.sharedCandidates?.find(candidate => candidate.width === width)
+  ?? entry.candidates.find(candidate => candidate.width === width)
 
 /** Score natural content at the source minimum core gap, before stretching page spacing. */
 export function pageDensityPenalty(fill) {
@@ -32,13 +34,12 @@ function sharedOption(entries, members, refine = true) {
   if (members.some(index => entries[index].sharePage === false)) return null
   // Sharing eligibility is checked at the configured admission level, independently of the solo search. Once a group passes,
   // choose its highest-quality common width.
-  const eligible = members.map(index => entries[index].candidates.find(candidate => candidate.width === sharedWidthMaximum))
+  const eligible = members.map(index => candidateAt(entries[index], sharedWidthMaximum))
   if (eligible.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
   const eligibilityHeight = eligible.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
   if (eligibilityHeight > capacity(sharedWidthMaximum) + .001) return null
   const optionAt = width => {
-    const candidates = members.map(index => entries[index].sharedCandidates?.find(candidate => candidate.width === width)
-      ?? entries[index].candidates.find(candidate => candidate.width === width))
+    const candidates = members.map(index => candidateAt(entries[index], width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return null
     const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
     if (usedHeight > capacity(width) + .001) return null
@@ -57,9 +58,100 @@ const sharedRefinementWidths = width => {
   return Array.from({ length: (upper - lower) / 6 + 1 }, (_, index) => lower + index * 6)
 }
 
+/** Exact lazy search: admission remains independent of solo ranking. Missing
+ * widths are measured only for groups that pass admission, and skipped only
+ * after the same quality bound proves they cannot replace a feasible winner. */
+async function refinePrunedSharedWidths(entries, measure, movableSections, signal) {
+  const ensure = async (index, width) => {
+    signal?.throwIfAborted()
+    const entry = entries[index]
+    if (candidateAt(entry, width)) return
+    let candidate
+    try { candidate = { width, ...await measure(entry, width) } }
+    catch (error) { candidate = { width, error: error.message } }
+    signal?.throwIfAborted()
+    entry.sharedCandidates ??= []
+    entry.sharedCandidates.push(candidate)
+  }
+  const admission = members => {
+    const candidates = members.map(index => candidateAt(entries[index], sharedWidthMaximum))
+    return candidates.every(candidate => candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight))
+      && candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1)) <= capacity(sharedWidthMaximum) + .001
+  }
+  const visit = async members => {
+    if (!admission(members)) return false
+    let best = null
+    const measureAt = async width => {
+      let height = sharedScoreGap * (members.length - 1)
+      // Reuse known members first. An invalid member or already excessive
+      // partial height proves the group cannot fit; the rest need no layout.
+      const order = [...members].sort((a, b) => Number(Boolean(candidateAt(entries[b], width))) - Number(Boolean(candidateAt(entries[a], width))))
+      for (const index of order) {
+        if (best) {
+          const bound = members.reduce((sum, member) => {
+            const candidate = candidateAt(entries[member], width)
+            return sum + (candidate && safe(candidate) ? numberedLayoutScore(candidate) : widthQualityUpperBound(width))
+          }, 0) / members.length
+          if (bound < numberedLayoutScore(best)) return
+        }
+        await ensure(index, width)
+        const candidate = candidateAt(entries[index], width)
+        if (!safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight)) return
+        height += candidate.naturalHeight
+        if (height > capacity(width) + .001) return
+      }
+    }
+    const coarseOrder = [...sharedWidthCandidates.filter((_, index) => index % 2 === 0),
+      ...sharedWidthCandidates.filter((_, index) => index % 2 === 1)]
+    for (const width of coarseOrder) {
+      if (widthCannotWin(width, best)) continue
+      await measureAt(width)
+      best = sharedOption(entries, members, false)
+    }
+    const coarse = best
+    if (!coarse) throw new Error('Admission width must be a feasible shared candidate')
+    for (const width of sharedRefinementWidths(coarse.width)) {
+      if (widthCannotWin(width, best)) continue
+      await measureAt(width)
+      best = sharedOption(entries, members)
+    }
+    return true
+  }
+  for (let start = 0; start < entries.length;) {
+    signal?.throwIfAborted()
+    let end = start + 1
+    if (entries[start].sharePage !== false) {
+      while (end < entries.length && entries[end].section === entries[start].section
+        && !entries[end].breakBefore && entries[end].sharePage !== false) end++
+    }
+    if (end - start > 1) {
+      for (let index = start; index < end; index++) await ensure(index, sharedWidthMaximum)
+      if (movableSections.has(entries[start].section)) {
+        const eligible = Array.from({ length: end - start }, (_, offset) => start + offset).filter(index => admission([index]))
+        const enumerate = async (members, from) => {
+          for (let index = from; index < eligible.length; index++) {
+            const next = [...members, eligible[index]]
+            if (next.length > 1 && !await visit(next)) continue
+            await enumerate(next, index + 1)
+          }
+        }
+        await enumerate([], 0)
+      } else {
+        for (let first = start; first < end; first++) {
+          for (let last = first + 2; last <= end; last++) {
+            if (!await visit(Array.from({ length: last - first }, (_, offset) => first + offset))) break
+          }
+        }
+      }
+    }
+    start = end
+  }
+}
+
 /** Measure the neighbors of every feasible group's coarse winner, before
  * chapter packing. Supplemental candidates never change solo width selection. */
-export async function refineSharedWidths(entries, measure, { movableSections = new Set(), signal } = {}) {
+export async function refineSharedWidths(entries, measure, { movableSections = new Set(), signal, prune = false } = {}) {
+  if (prune) return refinePrunedSharedWidths(entries, measure, movableSections, signal)
   const requests = new Map()
   const visit = members => {
     signal?.throwIfAborted()
@@ -159,7 +251,7 @@ function unorderedPacking(entries) {
   const indexes = new Map(bits.map((bit, index) => [bit, index]))
   const choices = Array.from({ length: entries.length }, (_, index) => [soloOption(entries[index], index)])
   const eligible = entries.flatMap((entry, index) => {
-    const candidate = entry.candidates.find(item => item.width === sharedWidthMaximum)
+    const candidate = candidateAt(entry, sharedWidthMaximum)
     return entry.sharePage !== false && candidate && safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight) ? [index] : []
   })
   // Only enumerate feasible groups; oversized prefixes need no supersets.

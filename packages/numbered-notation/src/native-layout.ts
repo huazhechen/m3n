@@ -15,7 +15,7 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { placeNativeAnnotations, nativeRegionTop, type NativeRegion } from './native-annotations.js'
 import { type ScoreDocument, type ScoreEvent } from '@m3n/notation'
-import { paginateNativeBlocks, type NativePageBlock } from './native-pagination.js'
+import { paginateNativeBlocks, prepareNativePagination, type NativePageBlock } from './native-pagination.js'
 import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
@@ -44,7 +44,7 @@ export type NativePage = { coreGap?: number; header?: string; index: number; wid
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
-  verticalBlocks: NativePageBlock[]; headerBlocks: { height: number; svg: string }[]
+  pagination: ReturnType<typeof prepareNativePagination>; verticalBlocks: NativePageBlock[]; headerBlocks: { height: number; svg: string }[]
 }
 
 function validate(options: NativeRenderOptions) {
@@ -190,7 +190,11 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
 }
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
-type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; relations?: NativeRelationPlan }
+type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | 'minimumEnd'> & {
+  columns: Array<{ minimumStart?: number; minimumEnd?: number }>
+}>
+type NativeLayoutPreparation = { projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
+  horizontal?: Map<string, HorizontalMinima> }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
  * preparation is shared: every candidate/trial still owns its placement state.
@@ -218,7 +222,7 @@ export class NativeLayoutTask {
   }
 }
 
-export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>): NativeLayout {
+export function layoutNativeScore(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, minimumQuality?: number): NativeLayout {
   validate(supplied)
   const cache = supplied.textMeasurementCache ?? new NumberedTextMeasurementCache()
   if (cache.synchronizeFonts() && timings) timings.textMeasureCacheResets = (timings.textMeasureCacheResets ?? 0) + 1
@@ -231,9 +235,18 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   // custom vertical gaps must not change the horizontal line breaks.
   if (supplied.minimumNoteGap !== undefined) return layoutNativeScoreAtGap(document, supplied, timings, supplied.layoutTask ? preparation : undefined)
   const minimumCoreGap = nativeCoreGap(document)
+  const horizontalTrials = new Map<number, ReturnType<typeof prepareNativeScoreAtGap>>()
+  if (minimumQuality !== undefined) {
+    for (const minimumNoteGap of [nativeStyle.minimumNoteGap, ...nativeStyle.noteGapCandidates.slice(1).reverse()]) {
+      horizontalTrials.set(minimumNoteGap, prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap }, timings, preparation))
+    }
+    const baselineRows = horizontalTrials.get(nativeStyle.minimumNoteGap)!.systemCount
+    if ([...horizontalTrials.values()].filter(trial => trial.systemCount <= baselineRows).every(trial => trial.score < minimumQuality))
+      throw Object.assign(new Error('Width cannot improve the one-page quality score'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
+  }
   let baseline: NativeLayout
   try {
-    baseline = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap: nativeStyle.minimumNoteGap }, timings, preparation)
+    baseline = horizontalTrials.get(nativeStyle.minimumNoteGap)?.complete() ?? layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap, minimumNoteGap: nativeStyle.minimumNoteGap }, timings, preparation)
   } catch (error) {
     // Continuous engraving still supports a single row taller than A4.
     if (!supplied.paged && error instanceof Error && error.message.includes('单个谱行')) {
@@ -246,8 +259,13 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   for (const minimumNoteGap of nativeStyle.noteGapCandidates.slice(1).reverse()) {
     let candidate: NativeLayout
     try {
-      candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
-        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation)
+      const trial = horizontalTrials.get(minimumNoteGap)
+      if (trial) {
+        if (trial.systemCount > selected.systems.length || trial.systemCount === selected.systems.length
+          && (trial.score < selectedScore || trial.score === selectedScore && minimumNoteGap >= selected.options.minimumNoteGap!)) continue
+        candidate = trial.complete()
+      } else candidate = layoutNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: minimumCoreGap,
+        minimumNoteGap, textMeasurer: baseline.measurer }, timings, preparation, { layout: selected, score: selectedScore })
     } catch (error) {
       // Wider spacing can make a decorated row too tall for one A4 page.
       // Other layout failures remain visible instead of becoming fallbacks.
@@ -267,7 +285,10 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
   return selected
 }
 
-function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation): NativeLayout {
+function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, selection?: { layout: NativeLayout; score: number }): NativeLayout {
+  return prepareNativeScoreAtGap(document, supplied, timings, preparation, selection).complete()
+}
+function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, selection?: { layout: NativeLayout; score: number }): { score: number; systemCount: number; complete(): NativeLayout } {
   let stageStarted = timings ? performance.now() : 0
   const record = (name: string) => {
     if (!timings) return
@@ -342,11 +363,37 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
   recordPart('relationPreparationMs', relationPreparationStarted)
   const available = options.width - 2 * margin
   const headerStarted = timings ? performance.now() : 0
-  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, (nativeCoreGap(document) * .8), options, preparation?.header)
+  if (preparation) preparation.commonHeader ??= new Map()
+  const header = nativeHeaderGeometry(headerDocument, options.width, margin, measurer, (nativeCoreGap(document) * .8), options, preparation?.header, preparation?.commonHeader)
   recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
   record('projectionMs')
-  measureNativeHorizontal(projection.measures, options)
+  // These minima depend on immutable music, gap and equal-measure settings,
+  // never on page width. Keep an unplaced measured projection for each gap;
+  // row splitting and final placement still belong to this candidate alone.
+  const horizontalKey = `${minimumNoteGap}:${minimumNoteGapFloor}:${options.equalMeasures ?? false}`
+  const measuredProjection = preparation?.horizontal?.get(horizontalKey)
+  if (measuredProjection) {
+    for (const [index, measure] of projection.measures.entries()) {
+      const measured = measuredProjection[index]!
+      measure.minimum = measured.minimum
+      measure.minimumStart = measured.minimumStart; measure.minimumEnd = measured.minimumEnd
+      for (const [columnIndex, column] of measure.columns.entries()) {
+        column.minimumStart = measured.columns[columnIndex]!.minimumStart
+        column.minimumEnd = measured.columns[columnIndex]!.minimumEnd
+      }
+    }
+    if (timings) timings.horizontalMeasureReuses = (timings.horizontalMeasureReuses ?? 0) + 1
+  } else {
+    measureNativeHorizontal(projection.measures, options)
+    if (preparation) {
+      preparation.horizontal ??= new Map()
+      preparation.horizontal.set(horizontalKey, projection.measures.map(measure => ({
+        minimum: measure.minimum, minimumStart: measure.minimumStart, minimumEnd: measure.minimumEnd,
+        columns: measure.columns.map(column => ({ minimumStart: column.minimumStart, minimumEnd: column.minimumEnd })),
+      })))
+    }
+  }
   record('horizontalMeasureMs')
   // A closing cross-row arc needs a full horizontal turn before its first
   // note. Reserve that space while choosing rows, rather than flattening it.
@@ -369,7 +416,7 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       || !first.continuation && first.source.events.some(event => event.sectionLabel)
   }
   const systemOf = new Map<NativeGlyph, number>()
-  for (const system of systems) {
+  const placeSystem = (system: NativeSystem) => {
     const leading = arcLeading(system.measures)
     const x = margin + leading
     if (leading > 0) system.arcContinuationLeft = margin
@@ -392,6 +439,29 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
   }
+  // Quality reads every row's unplaced minima, and only the final row's
+  // painted right edge. Place that row first; losing trials never need the
+  // other rows' glyphs, bars or lane geometry.
+  const lastSystem = systems.at(-1)
+  if (lastSystem) placeSystem(lastSystem)
+  record('horizontalPlacementMs')
+  // Gap ranking uses only horizontal rows and quality. A losing trial cannot
+  // become the winner through vertical fitting, so do not build its curves,
+  // lyric envelopes and page collision geometry. The baseline still receives
+  // full validation, and every replacement must complete the same engraving.
+  if (selection) {
+    const score = nativeLayoutScore({ options, margin, systems, pages: [] })
+    const previous = selection.layout
+    const wins = systems.length < previous.systems.length || systems.length === previous.systems.length
+      && (score > selection.score || score === selection.score && minimumNoteGap < previous.options.minimumNoteGap!)
+    if (!wins) {
+      if (timings) timings.horizontalRejectedTrials = (timings.horizontalRejectedTrials ?? 0) + 1
+      return { score: selection.score, systemCount: previous.systems.length, complete: () => previous }
+    }
+  }
+  return { score: nativeLayoutScore({ options, margin, systems, pages: [] }), systemCount: systems.length, complete: () => {
+  stageStarted = timings ? performance.now() : 0
+  for (const system of systems) if (system !== lastSystem) placeSystem(system)
   record('horizontalPlacementMs')
   const relationBounds = new Map<NativeSystem, NativeRegion[]>()
   for (const system of systems) {
@@ -511,15 +581,16 @@ function layoutNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderO
     return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
-    verticalBlocks: blocks, headerBlocks: header.blocks }
+    pagination: prepareNativePagination(blocks), verticalBlocks: blocks, headerBlocks: header.blocks }
   const gap = options.coreGap ?? (nativeCoreGap(document))
   const pageFitStarted = timings ? performance.now() : 0
-  const pagination = paginateNativeBlocks(blocks, { pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap), elastic: true })
+  const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
+    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
   positionNativeLayout(layout, pagination)
   if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
   record('verticalPaginationMs')
   return layout
+  } }
 }
 
 /** Reuse measured rows and ink; only vertical coordinates change. */
@@ -545,15 +616,15 @@ function positionNativeLayout(layout: NativeLayout, pagination: ReturnType<typeo
 }
 
 export function nativeContinuousPagination(layout: NativeLayout, coreGap: number) {
-  return paginateNativeBlocks(layout.verticalBlocks, { pageHeight: Infinity, margin: layout.margin, gap: coreGap, headerGap: nativeCoreGap(layout.document) * .8, elastic: true })
+  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, headerGap: nativeCoreGap(layout.document) * .8 })
 }
 
 /** Change page membership and vertical spacing without repeating horizontal layout. */
 export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, coreGap?: number) {
   const gap = coreGap ?? (nativeCoreGap(layout.document))
-  const pagination = paginateNativeBlocks(layout.verticalBlocks, {
+  const pagination = layout.pagination({
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap), elastic: true,
+    margin: layout.margin, gap, headerGap: nativeCoreGap(layout.document) * .8, maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap),
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

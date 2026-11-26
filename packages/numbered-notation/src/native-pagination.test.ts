@@ -3,7 +3,7 @@ import { describe,expect,it } from 'vitest';
 import { nativeLanePieces } from './native-lanes.js';
 import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js';
 import { nativeSystemCore } from './native-core.js';
-import { paginateNativeBlocks } from './native-pagination.js';
+import { paginateNativeBlocks, prepareNativePagination } from './native-pagination.js';
 const options = { pageHeight: 400, margin: 20, gap: 10 };
 describe('native measured-block pagination', () => {
     it('keeps the header and all pages at natural gaps, leaving unused space below', () => {
@@ -113,3 +113,18 @@ it('fits lyric gaps between 0.8em and the unchanged maximum while preserving col
     const ordinary = paginateNativeBlocks([{ ...ornament, coreGapScale: 1 }, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
     expect(ordinary.positions[1]!.top - ordinary.positions[0]!.top).toBeCloseTo(54.4);
 });
+
+it('reuses immutable ink constraints without retaining page membership or fitted gaps', () => {
+    const blocks = Array.from({ length: 8 }, (_, index) => ({ height: 48, baseline: 20,
+        core: { top: 8, bottom: 30 }, coreGapScale: index % 2 ? .6 : 1,
+        gapBefore: index % 3 ? 0 : 9,
+        ink: [{ left: 0, right: 40, top: 0, bottom: 48 }, { left: 45, right: 60, top: 12, bottom: 55 }],
+        boundaryInk: [{ left: 80, right: 90, top: -4, bottom: 5 }],
+    }))
+    const paginate = prepareNativePagination(blocks)
+    for (const pageHeight of [Infinity, 300, 900, 300, Infinity]) for (const gap of [16, 24]) {
+        const options = { pageHeight, margin: 12, gap, maxGap: gap * 1.1, elastic: true }
+        expect(paginate(options)).toEqual(paginateNativeBlocks(blocks, options))
+    }
+    expect(() => paginate({ pageHeight: 40, margin: 12, gap: 16 })).toThrow('单个谱行')
+})

@@ -63,15 +63,15 @@ describe('online scorebook with per-run layout reuse', () => {
   it('uses current automatic and shared widths, sharing complete scores with the same contents page', async () => {
     layouts()
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
-    expect(mocks.prepared).toHaveBeenCalledTimes(28)
-    expect(new Set(mocks.prepared.mock.calls.map(call => call[1].width))).toEqual(new Set([...Array.from({ length: 11 }, (_, index) => 528 + index * 24), 534, 540, 546]))
+    expect(mocks.prepared).toHaveBeenCalledTimes(14)
+    expect(new Set(mocks.prepared.mock.calls.map(call => call[1].width))).toEqual(new Set([528, 552, 534, 540, 546, 624]))
     expect(mocks.prepared.mock.calls[0][0]).toBe(mocks.prepared.mock.calls[1][0])
     expect(new Set(mocks.prepared.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
     expect(new Set(mocks.prepared.mock.calls.map(([, options]) => options.layoutTask)).size).toBe(1)
     expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 528 }), expect.objectContaining({ title: 'second', width: 528 })], 36)
     expect(result.scoreCount).toBe(2)
     expect(result.measurementTimings.scores).toHaveLength(2)
-    expect(result.measurementTimings.scores.every(score => score.candidates.length === 14)).toBe(true)
+    expect(result.measurementTimings.scores.every(score => score.candidates.length === 6)).toBe(true)
     expect(result.measurementTimings.stages.measurementMs).toBeGreaterThan(0)
     expect(result.measurementTimings.totalMs).toBeGreaterThanOrEqual(result.measurementTimings.stages.measurementMs)
     expect(result.sharedPages).toBe(1)
@@ -138,11 +138,11 @@ describe('online scorebook with per-run layout reuse', () => {
     layouts()
     mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1,
       lineDensityVariation: width === 768 || width === 606 ? 0 : width === 600 ? 1 : 3, lastLineSlack: 0 }))
-    await buildOnlineScorebook(new AbortController().signal, () => {})
+    const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.shared).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ title: 'first', width: 606 }), expect.objectContaining({ title: 'second', width: 606 }),
     ]), 36)
-    const requests = mocks.prepared.mock.calls.map(([document, options]) => `${document.title}:${options.width}`)
+    const requests = result.measurementTimings.scores.flatMap(score => score.candidates.map(candidate => `${score.file}:${candidate.width}`))
     expect(new Set(requests).size).toBe(requests.length)
     mocks.plan.entries[0].sharePage = false
     await buildOnlineScorebook(new AbortController().signal, () => {})
@@ -155,8 +155,8 @@ describe('online scorebook with per-run layout reuse', () => {
     await buildOnlineScorebook(new AbortController().signal, () => {})
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.load).toHaveBeenCalledTimes(4)
-    expect(mocks.prepared).toHaveBeenCalledTimes(56)
-    expect(mocks.prepared.mock.calls[0][1].textMeasurementCache).not.toBe(mocks.prepared.mock.calls[28][1].textMeasurementCache)
+    expect(mocks.prepared).toHaveBeenCalledTimes(28)
+    expect(mocks.prepared.mock.calls[0][1].textMeasurementCache).not.toBe(mocks.prepared.mock.calls[14][1].textMeasurementCache)
     expect(mocks.shared).toHaveBeenCalledTimes(2)
     expect(result.pages).toHaveLength(3)
   })

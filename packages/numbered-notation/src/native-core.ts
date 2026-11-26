@@ -20,12 +20,15 @@ export function weightedNativeCore(cells: readonly NativeInk[], profiles: readon
     const edges = [...new Set([cell.left, cell.right, ...peers.flatMap(p => [Math.max(cell.left, p.left), Math.min(cell.right, p.right)])])].sort((a, b) => a - b)
     for (let i = 1; i < edges.length; i++) {
       const left = edges[i - 1]!, right = edges[i]!, span = right - left
-      const extents = peers.filter(p => p.right > left && p.left < right).flatMap(p => {
-        const extent = p.range ? p.range(left, right) : p
-        return extent ? [extent] : []
-      })
-      upper += Math.min(0, cell.top, ...extents.map(p => p.top)) * span
-      lower += Math.max(0, cell.bottom, ...extents.map(p => p.bottom)) * span
+      let top = Math.min(0, cell.top), bottom = Math.max(0, cell.bottom)
+      for (const peer of peers) {
+        if (!(peer.right > left && peer.left < right)) continue
+        const extent = peer.range ? peer.range(left, right) : peer
+        if (!extent) continue
+        top = Math.min(top, extent.top); bottom = Math.max(bottom, extent.bottom)
+      }
+      upper += top * span
+      lower += bottom * span
       width += span
     }
   }

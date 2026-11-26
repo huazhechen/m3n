@@ -5,7 +5,8 @@ import { staffCharacterInk } from './staff-music-font.js'
 import type { StaffNumericPath } from './staff-glyph-primitive.js'
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
-export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; numericInk?: readonly Ink[]; renderNodes?: () => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
+export type XmlRenderOptions = { resolvedMusicGlyphs?: boolean }
+export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; numericInk?: readonly Ink[]; renderNodes?: (options?: XmlRenderOptions) => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
 export type Ink = { left: number; right: number; top: number; bottom: number }
 export const nodes = (node: XmlNode) => node.children.filter((child): child is XmlNode => typeof child !== 'string')
 export function hasClass(node: XmlNode, name: string): boolean {
@@ -25,13 +26,13 @@ export function findAll(node: XmlNode, match: (node: XmlNode) => boolean): XmlNo
   visit(node)
   return result
 }
-export const xml = (node: XmlNode | string): string =>
+export const xml = (node: XmlNode | string, options?: XmlRenderOptions): string =>
   typeof node === 'string'
     ? escapeXml(node)
-    : node.renderNodes ? node.renderNodes().map(xml).join('')
+    : node.renderNodes ? node.renderNodes(options).map(child => xml(child, options)).join('')
     : `<${node.tagName}${Object.entries(node.attributes)
         .map(([k, v]) => ` ${k}="${escapeXml(v)}"`)
-        .join('')}>${node.children.map(xml).join('')}</${node.tagName}>`
+        .join('')}>${node.children.map(child => xml(child, options)).join('')}</${node.tagName}>`
 const decode = (s: string) =>
   s.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (_, v: string) =>
     v.startsWith('#')

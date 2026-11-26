@@ -6,7 +6,7 @@ import { nativeBeamCount } from './native-note-metrics.js'
 import { solveNativeSpacing, type SpacingCell } from './native-spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
-export function nativeBarMetrics(kind: string | undefined) {
+function createBarMetrics(kind: string) {
   const size = nativeStyle.music * 1.25, thin = size * 0.065, thick = thin * 2.6, gap = thin * 1.8, radius = thin * 0.8
   const leftDots = kind === 'rptend' || kind === 'rptboth', rightDots = kind === 'rptstart' || kind === 'rptboth'
   const widths = kind === 'rptboth' ? [thin, thick, thin] : kind === 'dbl' ? [thin, thin] : kind === 'end' || leftDots ? [thin, thick] : rightDots ? [thick, thin] : [thin]
@@ -17,6 +17,14 @@ export function nativeBarMetrics(kind: string | undefined) {
   if (rightDots) { dots.push(width + gap + radius); width += gap + radius * 2 }
   const anchor = leftDots || rightDots ? bars[0]!.x + bars[0]!.width / 2 : width / 2
   return { size, width, anchor, bars, dots, radius }
+}
+const barMetrics = new Map<string, ReturnType<typeof createBarMetrics>>()
+/** Immutable geometry for the six bar forms; independent of fonts and scores. */
+export function nativeBarMetrics(kind: string | undefined) {
+  const key = kind && ['rptboth', 'dbl', 'end', 'rptend', 'rptstart'].includes(kind) ? kind : 'single'
+  let metrics = barMetrics.get(key)
+  if (!metrics) { metrics = createBarMetrics(key); barMetrics.set(key, metrics) }
+  return metrics
 }
 
 type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
@@ -52,7 +60,9 @@ const minimumCell = (lane: string, left: number, right: number, duration: number
 function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surrounding = measures): HorizontalItem[] {
   const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / (nativeStyle.music * .5)
   const items: HorizontalItem[] = []
-  const lanes = [...new Set(measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane))))]
+  const laneSet = new Set<string>()
+  for (const measure of measures) for (const column of measure.columns) for (const glyph of column.glyphs) laneSet.add(glyph.lane)
+  const lanes = [...laneSet]
   if (measures[0] && lanes.includes('bass')) items.push({ measure: measures[0], prefix: true, left: 0, right: nativeStyle.music,
     cells: lanes.map(lane => minimumCell(lane, 0, nativeStyle.music, 0, 0.45, scale)) })
   const bar = (measure: NativeMeasure, kind: string | undefined, opening = false) => {
@@ -63,7 +73,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       ? previous && nativeMeasureBars(surrounding, index - 1).closing === undefined ? previous : undefined
       : measure
     const prefix = navigationMeasure?.navigation?.length ? nativeStyle.navigationGap + navigationMeasure.navigation.reduce((sum, mark) => sum + mark.width + nativeStyle.navigationGap, 0) : 0
-    const lanes = [...new Set(measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.lane)))]
+    const laneSet = new Set<string>()
+    for (const column of measure.columns) for (const glyph of column.glyphs) laneSet.add(glyph.lane)
+    const lanes = [...laneSet]
     items.push({ measure, navigationMeasure, opening, boundary: true, left: geometry.anchor + prefix, right: geometry.width - geometry.anchor,
       // A bar has no musical duration; only its clearance matches a quarter note.
       cells: lanes.map(lane => minimumCell(lane, geometry.anchor + prefix, geometry.width - geometry.anchor, 1, (nativeStyle.music * .25), scale)) })
@@ -81,12 +93,15 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     }
     // A section heading introduces the repeat, rather than belonging inside it.
     // Its exterior clearance must be measured in the same order as it is painted.
-    if (firstColumn) controls(firstColumn, firstColumn.glyphs.flatMap(glyph => glyph.controls.filter(control => control.kind === 'section').map(control => ({control, lane: glyph.lane}))))
+    if (firstColumn?.glyphs.some(glyph => glyph.controls.some(control => control.kind === 'section')))
+      controls(firstColumn, firstColumn.glyphs.flatMap(glyph => glyph.controls.filter(control => control.kind === 'section').map(control => ({control, lane: glyph.lane}))))
     if (marks.opening) bar(measure, 'rptstart', true)
     for (const column of measure.columns) {
+      if (column.glyphs.some(glyph => glyph.controls.length)) {
       const membersByLane = column.glyphs.map(glyph => ({ lane: glyph.lane, controls: glyph.controls.filter(control => column !== firstColumn || control.kind !== 'section') }))
       for (let index = 0; index < Math.max(...membersByLane.map(member => member.controls.length)); index++) {
         controls(column, membersByLane.flatMap(member => member.controls[index] ? [{control: member.controls[index]!, lane: member.lane}] : []))
+      }
       }
       const cells = column.glyphs.map(glyph => {
         return minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left, glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, (nativeStyle.music * .25), scale)
@@ -210,15 +225,30 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   const items = itemsFor(measures, options)
   const result = solveNativeSpacing(items)
+  type Selection = { item: HorizontalItem; index: number }
+  const byMeasure = new Map<NativeMeasure, Selection[]>()
+  const byColumn = new Map<NativeColumn, Selection[]>()
+  for (const [index, item] of items.entries()) {
+    const selection = { item, index }
+    const selected = byMeasure.get(item.measure)
+    if (selected) selected.push(selection)
+    else byMeasure.set(item.measure, [selection])
+    for (const column of item.controlColumn && item.controlColumn !== item.column ? [item.column, item.controlColumn] : [item.column ?? item.controlColumn]) {
+      if (!column) continue
+      const owned = byColumn.get(column)
+      if (owned) owned.push(selection)
+      else byColumn.set(column, [selection])
+    }
+  }
   for (const measure of measures) {
-    const selected = items.map((item, index) => ({ item, index })).filter(({ item }) => item.measure === measure)
+    const selected = byMeasure.get(measure) ?? []
     const first = selected[0], last = selected.at(-1)
     if (!first || !last) continue
     const left = result.positions[first.index]! - Math.max(...first.item.cells.map(cell => cell.left))
     const right = result.positions[last.index]! + Math.max(...last.item.cells.map(cell => cell.right))
     measure.minimumStart = left; measure.minimumEnd = right; measure.minimum = right - left
     measure.columns.forEach((column, index) => {
-      const owned = selected.filter(({ item }) => item.column === column || item.controlColumn === column)
+      const owned = byColumn.get(column) ?? []
       column.minimumStart = index === 0 ? measure.minimumStart! : Math.min(...owned.map(({ item, index }) => result.positions[index]! - Math.max(...item.cells.map(cell => cell.left))))
       column.minimumEnd = index === measure.columns.length - 1 ? measure.minimumEnd! : Math.max(...owned.map(({ item, index }) => result.positions[index]! + Math.max(...item.cells.map(cell => cell.right))))
     })

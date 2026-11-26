@@ -1,6 +1,6 @@
 import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation'
 import glyphs from './staff-glyphs.json' with { type: 'json' }
-import { element, type Ink, type XmlNode } from './layout-svg.js'
+import { element, type Ink, type XmlNode, type XmlRenderOptions } from './layout-svg.js'
 
 export type StaffGlyph = keyof typeof glyphs
 export const staffMusicSize = () => scoreLayoutConfig.staff.music / scoreLayoutConfig.staff.engine.scale // SMuFL: one em = four staff spaces.
@@ -41,7 +41,14 @@ class MusicCharacter implements XmlNode {
   constructor(private readonly name: StaffGlyph, private readonly x: number, private readonly y: number, private readonly size: number) {
     this.numericInk = staffCharacterInk(glyphs[name].character, size, x, y)
   }
-  renderNodes(): XmlNode[] {
+  renderNodes(options?: XmlRenderOptions): XmlNode[] {
+    if (options?.resolvedMusicGlyphs) return [element('g', this.attributes, [element('g', {
+      transform: `matrix(${this.size / scoreLayoutConfig.fonts.measurementSize} 0 0 ${this.size / scoreLayoutConfig.fonts.measurementSize} ${this.x} ${this.y})`,
+      'font-family': scoreLayoutConfig.fonts.music, 'font-weight': String(scoreLayoutConfig.fonts.regularWeight), 'font-style': 'normal', 'aria-hidden': 'true',
+      'data-m3n-glyph': this.name,
+    }, [element('text', { x: '0', y: '0', 'font-size': String(scoreLayoutConfig.fonts.measurementSize),
+      'font-family': scoreLayoutConfig.fonts.music, 'font-weight': String(scoreLayoutConfig.fonts.regularWeight), 'font-style': 'normal', 'text-anchor': 'start',
+    }, [glyphs[this.name].character])])])]
     return [element('g', this.attributes, [element('text', { x: '0', y: '0', 'font-size': String(scoreLayoutConfig.fonts.measurementSize),
       transform: `matrix(${this.size / scoreLayoutConfig.fonts.measurementSize} 0 0 ${this.size / scoreLayoutConfig.fonts.measurementSize} ${this.x} ${this.y})`,
       'font-family': scoreLayoutConfig.fonts.music, 'font-weight': String(scoreLayoutConfig.fonts.regularWeight), 'font-style': 'normal', 'aria-hidden': 'true',

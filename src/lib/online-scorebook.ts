@@ -6,7 +6,7 @@ import { parseM3NDocument } from '@m3n/notation'
 import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
 import { a4ImagePlacement } from '@m3n/score-renderer/view'
 import { loadPresetScore, presetScores, preparePresetScores } from './samples'
-import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplaySettings } from './scorebook-renderer'
+import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplaySettings, type ScorebookCacheStats } from './scorebook-renderer'
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
 import { optimizeScorebook, refineSharedWidths, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
@@ -17,22 +17,31 @@ import { scorebookFrontPages } from './scorebook-front'
 export const scorebookTitle = plan.title
 export type ScorebookProgress = { completed: number; total: number; title: string; indeterminate?: boolean; phase?: 'downloading' | 'preparing' | 'measuring' | 'packing' | 'rendering' }
 export type OnlineScorebook = { pages: SVGSVGElement[]; scoreCount: number; sharedPages: number;
-  measurementTimings: { auditLayout: boolean; totalMs: number; stages: Record<string, number>; scores: {
-    file: string; parseFontsMs: number; wallMs: number; candidates: { width: number; timings: WidthTimings }[]
+  measurementTimings: { auditLayout: boolean; totalMs: number; stages: Record<string, number>; cacheStats?: ScorebookCacheStats; groups?: { files: string[]; width: number; pageCount: number }[]; scores: {
+    file: string; parseFontsMs: number; wallMs: number; selectedWidth?: number; candidates: { width: number; timings: WidthTimings }[]
   }[] }
 }
 type BookEntry = PackingEntry & { file: string; prepared: Map<number, PreparedBookScore>; slug: string; musicStart: number; pageCount: number }
 const svgNS = 'http://www.w3.org/2000/svg'
 const website = 'https://score.cheesefans.com/'
 
-function page(markup = '') {
+function page(markup: string | SVGSVGElement | (string | SVGSVGElement)[] = '') {
   const svg = document.createElementNS(svgNS, 'svg')
   svg.setAttribute('xmlns', svgNS)
   svg.setAttribute('viewBox', `0 0 ${plan.page.width} ${plan.page.height}`)
   svg.setAttribute('width', String(plan.page.width))
   svg.setAttribute('height', String(plan.page.height))
   // These are complete A4 pages; printing must not add a second paper margin.
-  svg.innerHTML = `<rect width="100%" height="100%" fill="white"/>${markup}`
+  const scores = Array.isArray(markup) ? markup : [markup]
+  if (scores.every(score => typeof score === 'string')) {
+    svg.innerHTML = `<rect width="100%" height="100%" fill="white"/>${scores.join('')}`
+  } else {
+    svg.innerHTML = '<rect width="100%" height="100%" fill="white"/>'
+    for (const score of scores) {
+      if (typeof score === 'string') svg.insertAdjacentHTML('beforeend', score)
+      else svg.append(score)
+    }
+  }
   return svg
 }
 
@@ -49,11 +58,11 @@ function linkScores(svg: SVGSVGElement, entries: BookEntry[]) {
   })
 }
 
-function inspectScoreMarkup(markup: string[], timings: Record<string, number> = {}) {
+function inspectScoreMarkup(markup: (string | SVGSVGElement)[], timings: Record<string, number> = {}) {
   const started = performance.now()
   const host = document.createElement('div')
   host.style.cssText = `position:absolute;left:${scoreLayoutConfig.rendering.auditOffscreenPosition}px;top:0`
-  host.innerHTML = markup.join('')
+  host.innerHTML = markup.map(score => typeof score === 'string' ? score : score.outerHTML).join('')
   document.body.append(host)
   timings.svgMountMs = (timings.svgMountMs ?? 0) + performance.now() - started
   try { return inspectScorePages([...host.querySelectorAll<SVGSVGElement>(':scope > svg')], timings) }
@@ -61,7 +70,7 @@ function inspectScoreMarkup(markup: string[], timings: Record<string, number> = 
 }
 
 /** Reuse measured layouts within one export; every invocation starts from the current sources. */
-export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void, { auditLayout = false, notationMode = readNotationMode(), measureNumbers = readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1 }: Partial<ScorebookDisplaySettings> & { auditLayout?: boolean } = {}): Promise<OnlineScorebook> {
+export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (progress: ScorebookProgress) => void, { auditLayout = false, pruneSearch = !auditLayout, notationMode = readNotationMode(), measureNumbers = readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1 }: Partial<ScorebookDisplaySettings> & { auditLayout?: boolean; pruneSearch?: boolean } = {}): Promise<OnlineScorebook> {
   const started = performance.now()
   const measurementTimings: OnlineScorebook['measurementTimings'] = { auditLayout, totalMs: 0, stages: {}, scores: [] }
   const files = new Map(presetScores.map(score => [score.sourcePath, score]))
@@ -69,7 +78,12 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     throw new Error('谱集配置与内置曲库不一致，请刷新页面重试。')
   }
   const entries: BookEntry[] = [], music: SVGSVGElement[] = []
-  const pause = async () => { await new Promise(resolve => setTimeout(resolve, 0)); signal.throwIfAborted() }
+  // A real task boundary preserves progress/cancellation without the 4ms
+  // minimum delay imposed on repeatedly nested timers.
+  const pause = async () => {
+    await (globalThis.scheduler?.postTask?.(() => {}) ?? new Promise(resolve => setTimeout(resolve, 0)))
+    signal.throwIfAborted()
+  }
   try {
     signal.throwIfAborted()
     await preparePresetScores({ signal, onProgress: value => {
@@ -106,7 +120,15 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     const renderer = await prepareScorebookRenderer({ notationMode, measureNumbers }, signal, auditLayout)
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
-      const progress = (fraction = 0) => onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      let lastProgress = -Infinity
+      const progress = (fraction = 0) => {
+        const now = performance.now()
+        // Publish at most 20 intermediate updates/second; every candidate still
+        // yields and checks cancellation, and each score publishes both ends.
+        if (fraction > 0 && fraction < 1 && now - lastProgress < 50) return
+        lastProgress = now
+        onProgress({ completed: index + fraction, total: plan.entries.length, title: entry.title, phase: 'measuring' })
+      }
       progress()
       try {
         const scoreStarted = performance.now()
@@ -116,13 +138,13 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         measurementTimings.scores.push(scoreTiming)
         const prepared = new Map<number, PreparedBookScore>()
         let completedWidths = 0
-        const { candidates } = await selectBestWidth(async width => {
+        const { candidates, best } = await selectBestWidth(async (width, best) => {
           await pause()
           signal.throwIfAborted()
           const widthStarted = performance.now()
           let timings: WidthTimings = {}
           try {
-            const measured = await renderer.measure(document, width)
+            const measured = await renderer.measure(document, width, pruneSearch && !auditLayout ? best : undefined)
             prepared.set(width, measured.prepared)
             timings = measured.candidate.timings
             return measured.candidate
@@ -132,8 +154,10 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
             // Each neighboring 24px interval adds three new 6px candidates.
             progress(++completedWidths / (widthCandidates.length + 6))
           }
-        }, { signal })
+        }, { signal, prune: pruneSearch && !auditLayout })
+        renderer.seal(document)
         progress(1)
+        Object.assign(scoreTiming, { selectedWidth: best.width })
         scoreTiming.wallMs = parseFontsMs + performance.now() - scoreStarted
         entries.push({ ...entry, prepared, slug: files.get(entry.file)!.slug, candidates, musicStart: 0, pageCount: 0 })
       } catch (error) {
@@ -162,8 +186,9 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         scoreTiming.candidates.push({ width, timings })
         scoreTiming.wallMs += performance.now() - started
       }
-    }, { movableSections, signal })
+    }, { movableSections, signal, prune: pruneSearch && !auditLayout })
     const packed = optimizeScorebook(entries, movableSections)
+    measurementTimings.groups = packed.groups.map(group => ({ files: packed.entries.slice(group.start, group.end).map(entry => entry.file), width: group.width, pageCount: group.pageCount }))
     measurementTimings.stages.packingMs = performance.now() - packingStarted
     const renderingStarted = performance.now()
     let sharedPages = 0
@@ -176,7 +201,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
         const rendered = await renderer.shared(members.map(entry => entry.prepared.get(group.width)!), group.width, sharedScoreGap)
         const safety = auditLayout ? inspectScoreMarkup(rendered.markup) : { outside: [], overlaps: [] }
         if (safety.outside.length || safety.overlaps.length) throw new Error(`合页实绘未通过边界或碰撞检查：${members.map(entry => entry.title).join(' / ')}`)
-        const svg = page(rendered.markup.join(''))
+        const svg = page(rendered.markup)
         let top = 0
         for (const score of svg.querySelectorAll<SVGSVGElement>(':scope > svg')) {
           const height = score.viewBox.baseVal.height
@@ -203,6 +228,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     signal.throwIfAborted()
     const pages = [...scorebookFrontPages({ ...plan, version: buildVersion }, packed.entries), ...music]
     measurementTimings.stages.renderingMs = performance.now() - renderingStarted
+    Object.assign(measurementTimings, { cacheStats: renderer.cacheStats })
     measurementTimings.totalMs = performance.now() - started
     return { pages, scoreCount: entries.length, sharedPages, measurementTimings }
   } finally { entries.length = 0 }

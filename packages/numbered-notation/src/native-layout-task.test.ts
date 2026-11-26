@@ -48,3 +48,15 @@ it('rebuilds preparation for new tasks, changed fonts, changed measurers and cha
   task = new NativeLayoutTask()
   expect(run().projectionBuilds).toBe(1)
 })
+
+it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('horizontal screening preserves complete engraving and rejects only certified scores: %s', file => {
+  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  for (const width of [528, 624, 768]) {
+    const options = { width, paged: true, pageMargin: 0, layoutTask, textMeasurementCache }
+    const reference = layoutNativeScore(document, options)
+    const screened = layoutNativeScore(document, options, undefined, 0)
+    expect(renderNativePages(screened)).toEqual(renderNativePages(reference))
+    expect(() => layoutNativeScore(document, options, undefined, 1.01)).toThrow('cannot improve')
+  }
+}, 60000)
