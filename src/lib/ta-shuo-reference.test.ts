@@ -39,7 +39,10 @@ it('preserves the uploaded Ta Shuo vocal line, including its second-verse and fi
   const text = performedWords(document)
   const verse = '他静悄悄地来过他慢慢带走沉默只是最后的承诺还是没有带走了寂寞我们爱的没有错只是美丽的独秀太折磨她说无所谓只要能在夜里翻来覆去的时候有寄托'
   const chorus = '等不到天黑烟火不会太完美回忆烧成灰还是等不到结尾她曾说的无所谓我怕一天一天被摧毁等不到天黑不敢凋谢的花蕾绿叶在跟随放开刺痛的滋味今后不再怕天明我想只是害怕清醒'
-  expect(text).toBe(verse + chorus + verse + chorus + chorus + '天明我想只是害怕清醒')
+  expect(text).toBe(verse + chorus + verse + chorus + chorus + '不怕天明我想只是害怕清醒')
+  const writtenLyrics = deriveScoreInteraction(document).lyricsByEvent
+  expect(written[51]!.events.map(event => (writtenLyrics.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
+    .toEqual(['', '', '不', '怕'])
   expect(categories.find(category => category.id === 'pop')!.files).toContain('ta_shuo_01.m3n')
   expect(plan.entries.find(entry => entry.id === 'ta_shuo')).toMatchObject({ file: 'ta_shuo_01.m3n', section: 'pop' })
   expect(plan.sourceCount).toBe(plan.entries.length)
@@ -75,10 +78,12 @@ it('preserves the full expanded performance while shortening the written score',
     return {
       bars: bars.map(bar => ({ interlude: Boolean(bar.interlude), events: bar.events.map(event =>
         ({ pitches: pitches.get(event) ?? [], beats: event.beats, tie: event.tie })) })),
-      lyrics: performedWords(document),
     }
   }
   expect(meaning(source)).toEqual(meaning(expandedReference))
+  // Keep the historical fixture unchanged; the PDF omitted these two pickup syllables.
+  expect(performedWords(parseM3NDocument(source))).toBe(performedWords(parseM3NDocument(expandedReference))
+    .replace(/天明我想只是害怕清醒$/, '不怕天明我想只是害怕清醒'))
 })
 
 it('encloses every lyric syllable spanning different pitches in a complete slur', () => {
