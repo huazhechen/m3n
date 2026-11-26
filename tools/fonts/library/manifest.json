@@ -1,7 +1,7 @@
 {
   "version": 1,
   "inputs": {
-    "config/scorebook/editorial-plan.json": "3576fa3240458c32ca5e400facde8fbf29019fa62b47177065710f158173ffa8",
+    "config/scorebook/editorial-plan.json": "f4f91eaed78320d15fb964530bd110dd4876a418d39d74f3396faa8d3ea5b2f4",
     "packages/numbered-notation/src/font-assets/Bravura.woff2": "ed50c84185424bccbbd9eef660bc8d57ba37e40ddf38a19fc40434682000bad8",
     "packages/numbered-notation/src/font-assets/NotoSansSC-full.ttf": "f76b49fecdb49994687e7a141e320e8956fc7cf6b814420ce2c305230dee305d",
     "packages/numbered-notation/src/font-data.ts": "a81446924435b4cc1b430b354a704b3c772561401ce98dfc92bb061c15f36a84",
@@ -13,7 +13,7 @@
     "src/scores/annie_01.m3n": "7bf3af121ee30b2f72c793d33a33320e8959b22b187a75dc1dd83e87fa4f830f",
     "src/scores/auld_lang_syne_01.m3n": "7e78bf442828d47e2c9725af99a0d7ead64191153e99e4b6bf49da5014802a4d",
     "src/scores/autumn_leaves_01.m3n": "07e7b7e72f44fcec4f36e98c55596be4b134c9ee74c395031ba7ce9983d2bfd2",
-    "src/scores/badinerie_bwv1067_01.m3n": "3c024186af8f1ec7cb07f557bf93317faf5e03c077094291402ecca69a3a875c",
+    "src/scores/badinerie_bwv1067_01.m3n": "2f5c9c253346f3ed379ee1cb2161b3aaec17711dc7c6a3dee85232cc7fff8b02",
     "src/scores/bai_hua_lin_01.m3n": "31ae4ede4b59bda76314156715b604af823e45b0bcf91220a22c3c6abb353d5c",
     "src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n": "f38e2d03c2d080fa910d8ab55ded259658f0344047dbe90984ce197b097276c8",
     "src/scores/beer_barrel_polka_01.m3n": "0c701d40c6e07d08b46b5a443fa6178da549a6c6ebeb5e919f7d44e39e6a1862",
