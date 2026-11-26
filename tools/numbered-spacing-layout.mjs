@@ -14,7 +14,7 @@ export async function initialize(fonts) {
   textMeasurementCache.synchronizeFonts()
 }
 
-export async function search(source, auditLayout = false, prune = false) {
+export async function search(source, auditLayout = false, prune = false, localRefine = false) {
   const started = performance.now()
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
@@ -34,7 +34,7 @@ export async function search(source, auditLayout = false, prune = false) {
       accumulate(measured.candidate.timings)
       return measured.candidate
     } catch (error) { accumulate(error.timings); throw error }
-  }, { prune: prune && !auditLayout })
+  }, { prune: prune && !auditLayout, localRefine: localRefine && !auditLayout })
   const searchMs = performance.now() - searchStarted
   const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
   return { timings, renderCache: result.renderCache, textMeasureCalls: timings.textMeasureCalls ?? 0,

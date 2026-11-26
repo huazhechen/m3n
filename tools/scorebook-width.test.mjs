@@ -456,3 +456,18 @@ test('numbered pruning uses the normalized font curve and preserves a 552px winn
   assert.deepEqual(pruned.best, exhaustive.best)
   assert(pruned.renderCache.skippedWidths.includes(768))
 })
+
+
+test('local refinement searches only the coarse winner neighbourhood and keeps safe pruning', async () => {
+  const fontCost = width => 3 * ((width - 528) / 240) ** 2
+  const measure = async width => ({ width, pageCount: 1, rows: 8, outside: [], overlaps: [],
+    totalCost: fontCost(width) + (width === 648 ? .05 : width === 534 ? .3 : 2) })
+  const full = await selectBestWidth(measure, { prune: true })
+  const local = await selectBestWidth(measure, { prune: true, localRefine: true })
+  assert.equal(local.best.width, 648)
+  assert.equal(full.best.width, 534)
+  assert(local.candidates.every(c => c.width % 24 === 0 || c.width >= 624 && c.width <= 672))
+  assert(!local.candidates.some(c => c.width === 534))
+  assert(local.renderCache.strategy.endsWith('-local'))
+  assert(local.renderCache.skippedWidths.includes(768))
+})

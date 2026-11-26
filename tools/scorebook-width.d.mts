@@ -25,9 +25,9 @@ export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 
 export class WidthSearchPruned extends Error { timings?: Record<string, number | Record<string, number>> }
 export function widthQualityUpperBound(width: number, numbered?: boolean): number
 export function widthCannotWin(width: number, best: Pick<WidthMeasurement, "width" | "totalCost" | "pageCount" | "qualityScore" | "lineDensityVariation" | "lastLineSlack" | "lineStretchPenalty"> | null): boolean
-export function probeWidthCandidates(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
+export function probeWidthCandidates(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; localRefine?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
   candidates: WidthMeasurement[]
   renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[] }
 }>
 
-export function selectBestWidth(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[] } }>
+export function selectBestWidth(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; localRefine?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[] } }>

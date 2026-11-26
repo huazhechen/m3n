@@ -39,7 +39,7 @@ export function chooseBestWidth(candidates) {
 }
 
 /** Search coarse levels, then refine within the winning level’s neighbors. */
-export async function probeWidthCandidates(measure, { verify, signal, prune = false } = {}) {
+export async function probeWidthCandidates(measure, { verify, signal, prune = false, localRefine = false } = {}) {
   const candidates = []
   const skippedWidths = []
   let requests = 0
@@ -79,7 +79,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     : widthCandidates
   for (const width of coarseOrder) await consider(width)
   const coarseBest = chooseBestWidth(candidates)
-  if (coarseBest?.totalCost !== undefined) {
+  if (coarseBest?.totalCost !== undefined && !localRefine) {
     // A break can improve abruptly in any coarse interval. Numbered notation
     // visits the entire 6px grid, pruning only by the certified font-cost bound.
     const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
@@ -91,7 +91,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
     for (let width = lower; width <= upper; width += widthStep / 4) if (!measured.has(width)) await consider(width)
   }
-  return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
+  return { candidates, renderCache: { strategy: widthSearchStrategy + (localRefine ? '-local' : ''), requests,
     uniqueWidths: requests, hits: 0, verifiedWidths, skippedWidths } }
 }
 
