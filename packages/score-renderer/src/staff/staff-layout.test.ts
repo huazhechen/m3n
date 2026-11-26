@@ -102,6 +102,40 @@ describe('staff layout contract', () => {
     }
   })
 
+  it.each([false, true])('keeps tempo outside an upper octave line regardless of drawing order (%s)', reversed => {
+    const tempo = element('g', { class: 'tempo' }, [element('text', { x: '70', y: '-10', 'font-size': '16' }, ['60'])])
+    const octave = element('g', { class: 'octave' }, [element('path', { d: 'M20 -60 H180', stroke: '#000', 'stroke-width': '1', fill: 'none' })])
+    const staff = element('g', { class: 'staff' }, [
+      ...[40, 50, 60, 70, 80].map(y => element('path', { class: 'staff-line', d: `M0 ${y} H320`, stroke: '#000', 'stroke-width': '1' })),
+      element('rect', { x: '70', y: '60', width: '10', height: '6' }),
+    ])
+    const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [staff]),
+      ...(reversed ? [octave, tempo] : [tempo, octave])])
+    const geometry = new SvgGeometry(node, textMeasurer())
+    const system = arrangeStaffSystem(node, geometry, 224, new Set())
+    expect(geometry.ink(tempo).bottom + 6 / STAFF_SCALE).toBeLessThanOrEqual(geometry.ink(octave).top + 1e-6)
+    expect(geometry.ink(octave).top).toBeCloseTo(-60.5)
+    expect(system.ink.top).toBeLessThan(geometry.ink(octave).top * STAFF_SCALE)
+  })
+
+  it.each([528, 768])('keeps combined tempo above explicit 8va on the initial and continuation systems at %s', width => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}{60qpm}\nN: {8va}{text=Lento}1e 2e 3e 4e | {br}{72qpm}{text=Meno}5e 6e 7e 1ee{/} |||').score)
+    const measure = textMeasurer(), lines = planStaffLines(document, width, false, measure, .25)
+    const systems = engraveStaffSystems(document, lines, width, measure, .25, false)
+    expect(systems).toHaveLength(2)
+    for (const system of systems) {
+      const geometry = new SvgGeometry(system.node, measure)
+      const tempo = findAll(system.node, n => hasClass(n, 'tempo'))[0]!
+      const octave = findAll(system.node, n => hasClass(n, 'octave'))[0]!
+      const ink = geometry.ink(tempo)
+      const covered = geometry.pieces(octave).filter(piece => overlapsX(ink, piece))
+      expect(covered.length).toBeGreaterThan(0)
+      expect(ink.bottom + 6 / STAFF_SCALE).toBeLessThanOrEqual(Math.min(...covered.map(piece => piece.top)) + 1e-6)
+      expect(findAll(tempo, n => hasClass(n, 'tempo-direction'))).toHaveLength(1)
+      expect(findAll(tempo, n => hasClass(n, 'tempo-metronome'))).toHaveLength(1)
+    }
+  })
+
   it('uses the stave rules as its core and expands gaps only for overlapping ink', () => {
     const makeSystem = (lyricX: number, withLyrics = true) => {
       const rules = [40, 50, 60, 70, 80].map(y => element('path', {

@@ -253,15 +253,17 @@ export function arrangeStaffSystem(
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
     isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
-      hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : isHairpin(attachment) ? -1 : 0
+      hasClass(attachment, 'repeatMark') ? 2 : hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row') ? 1 : hasClass(attachment, 'tempo') ? .5 : isHairpin(attachment) ? -1 : 0
   // Keep the section's directions next to its melody: tempo above heading,
-  // heading above directions, then music. Place the outer levels last.
+  // heading above directions, then music. Ordinary tempo is outside octave
+  // lines; place those outer levels last as well.
   const attachments = findAll(node, (n) => isMovableDecoration(n) && !hasClass(n, 'mNum') && !groupedHairpins.has(n) && !groupedEndings.has(n)).sort(
     (a, b) => placementOrder(a) - placementOrder(b),
   )
   const music = attachments.length ? musicObstacles() : []
   const obstacles = [...music]
   const placedDecorations: Array<{ lane?: number; pieces: Ink[] }> = []
+  const upperOctaves: Ink[] = []
   const laneMusic = new Map<number, Ink[]>()
   const belowMusic = (lane: number) => {
     let pieces = laneMusic.get(lane)
@@ -305,6 +307,12 @@ export function arrangeStaffSystem(
         ...placedDecorations.filter(item => item.lane === undefined || item.lane <= lane).flatMap(item => item.pieces)] : obstacles
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
     const clearance = ending ? (style.music * .07) / scale : localGap
+    if (hasClass(attachment, 'tempo')) {
+      // Octave lines belong to the notes. Tempo is always outside a crossed
+      // upper octave line, even if the inner gap could fit the text.
+      for (const piece of attachmentPieces) for (const octave of upperOctaves)
+        if (overlapsX(piece, octave, clearance / 2)) dy = Math.min(dy, octave.top - piece.bottom - clearance)
+    }
     if (ending) {
       // Empty space underneath a volta's horizontal rule is not ink. Let
       // high notes and slurs fit there when they clear the hooks and number.
@@ -337,6 +345,7 @@ export function arrangeStaffSystem(
     }
     const placed = geometry.pieces(attachment)
     obstacles.push(...placed)
+    if (hasClass(attachment, 'octave') && !below) upperOctaves.push(...placed)
     placedDecorations.push({ lane, pieces: placed })
     if (below && lane !== undefined && lane + 1 < lanes) {
       // Open the inter-staff space instead of letting a treble expression
