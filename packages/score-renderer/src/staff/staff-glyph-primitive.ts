@@ -8,6 +8,26 @@ export function staffCommandPath(commands: readonly StaffPathCommand[], x = 0, y
   return new CommandPath(commands, x, y)
 }
 const rounded = (value: number, precision: number) => Math.round(value * precision) / precision + 0
+/** Staff rules, stems and ledger lines need only one rounded segment. */
+export function staffLinePath(x1: number, y1: number, x2: number, y2: number): StaffNumericPath {
+  return new LinePath(x1, y1, x2, y2)
+}
+class LinePath implements StaffNumericPath {
+  readonly boxes: readonly Ink[]
+  readonly end: { x: number; y: number }
+  private serialized?: string
+  constructor(private readonly x1: number, private readonly y1: number, private readonly x2: number, private readonly y2: number, private readonly x = 0, private readonly y = 0) {
+    const a = rounded(x + x1, 1000), b = rounded(y + y1, 1000), c = rounded(x + x2, 1000), d = rounded(y + y2, 1000)
+    this.boxes = [{ left: Math.min(a, c), right: Math.max(a, c), top: Math.min(b, d), bottom: Math.max(b, d) }]
+    this.end = { x: c, y: d }
+  }
+  text(): string {
+    return this.serialized ??= `M${rounded(this.x + this.x1, 1000)} ${rounded(this.y + this.y1, 1000)}L${rounded(this.x + this.x2, 1000)} ${rounded(this.y + this.y2, 1000)}`
+  }
+  place(x: number, y: number): StaffNumericPath {
+    return new LinePath(this.x1, this.y1, this.x2, this.y2, this.x + x, this.y + y)
+  }
+}
 function commandAxis(commands: readonly StaffPathCommand[], origin: number, offset: number, precision: number): StaffPathAxis {
   const geometry = new StaffPathAxis()
   for (const { kind, values } of commands) {

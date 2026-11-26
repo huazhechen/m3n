@@ -40,8 +40,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   validate(width)
   const projected = measurements.document
   const expanded = needsStaffExpansion(score)
-  const displayedEvents = new Set(projected.measures.flatMap(measure => [measure.melody, measure.bass]
-    .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
   const referenceGap = scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.spacingIncrementSpaces
@@ -56,7 +54,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       ...costs, ...spacing, totalCost: costs.fontSizeCost + costs.overflowCost + spacing.spacingCost }
   }
   type Layout = {
-    systems: StaffSystem[]; pages: StaffPage[]; engraved?: boolean; fittedPages?: StaffPage[]; furniture: XmlNode[]
+    systems: StaffSystem[]; pages: StaffPage[]; gutterPublished?: boolean; engraved?: boolean; fittedPages?: StaffPage[]; furniture: XmlNode[]
     header: ReturnType<typeof staffHeader>; lines: StaffLine[]; spacing: number; paginationError?: Error
     quality: ReturnType<typeof qualityFor>
   }
@@ -106,28 +104,43 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const trials = scoreLayoutConfig.staff.noteGapCandidates.map(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const heights = heightCache(spacing)
+      // Preserve the last occurrence of a tuplet parent across fragments, just
+      // as the complete line scan does, without rescanning the score per row.
+      const eventMeasures = new Map<string, number>()
+      graph.measured.forEach((member, index) => {
+        for (const lane of [member.measure.melody, member.measure.bass]) for (const event of lane) {
+          eventMeasures.set(event.id, index)
+          for (const child of event.children ?? []) eventMeasures.set(child.id, index)
+        }
+      })
       const rowCache = new Map<string, StaffSystem>()
       const rowFor = (start: number, end: number, target?: number) => {
         const key = `${start}:${end}:${target ?? availableAt(candidateWidth) / STAFF_SCALE}`
         let system = rowCache.get(key)
         if (!system) {
-          const line = graph.makeLines([end], false, start)[0]!
+          const line = graph.makeLines([end], false, start, false)[0]!
           if (target !== undefined) line.target = target
-          const prefix = start ? graph.makeLines([start], false) : []
-          const suffix = end < graph.measured.length ? graph.makeLines([graph.measured.length], false, end) : []
-          // Outside rows supply only relation endpoint order; engrave this row
-          // alone. Its geometry is independent of how that outside is broken.
-          system = engraveStaffSystems(projected, [...prefix, line, ...suffix], musicWidth, measure, spacing,
-            Boolean(settings.measureNumbers), tempoScale, measurements.preparation, prefix.length)[0]!
+          system = engraveStaffSystems(projected, [line], musicWidth, measure, spacing,
+            Boolean(settings.measureNumbers), tempoScale, measurements.preparation, 0, id => {
+              const index = eventMeasures.get(id)
+              return index === undefined ? undefined : index < start ? -1 : index >= end ? 1 : 0
+            }, true)[0]!
           system.envelope = scoreHeightEnvelope({ height: system.ink.bottom, core: system.core, ink: [system.ink] },
             staffMusicCentre, Boolean(system.hasLyrics))
           rowCache.set(key, system)
         }
         return system
       }
+      const linePlans = new Map<string, StaffLine[]>()
+      const linesFor = (ends: number[]) => {
+        const key = ends.join(':')
+        let lines = linePlans.get(key)
+        if (!lines) { lines = graph.makeLines(ends); linePlans.set(key, lines) }
+        return lines
+      }
       const systemsFor = (ends: number[]) => {
         let start = 0
-        const lines = graph.makeLines(ends)
+        const lines = linesFor(ends)
         return ends.map((end, index) => { const system = rowFor(start, end, lines[index]!.target); start = end; return system })
       }
       const evaluate = (ends: number[]) => {
@@ -139,7 +152,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           return { ends, pages: Infinity, value: ends }
         }
       }
-      const greedy = evaluate(greedyScoreLines(graph.candidates)), optimum = evaluate(planScoreLinesGlobally(graph.candidates))
+      const optimum = evaluate(planScoreLinesGlobally(graph.candidates))
+      const greedyEnds = greedyScoreLines(graph.candidates)
+      // A one-page optimum cannot violate the greedy page ceiling.
+      const greedy = optimum.pages === 1 || greedyEnds.every((end, i) => end === optimum.ends[i]) && greedyEnds.length === optimum.ends.length
+        ? optimum : evaluate(greedyEnds)
       const canFit = optimum.pages > greedy.pages ? scoreWholeRowFeasibility(graph.candidates,
         (start, _end) => {
           const original = graph.measured[start]!.measure
@@ -155,7 +172,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }, [staffHeaderBlock(header.height)],
         { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3 }) : undefined
       const plan = planScoreLinesWithinPages(graph.candidates, greedy, optimum, evaluate, undefined, canFit)
-      const lines = graph.makeLines(plan.ends)
+      const lines = linesFor(plan.ends)
       let rowStart = 0
       const finalSystems = lines.map((line, index) => {
         const end = plan.ends[index]!, system = rowFor(rowStart, end, line.target)
@@ -167,13 +184,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     // Candidate rows are already measured and cached at their actual width.
     // Reuse the chosen row nodes for output as well as numeric pagination.
     const systems = trial.proxies
-    for (const system of systems) {
-      translate(system.node, gutter / STAFF_SCALE, 0)
-      system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))
-      system.spacingPieces = system.spacingPieces.map(piece => moveInk(piece, gutter, 0))
-      system.edgePieces = system.edgePieces.map(piece => ({ ...moveInk(piece, gutter, 0), gap: piece.gap }))
-      system.ink = moveInk(system.ink, gutter, 0); system.core = moveInk(system.core, gutter, 0)
-    }
     let pages: StaffPage[] = [], paginationError: Error | undefined
     try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap) }
     catch (error) {
@@ -183,6 +193,20 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const selected: Layout = { systems, pages, paginationError, furniture: [], header, lines: trial.lines, spacing: trial.spacing, quality: trial.quality, engraved: true }
     layouts.set(candidateWidth, selected)
     return selected
+  }
+  const publishGutter = (result: Layout) => {
+    if (result.gutterPublished) return
+    result.gutterPublished = true
+    const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
+    const systems = result.systems
+    for (const system of systems) {
+      system.materializeInk?.()
+      translate(system.node, gutter / STAFF_SCALE, 0)
+      system.pieces = system.pieces.map(piece => moveInk(piece, gutter, 0))
+      system.spacingPieces = system.spacingPieces.map(piece => moveInk(piece, gutter, 0))
+      system.edgePieces = system.edgePieces.map(piece => ({ ...moveInk(piece, gutter, 0), gap: piece.gap }))
+      system.ink = moveInk(system.ink, gutter, 0); system.core = moveInk(system.core, gutter, 0)
+    }
   }
   const outputPages = (result: Layout, paged: boolean, candidateWidth = width, coreGap = settings.coreGap) => {
     const gap = coreGap ?? minimumGap
@@ -197,6 +221,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const saved = cache.get(paged)
     if (saved && saved.coreGap === coreGap) return
     const result = layout(width)
+    publishGutter(result)
     const pages = outputPages(result, paged, width, coreGap)
     // Publish local painted bounds for interaction; SVG font line boxes can
     // extend far beyond the actual music glyphs.
@@ -290,6 +315,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     /** Compare scalar row/measure avoidance without changing production layout. */
     avoidanceComparison(candidateWidth = width) {
       const result = layout(candidateWidth)
+      publishGutter(result)
       const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
       return compareStaffAvoidance(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin,
         result.header.height, minimumGap, measure, gutter)
@@ -297,8 +323,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {
       const result = layout(candidateWidth)
+      publishGutter(result)
       return {
-        displayedEvents,
+        displayedEvents: new Set(projected.measures.flatMap(measure => [measure.melody, measure.bass]
+          .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size,
         heightEnvelopeDiagnostics: result.systems.flatMap((system, index) => {
           const envelope = system.envelope!
           const above = Math.max(0, staffMusicCentre - envelope.coreAbove - envelope.extraAbove - system.ink.top)

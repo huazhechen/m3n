@@ -4,7 +4,7 @@ import { analyzeM3N } from '@m3n/notation'
 import { createStaffMeasureMinimum, planStaffLines, type StaffMeasureMinimum } from './line-layout.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { textMeasurer, xml } from './layout-svg.js'
-import { createStaffPreparation, createStaffMeasure, drawStaffMeasure } from './staff-engine.js'
+import { createStaffPreparation, createStaffMeasure, drawStaffMeasure, staffReadingSpacing } from './staff-engine.js'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
@@ -27,6 +27,17 @@ describe('fixed staff measure preparation', () => {
           .toBe(xml(drawStaffMeasure(independent, independent.minimum + 80, 20)))
       }
     }
+  })
+  it('preserves lazy reading diagnostics after the drawing model is reused', () => {
+    const item = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 (2 3) 4 5 |||').score).measures[0]!
+    const model = createStaffMeasure(item, true, false, textMeasurer(), .6)
+    const expected = staffReadingSpacing(model.prepared, .6, 37).reading
+    const node = drawStaffMeasure(model, model.minimum + 37, 17)
+    drawStaffMeasure(model, model.minimum + 123, 50)
+    expect(xml(node)).toContain(`data-m3n-reading-ratio="${expected.worstRatio}"`)
+    expect(node.attributes['data-m3n-reading-ratio']).toBe(String(expected.worstRatio))
+    expect(node.attributes['data-m3n-reading-penalty']).toBe(String(expected.penalty))
+    expect(xml(node)).toContain(`data-m3n-reading-ratio="${expected.worstRatio}"`)
   })
   it('shares immutable descriptors within a task and isolates candidate anchors', () => {
     const item = projectStaffDocument(analyzeM3N('{4/4}\nN: 1 2 3 4 |||').score).measures[0]!

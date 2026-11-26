@@ -9,14 +9,44 @@ import { scorePhysicalSpacing } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
-import { planStaffLines } from './line-layout.js'
+import { planStaffLines, prepareStaffLineGraph } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
 describe('staff page packing', () => {
+  it('keeps cross-row relations when outside rows supply topology without spacing', () => {
+    const score = analyzeM3N('{4/4}\nN: (1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e) |||').score
+    const projected = projectStaffDocument(score), measure = textMeasurer()
+    const graph = prepareStaffLineGraph(projected, 600, false, measure, .6)
+    const lines = graph.makeLines([1, 2, 3], false)
+    const expected = engraveStaffSystems(projected, lines, 600, measure, .6, false)
+    for (let row = 0; row < 3; row++) {
+      const eventMeasures = new Map<string, number>()
+      graph.measured.forEach((member, index) => {
+        for (const lane of [member.measure.melody, member.measure.bass]) for (const event of lane) {
+          eventMeasures.set(event.id, index)
+          for (const child of event.children ?? []) eventMeasures.set(child.id, index)
+        }
+      })
+      const line = graph.makeLines([row + 1], false, row, false)[0]!
+      const actual = engraveStaffSystems(projected, [line], 600, measure, .6, false, 1, undefined, 0,
+        id => { const index = eventMeasures.get(id); return index === undefined ? undefined : index < row ? -1 : index > row ? 1 : 0 }, true)[0]!
+      expect(actual.ink).toEqual(expected[row]!.ink)
+      expect(actual.materializeInk).toBeTypeOf('function')
+      actual.materializeInk?.()
+      expect(actual.materializeInk).toBeUndefined()
+      expect(actual.pieces).toEqual(expected[row]!.pieces)
+      expect(actual.spacingPieces).toEqual(expected[row]!.spacingPieces)
+      expect(actual.edgePieces).toEqual(expected[row]!.edgePieces)
+      expect(xml(actual.node)).toBe(xml(expected[row]!.node))
+    }
+  })
   it('reuses engraving across gap fits with the same geometry and SVG as fresh layouts', async () => {
     const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
     const shared = await prepareStaffScore(score, { width: 550, coreGap: 20 })
+    shared.measurementInfo()
+    shared.pageCount(true)
+    shared.continuousHeight()
     for (const gap of [20, 48, 32, 20]) {
       const fresh = await prepareStaffScore(score, { width: 550, coreGap: gap })
       expect(shared.continuousHeight(gap)).toBe(fresh.continuousHeight())

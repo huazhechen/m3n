@@ -18,7 +18,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { envelope?: ScoreHeightEnvelope; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
+export type StaffSystem = { materializeInk?: () => void; envelope?: ScoreHeightEnvelope; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -39,6 +39,7 @@ export function arrangeStaffSystem(
   geometry: SvgGeometry,
   width: number,
   sectionHeadings: Set<string>,
+  deferPieces = false,
 ): StaffSystem {
   const classes = new Map<string, XmlNode[]>()
   const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending', 'mNum', 'staff-clef'])
@@ -380,22 +381,35 @@ export function arrangeStaffSystem(
     detach(node)
     node.children = [element('g', { transform: `translate(${inset} 0)` }, node.children), label]
   }
-  const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum', 'staff-clef'])
-  const pieces: Ink[] = [], spacingPieces: Ink[] = []
-  let spacingIndex = 0
-  for (const p of partition.all) {
-    const scaled = { left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }
-    pieces.push(scaled)
-    if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
-  }
   // The stave itself is the stable core. Notes, lyrics and controls only
   // enlarge a particular row gap when their actual ink requires clearance.
   const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
-  const edgePieces = ['ending', 'staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
-    (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
-      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'staff-clef' ? style.music * .1 : style.edgeGap })))
-  return { node, pieces, spacingPieces, edgePieces, ink: union(pieces), core, section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
+  const result: StaffSystem = { node, pieces: [], spacingPieces: [], edgePieces: [],
+    ink: { left: 0, right: 0, top: 0, bottom: 0 }, core,
+    section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
+  const materialize = () => {
+    const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum', 'staff-clef'])
+    const pieces: Ink[] = [], spacingPieces: Ink[] = []
+    let spacingIndex = 0
+    for (const p of partition.all) {
+      const scaled = { left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }
+      pieces.push(scaled)
+      if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
+    }
+    const edgePieces = ['ending', 'staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
+      (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
+        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'staff-clef' ? style.music * .1 : style.edgeGap })))
+    result.pieces = pieces; result.spacingPieces = spacingPieces; result.edgePieces = edgePieces
+    result.ink = union(pieces)
+    result.materializeInk = undefined
+  }
+  if (deferPieces) {
+    const ink = geometry.ink(node)
+    result.ink = { left: ink.left * scale, right: ink.right * scale, top: ink.top * scale, bottom: ink.bottom * scale }
+    result.materializeInk = materialize
+  } else materialize()
+  return result
 }
 const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, { collision: number; edgeCollision: number }>>()
 const orderedInk = new WeakMap<StaffSystem, Ink[]>()
@@ -405,6 +419,7 @@ function sortedSpacing(system: StaffSystem): Ink[] {
   return sorted
 }
 function systemInkDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
+  previous.materializeInk?.(); next.materializeInk?.()
   let following = distances.get(previous)
   if (!following) {
     following = new WeakMap()

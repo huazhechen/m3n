@@ -11,20 +11,24 @@ export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spaci
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
+  const widths = new WeakMap<StaffMeasure, Array<Map<number, number>>>()
   const minimum: StaffMeasureMinimum = (measure, first, spacing) => {
+    let variants = widths.get(measure)
+    if (!variants) { variants = [new Map(), new Map()]; widths.set(measure, variants) }
+    const index = first ? 1 : 0
+    const cached = variants[index]!.get(spacing)
+    if (cached !== undefined) return cached
     let pair = metrics.get(measure)
     if (!pair) { pair = []; metrics.set(measure, pair) }
-    const index = first ? 1 : 0
     let fixed = pair[index]
     if (!fixed) {
       fixed = pair[index] = preparation.measure(measure, first, hasBass, measureText).metrics
     }
-    return staffMinimumAtSpacing(fixed, spacing)
+    const value = staffMinimumAtSpacing(fixed, spacing)
+    variants[index]!.set(spacing, value)
+    return value
   }
-  minimum.preferred = (measure, first, spacing) => {
-    minimum(measure, first, spacing)
-    return staffMinimumAtSpacing(metrics.get(measure)![first ? 1 : 0]!, spacing, true)
-  }
+  minimum.preferred = minimum
   const localReadings = new WeakMap<StaffMeasure, Map<string, number>>()
   minimum.localReading = (measure, spacing, extra) => {
     let variants = localReadings.get(measure)
@@ -38,7 +42,15 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
     return penalty
   }
   minimum.rhythmic = (measure, first, spacing, extra) => staffRhythmicSpacing(preparation.measure(measure, first, hasBass, measureText), spacing, extra)
-  minimum.weight = measure => preparation.measure(measure, false, hasBass, measureText).weights.reduce((sum, weight) => sum + weight, 0) || 1
+  const weights = new WeakMap<StaffMeasure, number>()
+  minimum.weight = measure => {
+    let weight = weights.get(measure)
+    if (weight === undefined) {
+      weight = preparation.measure(measure, false, hasBass, measureText).weights.reduce((sum, weight) => sum + weight, 0) || 1
+      weights.set(measure, weight)
+    }
+    return weight
+  }
   const descriptions = new WeakMap<StaffMeasure, StaffMeasureDescription>()
   minimum.describe = measure => {
     let description = descriptions.get(measure)
@@ -107,7 +119,7 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
     }
     return rows
   })
-  const makeLines = (ends: number[], shorten = true, begin = 0) => {
+  const makeLines = (ends: number[], shorten = true, begin = 0, rhythmic = true) => {
     const lines: StaffLine[] = []
     let start = begin
     for (const end of ends) {
@@ -115,7 +127,7 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
       const weight = members.reduce((sum, member) => sum + member.weight, 0)
       const line: StaffLine = { measures: members, minimum: minimumWidth, reading: minimumWidth,
         target: Math.max(available, minimumWidth), weight }
-      if (minimum.rhythmic) {
+      if (rhythmic && minimum.rhythmic) {
         let gap = 0, weights = 0
         members.forEach((member, index) => {
           const cell = equal ? (line.target - members[0]!.head) / members.length - member.body

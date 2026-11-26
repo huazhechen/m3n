@@ -2,7 +2,7 @@ import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scor
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
-import { staffCommandPath } from './staff-glyph-primitive.js'
+import { staffCommandPath, staffLinePath } from './staff-glyph-primitive.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
 
 const style = scoreLayoutConfig.staff
@@ -20,19 +20,35 @@ export type StaffMeasureMetrics = {
   columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
 /** Hard rhythmic minima followed only by nonnegative stretching. */
-export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
-  const base = staffColumnSpacing(prepared.metrics, spacing)
-  const edgeWeight = (prepared.weights.at(-1) ?? 1) / 2
-  const weights = [edgeWeight, ...prepared.weights.slice(0, -1), edgeWeight]
-  const total = weights.reduce((sum, weight) => sum + weight, 0)
-  const occupied = prepared.metrics.start + base.minimumWidth + staffMusicSize() / 4 + prepared.metrics.endInset
-  const surplus = Math.max(0, extra) + Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied)
+const spacingBases = new WeakMap<PreparedMeasure, Map<number, {
+  positions: readonly number[]; weights: number[]; total: number; correction: number
+}>>()
+function staffSpacingPositions(prepared: PreparedMeasure, spacing: number, extra: number) {
+  let variants = spacingBases.get(prepared)
+  if (!variants) { variants = new Map(); spacingBases.set(prepared, variants) }
+  let basis = variants.get(spacing)
+  if (!basis) {
+    const base = staffColumnSpacing(prepared.metrics, spacing)
+    const edgeWeight = (prepared.weights.at(-1) ?? 1) / 2
+    const weights = [edgeWeight, ...prepared.weights.slice(0, -1), edgeWeight]
+    const total = weights.reduce((sum, weight) => sum + weight, 0)
+    const occupied = prepared.metrics.start + base.minimumWidth + staffMusicSize() / 4 + prepared.metrics.endInset
+    basis = { positions: base.positions, weights, total,
+      correction: Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied) }
+    variants.set(spacing, basis)
+  }
+  const { weights, total } = basis
+  const surplus = Math.max(0, extra) + basis.correction
   let offset = total > 0 ? surplus * weights[0]! / total : 0
-  const positions = base.positions.map((position, index) => {
+  const positions = basis.positions.map((position, index) => {
     const value = position + offset
     offset += total > 0 ? surplus * weights[index + 1]! / total : 0
     return value
   })
+  return positions
+}
+export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
+  const positions = staffSpacingPositions(prepared, spacing, extra)
   const reading = scoreReadingWindows(positions.map((x, index) => ({ beat: prepared.onsets[index]!, x,
     preferredNext: prepared.metrics.columns[index]!.naturalAdvance })))
   return { positions, reading, compressionPenalty: 0 }
@@ -40,7 +56,7 @@ export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, 
 /** Final physical whitespace / LilyPond duration weights, in logical px.
  * Boundary springs represent the last event's duration, not a free extra gap. */
 export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
-  const positions = staffReadingSpacing(prepared, spacing, extra).positions
+  const positions = staffSpacingPositions(prepared, spacing, extra)
   const head = staffGlyphMetrics('noteheadBlack'), headWidth = head.right - head.left
   const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
   let gap = 0, weight = 0
@@ -430,14 +446,15 @@ export function createStaffMeasure(measure: StaffMeasure, first: boolean, hasBas
   const entries = prepared.entries.map(lane => lane.map(entry => ({ item: entry.item, notes: entry.notes.map(note => ({
     prepared: note, x: 0, ys: [], headLeft: 0, headRight: 0, direction: note.direction, stemX: 0, stemEnd: 0,
   } as StaffNoteAnchor)) })))
-  const beams = prepared.beams.map(beam => ({ lane: beam.lane, notes: beam.indices.map(i => entries[beam.lane]!.flatMap(entry => entry.notes)[i]!) }))
+  const flatNotes = prepared.beams.length ? entries.map(lane => lane.flatMap(entry => entry.notes)) : []
+  const beams = prepared.beams.map(beam => ({ lane: beam.lane, notes: beam.indices.map(i => flatNotes[beam.lane]![i]!) }))
   for (const beam of beams) for (const note of beam.notes) note.beam = beam
   return { prepared, entries, beams, measureText, staves: [0, ...(hasBass ? [bassY] : [])].map(y => ({ x: 0, y, width: 0, noteStartX: 0 })),
     metrics: prepared.metrics, minimum: staffMinimumAtSpacing(prepared.metrics, spacing), start: prepared.metrics.start, endInset: prepared.metrics.endInset, measure, spacing, joinedRepeat: Boolean(measure.joinsPreviousRepeat && !first) }
 }
 export function staffLine(x1: number, y1: number, x2: number, y2: number, width = (staffMusicSize() / 4 * 0.1), cls?: string): XmlNode {
   const node = element('path', { stroke: '#000', 'stroke-width': String(width), fill: 'none', ...(cls ? { class: cls } : {}) })
-  setNumericPath(node, staffCommandPath([{ kind: 0, values: [x1, y1] }, { kind: 1, values: [x2, y2] }]))
+  setNumericPath(node, staffLinePath(x1, y1, x2, y2))
   return node
 }
 function drawSignature(signature: Signature, x: number, y: number): XmlNode[] {
@@ -471,31 +488,51 @@ export function drawStaffBar(type: string | undefined, x: number, y: number, lef
   }
   return element('g', { class: 'staff-bar' }, lines)
 }
+type FixedNoteGeometry = {
+  left: number; right: number; top: number; bottom: number
+  glyph: ReturnType<typeof staffGlyphMetrics>; ledgers: Array<{ y: number; xs: number[] }>
+}
+const fixedNoteGeometry = new WeakMap<PreparedNote, FixedNoteGeometry>()
+function noteGeometry(note: PreparedNote): FixedNoteGeometry {
+  let saved = fixedNoteGeometry.get(note)
+  if (saved) return saved
+  const rows = new Map<number, number[]>()
+  if (!note.rest) for (const head of note.heads) {
+    const add = (y: number) => {
+      const xs = rows.get(y)
+      if (xs) xs.push(head.x)
+      else rows.set(y, [head.x])
+    }
+    for (let y = staffMusicSize() - staffMusicSize() / 4; y >= head.y; y -= staffMusicSize() / 4) add(y)
+    for (let y = staffMusicSize() * 2 + staffMusicSize() / 4; y <= head.y; y += staffMusicSize() / 4) add(y)
+  }
+  saved = { left: Math.min(...note.heads.map(h => h.x)), right: Math.max(...note.heads.map(h => h.x)),
+    top: Math.min(...note.heads.map(h => h.y)), bottom: Math.max(...note.heads.map(h => h.y)),
+    glyph: staffGlyphMetrics(note.head, note.size), ledgers: [...rows].map(([y, xs]) => ({ y, xs })) }
+  fixedNoteGeometry.set(note, saved)
+  return saved
+}
 function positionNote(note: StaffNoteAnchor, x: number, y: number) {
-  const p = note.prepared
+  const p = note.prepared, fixed = noteGeometry(p)
   note.x = x; note.direction = p.direction
   note.ys = p.heads.map(h => y + h.y)
-  note.headLeft = x + Math.min(...p.heads.map(h => h.x))
-  note.headRight = x + Math.max(...p.heads.map(h => h.x)) + staffGlyphMetrics(p.head, p.size).right
-  const mainWidth = staffGlyphMetrics(p.head, p.size).right
+  note.headLeft = x + fixed.left
+  note.headRight = x + fixed.right + fixed.glyph.right
+  const mainWidth = fixed.glyph.right
   note.stemX = x + (p.direction === 1 ? mainWidth - (p.size / 4 * 0.06) : (p.size / 4 * 0.06))
   const outer = p.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
   note.stemEnd = outer - p.direction * Math.max(p.size * 0.875, p.size * 0.625 + Math.max(0, Math.log2(p.dur / 8)) * (p.size / 4 * 0.5))
 }
 function drawNote(note: StaffNoteAnchor, staveY: number): XmlNode[] {
-  const p = note.prepared, size = p.size, unit = size / 4, result: XmlNode[] = []
+  const p = note.prepared, size = p.size, unit = size / 4, result: XmlNode[] = [], fixed = noteGeometry(p)
   if (p.signature.width) result.push(element('g', { class: 'inline-signature' }, drawSignature(p.signature, note.x - p.left, staveY)))
   if (!p.rest) {
-    const ledger = new Map<number, { left: number; right: number }>()
-    for (const head of p.heads) {
-      const add = (y: number) => {
-        const old = ledger.get(y), left = note.x + head.x - unit * .3, right = note.x + head.x + staffGlyphMetrics(p.head, size).right + unit * .3
-        ledger.set(y, { left: Math.min(old?.left ?? left, left), right: Math.max(old?.right ?? right, right) })
+    for (const { y, xs } of fixed.ledgers) {
+      let left = Infinity, right = -Infinity
+      for (const x of xs) {
+        left = Math.min(left, note.x + x - unit * .3)
+        right = Math.max(right, note.x + x + fixed.glyph.right + unit * .3)
       }
-      for (let y = staffMusicSize() - (staffMusicSize() / 4); y >= head.y; y -= (staffMusicSize() / 4)) add(y)
-      for (let y = (staffMusicSize() * 2) + (staffMusicSize() / 4); y <= head.y; y += (staffMusicSize() / 4)) add(y)
-    }
-    for (const [y, { left, right }] of ledger) {
       const line = staffLine(left, staveY + y, right, staveY + y, unit * .1, 'ledger-line')
       if (note.beam) line.attributes['data-m3n-join'] = `${note.stemX},${note.stemEnd}`
       result.push(line)
@@ -510,9 +547,9 @@ function drawNote(note: StaffNoteAnchor, staveY: number): XmlNode[] {
     if (p.dur >= 8 && !note.beam) result.push(staffGlyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size))
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
-    ? Math.min(0, note.stemEnd - (staffMusicSize() / 4 * 0.6) - (staveY + Math.min(staffMusicSize(), ...p.heads.map(head => head.y)) - (staffMusicSize() / 4 * 1))) : 0
-  let articulationTop = Math.min(...p.heads.map(head => head.y)) + staffGlyphMetrics(p.head, size).top
-  let articulationBottom = Math.max(...p.heads.map(head => head.y)) + staffGlyphMetrics(p.head, size).bottom
+    ? Math.min(0, note.stemEnd - (staffMusicSize() / 4 * 0.6) - (staveY + Math.min(staffMusicSize(), fixed.top) - (staffMusicSize() / 4 * 1))) : 0
+  let articulationTop = fixed.top + fixed.glyph.top
+  let articulationBottom = fixed.bottom + fixed.glyph.bottom
   for (const s of p.symbols) {
     if (!p.rest && s.glyph.startsWith('artic')) {
       // Beam grouping can reverse a note's initial stem. Choose the side only
@@ -653,8 +690,8 @@ function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, 
 export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false): XmlNode {
   const { prepared } = model
   const extra = Math.max(0, width - model.minimum)
-  const readingSpacing = staffReadingSpacing(prepared, model.spacing, extra)
-  const positions = readingSpacing.positions.map(position => x + model.start + position)
+  const localPositions = staffSpacingPositions(prepared, model.spacing, extra)
+  const positions = localPositions.map(position => x + model.start + position)
   const duration = Math.max(0, ...model.entries.flatMap(lane => lane.map(entry => entry.item.onset + entry.item.beats)))
   // Range marks end at the event's time boundary, including space occupied by
   // a sustained note. Interpolate shared columns so a longer note can end
@@ -679,9 +716,19 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     }
   }
   model.beams.forEach(positionBeam)
-  const measureNode = element('g', { id: model.measure.id, class: 'measure',
-    'data-m3n-reading-ratio': String(readingSpacing.reading.worstRatio),
-    'data-m3n-reading-penalty': String(readingSpacing.reading.penalty) })
+  const measureNode = element('g', { id: model.measure.id, class: 'measure' })
+  // Audit-only attributes are materialized together with the SVG element.
+  // Candidate geometry only needs the captured local positions and children.
+  measureNode.renderNodes = () => {
+    if (measureNode.attributes['data-m3n-reading-ratio'] === undefined) {
+      const reading = scoreReadingWindows(localPositions.map((x, index) => ({
+        beat: prepared.onsets[index]!, x, preferredNext: prepared.metrics.columns[index]!.naturalAdvance,
+      })))
+      measureNode.attributes['data-m3n-reading-ratio'] = String(reading.worstRatio)
+      measureNode.attributes['data-m3n-reading-penalty'] = String(reading.penalty)
+    }
+    return [element('g', measureNode.attributes, measureNode.children)]
+  }
   for (const [lane, stave] of model.staves.entries()) {
     const staff = element('g', { class: 'staff', 'data-staff': lane ? 'bass' : 'melody' })
     for (let i = 0; i < 5; i++) staff.children.push(staffLine(x, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, x + width, stave.y + staffMusicSize() + (staffMusicSize() / 4) * i, (staffMusicSize() / 4 * 0.1), 'staff-line'))

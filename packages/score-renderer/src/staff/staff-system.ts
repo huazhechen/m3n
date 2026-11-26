@@ -67,7 +67,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation?: StaffPreparation, selectedLine?: number) {
+  preparation?: StaffPreparation, selectedLine?: number, endpointLine?: (id: string) => number | undefined, deferPieces = false) {
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
@@ -86,7 +86,12 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
   if (!relations) { relations = prepareSystemRelations(document); plans?.set(document, relations) }
   const { intervals, ties, endpoints, intervalEndpoints, endingRanges } = relations
   const lineOf = new Map<string, number>()
-  lines.forEach((line, i) => line.measures.forEach(m => {
+  if (endpointLine) {
+    for (const id of intervalEndpoints) {
+      const index = endpointLine(id)
+      if (index !== undefined) lineOf.set(id, index)
+    }
+  } else lines.forEach((line, i) => line.measures.forEach(m => {
     for (const lane of [m.measure.melody, m.measure.bass]) for (const e of lane) {
       if (intervalEndpoints.has(e.id)) lineOf.set(e.id, i)
       for (const child of e.children ?? []) if (intervalEndpoints.has(child.id)) lineOf.set(child.id, i)
@@ -261,12 +266,12 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         ]))
       }
       const tieGeometry = new SvgGeometry(node, measureText, true)
-      const tieSignatures = ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
+      const tieSignatures = ties.length ? ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
         .flatMap(staff => findAll(staff, n => hasClass(n, 'staff-signature') || hasClass(n, 'inline-signature'))
-          .flatMap(signature => tieGeometry.pieces(signature))))
-      const barJoins = findAll(node, n => hasClass(n, 'staff-bar'))
+          .flatMap(signature => tieGeometry.pieces(signature)))) : []
+      const barJoins = ties.length ? findAll(node, n => hasClass(n, 'staff-bar'))
         .flatMap(bar => findAll(bar, n => Boolean(n.attributes['data-m3n-join'])))
-        .map(rule => rule.attributes['data-m3n-join']!).join(' ')
+        .map(rule => rule.attributes['data-m3n-join']!).join(' ') : ''
       for (const tie of ties) {
         const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
         if (!first && !last) continue
@@ -293,14 +298,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const yTop = (models[0]!.staves[lane]?.y ?? 0) + staffMusicSize()
         const low = (models[0]!.staves[lane]?.y ?? 0) + (staffMusicSize() * 2)
         if (interval.kind === 'lg') {
-          const music = slurMusic[lane] ??= new SvgGeometry(node, measureText, true).pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
+          const music = slurMusic[lane] ??= tieGeometry.pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
           const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left))
           slur.attributes['data-m3n-staff'] = String(lane)
           node.children.push(slur)
-          music.push(...new SvgGeometry(slur, measureText, true).pieces(slur))
+          music.push(...tieGeometry.pieces(slur))
         } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
           if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam', { 'data-m3n-staff': String(lane) }))
           else {
@@ -321,8 +326,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const e = m.measure.melody[0]?.event
         return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + style.sectionLabelInset > width / 2)
       }).map(m => m.id))
-      const geometry = new SvgGeometry(node, measureText, true)
-      const system = arrangeStaffSystem(node, geometry, width, headings)
+      const geometry = tieGeometry
+      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces)
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system
     }

@@ -1,9 +1,21 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { element, nodes, readXml, setNumericPath, SvgGeometry, xml } from './layout-svg.js'
-import { staffCommandPath } from './staff-glyph-primitive.js'
+import { staffCommandPath, staffLinePath } from './staff-glyph-primitive.js'
 const measure = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 describe('numeric music primitives', () => {
+  it('matches general line paths exactly before and after placement', () => {
+    for (const [x1, y1, x2, y2] of [[0, 0, 123.456789, 0], [-1.0005, 2.9995, 1.234567, -0.00001], [5, 20, 5, -30]]) {
+      const specialized = staffLinePath(x1!, y1!, x2!, y2!)
+      const general = staffCommandPath([{ kind: 0, values: [x1!, y1!] }, { kind: 1, values: [x2!, y2!] }])
+      for (const [x, y] of [[0, 0], [12.0005, -130.9999]]) {
+        const actual = specialized.place(x!, y!), expected = general.place(x!, y!)
+        expect(actual.boxes).toEqual(expected.boxes)
+        expect(actual.end).toEqual(expected.end)
+        expect(actual.text()).toBe(expected.text())
+      }
+    }
+  })
   it('reuses only an identical absolute axis across repeated placements', () => {
     const primitive = staffCommandPath([
       { kind: 0, values: [-1.333333, 2.666666] },

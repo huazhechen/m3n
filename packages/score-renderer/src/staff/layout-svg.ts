@@ -310,11 +310,12 @@ export class SvgGeometry {
     if (['defs', 'style', 'desc'].includes(node.tagName)) return
     // Paths dominate music drawing; they do not consume inherited font styles.
     const shape = ['path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)
-    const style = shape ? inherited : {
-      size: a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size,
-      bold: a['font-weight'] === 'bold' || a['font-weight'] === String(scoreLayoutConfig.fonts.boldWeight) || inherited.bold ||
-        hasClass(node, 'reh'),
-      italic: a['font-style'] === 'italic' || inherited.italic || hasClass(node, 'dynam'),
+    let style = inherited
+    if (!shape) {
+      const size = a['font-size'] && num('font-size') > 0 ? num('font-size') : inherited.size
+      const bold = a['font-weight'] === 'bold' || a['font-weight'] === String(scoreLayoutConfig.fonts.boldWeight) || inherited.bold || hasClass(node, 'reh')
+      const italic = a['font-style'] === 'italic' || inherited.italic || hasClass(node, 'dynam')
+      if (size !== inherited.size || bold !== inherited.bold || italic !== inherited.italic) style = { size, bold, italic }
     }
     if (node.tagName === 'use') {
       const ref = this.definitions.get((a['xlink:href'] ?? a.href ?? '').replace(/^#/, ''))
