@@ -1,7 +1,9 @@
-export type ScoreControlIconName = 'play' | 'pause' | 'metronome' | 'settings' | 'piano' | 'synth' | 'harmonica' | 'guitar' | 'violin' | 'flute' | 'paged' | 'movableDo' | 'fixedDo' | 'measureNumbers' | 'staff' | 'reset'
+export type ScoreControlIconName = 'immersion' | 'exitImmersion' | 'play' | 'pause' | 'metronome' | 'settings' | 'piano' | 'synth' | 'harmonica' | 'guitar' | 'violin' | 'flute' | 'paged' | 'movableDo' | 'fixedDo' | 'measureNumbers' | 'staff' | 'reset'
 
 export function ScoreControlIcon({ name }: { name: ScoreControlIconName }) {
   const shapes = {
+    immersion: <path d="M9 3H3v6m12-6h6v6M3 15v6h6m6 0h6v-6" />,
+    exitImmersion: <path d="M3 9h6V3m6 0v6h6M9 21v-6H3m18 0h-6v6" />,
     play: <path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none" />,
     pause: <path d="M8 5v14M16 5v14" strokeWidth="4" />,
     metronome: <path d="m9 3-5 18h16L15 3ZM8 16h8M12 16l5-9" />,

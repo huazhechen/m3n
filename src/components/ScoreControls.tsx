@@ -13,6 +13,8 @@ import { PlaybackProgressControl } from './PlaybackProgressControl'
 type ScoreControlsProps = {
   playbackOnly?: boolean
   contained?: boolean
+  immersive?: boolean
+  onImmersiveChange?: () => void
   isPlaying: boolean
   isLoading: boolean
   progress: number
@@ -62,21 +64,24 @@ export function ScoreControls(props: ScoreControlsProps) {
     : TRANSPOSE_KEYS[selectedKey]
   const playLabel = props.isPlaying ? '暂停' : '播放'
   const playLoading = props.isLoading && !props.isPlaying
-  const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : `audio-controls floating-controls${props.contained ? ' contained-controls' : ''}`} role="group" aria-label="乐谱控制">
+  const controls = <div className={props.playbackOnly ? 'audio-controls playback-only' : `audio-controls floating-controls${props.contained ? ' contained-controls' : ''}`} data-immersive={props.immersive || undefined} data-has-immersion={!!props.onImmersiveChange || undefined} role="group" aria-label="乐谱控制">
     <div className="control-transport">
         <button type="button" className="control-button playback-toggle" aria-label={playLabel} title={playLoading ? '加载中' : playLabel} aria-busy={playLoading || undefined} aria-disabled={playLoading || undefined} onClick={() => { if (!playLoading) props.onTogglePlayback() }}>
           <ScoreControlIcon name={props.isPlaying ? 'pause' : 'play'} /><span>{playLoading ? '加载中' : playLabel}</span>
         </button>
         <PlaybackProgressControl progress={props.progress} isPlaying={props.isPlaying}
           onSeekStart={props.onSeekStart} onSeek={props.onSeek} onSeekCommit={props.onSeekCommit} />
-      <button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
+      {props.playbackOnly ? (<button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
           <ScoreControlIcon name="metronome" /><span>节拍器</span>
-        </button>
+        </button>) : (<button type="button" className="control-button settings-toggle" aria-label="乐谱设置" aria-haspopup="dialog" aria-expanded={settingsOpen} aria-controls={settingsId} popoverTarget={settingsId} title="乐谱设置">
+        <ScoreControlIcon name="settings" />
+      </button>)}
     </div>
     {!props.playbackOnly && <>
-      <button type="button" className="control-button settings-toggle" aria-label="乐谱设置" aria-haspopup="dialog" aria-expanded={settingsOpen} aria-controls={settingsId} popoverTarget={settingsId} title="乐谱设置">
-        <ScoreControlIcon name="settings" />
-      </button>
+      {props.onImmersiveChange && <button type="button" className="control-button immersion-toggle" aria-label={props.immersive ? '退出沉浸浏览' : '沉浸浏览'} title={props.immersive ? '退出沉浸浏览' : '沉浸浏览'} aria-pressed={!!props.immersive} onClick={() => {
+        settingsRef.current?.hidePopover()
+        props.onImmersiveChange?.()
+      }}><ScoreControlIcon name={props.immersive ? 'exitImmersion' : 'immersion'} /></button>}
       <div ref={settingsRef} id={settingsId} popover="auto" role="dialog" aria-label="乐谱设置" className="control-settings-popover" onToggle={event => setSettingsOpen(event.newState === 'open')}>
         <div className="control-settings-header"><strong>乐谱设置</strong><button type="button" className="control-button" aria-label="关闭乐谱设置" onClick={() => settingsRef.current?.hidePopover()}>×</button></div>
         <div className="control-sliders">
@@ -106,6 +111,9 @@ export function ScoreControls(props: ScoreControlsProps) {
         keyDialogRef.current?.querySelector<SVGElement>('[aria-pressed="true"]')?.focus()
       }}><span className="transpose-key-icon" aria-hidden="true">{selectedKeyLabel}</span><span>调号</span></button>
         </div>
+        <div className="control-settings-footer"><button type="button" role="switch" aria-label="节拍器" aria-checked={props.metronomeEnabled} title="节拍器" className="control-button metronome-toggle" disabled={props.isLoading} onClick={() => props.onMetronomeChange(!props.metronomeEnabled)}>
+          <ScoreControlIcon name="metronome" /><span>节拍器</span>
+        </button></div>
     {(props.toneLoading || props.toneError) && <div className="control-tone-status" role="status">{props.toneError || `正在加载${selectedTone.label}音色…`}{props.toneError && <button type="button" className="control-button" onClick={props.onToneRetry}>重试加载音色</button>}</div>}
     <dialog ref={notationDialogRef} className="transpose-dialog" aria-labelledby={notationTitleId}>
       <div className="transpose-dialog-header"><h2 id={notationTitleId}>选择记谱方式</h2><button type="button" className="control-button" aria-label="关闭记谱方式选择" onClick={() => notationDialogRef.current?.close()}>×</button></div>

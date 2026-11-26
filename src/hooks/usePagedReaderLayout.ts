@@ -2,7 +2,7 @@ import { useEffect, type RefObject } from 'react'
 import { MOBILE_LAYOUT_QUERY } from '../lib/responsive-layout'
 
 /** Fit printed pages into the desktop reader's remaining viewport without re-engraving. */
-export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>, enabled: boolean) {
+export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>, enabled: boolean, immersive = false) {
   useEffect(() => {
     const paper = paperRef.current
     if (!paper || !enabled) return
@@ -17,8 +17,8 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
       if (mobile.matches) { clear(); return }
       const pages = [...paper.querySelectorAll<SVGSVGElement>(':scope > .score-page-sheet > svg')]
       if (!pages.length) { clear(); return }
-      // Fit the complete A4 sheet, including its 12mm paper margins.
-      const aspect = 297 / 210
+      // Screen content keeps its aspect ratio with 6mm margins at A4-equivalent width.
+      const aspect = (198 * 273 / 186 + 12) / 210
       if (!Number.isFinite(aspect) || aspect <= 0) return
       let bottomSpace = 0
       for (let ancestor = paper.parentElement; ancestor; ancestor = ancestor.parentElement) {
@@ -53,5 +53,5 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
       mobile.removeEventListener('change', schedule)
       clear()
     }
-  }, [paperRef, enabled])
+  }, [paperRef, enabled, immersive])
 }

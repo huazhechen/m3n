@@ -17,6 +17,7 @@ import { attachScoreKeyboard } from '../lib/score-reader-keyboard'
 export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'scores' | 'works' }) {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const [immersive, setImmersive] = useState(false)
   const readerRef = useRef<HTMLElement>(null)
   const [works, setWorks] = useState<typeof presetScores>([])
   const basePath = collection === 'works' ? '/works' : '/scores'
@@ -56,7 +57,7 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
   if (status !== 'ready') return <main><TopNav {...navProps} /><ScoreLoadStatus {...navProps} status={status} error={error} onRetry={retry} /></main>
 
   return (
-    <main ref={readerRef}>
+    <main ref={readerRef} data-reader-immersive={immersive || undefined}>
       <TopNav {...navProps} actions={<div className="score-reader-actions">
         <div className="score-reader-tools" role="group" aria-label="乐谱操作">
           <button
@@ -75,6 +76,16 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
       </div>} />
       <section className="score-reader" aria-label={`${result.title || score?.title || 'Shared'} 乐谱`}>
         <ScoreRenderer
+          immersive={immersive}
+          onImmersiveChange={() => {
+            const paper = readerRef.current?.querySelector('.score-paper')
+            const anchor = [...paper?.querySelectorAll('g.measure') ?? []].find(element => element.getBoundingClientRect().bottom > 100)
+            const top = anchor?.getBoundingClientRect().top
+            setImmersive(value => !value)
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              if (anchor && top !== undefined) window.scrollBy({ top: anchor.getBoundingClientRect().top - top, behavior: 'instant' })
+            }))
+          }}
           fitPagedToViewport
           scoreId={collection === 'works' ? `works:${slug}` : slug}
           scoreDocument={analysis.score}

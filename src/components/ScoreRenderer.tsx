@@ -1,3 +1,4 @@
+import { followPlayingMeasure } from '../lib/score-playback-follow'
 import { scoreInkBounds } from '../lib/score-ink-bounds'
 import { queryPlaybackElements } from '../lib/score-playback-elements'
 import { renderScoreInto, type RenderPhase, type ScoreDisplaySettings } from '../lib/render-score'
@@ -47,6 +48,8 @@ type ScoreRendererProps = {
   /** Disable for editable sources so content changes preserve the chosen width. */
   autoSearchWidth?: boolean
   fitPagedToViewport?: boolean
+  immersive?: boolean
+  onImmersiveChange?: () => void
   isSourceUpdating?: boolean
   activeXmlId?: string | null
   invalidMeasureIds?: string[]
@@ -127,6 +130,8 @@ export function ScoreRenderer({
   previewWidth,
   autoSearchWidth = true,
   fitPagedToViewport = false,
+  immersive = false,
+  onImmersiveChange,
   isSourceUpdating = false,
   activeXmlId,
   invalidMeasureIds = EMPTY_INVALID_MEASURE_IDS,
@@ -199,7 +204,7 @@ export function ScoreRenderer({
     !compact && readRendererSetting(METRONOME_ENABLED_KEY, 1, 0, 1) === 1
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
-  usePagedReaderLayout(paperRef, fitPagedToViewport && renderMode === 'paged')
+  usePagedReaderLayout(paperRef, fitPagedToViewport && renderMode === 'paged', immersive)
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
@@ -411,6 +416,9 @@ export function ScoreRenderer({
       }
     })
     measures.forEach(highlightMeasure)
+    if (fitPagedToViewport && playerRef.current && !playerRef.current.paused && measures[0]) {
+      followPlayingMeasure(measures[0])
+    }
     highlightedMeasuresRef.current = measures
     onActiveXmlId?.(timedElements.map((element) => element.xmlId).find((id) => sourceMap.some((range) => range.xmlId === id)) ?? null)
   }
@@ -643,6 +651,8 @@ export function ScoreRenderer({
         }}
       />}
       {hasAudioControls && <ScoreControls
+        immersive={immersive}
+        onImmersiveChange={onImmersiveChange}
         playbackOnly={playbackOnly}
         contained={containedControls}
         isPlaying={isPlaying}
