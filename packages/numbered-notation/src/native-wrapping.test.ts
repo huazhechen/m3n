@@ -10,7 +10,7 @@ const measured = (count: number): NativeMeasure => ({
   id: 'dense', source: { events: [] }, part: 0, index: 0, beats: count / 2,
   columns: Array.from({ length: count }, (_, index) => ({ time: index / 2, glyphs: [], left: 10, right: 10, x: 0,
     minimumStart: index * 20, minimumEnd: (index + 1) * 20 })),
-  breakBefore: true, breakAfter: false, extraGap: 12, minimum: count * 20,
+  breakBefore: true, breakAfter: false, coreGapBefore: 36, minimum: count * 20,
   minimumStart: 0, minimumEnd: count * 20,
   start: 0, end: 0, continuation: false, lastFragment: true,
 })
@@ -20,7 +20,7 @@ describe('native dense-measure wrapping', () => {
     const measure = measured(20), before = structuredClone(measure)
     const fragments = splitNativeMeasure(measure, 256)
     expect(fragments.map(fragment => fragment.columns.length)).toEqual([10, 10])
-    expect(fragments.map(fragment => fragment.extraGap)).toEqual([12, 0])
+    expect(fragments.map(fragment => fragment.coreGapBefore)).toEqual([36, undefined])
     expect(fragments.map(fragment => fragment.continuation)).toEqual([false, true])
     expect(fragments.map(fragment => fragment.lastFragment)).toEqual([false, true])
     expect(fragments.map(fragment => fragment.minimum)).toEqual([200, 200])

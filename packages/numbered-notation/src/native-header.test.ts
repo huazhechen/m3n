@@ -72,13 +72,13 @@ describe('header text blocks in the native implementation', () => {
             }
         expect(checked).toBeGreaterThan(0);
     });
-    it('adds a section gap between musical sections, without adding one after the header', () => {
+    it('uses 1.5em core clearance between inline sections without changing the header gap', () => {
         const layout = (source: string) => layoutNativeScore(parseM3NDocument(source), { width: 800, paged: false });
         const plain = layout('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||');
         const sections = layout('{4/4}\n===A\nN: 1 2 3 4 |\n===B\nN: 5 6 7 1e |||');
         const stride = (score: ReturnType<typeof layout>) => score.systems[1]!.lanes[0]!.y - score.systems[0]!.lanes[0]!.y;
-        expect(stride(sections) - stride(plain)).toBeCloseTo(11.52);
-        // The first section has no extra 12px gap below the header. Its frame
+        expect(stride(sections) - stride(plain)).toBeCloseTo(7.2);
+        // The first section has no section clearance below the header. Its frame
         // changes the local ink clearance by only half a pixel.
         expect(Math.abs(sections.systems[0]!.lanes[0]!.y - plain.systems[0]!.lanes[0]!.y)).toBeLessThan(1);
     });

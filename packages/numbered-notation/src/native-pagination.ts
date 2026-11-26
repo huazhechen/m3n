@@ -3,7 +3,7 @@ import { interpolateScoreCoreGap } from './score-layout-policy.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { sortedNativeInkSeparation } from './native-ink-separation.js'
 import type { NativeInk } from './native-ink.js'
-export type NativePageBlock = { height: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
+export type NativePageBlock = { height: number; coreGapBefore?: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
 export type NativeBlockPosition = { page: number; top: number }
 type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
 
@@ -85,12 +85,12 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[]) {
       if (previous) {
         // Header separation stays fixed as the music's core parameter changes.
         // Lyrics reduce the starting clearance, while retaining the same page
-        // stretch ceiling. Interpolate each gap using the shared fit parameter.
-        const musicGap = interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
+        // stretch ceiling. Inline sections instead use their fixed core clearance.
+        const musicGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
         const separation = item.block.core && previous.block.core ? musicGap : headerGap
         baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
         for (const prior of placed) {
-          const localGap = interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
+          const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
           baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + localGap * nativeStyle.collisionGapRatio)
         }
         baseline += item.block.gapBefore ?? 0

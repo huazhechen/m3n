@@ -128,3 +128,23 @@ it('reuses immutable ink constraints without retaining page membership or fitted
     }
     expect(() => paginate({ pageHeight: 40, margin: 12, gap: 16 })).toThrow('单个谱行')
 })
+
+it('keeps inline-section core clearance at 1.5em through lyric tightening and page fitting', () => {
+    const block = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapScale: 2 / 3,
+        ink: [{ left: 0, right: 20, top: 0, bottom: 20 }] };
+    const paginate = prepareNativePagination([block, { ...block, coreGapBefore: 36 }]);
+    for (const pageHeight of [Infinity, 400]) {
+        const result = paginate({ pageHeight, margin: 0, gap: 28.8, maxGap: 31.68 });
+        expect(result.positions[1]!.top - result.positions[0]!.top - 20).toBeCloseTo(36);
+    }
+    // A section beginning on a new page gets no inter-system clearance.
+    expect(paginate({ pageHeight: 60, margin: 0, gap: 28.8 }).positions[1]).toEqual({ page: 1, top: 0 });
+});
+it('uses half the section core clearance for protruding decoration collisions', () => {
+    const upper = { height: 50, baseline: 0, core: { top: 0, bottom: 20 },
+        ink: [{ left: 0, right: 20, top: 0, bottom: 50 }] };
+    const lower = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapBefore: 36,
+        ink: [{ left: 0, right: 20, top: 0, bottom: 20 }] };
+    const result = prepareNativePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 28.8 });
+    expect(result.positions[1]!.top - result.positions[0]!.top - 50).toBeCloseTo(18);
+});

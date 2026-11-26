@@ -39,7 +39,7 @@ export type NativeColumn = {
 }
 export type NativeMeasure = {
   id: string; source: ScoreMeasure; part: number; index: number; columns: NativeColumn[]; beats: number
-  breakBefore: boolean; breakAfter: boolean; extraGap: number; minimum: number; label?: string
+  breakBefore: boolean; breakAfter: boolean; coreGapBefore?: number; minimum: number; label?: string
   start: number; end: number; continuation: boolean; lastFragment: boolean; number?: number
   minimumStart?: number; minimumEnd?: number; barX?: number; openingBarX?: number
   navigation?: NativeNavigation[]
@@ -267,7 +267,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
     for (let index = 0; index < count; index++) {
       const source = part.melody[index] ?? { events: [] }
       if (!source.events.length && !source.multiRest && !source.interlude && !part.bass[index]?.events.length) continue
-      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), extraGap: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? (nativeCoreGap(document) * .4) : 0, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
+      const measure: NativeMeasure = { id: `m3n-measure-${partIndex + 1}-${index + 1}`, source, part: partIndex, index, columns: [], beats: 0, breakBefore: index === 0 || Boolean(source.breakBefore || part.melody[index - 1]?.breakAfter || source.events.some(event => event.sectionLabel)), breakAfter: Boolean(source.breakAfter), coreGapBefore: result.measures.at(-1)?.part === partIndex && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? nativeStyle.music * 1.5 : undefined, minimum: 0, start: 0, end: 0, continuation: false, lastFragment: true }
       measure.number = source.interlude ? measureNumber : ++measureNumber
       measureNumber += (source.multiRest ?? 1) - 1
       measure.navigation = [...new Set([...(source.navigation ?? []), ...source.events.flatMap(event => event.navigation)])]

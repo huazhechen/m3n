@@ -42,7 +42,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number): Nativ
       // A split bar owns its rows. Do not attach a short following bar to its
       // final fragment and shift the rest of the score's global line plan.
       breakBefore: true, breakAfter: true,
-      extraGap: index === 0 ? measure.extraGap : 0,
+      coreGapBefore: index === 0 ? measure.coreGapBefore : undefined,
       minimumStart: first.minimumStart!, minimumEnd: last.minimumEnd!, minimum: last.minimumEnd! - first.minimumStart! }
   })
 }

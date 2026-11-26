@@ -579,7 +579,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       })
     const hasLyrics = system.lanes.some(lane => lane.rows.length > 0)
     const coreGapScale = hasLyrics ? scoreLyricGapScale(nativeCoreGap(document)) : 1
-    return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, gapBefore: system.measures[0]?.extraGap ?? 0 }
+    return { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, coreGapBefore: system.measures[0]?.coreGapBefore }
   })]
   const layout: NativeLayout = { document, headerDocument, projection, systems, pages: [], relations, options, measurer, headerHeight, margin,
     pagination: prepareNativePagination(blocks), verticalBlocks: blocks, headerBlocks: header.blocks }
