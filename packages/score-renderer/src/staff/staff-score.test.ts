@@ -101,3 +101,17 @@ describe('staff page packing', () => {
     expect(score).toEqual(before)
   }, 120_000)
 })
+
+it('screens horizontal quality without changing a completed staff layout', async () => {
+  const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+  for (const width of [528, 624, 768]) {
+    const render = await prepareStaffScore(score, { width })
+    expect(render.canExceedQuality(0)).toBe(true)
+    expect(render.canExceedQuality(1.01)).toBe(false)
+    const actual = render.layoutInfo()
+    expect(render.measurementInfo()).toEqual({ quality: actual.quality, rows: actual.lines.length, pageCount: actual.pageCount })
+    expect(render.qualityUpperBound()).toBeGreaterThanOrEqual(scoreHorizontalQuality(width, actual.quality))
+    expect(actual).toEqual((await prepareStaffScore(score, { width })).layoutInfo())
+    expect(render.canExceedQuality(scoreHorizontalQuality(width, actual.quality))).toBe(true)
+  }
+})

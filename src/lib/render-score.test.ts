@@ -189,9 +189,9 @@ describe('staff automatic width range', () => {
     expect(prepareStaffTask).toHaveBeenCalledTimes(2)
     const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
     expect(first).not.toBe(second)
-    expect(staffTaskUses).toHaveBeenCalledTimes(28)
-    expect(staffTaskUses.mock.calls.slice(0, 14).every(([task]) => task === first)).toBe(true)
-    expect(staffTaskUses.mock.calls.slice(14).every(([task]) => task === second)).toBe(true)
+    expect(staffTaskUses).toHaveBeenCalledTimes(2)
+    expect(staffTaskUses.mock.calls.slice(0, 1).every(([task]) => task === first)).toBe(true)
+    expect(staffTaskUses.mock.calls.slice(1).every(([task]) => task === second)).toBe(true)
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {

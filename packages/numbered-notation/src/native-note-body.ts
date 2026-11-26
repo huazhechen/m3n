@@ -5,6 +5,7 @@ import { nativeStyle } from './native-style.js'
 /** Music body coordinates relative to its alphabetic baseline. Design gaps
  * use the note size; font edges come from the same zero used by the layout. */
 export function nativeNoteBody(measurer: TextMeasurer, size = nativeStyle.music) {
+  const create = () => {
   const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
   const top = -zero.baseline, bottom = (zero.inkBottom ?? zero.h) - zero.baseline
   const beamStroke = size * .055, beamStep = size * .14
@@ -14,4 +15,6 @@ export function nativeNoteBody(measurer: TextMeasurer, size = nativeStyle.music)
     octaveY: (above: boolean, index: number, beams = 0) => above
       ? top - size * (.08 + nativeStyle.octaveDotRadiusEm + index * (2 * nativeStyle.octaveDotRadiusEm + .08))
       : (beams ? beamY(beams - 1) + beamStroke / 2 : bottom + size * .04) + size * (.08 + nativeStyle.octaveDotRadiusEm + index * (2 * nativeStyle.octaveDotRadiusEm + .08)) }
+  }
+  return measurer.fixedSymbol?.(`note-body:${size}`, create) ?? create()
 }

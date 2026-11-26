@@ -3,7 +3,7 @@ import { DEFAULT_SCORE_WIDTH, type NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
-import { selectBestWidth } from '../../tools/scorebook-width.mjs'
+import { numberedLayoutScore, selectBestWidth } from '../../tools/scorebook-width.mjs'
 import type { NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
@@ -44,11 +44,11 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
   const { measureNumberedWidth } = await import('../../tools/lib/numbered-width-measurement.mjs')
   await prepareNumberedNotationFonts(scoreDocument)
   const taskSettings = { ...settings, textMeasurementCache: settings.textMeasurementCache ?? new NumberedTextMeasurementCache(), layoutTask: new NumberedLayoutTask() }
-  const { best } = await selectBestWidth(async width => {
+  const { best } = await selectBestWidth(async (width, best) => {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal }).candidate
-  }, { signal })
+    return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal, minimumQuality: best?.pageCount === 1 ? numberedLayoutScore(best) : undefined }).candidate
+  }, { signal, prune: true })
   return best.width
 }
 
@@ -56,11 +56,11 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
   const { prepareStaffMeasurementTask } = await loadStaffResources()
   const task = await prepareStaffMeasurementTask(scoreDocument, settings, signal)
   const { measureStaffWidth } = await import('../../tools/lib/staff-width-measurement.mjs')
-  const { best } = await selectBestWidth(async width => {
+  const { best } = await selectBestWidth(async (width, best) => {
     await yieldToBrowser()
     signal?.throwIfAborted()
-    return measureStaffWidth(scoreDocument, width, settings, signal, { task })
-  }, { signal })
+    return measureStaffWidth(scoreDocument, width, settings, signal, { task, minimumQuality: best?.pageCount === 1 ? numberedLayoutScore(best) : undefined })
+  }, { signal, prune: true })
   return best.width
 }
 

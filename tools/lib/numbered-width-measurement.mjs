@@ -1,15 +1,17 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
-import { numberedLayoutScore } from '../scorebook-width.mjs'
+import { numberedLayoutScore, WidthSearchPruned } from '../scorebook-width.mjs'
 import { inspectScorePages } from './score-geometry.mjs'
 
 /** One candidate measurement for reader, online PDF and local PDF. Fonts are
  * prepared once by the caller. Production reads layout metadata only; opt-in
  * audits mount SVG without changing the layout or its avoidance constraints. */
-export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false } = {}) {
+export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, minimumQuality } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
-  const prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings)
+  let prepared
+  try { prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings, auditLayout ? undefined : minimumQuality) }
+  catch (error) { if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') throw new WidthSearchPruned(); throw error }
   signal?.throwIfAborted()
   timings.layoutMs = performance.now() - started
   const quality = prepared.quality

@@ -1,8 +1,8 @@
 """Run one verification command with a bounded Node heap and aggregate RSS guard.
 
 Counts Node, browser and font/test processes across worktrees. Stops its own
-process tree at 2600 MiB by default (also the maximum via
-M3N_MEMORY_LIMIT_MB), leaving headroom below the authorized 3 GB ceiling.
+process tree at 1700 MiB by default (1800 MiB maximum via
+M3N_MEMORY_LIMIT_MB), leaving headroom below this workspace's 2 GB ceiling.
 """
 import os
 import signal
@@ -12,21 +12,40 @@ import time
 
 env = {**os.environ, 'NODE_OPTIONS': '--max-old-space-size=384',
        'VITEST_MAX_WORKERS': '1'}
-limit_mib = int(os.environ.get('M3N_MEMORY_LIMIT_MB', '2600'))
-if not 256 <= limit_mib <= 2600:
-    sys.exit('M3N_MEMORY_LIMIT_MB must be between 256 and 2600, below the 3 GB ceiling.')
+limit_mib = int(os.environ.get('M3N_MEMORY_LIMIT_MB', '1700'))
+if not 256 <= limit_mib <= 1800:
+    sys.exit('M3N_MEMORY_LIMIT_MB must be between 256 and 1800, below the 2 GB ceiling.')
 command = sys.argv[1:]
 if not command:
     sys.exit('Usage: python3 tools/run-low-memory.py COMMAND [ARGS...]')
 # Do not overlap another worktree's build, test or browser job.
-def active_job():
-    for row in subprocess.check_output(['ps', '-eo', 'pid,comm,args'], text=True).splitlines()[1:]:
-        parts = row.split(None, 2)
-        if len(parts) != 3:
+def active_job(ignore=()):
+    rows = []
+    for row in subprocess.check_output(['ps', '-eo', 'pid,ppid,comm,args'], text=True).splitlines()[1:]:
+        parts = row.split(None, 3)
+        if len(parts) == 4:
+            rows.append((int(parts[0]), int(parts[1]), parts[2], parts[3]))
+    parents = {pid: parent for pid, parent, _, _ in rows}
+    # Classify descendants from this same snapshot: a worker can be forked
+    # between collect_children() and this check. It still belongs to our job.
+    excluded = {os.getpid(), *ignore}
+    while True:
+        children = {pid for pid, parent, _, _ in rows if parent in excluded}
+        if children <= excluded:
+            break
+        excluded.update(children)
+    ancestor = os.getppid()
+    while ancestor and ancestor not in excluded:
+        excluded.add(ancestor)
+        ancestor = parents.get(ancestor, 0)
+    for pid, _, comm, args in rows:
+        if pid in excluded or 'crashpad' in comm.lower():
             continue
-        pid, comm, args = parts
         heavy = any(name in comm.lower() for name in ['node', 'vitest', 'esbuild', 'chromium', 'chrome']) or ('python' in comm and any(name in args for name in ['prepare-score-fonts', 'prepare-staff-glyphs', 'subset-builtin-pdf-font']))
-        if int(pid) == os.getpid() or not heavy:
+        # A guarded batch remains active in the gaps between its commands.
+        driver = 'python' in comm and 'tools/run-low-memory.py' in args and any(
+            parent == pid and child_comm not in ['ps', 'sleep'] for _, parent, child_comm, _ in rows)
+        if not heavy and not driver:
             continue
         try:
             cwd = os.readlink(f'/proc/{pid}/cwd')
@@ -61,6 +80,9 @@ def collect_children():
 try:
     while job.poll() is None:
         collect_children()
+        if (active := active_job(owned)):
+            print(f'Concurrent project job started (PID {active[0]}, {active[1]}); stopping this job to keep heavy work serial.', flush=True)
+            raise MemoryError()
         total = 0
         for row in subprocess.check_output(['ps', '-eo', 'pid,rss,comm,args'], text=True).splitlines()[1:]:
             parts = row.split(None, 3)

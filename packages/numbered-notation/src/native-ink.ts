@@ -64,6 +64,22 @@ const decode = (text: string) => text.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|
   entity.startsWith('#') ? String.fromCodePoint(entity[1] === 'x' ? parseInt(entity.slice(2), 16) : Number(entity.slice(1)))
     : ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[entity] ?? entity))
 
+// Parsing depends only on the literal fragment, not fonts or layout settings.
+// Keep this bounded by both entries and source size; measured ink remains
+// fresh and private to each caller (including after font changes).
+const fragments = new Map<string, ReturnType<typeof parse>>()
+let fragmentCharacters = 0
+function fragmentNodes(svg: string) {
+  const saved = fragments.get(svg)
+  if (saved) return saved
+  const nodes = parse(svg)
+  if (svg.length <= 4096) {
+    if (fragments.size >= 1024 || fragmentCharacters + svg.length > 262144) { fragments.clear(); fragmentCharacters = 0 }
+    fragments.set(svg, nodes); fragmentCharacters += svg.length
+  }
+  return nodes
+}
+
 /** Measure exactly the primitive fragment that the SVG painter emits. Unsupported
  * primitives fail visibly rather than silently reserving a nominal font height.
  * Stroke expansion is conservative at corners (native paths use round joins).
@@ -105,7 +121,7 @@ export function nativeSvgPieces(svg: string, measurer: TextMeasurer): NativeInk[
       return b
     })
   }
-  return parse(svg).flatMap(visit)
+  return fragmentNodes(svg).flatMap(visit)
 }
 
 export function nativeSvgInk(svg: string, measurer: TextMeasurer): NativeInk {

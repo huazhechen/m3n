@@ -6,6 +6,7 @@ import {
   pushGraphicsState, popGraphicsState, concatTransformationMatrix, scale,
   setFillingRgbColor, setStrokingRgbColor, setLineWidth, setLineJoin,
   TextRenderingMode, rgb,
+  drawSvgPath,
 } from 'pdf-lib'
 import { a4ImagePlacement, type ScorePdfOptions } from './score-export.js'
 import { prepareScoreTextFonts } from './score-fonts.js'
@@ -30,18 +31,28 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
     embedded.set(file, { name: PDFName.of(`M3NFont${embedded.size}`), font })
   }
   const footerFont = embedded.get(fonts.resource('h').file)!.font
-  const encodedCharacters = new Map<string, ReturnType<typeof footerFont.encodeText>>()
+  // Operators are immutable values. Share repeated glyph/style commands while
+  // preserving their complete original order in each page's content stream.
+  const characters = new Map<string, ReturnType<typeof showText>>()
+  const resources = new Map<string, ReturnType<typeof fonts.resource>>()
+  const textStyles = new Map<string, ReturnType<typeof setFontAndSize>[]>()
+  const paths = new Map<string, ReturnType<typeof drawSvgPath>>()
+  const save = pushGraphicsState(), restore = popGraphicsState()
+  const blackFill = setFillingRgbColor(0, 0, 0), blackStroke = setStrokingRgbColor(0, 0, 0)
+  const textBegin = beginText(), textEnd = endText()
+  const originText = setTextMatrix(1, 0, 0, -1, 0, 0), pathFlip = scale(1, -1)
+  const roundJoin = setLineJoin(LineJoinStyle.Round), miterJoin = setLineJoin(LineJoinStyle.Miter)
   options.signal?.throwIfAborted()
   options.onPhase?.('pages')
   const host = document.createElement('div')
-  host.style.cssText = `position:fixed;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0;pointer-events:none;`
+  host.style.cssText = `position:fixed;left:${scoreLayoutConfig.rendering.offscreenPosition}px;top:0;pointer-events:none;contain:layout style;`
   host.setAttribute('aria-hidden', 'true')
   document.body.append(host)
   const pt = 72 / 25.4
   try {
     for (const [index, original] of pages.entries()) {
       options.signal?.throwIfAborted()
-      const svg = original.cloneNode(true) as SVGSVGElement
+      const svg = options.consumePages ? original : original.cloneNode(true) as SVGSVGElement
       const { width, height } = svg.viewBox.baseVal
       if (!(width > 0 && height > 0)) throw new Error('简谱尺寸无效。')
       svg.setAttribute('width', String(width)); svg.setAttribute('height', String(height))
@@ -55,6 +66,20 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
       const page = pdf.addPage([210 * pt, 297 * pt])
       for (const { name, font } of embedded.values()) page.node.setFontDictionary(name, font.ref)
       let elementCount = 0
+      const matrices = new WeakMap<SVGGraphicsElement, DOMMatrix>()
+      const transforms = new WeakMap<DOMMatrix, ReturnType<typeof concatTransformationMatrix>>()
+      const screenMatrix = (element: SVGGraphicsElement, style?: CSSStyleDeclaration): DOMMatrix | null => {
+        const saved = matrices.get(element)
+        if (saved) return saved
+        style ??= getComputedStyle(element)
+        // An SVG viewport contributes its viewBox even without a transform.
+        // Other inert ancestors share exactly the same browser matrix.
+        const parent = element.parentElement
+        const measured = element.localName !== 'svg' && !element.hasAttribute('transform') && style.transform === 'none'
+          && parent instanceof SVGGraphicsElement ? screenMatrix(parent) : element.getScreenCTM()
+        if (measured) matrices.set(element, measured)
+        return measured
+      }
       for (const element of svg.querySelectorAll<SVGGraphicsElement>('*')) {
         if (++elementCount % 128 === 0) {
           await pause()
@@ -66,42 +91,70 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
         if (!['path', 'line', 'rect', 'circle', 'text'].includes(tag)) throw new Error(`不支持的乐谱图形：${tag}`)
         const style = getComputedStyle(element)
         if (style.display === 'none' || style.visibility === 'hidden') continue
-        const matrix = element.getScreenCTM()
+        // Untransformed siblings share their parent's viewport matrix. Cache
+        // the browser result, preserving its exact rounding and CSS semantics.
+        const matrix = screenMatrix(element, style)
         if (!matrix) throw new Error('无法测量乐谱图形坐标。')
-        const m = inverse.multiply(matrix)
-        page.pushOperators(pushGraphicsState(), concatTransformationMatrix(
+        let transform = transforms.get(matrix)
+        if (!transform) {
+          const m = inverse.multiply(matrix)
+          transform = concatTransformationMatrix(
           factor * m.a, -factor * m.b, factor * m.c, -factor * m.d,
           placement.x * pt + factor * m.e, (297 - placement.y) * pt - factor * m.f,
-        ))
+          )
+          transforms.set(matrix, transform)
+        }
+        page.pushOperators(save, transform)
         if (tag === 'text') {
           const text = element as SVGTextElement
           const fontSize = Number.parseFloat(style.fontSize)
-          const isMusic = style.fontFamily.includes(scoreLayoutConfig.fonts.latin)
-          const bold = Number.parseInt(style.fontWeight, 10) >= 600
+          const fontFamily = style.fontFamily
+          const isMusic = fontFamily.includes(scoreLayoutConfig.fonts.latin)
+          const weight = Number.parseInt(style.fontWeight, 10)
+          const bold = weight >= 600
           const italic = style.fontStyle === 'italic'
-          page.pushOperators(setFillingRgbColor(0, 0, 0), setStrokingRgbColor(0, 0, 0), beginText())
+          page.pushOperators(blackFill, blackStroke, textBegin)
+          // Resolved engine glyphs have one character at the local baseline
+          // origin. Their enclosing group supplies the complete placement.
+          const originGlyph = [...text.textContent ?? ''].length === 1
+            && (text.hasAttribute('data-m3n-glyph') || text.parentElement?.hasAttribute('data-m3n-glyph'))
+            && text.getAttribute('x') === '0' && text.getAttribute('y') === '0'
+            && !['dx', 'dy', 'rotate', 'textLength'].some(name => text.hasAttribute(name))
+            && style.textAnchor === 'start' && ['auto', 'alphabetic'].includes(style.dominantBaseline)
           let offset = 0
           for (const char of text.textContent ?? '') {
-            const position = text.getStartPositionOfChar(offset)
-            const rotation = text.getRotationOfChar(offset) * Math.PI / 180
+            const position = originGlyph ? { x: 0, y: 0 } : text.getStartPositionOfChar(offset)
+            const rotation = originGlyph ? 0 : text.getRotationOfChar(offset) * Math.PI / 180
             offset += char.length
             if (/\s|[\u200B\u2800]/u.test(char)) continue
-            const resource = fonts.resource(char, Number.parseInt(style.fontWeight), italic, isMusic, style.fontFamily)
+            const resourceKey = `${fontFamily}:${weight}:${italic}:${char}`
+            let resource = resources.get(resourceKey)
+            if (!resource) {
+              resource = fonts.resource(char, weight, italic, isMusic, fontFamily)
+              if (resources.size >= 8192) resources.clear()
+              resources.set(resourceKey, resource)
+            }
             const { name, font } = embedded.get(resource.file)!
             const cacheKey = `${resource.file}:${char}`
-            let encoded = encodedCharacters.get(cacheKey)
-            if (!encoded) {
-              encoded = font.encodeText(char)
-              encodedCharacters.set(cacheKey, encoded)
+            let character = characters.get(cacheKey)
+            if (!character) {
+              character = showText(font.encodeText(char))
+              characters.set(cacheKey, character)
             }
             const syntheticBold = bold && resource.file === fonts.cjk.file
-            page.pushOperators(setFontAndSize(name, fontSize),
-              setTextRenderingMode(syntheticBold ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill),
-              setLineWidth(fontSize * 0.015),
-              setTextMatrix(Math.cos(rotation), Math.sin(rotation), Math.sin(rotation), -Math.cos(rotation), position.x, position.y),
-              showText(encoded))
+            const styleKey = `${resource.file}:${fontSize}:${syntheticBold}`
+            let operators = textStyles.get(styleKey)
+            if (!operators) {
+              operators = [setFontAndSize(name, fontSize),
+                setTextRenderingMode(syntheticBold ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill), setLineWidth(fontSize * 0.015)]
+              if (textStyles.size >= 512) textStyles.clear()
+              textStyles.set(styleKey, operators)
+            }
+            page.pushOperators(...operators,
+              rotation === 0 && position.x === 0 && position.y === 0 ? originText
+                : setTextMatrix(Math.cos(rotation), Math.sin(rotation), Math.sin(rotation), -Math.cos(rotation), position.x, position.y), character)
           }
-          page.pushOperators(endText())
+          page.pushOperators(textEnd)
         } else {
           const num = (name: string) => Number.parseFloat(element.getAttribute(name) ?? '0')
           const shade = style.fill === 'rgb(255, 255, 255)' ? 1 : 0
@@ -109,11 +162,18 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
           const borderColor = style.stroke === 'none' ? undefined : rgb(0, 0, 0)
           const borderWidth = borderColor ? Number.parseFloat(style.strokeWidth) : 0
           const options = { color, borderColor, borderWidth, borderLineCap: style.strokeLinecap === 'round' ? LineCapStyle.Round : LineCapStyle.Butt }
-          page.pushOperators(setLineJoin(style.strokeLinejoin === 'round' ? LineJoinStyle.Round : LineJoinStyle.Miter))
+          page.pushOperators(style.strokeLinejoin === 'round' ? roundJoin : miterJoin)
           if (tag === 'path') {
             // drawSvgPath already flips Y; cancel that flip in SVG coordinates.
-            page.pushOperators(scale(1, -1))
-            page.drawSvgPath(element.getAttribute('d') ?? '', { ...options, x: 0, y: 0 })
+            page.pushOperators(pathFlip)
+            const d = element.getAttribute('d') ?? ''
+            const key = `${shade}:${Boolean(color)}:${Boolean(borderColor)}:${borderWidth}:${options.borderLineCap}:${d}`
+            let operators = paths.get(key)
+            if (!operators) {
+              operators = drawSvgPath(d, { ...options, x: 0, y: 0, scale: undefined })
+              paths.set(key, operators)
+            }
+            page.pushOperators(...operators)
           } else if (tag === 'line') {
             page.drawLine({ start: { x: num('x1'), y: num('y1') }, end: { x: num('x2'), y: num('y2') }, color: borderColor, thickness: borderWidth, lineCap: options.borderLineCap })
           } else if (tag === 'rect') {
@@ -123,7 +183,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
             page.drawCircle({ ...options, x: num('cx'), y: num('cy'), size: num('r') })
           }
         }
-        page.pushOperators(popGraphicsState())
+        page.pushOperators(restore)
       }
       for (const link of svg.querySelectorAll<SVGAElement>('a')) {
         const href = link.getAttribute('href') ?? link.getAttribute('xlink:href')

@@ -15,6 +15,8 @@ const ns = 'http://www.w3.org/2000/svg'
 export type StaffSettings = {
   width?: number; transpose?: number; tempoScale?: number; measureNumbers?: boolean
   includeBass?: boolean; pageMargin?: number; coreGap?: number
+  /** Detached exports have no pointer/reading hit targets. */
+  interactive?: boolean
 }
 /** Fonts are prepared per score; there is no separate engine resource. */
 export async function prepareStaffResources() {}
@@ -33,12 +35,31 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   }
   validate(width)
   const projected = measurements.document
+  const expanded = needsStaffExpansion(score)
   const displayedEvents = new Set(projected.measures.flatMap(measure => [measure.melody, measure.bass]
     .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
+  const horizontal = new Map<number, Array<{ spacing: number; lines: StaffLine[]; quality: ReturnType<typeof scoreLineQuality> }>>()
+  const plans = (candidateWidth: number) => {
+    validate(candidateWidth)
+    let saved = horizontal.get(candidateWidth)
+    if (saved) return saved
+    const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
+    const musicWidth = candidateWidth - 2 * margin - gutter - scoreLayoutConfig.staff.rightGutter
+    const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
+    saved = [0.25, ...scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)].map(spacing => {
+      signal?.throwIfAborted()
+      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
+        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
+      return { spacing, lines, quality }
+    })
+    horizontal.set(candidateWidth, saved)
+    return saved
+  }
   type Layout = {
-    systems: StaffSystem[]; pages: StaffPage[]; furniture: XmlNode[]
+    systems: StaffSystem[]; pages: StaffPage[]; fittedPages?: StaffPage[]; furniture: XmlNode[]
     header: ReturnType<typeof staffHeader>; lines: StaffLine[]; spacing: number; paginationError?: Error
     quality: ReturnType<typeof scoreLineQuality>
   }
@@ -56,10 +77,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
     const attempt = (spacing: number, selected?: Layout): Layout => {
       signal?.throwIfAborted()
-      const lines = planStaffLines(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
-      const available = musicWidth - scoreLayoutConfig.staff.contentEdgeInset
-      const quality = scoreLineQuality(lines.map(line => (line.reading ?? line.minimum) * STAFF_SCALE / available),
-        lines.length ? Math.max(0, Math.min(1, 1 - lines.at(-1)!.target * STAFF_SCALE / available)) : 0)
+      const { lines, quality } = plans(candidateWidth).find(plan => plan.spacing === spacing)!
       // Vertical engraving cannot improve this horizontal ranking. Complete
       // the baseline and every possible replacement, but discard losing gaps
       // before constructing their glyph nodes and collision geometry.
@@ -80,7 +98,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         system.core = moveInk(system.core, gutter, 0)
       }
       let pages: StaffPage[] = [], paginationError: Error | undefined
-      try { pages = paginateStaff(systems, height, header.height, minimumGap, true) }
+      try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap) }
       catch (error) {
         if (!(error instanceof Error) || !error.message.includes('单个五线谱谱行')) throw error
         paginationError = error
@@ -88,13 +106,22 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return { systems, pages, furniture: [], header, lines, spacing, paginationError, quality }
     }
     let selected = attempt(0.25)
-    if (!selected.paginationError) for (const spacing of scoreLayoutConfig.numbered.noteGapCandidates.slice(1).reverse().map(gap => .25 + (gap - scoreLayoutConfig.numbered.minimumNoteGap) / 48)) {
-      const candidate = attempt(spacing, selected)
-      if (candidate.paginationError) continue
-      const candidateScore = scoreHorizontalQuality(candidateWidth, candidate.quality)
-      const selectedScore = scoreHorizontalQuality(candidateWidth, selected.quality)
-      if (candidate.lines.length < selected.lines.length || candidate.lines.length === selected.lines.length
-        && (candidateScore > selectedScore || candidateScore === selectedScore && candidate.spacing < selected.spacing)) selected = candidate
+    // The trial ranking is known before engraving. Visit alternatives in that
+    // exact total order: the first valid improvement is the final winner, so
+    // intermediate winners need no vertical geometry. The baseline must still
+    // paginate, and invalid alternatives fall through to the next original trial.
+    if (!selected.paginationError) {
+      const ranked = plans(candidateWidth).filter(plan => plan.spacing !== .25).slice().sort((a, b) =>
+        a.lines.length - b.lines.length
+        || scoreHorizontalQuality(candidateWidth, b.quality) - scoreHorizontalQuality(candidateWidth, a.quality)
+        || a.spacing - b.spacing)
+      for (const plan of ranked) {
+        const candidate = attempt(plan.spacing, selected)
+        if (candidate === selected) break
+        if (candidate.paginationError) continue
+        selected = candidate
+        break
+      }
     }
     layouts.set(candidateWidth, selected)
     return selected
@@ -104,7 +131,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     if (!Number.isFinite(gap) || gap < 0) throw new Error('五线谱行距无效。')
     if (paged && coreGap === undefined) {
       if (result.paginationError) throw result.paginationError
-      return result.pages
+      return result.fittedPages ??= paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, true)
     }
     return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, paged, coreGap === undefined ? scoreMaximumCoreGap(gap) : gap)
   }
@@ -115,7 +142,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const pages = outputPages(result, paged, width, coreGap)
     // Publish local painted bounds for interaction; SVG font line boxes can
     // extend far beyond the actual music glyphs.
-    for (const system of result.systems) {
+    if (settings.interactive !== false) for (const system of result.systems) {
       const geometry = new SvgGeometry(system.node, measure, true)
       const systemBox = geometry.ink(element('g', {}, system.node.children))
       system.node.attributes['data-m3n-ink-bounds'] = [systemBox.left, systemBox.top, systemBox.right - systemBox.left, systemBox.bottom - systemBox.top].join(' ')
@@ -153,6 +180,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
             },
             content,
           ),
+          { resolvedMusicGlyphs: settings.interactive === false },
         )
       }),
     })
@@ -165,7 +193,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       host.innerHTML = text
       const svg = host.querySelector('svg')!
       svg.setAttribute('preserveAspectRatio', 'xMinYMin meet')
-      resolveStaffText(svg, settings.measureNumbers)
+      resolveStaffText(svg, settings.measureNumbers, settings.interactive === false)
       svg.querySelectorAll('defs').forEach((node) => node.remove())
       svg.dataset.notation = 'staff'
       for (const event of svg.querySelectorAll<SVGGElement>('g.note[id], g.chord[id], g.tuplet[id], g.rest[id]')) {
@@ -173,7 +201,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         const slot = /-n(\d+)$/.exec(event.id)?.[1]
         if (slot) event.dataset.m3nTupletSlot = String(Number(slot) - 1)
         event.dataset.m3nId = event.id.replace(/-n\d+$/, '').replace(/-rend\d+$/, '')
-        if (needsStaffExpansion(score)) event.dataset.m3nPasses = /-rend(\d+)/.exec(event.id)?.[1] ?? '1'
+        if (expanded) event.dataset.m3nPasses = /-rend(\d+)/.exec(event.id)?.[1] ?? '1'
       }
 
       svg.setAttribute('width', String(width))
@@ -181,10 +209,34 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return svg
     })
   }
+  const qualityUpperBound = (candidateWidth: number) => {
+    const trials = plans(candidateWidth), baselineRows = trials[0]!.lines.length
+    // A valid width requires its baseline to paginate. More-row alternatives
+    // can never replace that baseline, even when their quality is higher.
+    return Math.max(...trials.filter(plan => plan.lines.length <= baselineRows)
+      .map(plan => scoreHorizontalQuality(candidateWidth, plan.quality)))
+  }
   return Object.assign(render, {
+    qualityUpperBound(candidateWidth = width) {
+      return qualityUpperBound(candidateWidth)
+    },
+    /** Upper bound across every spacing trial, without vertical engraving.
+     * Used only against an already valid one-page width in production search. */
+    canExceedQuality(minimum: number, candidateWidth = width) {
+      return qualityUpperBound(candidateWidth) >= minimum
+    },
     /** Continuous geometry without generating or mounting an SVG candidate. */
     continuousHeight(coreGap = settings.coreGap) {
       return outputPages(layout(width), false, width, coreGap)[0]!.height + 2 * margin
+    },
+    /** Search only needs scalar ranking metadata, without walking SVG trees. */
+    measurementInfo(candidateWidth = width) {
+      const result = layout(candidateWidth)
+      return {
+        quality: { ...result.quality },
+        rows: result.lines.length,
+        pageCount: result.paginationError ? 0 : settings.coreGap === undefined ? result.pages.length : outputPages(result, true, candidateWidth).length,
+      }
     },
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {
@@ -218,7 +270,9 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     pageCount(paged: boolean, candidateWidth = width) {
       if (!paged) return 1
       const result = layout(candidateWidth)
-      return outputPages(result, true, candidateWidth).length
+      if (settings.coreGap !== undefined) return outputPages(result, true, candidateWidth).length
+      if (result.paginationError) throw result.paginationError
+      return result.pages.length
     },
   })
 }

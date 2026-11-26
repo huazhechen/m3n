@@ -38,8 +38,8 @@ export class PreparedNumberedNotationScore {
   readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
-  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>) {
-    this.layout = layoutNativeScore(document, { ...options, paged: true }, timings)
+  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number) {
+    this.layout = layoutNativeScore(document, { ...options, paged: true }, timings, minimumQuality)
     this.pageCount = this.layout.pages.length
     this.systemCount = this.layout.systems.length
     this.quality = nativeLayoutQuality(this.layout)

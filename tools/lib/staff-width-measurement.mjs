@@ -2,22 +2,23 @@ import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareStaffScore } from '@m3n/score-renderer/staff'
 import { a4SourcePageHeight } from '@m3n/score-renderer'
 import { auditStaffInkCollisions, auditStaffSystemCollisions, staffInkBounds } from './staff-ink-collisions.mjs'
-import { numberedLayoutScore } from '../scorebook-width.mjs'
+import { numberedLayoutScore, WidthSearchPruned } from '../scorebook-width.mjs'
 
 /** Staff-specific geometry adapter; width enumeration, safety filtering and
  * ranking belong to the same policy used for numbered notation. */
-export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false, task, onPrepared } = {}) {
+export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false, task, onPrepared, minimumQuality } = {}) {
   const started = performance.now(), timings = {}
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
-  const info = render.layoutInfo()
+  if (!auditLayout && minimumQuality !== undefined && !render.canExceedQuality(minimumQuality)) throw new WidthSearchPruned()
+  const info = auditLayout ? render.layoutInfo() : render.measurementInfo()
   const { lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity } = info.quality
   const pageCount = render.pageCount(true)
   timings.layoutMs = performance.now() - started
   const qualityScore = numberedLayoutScore({ width, ...info.quality })
   if (!auditLayout) {
     timings.totalMs = performance.now() - started
-    return { width, pageCount, rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }
+    return { width, pageCount, rows: info.rows, outside: [], overlaps: [], lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }
   }
   let stage = performance.now()
   const pages = render(true)

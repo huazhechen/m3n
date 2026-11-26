@@ -26,14 +26,55 @@ export type SpacingSolution = { positions: number[]; minimumWidth: number; stret
 export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
-  const lanes = [...new Set(columns.flatMap(column => column.cells.map(cell => cell.lane)))]
-  const sparse = new Set(columns.flatMap(column => column.cells.filter(cell => cell.sparse).map(cell => cell.lane)))
+  const laneSet = new Set<string>(), sparse = new Set<string>()
+  for (const column of columns) for (const cell of column.cells) {
+    laneSet.add(cell.lane)
+    if (cell.sparse) sparse.add(cell.lane)
+  }
+  const lanes = [...laneSet]
+  if ((!justify || width === Infinity) && !columns.some(column => column.fixedAfter !== undefined)) {
+    // Minimum-width probes need only the running voice ends and the preceding
+    // spring weights. Avoid materializing a column × voice matrix for every
+    // overlapping line candidate; retain the same lane and arithmetic order.
+    const ends = lanes.map(() => 0), after = lanes.map(() => 0), positions: number[] = []
+    const cells: Array<SpacingCell | undefined> = []
+    let cumulative = fillEdges.left ? 1 : 0
+    for (let index = 0; index < columns.length; index++) {
+      const column = columns[index]!
+      let maxLeft = 0, maxRight = 0
+      for (const cell of column.cells) if (!cell.sparse) {
+        maxLeft = Math.max(maxLeft, cell.placeholderLeft ?? cell.left)
+        maxRight = Math.max(maxRight, cell.placeholderRight ?? cell.right)
+      }
+      let position = -Infinity, weight = -Infinity
+      for (let lane = 0; lane < lanes.length; lane++) {
+        const cell = cells[lane] = column.cells.find(cell => cell.lane === lanes[lane])
+        position = Math.max(position, cell ? ends[lane]! + cell.left + cell.before
+          : sparse.has(lanes[lane]!) ? 0 : ends[lane]! + 0 + maxLeft)
+        if (index) weight = Math.max(weight, (after[lane]! + (cell ? cell.beforeStretch ?? 1 : 0)) / 2)
+        after[lane] = cell ? cell.afterStretch ?? 1 : 0
+      }
+      positions.push(position)
+      for (let lane = 0; lane < lanes.length; lane++) {
+        const cell = cells[lane]
+        if (cell) ends[lane] = position + cell.right + cell.after
+        else if (!sparse.has(lanes[lane]!)) ends[lane] = position + 0 + maxRight
+      }
+      if (index) cumulative += weight
+    }
+    return { positions, minimumWidth: Math.max(...ends), stretchWeight: cumulative + (fillEdges.right ? 1 : 0) }
+  }
   const rows = columns.map(column => {
-    const maxLeft = Math.max(0, ...column.cells.filter(cell => !cell.sparse).map(cell => cell.placeholderLeft ?? cell.left))
-    const maxRight = Math.max(0, ...column.cells.filter(cell => !cell.sparse).map(cell => cell.placeholderRight ?? cell.right))
-    return lanes.map(lane => {
+    let maxLeft = 0, maxRight = 0
+    for (const cell of column.cells) if (!cell.sparse) {
+      maxLeft = Math.max(maxLeft, cell.placeholderLeft ?? cell.left)
+      maxRight = Math.max(maxRight, cell.placeholderRight ?? cell.right)
+    }
+    return lanes.map<SpacingCell & { active?: boolean }>(lane => {
       const found = column.cells.find(cell => cell.lane === lane)
-      if (found) return { ...found, active: true }
+      // Solver inputs are read-only. Reuse real cells rather than copying
+      // every music and lyric cell for every overlapping line candidate.
+      if (found) return found
       if (sparse.has(lane)) return { lane, sparse: true, active: false, left: 0, right: 0, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }
       return {
         lane, active: true, left: 0, right: 0, before: maxLeft, after: maxRight,
@@ -51,7 +92,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
         members[++end] = { group: groups.length, offset }
       }
       groups.push({ cells: lanes.flatMap((lane, row) => {
-        const occupied = rows.slice(start, end + 1).flatMap((cells, i) => cells[row]!.active ? [{ cell: cells[row]!, offset: members[start + i]!.offset }] : [])
+        const occupied = rows.slice(start, end + 1).flatMap((cells, i) => cells[row]!.active !== false ? [{ cell: cells[row]!, offset: members[start + i]!.offset }] : [])
         if (!occupied.length) return []
         return [{
           ...occupied[0]!.cell, lane,
@@ -68,21 +109,26 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   }
   const positions: number[] = [], ends = lanes.map(() => 0)
   rows.forEach(row => {
-    const position = Math.max(...row.map((cell, lane) => cell.active ? ends[lane]! + cell.left + cell.before : 0))
+    let position = -Infinity
+    for (let lane = 0; lane < row.length; lane++) {
+      const cell = row[lane]!
+      position = Math.max(position, cell.active !== false ? ends[lane]! + cell.left + cell.before : 0)
+    }
     positions.push(position)
-    row.forEach((cell, lane) => { if (cell.active) ends[lane] = position + cell.right + cell.after })
+    row.forEach((cell, lane) => { if (cell.active !== false) ends[lane] = position + cell.right + cell.after })
   })
   const minimumWidth = Math.max(...ends)
   const cumulative = [fillEdges.left ? 1 : 0]
   for (let index = 1; index < positions.length; index++) {
-    const weight = Math.max(...rows[index]!.map((cell, lane) =>
-      ((rows[index - 1]![lane]!.afterStretch ?? 1) + (cell.beforeStretch ?? 1)) / 2))
+    let weight = -Infinity
+    for (let lane = 0; lane < lanes.length; lane++) weight = Math.max(weight,
+      ((rows[index - 1]![lane]!.afterStretch ?? 1) + (rows[index]![lane]!.beforeStretch ?? 1)) / 2)
     cumulative.push(cumulative[index - 1]! + weight)
   }
   const stretchWeight = cumulative.at(-1)! + (fillEdges.right ? 1 : 0)
   if (justify && width !== Infinity) {
-    const left = Math.min(...rows.flatMap((row, i) => row.filter(cell => cell.active).map(cell => positions[i]! - cell.left)))
-    const right = Math.max(...rows.flatMap((row, i) => row.filter(cell => cell.active).map(cell => positions[i]! + cell.right)))
+    const left = Math.min(...rows.flatMap((row, i) => row.filter(cell => cell.active !== false).map(cell => positions[i]! - cell.left)))
+    const right = Math.max(...rows.flatMap((row, i) => row.filter(cell => cell.active !== false).map(cell => positions[i]! + cell.right)))
     const occupied = right - left
     const shift = -left, free = Math.max(0, width - occupied)
     positions.forEach((position, index) => { positions[index] = position + shift + (stretchWeight > 0 ? free * cumulative[index]! / stretchWeight : 0) })

@@ -8,18 +8,18 @@ import type { MeasureText } from './layout-svg.js'
 export function createStaffHorizontalReference(document: StaffDocument, settings: { transpose?: number; includeBass?: boolean; tempoScale?: number } = {}) {
   const reference = createScoreHorizontalReference(document.score, { includeBass: document.hasBass, ...settings })
   const offsets = new Map(document.measures.map(measure => [measure.id, measure.beatOffset ?? 0]))
-  return (members: StaffMeasure[], spacing: number, equal: boolean) => reference(members.map(member => {
+  return Object.assign((members: StaffMeasure[], spacing: number, equal: boolean) => reference(members.map(member => {
     const id = member.id.replace(/-fragment-.*/, '')
     const start = member.fragment ? (member.beatOffset ?? 0) - (offsets.get(id) ?? 0) : 0
     return { id, start, end: member.fragment ? start + Math.max(0,
       ...[member.melody, member.bass].flatMap(lane => lane.map(event => event.onset + event.beats))) : undefined }
-  }), scoreLayoutConfig.numbered.minimumNoteGap + (spacing - .25) * 48, equal)
+  }), scoreLayoutConfig.numbered.minimumNoteGap + (spacing - .25) * 48, equal), { releasePreparation: reference.releasePreparation })
 }
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
 export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; target: number; weight: number }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { reference?: (measures: StaffMeasure[], spacing: number, equal: boolean) => number | undefined; preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { reference?: ((measures: StaffMeasure[], spacing: number, equal: boolean) => number | undefined) & { releasePreparation?: () => void }; preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -114,6 +114,9 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
         reading += member.reading
         widest = Math.max(widest, member.body)
         const minimum = equal ? widest * (stop - start) + group[start]!.head : sum + group[start]!.head
+        // The shared reference can only increase this minimum. An overflowing
+        // multi-measure span is rejected regardless of its reference width.
+        if (minimum > available && stop > start + 1) break
         const reference = sharedWidth(group.slice(start, stop))
         const occupied = Math.max(minimum, reference ?? 0)
         if (occupied > available && stop > start + 1) break

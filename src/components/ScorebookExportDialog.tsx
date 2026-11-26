@@ -62,7 +62,7 @@ export function ScorebookExportDialog({ onClose }: { onClose: () => void }) {
         // pages have no preview consumer; release their DOM before packaging.
         result.pages[done - 1]?.replaceChildren()
         setProgress({ completed: done, total, title: '' }); setStatus(`正在生成 PDF：${done}/${total} 页…`)
-      }, { fullPage: true, signal: controller.signal, onPhase(phase) {
+      }, { fullPage: true, consumePages: true, signal: controller.signal, onPhase(phase) {
         check()
         if (phase === 'saving' || phase === 'fonts' || phase === 'loading') {
           setProgress(value => ({ ...value, indeterminate: true }))
