@@ -175,7 +175,7 @@ it.each([false, true])('selects a complete elastic spacing tier in paged=%s layo
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
-      const chosen = layoutNativeScore(defaults.document, { width, paged }).options.minimumNoteGap
+      const chosen = layoutNativeScore(defaults.document, { width, paged, rowEnvelope: true }).options.minimumNoteGap
       expect([8, 16]).toContain(chosen)
       expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGap: chosen }).pages)
       expect(defaults.score.diagnostics).toEqual([])

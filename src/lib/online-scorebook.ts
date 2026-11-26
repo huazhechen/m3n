@@ -154,7 +154,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
             // Each neighboring 24px interval adds three new 6px candidates.
             progress(++completedWidths / (widthCandidates.length + 6))
           }
-        }, { signal, prune: pruneSearch && !auditLayout })
+        }, { signal, prune: pruneSearch && !auditLayout, localRefine: notationMode !== 'staff' && !auditLayout })
         renderer.seal(document)
         progress(1)
         Object.assign(scoreTiming, { selectedWidth: best.width })

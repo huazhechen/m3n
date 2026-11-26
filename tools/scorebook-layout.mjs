@@ -50,13 +50,13 @@ async function prepareMeasurement(source) {
   return measurementDocument
 }
 
-export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch'), auditLayout = false) {
+export async function measure(source, width, paged = true, coreGap, host = document.querySelector('#scratch'), auditLayout = false, minimumQuality) {
   const started = performance.now()
   const scoreDocument = await prepareMeasurement(source)
   const parseFontsMs = performance.now() - started
   textMeasurementCache ??= new NumberedTextMeasurementCache()
   layoutTask ??= new NumberedLayoutTask()
-  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, settings: { coreGap, textMeasurementCache, layoutTask },
+  const { candidate } = measureNumberedWidth(scoreDocument, width, { host, paged, auditLayout, minimumQuality, settings: { coreGap, textMeasurementCache, layoutTask },
     afterMount: host => attachScoreReading(host, measurementDescription) })
   candidate.timings.parseFontsMs = parseFontsMs
   candidate.timings.totalMs += parseFontsMs
