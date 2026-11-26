@@ -31,6 +31,7 @@ try {
     .filter(file => file.endsWith('.m3n'))
     .map(file => ({ file, source: readFileSync(join(root, 'src/scores', file), 'utf8') }))
   scores.push(
+    { file: 'regression-expression-order', source: '{4/4}\nN: {expression=Andante, dolce}1 {expression=legatiss.}2 3 4 |||' },
     { file: 'regression-subtitle-singer', source: '{title=多行副标题与演唱者}{subtitle=这是一段需要在窄版宽中自动换行并完整保留的副标题}{singer=歌手甲与歌手乙}{4/4}\nN: 1 2 3 4 |||' },
     { file: 'regression-lyrics', source: '{4/4}\nN: ' + Array(12).fill('(1 2) (3 4) 5 6 |').join(' ') + '\nL: ' + '“春天，花开！”'.repeat(12) + '\nL2: ' + 'internationalization '.repeat(12) },
     { file: 'regression-relations', source: '{6/8}\nN: ||: {lg}(1d 2d 3d) [1d3d5d:h]{hold} 1{ac(7d)}{/} | {cresc}1^.{/} :||\n---\nN: {rest=2} | 1{fermata} 2 3 |||' },
@@ -91,7 +92,7 @@ try {
         const overlapsHost = host && Math.min(box.x + box.width, host.x + host.width) > Math.max(box.x, host.x) + 0.5
         if (!host || (overlapsHost && box.y + box.height > host.y + 1)) issues.push({ file, width, paged, annotation: annotation.textContent, host: note?.id })
       }
-      if (file === 'ai_de_li_zan_01.m3n') {
+      if (file === 'regression-expression-order') {
         const opening = annotations.find(node => node.textContent === 'Andante, dolce')
         const continuation = annotations.find(node => node.textContent === 'legatiss.')
         const a = opening && inkBounds(opening), b = continuation && inkBounds(continuation)
