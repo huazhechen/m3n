@@ -26,7 +26,8 @@
 .audio-controls button:focus-visible, .audio-controls input:focus-visible { outline: 2px solid #176e6e; outline-offset: 2px; }
 .audio-controls .playback-toggle, .audio-controls [role="switch"][aria-checked="true"] { border-color: #176e6e; color: white; background: #176e6e; }
 .audio-controls output { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.playback-progress { position: relative; min-width: 0; }
+/* A flex row removes the inline range input's text-baseline/descender space. */
+.playback-progress { position: relative; display: flex; align-items: center; min-width: 0; }
 .playback-progress-accessible:not(:focus) { position: absolute; width: 1px !important; height: 1px !important; overflow: hidden; clip-path: inset(50%); }
 .playback-progress-accessible:focus { position: absolute; inset: 0; background: #fff !important; }
 .audio-controls input[type="range"] { appearance: none; width: 100%; min-width: 0; height: var(--ui-control-size); margin: 0; background: transparent; accent-color: #176e6e; cursor: pointer; touch-action: pan-y; }
