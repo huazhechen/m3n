@@ -1,58 +1,62 @@
-import { compileScorePerformance, formatM3N, parseM3NDocument, resolveScorePitches, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
+import { compileScorePerformance, formatM3N, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
 import source from '../scores/butter_fly_01.m3n?raw'
-import reference from './fixtures/butter-fly-upload.json'
+import vocalSource from './fixtures/butter-fly-vocal-rhythm.m3n?raw'
 
 const document = parseM3NDocument(source)
-const part = document.parts.get('score')!
-const bars = part.melody.filter(bar => bar.events.length)
-const semitones: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-const alterations: Record<string, number> = { '': 0, s: 1, f: -1, n: 0 }
-const midi = (pitch: string) => {
-  const [name, octave, accidental] = pitch.split(':')
-  return 12 * (Number(octave) + 1) + semitones[name!.toUpperCase()]! + alterations[accidental!]!
-}
+const original = parseM3NDocument(vocalSource)
+const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
+const vocalBars = original.parts.get('score')!.melody.filter(bar => bar.events.length)
 
-it('matches every uploaded fixed-do melody pitch, octave, duration and tie in E-major movable do', () => {
+it('keeps every vocal duration, rest, tie and repeated-note articulation', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect(formatM3N(source)).toBe(source)
   expect(document.key).toBe('E')
-  expect(document.tempo).toBe(106)
-  expect(bars).toHaveLength(44)
-  expect(part.bass.flatMap(bar => bar.events)).toEqual([])
+  expect(document.tempo).toBe(165)
+  expect(bars).toHaveLength(45)
+  const rhythm = (measures: typeof bars) => measures.map(bar => ({
+    left: bar.left, right: bar.right,
+    events: bar.events.map(event => ({ kind: event.kind, beats: event.beats, tie: Boolean(event.tie) })),
+  }))
+  expect(rhythm(bars)).toEqual(rhythm(vocalBars))
+  expect(source).toContain('{lg}(5 3){/}')
+  expect(bars.flatMap(bar => bar.events.filter(event => event.tie))).toHaveLength(34)
+  expect(bars.slice(0, 12).flatMap(bar => bar.events.filter(event => event.tie))).toHaveLength(10)
+  expect(bars[9]!.events[4]!.beats).toBe(1)
+  expect(bars[11]!.events[4]!.beats).toBe(1)
+  expect(document.parts.get('score')!.bass.flatMap(bar => bar.events)).toEqual([])
+  expect(bars.every(bar => bar.events.reduce((sum, event) => sum + event.beats, 0) === 4)).toBe(true)
+})
+
+it('retains fixed-do pitch corrections that fit the vocal rhythm and ties', () => {
   const pitches = resolveScorePitches(bars)
-  for (const [index, measure] of reference.measures.entries()) {
-    const expected = measure.events.split(' ').map(token => {
-      const [name, duration] = token.split('/')
-      const match = /^([A-G])(#?)([0-9])$/.exec(name!)
-      return {
-        pitch: match ? 12 * (Number(match[3]) + 1) + semitones[match[1]!]! + (match[2] ? 1 : 0) : null,
-        beats: Number(duration!.replace('~', '')),
-        tie: duration!.endsWith('~'),
-      }
-    })
-    expect(bars[index]!.events.map(event => ({
-      pitch: pitches.get(event)?.[0] ? midi(pitches.get(event)![0]!) : null,
-      beats: event.beats,
-      tie: Boolean(event.tie),
-    })), `PDF measure ${measure.pdfMeasure}`).toEqual(expected)
-    expect(bars[index]!.events.reduce((sum, event) => sum + event.beats, 0)).toBe(4)
-    expect(bars[index]!.events.every(event => event.pitches.length <= 1)).toBe(true)
+  const vocalPitches = resolveScorePitches(vocalBars)
+  // One-based written measure / zero-based event, including the pickup bar.
+  // PDF 10, 12, 14, 16, 20, 22, 24 and 36; fixed C do → E-major movable do.
+  const corrections: Record<string, string> = {
+    '1/3': 'b:3:', '3/3': 'e:4:', '5/4': 'g:4:n', '5/6': 'g:4:n',
+    '7/5': 'g:4:s', '11/4': 'e:4:', '13/3': 'g:4:n', '15/5': 'g:4:s', '27/4': 'c:5:s',
+  }
+  for (const [index, bar] of bars.entries()) for (const [position, event] of bar.events.entries()) {
+    expect(pitches.get(event)?.[0], `written measure ${index + 1}, event ${position}`)
+      .toBe(corrections[`${index + 1}/${position}`] ?? vocalPitches.get(vocalBars[index]!.events[position]!)?.[0])
   }
 })
 
-it('keeps the existing two-pass route and the uploaded vocal ending without piano material', () => {
-  expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
-  expect(bars.filter(bar => bar.right === 'rptend')).toHaveLength(1)
-  const expanded = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
-  expect(expanded).toHaveLength(86)
+it('does not add attacks or gaps anywhere in either repeat pass', () => {
   const performance = compileScorePerformance(document)
-  expect(performance.beats).toBe(344)
-  expect(performance.notes.find(note => note.start === 3.5)).toMatchObject({ pitch: 59, end: 4 })
-  // PDF 12→13 is G-sharp, never a tie from C-sharp into a rest.
+  const vocalPerformance = compileScorePerformance(original)
+  expect(performance.beats).toBe(348)
+  expect(performance.notes).toHaveLength(348)
+  expect(performance.notes.map(note => [note.start, note.end]))
+    .toEqual(vocalPerformance.notes.map(note => [note.start, note.end]))
+  expect(performance.notes.filter(note => note.start < 48)).toHaveLength(50)
   for (const offset of [0, 168]) {
-    expect(performance.notes.find(note => note.start === 11.5 + offset)).toMatchObject({ pitch: 68, end: 12.5 + offset })
-    expect(performance.notes.some(note => note.start === 12 + offset)).toBe(false)
+    expect(performance.notes.find(note => note.start === 39.5 + offset))
+      .toMatchObject({ pitch: 73, end: 40.5 + offset })
+    expect(performance.notes.some(note => note.start === 40 + offset)).toBe(false)
+    expect(performance.notes.find(note => note.start === 121.5 + offset))
+      .toMatchObject({ pitch: 76, end: 123 + offset })
+    expect(performance.notes.some(note => note.start === 122 + offset || note.start === 122.5 + offset)).toBe(false)
   }
-  expect(performance.notes.at(-1)).toMatchObject({ pitch: 76, start: 340, end: 342 })
 })

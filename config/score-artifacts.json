@@ -2,7 +2,7 @@
   "version": 1,
   "staffGeneration": "deferred",
   "rendererSha256": "c6e83534816a98877b59ceef7f7857a00337cfbd1d527eedf4be748f35c853e3",
-  "fontManifestSha256": "294bcebe7f8fc865425f9c59ad7e2ee7ef7f3ed2cab87d817a59e01e76c1e3d9",
+  "fontManifestSha256": "56fe4fa72687237bc3c2b95517784fdc4e676b416697c2d8f7867f0c56589ba7",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -550,9 +550,9 @@
       "fontSha256": "809b68cfcd2c7eb249dbc5af0d2efdec4a074664e155d2bbfe337748c503b74b"
     },
     "src/scores/butter_fly_01.m3n": {
-      "sourceSha256": "6e81f1a4b583de967ea2476e6db31255cf43a4015227dc921ad9ff95c7ba8dd6",
-      "font": "NotoSansSC-c50ef1126e088ed0.ttf",
-      "fontSha256": "d8d9163df58f50cfcb2b9d1b97a79827975d51747e5d7b444514424c86afe181"
+      "sourceSha256": "c90a931db054459308dd90015e10c08c4b27b5f96628db1be311166feef24472",
+      "font": "NotoSansSC-5ebc5145be3c9134.ttf",
+      "fontSha256": "eb05905a50dacc7fdc8075291db2fe790f971f242acd994db23ce6dbd860d45b"
     },
     "src/scores/g_xian_shang_de_yong_tan_diao_01.m3n": {
       "sourceSha256": "9616f292ba1871c132708778c031497e82a9e5a78083a005c9d14509aede6e4d",
