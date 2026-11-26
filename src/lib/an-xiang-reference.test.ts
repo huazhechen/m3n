@@ -3,11 +3,14 @@ import { expect, it } from 'vitest'
 import source from '../scores/an_xiang_01.m3n?raw'
 
 import reference from './fixtures/an-xiang-pdf-reference.json'
+import simplified from './fixtures/an-xiang-simplified-reference.json'
+import beforeSource from './fixtures/an-xiang-before-simplification.m3n?raw'
 
 // PDF pitches retain their printed C/A keys; compare concert MIDI pitches so
 // transcribing the A section in C cannot conceal an octave or accidental error.
 const semitones = [0, 2, 4, 5, 7, 9, 11]
-const expectedInstrumental = reference.bars.map(bar => bar.notes.split(' ').map((printedToken, index) => {
+const arrangedBars = reference.bars.map(bar => simplified.bars.find(edited => edited.number === bar.number) ?? bar)
+const expectedInstrumental = arrangedBars.map(bar => bar.notes.split(' ').map((printedToken, index) => {
   // User edition: replace PDF bar 37's opening rest with the same 1 as beat 3.
   const token = bar.number === 37 && index === 0 ? '1/.25' : printedToken
   const [pitch, length] = token.split('/')
@@ -26,7 +29,7 @@ const events = (bar: typeof bars[number]) => bar.events.flatMap(event => event.k
   ? event.pitches.map(pitch => [pitch, event.beats / event.pitches.length])
   : [[event.pitches[0] ?? '0', event.beats]])
 
-it('matches PDF bars 2–5 and 37–47 in concert pitch, rhythm and ties, including the key change and tuplets', () => {
+it('matches the PDF introduction and approved simplified interlude in concert pitch, rhythm and ties', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
   expect([document.key, document.meterCount, document.meterUnit, document.tempo]).toEqual(['C', 4, 4, 70])
   expect(bars).toHaveLength(52)
@@ -54,7 +57,7 @@ it('matches PDF bars 2–5 and 37–47 in concert pitch, rhythm and ties, includ
   }
 })
 
-it('plays the introduction once and the vocal section twice, with the interlude only in the first ending', () => {
+it('plays the introduction and interlude once and jumps to Coda on the second vocal pass without houses', () => {
   const played = unfoldScorePerformance(document).parts.get('score')!.melody.filter(bar => bar.events.length)
   const expected = [...bars.slice(0, 47), ...bars.slice(4, 32), ...bars.slice(47)]
   expect(played.map(events)).toEqual(expected.map(events))
@@ -62,6 +65,9 @@ it('plays the introduction once and the vocal section twice, with the interlude 
   expect(compileScorePerformance(document).beats).toBe(320)
   expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index + 1] : [])).toEqual([5])
   expect(bars.flatMap((bar, index) => bar.right === 'rptend' ? [index + 1] : [])).toEqual([47])
+  expect(bars.every(bar => !bar.ending)).toBe(true)
+  expect(source.match(/\{tocoda\}/g)).toHaveLength(1)
+  expect(source.match(/\{coda\}/g)).toHaveLength(1)
 })
 
 it('corrects the chorus melody, restores the distinct lyrics and places every syllable outside the instruments', () => {
@@ -86,15 +92,15 @@ it('corrects the chorus melody, restores the distinct lyrics and places every sy
   expect(events(bars[51]!)).toEqual([['6', 4]])
 })
 
-it('splits both sextuplets into four triplets without changing their sixteenth-note timing', () => {
+it('uses two eighth-note triplet groups and preserves the approved opening 1', () => {
   const tuplets = bars[45]!.events.filter(event => event.kind === 'tuplet')
-  expect(tuplets).toHaveLength(4)
-  expect(tuplets.map(event => [event.pitches.length, event.beats])).toEqual(Array(4).fill([3, .5]))
+  expect(tuplets).toHaveLength(2)
+  expect(tuplets.map(event => [event.pitches.length, event.beats])).toEqual(Array(2).fill([3, 1]))
   expect(events(bars[36]!).slice(0, 1)).toEqual([['1', .25]])
   expect(events(bars[36]!)[0]).toEqual(events(bars[36]!)[8])
 })
 
-it('plays each PDF tied continuation without a new attack and preserves the untied repeated chords', () => {
+it('plays the simplified melody without extra attacks on the retained sustained note', () => {
   let cursor = 144 // First ending: the instrumental section starts at written bar 37.
   let continuation = false
   const expected: Array<{ start: number; end: number; pitch: number }> = []
@@ -116,8 +122,46 @@ it('plays each PDF tied continuation without a new attack and preserves the unti
     expect(note.start).toBeCloseTo(expected[index]!.start)
     expect(note.end).toBeCloseTo(expected[index]!.end)
   }
-  // PDF bar 40's first two chords are black and untied: keep both attacks.
-  expect(actual.filter(note => note.start >= 156 && note.start < 159).map(note => note.start)).toEqual([156, 157])
-  // Four gray continuations (PDF 39, 41, 42, 45) must not create extra attacks.
-  expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(4)
+  // Repeated chord attacks are merged by the approved simplification.
+  expect(actual.filter(note => note.start >= 156 && note.start < 159).map(note => note.start)).toEqual([156])
+  expect(expectedInstrumental.slice(4).flat().filter(note => note.tie)).toHaveLength(1)
+})
+
+it('keeps every vocal and introduction pitch and timing, and substantially reduces the interlude note count', () => {
+  const beforeDocument = parseM3NDocument(beforeSource)
+  const before = compileScorePerformance(beforeDocument), after = compileScorePerformance(document)
+  const outsideInterlude = (note: { start: number }) => note.start < 144 || note.start >= 188
+  const previous = before.notes.filter(outsideInterlude), current = after.notes.filter(outsideInterlude)
+  expect(current).toHaveLength(previous.length)
+  for (const [index, note] of current.entries()) {
+    expect(note.pitch).toBe(previous[index]!.pitch)
+    expect(note.start).toBeCloseTo(previous[index]!.start)
+    expect(note.end).toBeCloseTo(previous[index]!.end)
+  }
+  expect(after.beats).toBe(before.beats)
+  expect(document.lyrics.map(block => block.syllables.map(syllable => syllable.text))).toEqual(
+    beforeDocument.lyrics.map(block => block.syllables.map(syllable => syllable.text)),
+  )
+  const currentInterlude = after.notes.filter(note => !outsideInterlude(note))
+  const previousInterlude = before.notes.filter(note => !outsideInterlude(note))
+  expect(previousInterlude).toHaveLength(116)
+  expect(currentInterlude).toHaveLength(78)
+  // Every retained pitch comes from the same PDF bar, including its A-key octave.
+  const previousBars = beforeDocument.parts.get('score')!.melody.filter(bar => bar.events.length)
+  const previousPitches = resolveScorePitches(previousBars), currentPitches = resolveScorePitches(bars)
+  for (let index = 36; index < 47; index++) {
+    const allowed = new Set(previousBars[index]!.events.flatMap(event => (previousPitches.get(event) ?? []).map(pitch => pitch.replace(/:n$/, ':'))))
+    for (const pitch of bars[index]!.events.flatMap(event => currentPitches.get(event) ?? [])) {
+      expect(allowed.has(pitch.replace(/:n$/, ':')), `written bar ${index + 1}: ${pitch}`).toBe(true)
+    }
+  }
+})
+
+it('retains the distinctive final-beat 32nd-note ascent from the uploaded image with the corrected PDF pitches', () => {
+  const notes = events(bars[37]!)
+  expect(notes.slice(-8)).toEqual([
+    ['3e', .125], ['6', .125], ['7', .125], ['1#e', .125],
+    ['2e', .125], ['3e', .125], ['4#e', .125], ['5#e', .125],
+  ])
+  expect(notes.slice(0, -8).reduce((sum, note) => sum + Number(note[1]), 0)).toBe(3)
 })
