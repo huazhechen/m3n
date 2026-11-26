@@ -53,7 +53,18 @@ it('keeps the original three repeats and the complete D-minor/D-major form as a 
   for (const bar of [14, 15, 81, 130]) {
     expect(bars[bar - 1]!.events.some(event => event.postfixes.includes('fermata'))).toBe(true)
   }
-  expect(source).toContain('{text=延长休止}0')
+  expect(document.subtitle).toBe('Csárdás')
+  expect(source).not.toContain('延长休止')
+  expect([...source.matchAll(/\{text=([^}]+)\}/g)].map(match => match[1])).toEqual([
+    'Largo', 'Allegro vivo', 'Molto meno', 'Meno, quasi lento',
+    'Allegro vivace', 'Allegretto', 'a tempo più presto', 'Molto più vivo',
+  ])
+  expect(bars.flatMap(bar => bar.events).filter(event => event.tuplet?.num === 6)).toHaveLength(0)
+  for (const index of [9, 11]) {
+    const tuplets = bars[index]!.events.filter(event => event.kind === 'tuplet')
+    expect(tuplets).toHaveLength(2)
+    expect(tuplets.map(event => [event.tuplet!.num, event.beats])).toEqual([[3, .5], [3, .5]])
+  }
   expect(pitches.get(bars.at(-1)!.events[0]!)).toEqual(['d:4:'])
   const file = 'cha_er_da_shi_01.m3n'
   expect(categories.find(category => category.id === 'instrumental-large')!.files).toContain(file)
