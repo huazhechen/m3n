@@ -17,21 +17,30 @@ describe('line strain against available compression travel', () => {
   })
 })
 
-describe('moderate compression preference', () => {
-  it('preserves natural length, full compression and the unbounded stretch curve', () => {
-    expect(spacingStrainBadness(8, 16, 16, .25)).toBe(0)
-    expect(spacingStrainBadness(8, 16, 8, .25)).toBe(1)
-    expect(spacingStrainBadness(8, 16, 7.99, .25)).toBe(Infinity)
-    for (const width of [16, 20, 24, 160]) expect(spacingStrainBadness(8, 16, width, .25)).toBe(spacingStrainBadness(8, 16, width))
+describe('one strain curve with separate compression and stretch scales', () => {
+  const policy = { stretchTravelRatio: .5 }
+  it.each([[8, 1], [12, .25], [14, .0625], [16, 0], [18, .25], [20, 1], [24, 4]])(
+    'prices a %spx clearance as %s at natural 16px and minimum 8px', (width, expected) => {
+      expect(spacingStrainBadness(8, 16, width, policy)).toBe(expected)
+    })
+  it('keeps the hard minimum and continuously increases costs in both directions', () => {
+    expect(spacingStrainBadness(8, 16, 7.99, policy)).toBe(Infinity)
+    for (let i = 1; i <= 80; i++) {
+      expect(spacingStrainBadness(8, 16, 16 - i / 10, policy)).toBeGreaterThan(spacingStrainBadness(8, 16, 16 - (i - 1) / 10, policy))
+      expect(spacingStrainBadness(8, 16, 16 + i / 10, policy)).toBeGreaterThan(spacingStrainBadness(8, 16, 16 + (i - 1) / 10, policy))
+    }
+    expect(spacingStrainBadness(8, 16, 160, policy)).toBeGreaterThan(1)
   })
-  it('eases moderate compression continuously and increasingly penalises tighter gaps', () => {
-    expect(spacingStrainBadness(8, 16, 12, .25)).toBe(.109375)
-    expect(spacingStrainBadness(8, 16, 14, .25)).toBe(.0185546875)
-    const costs = Array.from({ length: 81 }, (_, i) => spacingStrainBadness(8, 16, 16 - i / 10, .25))
-    for (let i = 1; i < costs.length; i++) expect(costs[i]).toBeGreaterThan(costs[i - 1]!)
-    expect(spacingStrainBadness(108, 116, 112, .25)).toBe(.109375)
-    expect(spacingStrainBadness(80, 160, 120, .25)).toBe(.109375)
-    expect(Number.isFinite(spacingStrainBadness(16, 16, 20, .25))).toBe(true)
+  it('excludes rigid ink, respects engraving scale and handles rows without elastic travel', () => {
+    expect(spacingStrainBadness(108, 116, 112, policy)).toBe(.25)
+    expect(spacingStrainBadness(80, 160, 120, policy)).toBe(.25)
+    expect(spacingStrainBadness(108, 116, 120, policy)).toBe(1)
+    expect(spacingStrainBadness(80, 160, 200, policy)).toBe(1)
+    expect(spacingStrainBadness(16, 16, 16, policy)).toBe(0)
+    expect(Number.isFinite(spacingStrainBadness(16, 16, 20, policy))).toBe(true)
+  })
+  it('rejects invalid stretch scales rather than introducing nonfinite planning costs', () => {
+    for (const stretchTravelRatio of [0, -.5, NaN, Infinity]) expect(() => spacingStrainBadness(8, 16, 20, { stretchTravelRatio })).toThrow()
   })
 })
 

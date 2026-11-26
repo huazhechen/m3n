@@ -59,16 +59,16 @@ export function elasticLineBadness(minimum: number, natural: number, width: numb
   return solveElasticSprings([spring], Math.max(0, width)).badness
 }
 
-/** Normalize compression and extension by the available spring travel,
- * excluding rigid ink. A line below its collision minimum is never legal. */
-export function spacingStrainBadness(minimum: number, natural: number, width: number, compressionWeight = 1): number {
+/** Square normalized strain in both directions, using separate travel scales.
+ * Rigid ink does not dilute strain. Infeasible widths retain the hard limit.
+ * The default preserves the legacy symmetric quadratic curve. */
+export function spacingStrainBadness(minimum: number, natural: number, width: number,
+  { stretchTravelRatio = 1 }: { stretchTravelRatio?: number } = {}): number {
+  if (!Number.isFinite(stretchTravelRatio) || stretchTravelRatio <= 0) throw new Error('伸缩评分的伸展尺度无效。')
   if (width < minimum) return Infinity
-  const travel = Math.max(0, natural - minimum)
-  if (!travel) return width === natural ? 0 : ((width - natural) / Math.max(1, natural)) ** 2
-  const squared = ((width - natural) / travel) ** 2
-  // Ease moderate compression while retaining unit cost at the hard minimum.
-  // The default keeps the existing symmetric cost for other callers.
-  return width < natural ? compressionWeight * squared + (1 - compressionWeight) * squared ** 2 : squared
+  const travel = natural > minimum ? natural - minimum : Math.max(1, natural)
+  const scale = travel * (width > natural ? stretchTravelRatio : 1)
+  return ((width - natural) / scale) ** 2
 }
 
 export type ElasticLine = { minimumWidth: number; naturalWidth?: number; stretchWeight: number }

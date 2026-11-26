@@ -207,7 +207,8 @@ function breakMeasures(measures: NativeMeasure[], width: number, options: Native
         const target = Math.max(minWidth, available)
         candidates[index]!.push({ end: stop + 1, density: minWidth / available,
           naturalDensity: naturalWidth / available,
-          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target, nativeStyle.compressionWeight) })
+          elasticBadness: spacingStrainBadness(minWidth, naturalWidth, target, {
+            stretchTravelRatio: nativeStyle.stretchTravelRatio }) })
       }
     }
     let index = 0
