@@ -517,6 +517,25 @@ export function createStaffMeasure(measure: StaffMeasure, first: boolean, hasBas
   return { prepared, entries, beams, measureText, staves: [0, ...(hasBass ? [bassY] : [])].map(y => ({ x: 0, y, width: 0, noteStartX: 0 })),
     metrics: prepared.metrics, minimum: staffMinimumAtSpacing(prepared.metrics, spacing), start: prepared.metrics.start, endInset: prepared.metrics.endInset, measure, spacing, joinedRepeat: Boolean(measure.joinsPreviousRepeat && !first) }
 }
+const placementWorkspaces = new WeakMap<StaffPreparation, WeakMap<PreparedMeasure, StaffMeasureLayout>>()
+/** Candidate drawing captures its own coordinates. Anchors are private scratch
+ * state used only until a row's relations and attachments have been placed. */
+export function borrowStaffMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY: number,
+  preparation: StaffPreparation): StaffMeasureLayout {
+  let workspaces = placementWorkspaces.get(preparation)
+  if (!workspaces) { workspaces = new WeakMap(); placementWorkspaces.set(preparation, workspaces) }
+  const prepared = preparation.measure(measure, first, hasBass, measureText)
+  let model = workspaces.get(prepared)
+  if (!model) {
+    model = createStaffMeasure(measure, first, hasBass, measureText, spacing, bassY, preparation)
+    workspaces.set(prepared, model)
+  } else {
+    model.spacing = spacing
+    model.minimum = staffMinimumAtSpacing(model.metrics, spacing)
+    if (hasBass) model.staves[1]!.y = bassY
+  }
+  return model
+}
 export function staffLine(x1: number, y1: number, x2: number, y2: number, width = (staffMusicSize() / 4 * 0.1), cls?: string): XmlNode {
   const node = element('path', { stroke: '#000', 'stroke-width': String(width), fill: 'none', ...(cls ? { class: cls } : {}) })
   setNumericPath(node, staffLinePath(x1, y1, x2, y2))

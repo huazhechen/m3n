@@ -97,3 +97,5 @@
 简谱数值候选的横向准备与安全预检查读取共享的未放置度量投影，实际放置时才复制私有状态并重绑端点与分片；全量对照见[延后复制放置状态](WIDTH_DEFERRED_PROJECTION_PERFORMANCE.md)。五线谱适配器的普通文字局部边界复用与谱线直接生成精确边界，分别见[文字边界复用](WIDTH_LEAF_TEXT_PERFORMANCE.md)和[数值谱线边界](WIDTH_LINE_INK_PERFORMANCE.md)。这些均未改变共享搜索、评分或分页算法，全部曲目600ms目标仍未达到。
 
 候选音乐的数值执行记录及逐元素／完整SVG一致性验证，见[首段执行架构迁移](WIDTH_NUMERIC_RUN_PERFORMANCE.md)；整体后续方案见[600ms执行架构重构](WIDTH_COMPILED_GEOMETRY_PLAN.md)。
+
+允许页数不增加、选宽偏差至多12px后的三种近似搜索试验，以及保留的小节放置工作区复用，见[有损选宽试验](WIDTH_LOSSY_SELECTION_EXPERIMENTS.md)。近似策略均未通过全量边界，正式搜索继续保持完整6px网格。
