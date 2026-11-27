@@ -18,13 +18,16 @@ export async function search(source, { auditLayout = false, prune = !auditLayout
   const started = performance.now()
   const score = readScore(source)
   const task = await prepareStaffMeasurementTask(score)
-  const result = await probeWidthCandidates((width, best) => measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount }), { prune: prune && !auditLayout })
+  const result = await probeWidthCandidates((width, best) => {
+    if (globalThis.__m3nTraceWidths) console.log('width-start '+width)
+    return measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount })
+  }, { prune: prune && !auditLayout })
   if (globalThis.__m3nExperimentalRowReuse) {
     const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling
     globalThis.__m3nExperimentalRowReuse = false
     globalThis.__m3nExperimentalGreedyCeiling = false
     try {
-      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureStaffWidth(score,width,{},undefined,{task}))
+      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureStaffWidth(score,width,{},undefined,{task}),{verifyWidestWhenMultipage:true})
       result.best = verified.best
       result.verifiedCandidates = verified.verifiedCandidates
       result.verificationFailures = verified.failures

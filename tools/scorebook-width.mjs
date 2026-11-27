@@ -100,13 +100,20 @@ export async function selectBestWidth(measure, options) {
 
 /** Exact-check estimates in rank order, continuing after page underestimates.
  * This verifies the returned geometry, not the global width/page error bound. */
-export async function verifyEstimatedWidthCandidates(candidates, measure, { signal } = {}) {
+export async function verifyEstimatedWidthCandidates(candidates, measure, { signal, verifyWidestWhenMultipage = false } = {}) {
   const ordered = candidates.filter(safe).sort(rank)
   const expectedPages = ordered[0]?.pageCount
+  // A surrogate can overestimate pages as well as underestimate them. Probe
+  // the widest endpoint before trusting a multi-page estimate. This catches
+  // missed endpoint transitions; it is not a proof about intermediate widths.
+  const widest = verifyWidestWhenMultipage && expectedPages > 1
+    ? candidates.reduce((a,b) => !a || b.width > a.width ? b : a, null) : undefined
+  const preflight = widest && widest.width !== ordered[0]?.width ? widest : undefined
+  const queue = preflight ? [preflight,...ordered.filter(candidate => candidate.width!==preflight.width)] : ordered
   const verifiedCandidates = [], failures = []
   let best = null, requests = 0
   const started = performance.now()
-  for (const candidate of ordered) {
+  for (const candidate of queue) {
     signal?.throwIfAborted()
     requests++
     let exact
@@ -119,7 +126,7 @@ export async function verifyEstimatedWidthCandidates(candidates, measure, { sign
     signal?.throwIfAborted()
     verifiedCandidates.push(exact)
     if (safe(exact) && (!best || rank(exact, best) < 0)) best = exact
-    if (best && best.pageCount <= expectedPages) break
+    if (candidate!==preflight && safe(exact) && exact.pageCount <= expectedPages) break
   }
   if (!best) throw new Error('没有通过精确复核的选宽候选。')
   return { best, requests, ms: performance.now() - started, verifiedCandidates, failures }

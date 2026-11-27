@@ -6,7 +6,7 @@ import { relationsFor, reserveInstrumentalEndpoints } from './native-relation-pl
 import { scoreEndingReferences } from './layout/ending-reference.js'
 import { cacheNativeArcObstacles, releaseNativeArcObstacles } from './native-arc.js'
 import { intersectNativeRowBounds } from './native-row-bound.js'
-import { captureNativeRowHorizontal, restoreNativeRowHorizontal, captureNativeRow, restoreNativeRow, restoreNativeRowRelations, type NativeRowSnapshot } from './native-row-cache.js'
+import { captureNativeRowHorizontal, restoreNativeRowHorizontal, captureNativeRow, restoreNativeRow, restoreNativeRowRelations } from './native-row-cache.js'
 import { nativeRowGeometry, nativeRowCoreLowerBound } from './native-row-geometry.js'
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './layout/policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
@@ -58,7 +58,7 @@ function validate(options: NativeRenderOptions) {
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
 type NativeLayoutPreparation = { workspaces?: WeakMap<NativeProjection, NativePlacementWorkspace>; canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
-  proxyRows?:Map<string,{left:number;right:number;block:ScorePageBlock;snapshot:NativeRowSnapshot}>
+  proxyRows?:Map<string,{left:number;right:number;block:ScorePageBlock}>
   feasibilityWitnesses?:Map<string,{ends?:number[]}>; horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
   arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; measuredProjections?: Map<string, NativeProjection>; rowMinimums?: Map<string, Map<string, number>>
 }
@@ -132,7 +132,10 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
       throw Object.assign(new Error('Page and font lower bounds cannot improve the winner'),{code:'M3N_WIDTH_QUALITY_PRUNED'})
     const ceiling=maximumPageCount-(fontCannotWin ? 1 : 0)
     const since=timings ? performance.now() : 0
-    const impossible=trials.every(({trial})=>trial.canFitPageCeiling?.(ceiling)===false)
+    // Compiled surrogate rows are cheap enough to measure directly. Do not
+    // spend more on a static feasibility proof than on the candidate itself.
+    const estimated = measurement && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+    const impossible=!estimated && trials.every(({trial})=>trial.canFitPageCeiling?.(ceiling)===false)
     if(timings)timings.pageFeasibilityMs=(timings.pageFeasibilityMs ?? 0)+performance.now()-since
     if(impossible) {
       if(timings)timings.pageFeasibilityPrunes=(timings.pageFeasibilityPrunes ?? 0)+1
@@ -392,7 +395,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   }
   const systemOf = new Map<NativeGlyph, number>()
   let proxyPlacementRows: Set<number> | undefined
-  const proxyPlacements = new Map<NativeSystem,{key:string;block:ScorePageBlock;snapshot:NativeRowSnapshot}>()
+  const proxyPlacements = new Map<NativeSystem,{key:string;block:ScorePageBlock}>()
   const spacingFor=(measures:NativeMeasure[])=>{
     const key=measures.every(m=>!m.continuation && m.lastFragment) ? `${horizontalKey}:${measures.map(m=>m.id).join(':')}` : undefined
     if(preparation && key!==undefined) {
@@ -403,7 +406,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return nativeHorizontalSpacing(measures,options)
   }
-  const placeSystem = (system: NativeSystem,cache?:NativePageTrialCache) => {
+  const placementFrame = (system: NativeSystem) => {
     const leading = arcLeading(system.measures)
     const x = margin + leading
     if (leading > 0) system.arcContinuationLeft = margin
@@ -415,6 +418,10 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
         endingMode !== 'inherited' && system.unitRhythmicGap !== undefined && endingGapReferences.has(system)
           ? { current: system.unitRhythmicGap, reference: endingGapReferences.get(system)! } : undefined)
     }
+    return {x,width}
+  }
+  const placeSystem = (system: NativeSystem,cache?:NativePageTrialCache) => {
+    const {x,width} = placementFrame(system)
     if (proxyPlacementRows?.has(system.index)) {
       const key = JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])
       const saved = preparation?.proxyRows?.get(key)
@@ -422,7 +429,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
         const warp = <T extends NativeInk>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,x,x+width)
         const block = {...saved.block,ink:warp(saved.block.ink ?? []),boundaryInk:warp(saved.block.boundaryInk ?? []),edgeInk:warp(saved.block.edgeInk ?? [])}
         system.measures[0]!.start=x; system.measures.at(-1)!.end=x+width
-        proxyPlacements.set(system,{key:`proxy:${key}:${x}:${width}`,block,snapshot:saved.snapshot})
+        proxyPlacements.set(system,{key:`proxy:${key}:${x}:${width}`,block})
         return
       }
     }
@@ -533,6 +540,24 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return block
   }
+  const finishLayout = (blocks:ScorePageBlock[], measuredSystems:NativeSystem[], onlyRow?:number):NativeLayout => {
+    const resultSystems = measurement ? measuredSystems.map(system => ({ ...system,
+      measures: system.measures.map(measure => ({ ...measure })) })) : measuredSystems
+    const layout: NativeLayout = { document, headerDocument, projection, systems:resultSystems, pages: [], relations, options, measurer, headerHeight, margin,
+      pagination: prepareScorePagination(blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerBlocks: onlyRow===undefined ? header.blocks : [] }
+    if(onlyRow!==undefined)return layout
+    const gap = options.coreGap ?? (nativeCoreGap(document))
+    const pageFitStarted = timings ? performance.now() : 0
+    const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
+      margin, gap, headerGap: nativeHeaderGap(document), maxGap: options.numericLayout ? gap : options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
+    // Internal numeric trials need only page membership. The public entry point
+    // fits the winner's vertical spacing and publishes coordinates exactly once.
+    if(options.numericLayout)layout.pages=pagination.heights.map((height,index)=>({index,width:options.width,height,systems:[]}))
+    else positionNativeLayout(layout, pagination)
+    if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
+    record('verticalPaginationMs')
+    return layout
+  }
   return { get pageFloor(){return options.numericLayout ? minimumPages() : 1},
     canFitPageCeiling: options.numericLayout ? ceiling=>{
       const headers=header.blocks.map(block=>({height:block.height,ink:nativeSvgPieces(block.svg,measurer)}))
@@ -639,6 +664,33 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return bound
   } : undefined, score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit, onlyRow) => {
+  // A fully compiled surrogate plan needs no mutable glyph arena, relation
+  // placement or snapshot restoration. Keep this path inside measurement;
+  // the selected width is still verified with the experiment switched off.
+  if (measurement && options.numericLayout && onlyRow===undefined && preparation?.proxyRows
+    && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse) {
+    const proxyTemplates = preparation.proxyRows
+    const compiled = systems.map(system => {
+      const frame = placementFrame(system)
+      const key = JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])
+      const saved = proxyTemplates.get(key)
+      return saved ? {system,frame,key,saved} : undefined
+    })
+    if (compiled.every(row => row!==undefined)) {
+      const headers = rowCache?.headers ?? header.blocks.map(block => ({height:block.height,ink:nativeSvgPieces(block.svg,measurer)}))
+      if (rowCache) rowCache.headers=headers
+      const blocks = compiled.map(({system,frame,key,saved}) => {
+        const warp = <T extends NativeInk>(pieces:readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,frame.x,frame.x+frame.width)
+        const block = {...saved.block,ink:warp(saved.block.ink ?? []),boundaryInk:warp(saved.block.boundaryInk ?? []),edgeInk:warp(saved.block.edgeInk ?? [])}
+        system.measures=system.measures.map(measure=>({...measure}))
+        system.measures[0]!.start=frame.x;system.measures.at(-1)!.end=frame.x+frame.width
+        rowCache?.blocks.set(`proxy:${key}:${frame.x}:${frame.width}`,block)
+        return block
+      })
+      if (timings) timings.compiledProxyPlans=(timings.compiledProxyPlans ?? 0)+1
+      return finishLayout([...headers,...blocks],systems)
+    }
+  }
   if (borrowedGlyphs) {
     const started = timings ? performance.now() : 0
     let owned: NativeProjection
@@ -723,29 +775,34 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   if (options.numericLayout && rowCache) rowCache.rows ??= new Map()
-  for (const {key,block,snapshot} of proxyPlacements.values()) {
-    rowCache!.blocks.set(key,block); rowCache!.rows!.set(key,snapshot)
+  for (const {key,block} of proxyPlacements.values()) {
+    rowCache!.blocks.set(key,block)
     if (timings) timings.proxyPlacementHits=(timings.proxyPlacementHits ?? 0)+1
   }
   const proxyRows = measurement && preparation && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
     ? preparation.proxyRows ??= new Map() : undefined
-  const proxyKeys = proxyRows ? systems.map(system => JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,dependencies.get(system)])) : undefined
+  // In the explicit experiment, relation heights belong to the row template;
+  // width-dependent endpoint spans no longer force new glyph arrangements.
+  // Exact measurements still key snapshots by their complete dependencies.
+  const proxyKeys = proxyRows ? systems.map(system => JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])) : undefined
   if (proxyRows && rowKeys) for (const system of systems) {
-    if (onlyRow !== undefined && system.index !== onlyRow || rowCache!.rows!.has(rowKeys[system.index]!)) continue
+    if (onlyRow !== undefined && system.index !== onlyRow || rowCache!.blocks.has(rowKeys[system.index]!)) continue
     const saved = proxyRows.get(proxyKeys![system.index]!)
     if (!saved) continue
     const left = system.measures[0]!.start, right = system.measures.at(-1)!.end
     const warp = <T extends NativeInk>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,left,right)
     rowCache!.blocks.set(rowKeys[system.index]!, { ...saved.block,
       ink: warp(saved.block.ink ?? []), boundaryInk: warp(saved.block.boundaryInk ?? []), edgeInk: warp(saved.block.edgeInk ?? []) })
-    rowCache!.rows!.set(rowKeys[system.index]!,saved.snapshot)
     if (timings) timings.proxyRowHits = (timings.proxyRowHits ?? 0) + 1
   }
-  const reused = new Map<NativeSystem, NativeRowSnapshot>()
+  const reused = new Set<NativeSystem>()
   if (options.numericLayout && rowKeys) for (const system of systems) {
     if(onlyRow!==undefined && system.index!==onlyRow)continue
     const snapshot = rowCache!.rows!.get(rowKeys[system.index]!)
-    if (snapshot) { reused.set(system, snapshot); if (!proxyRows) restoreNativeRow(system, snapshot) }
+    if (proxyRows ? rowCache!.blocks.has(rowKeys[system.index]!) : snapshot) {
+      reused.add(system)
+      if (!proxyRows && snapshot) restoreNativeRow(system, snapshot)
+    }
   }
   const activeSystems = systems.filter(system => !reused.has(system) && (onlyRow===undefined || system.index===onlyRow))
   if (timings) timings.numericRowCacheHits = (timings.numericRowCacheHits ?? 0) + reused.size
@@ -783,7 +840,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   for(const system of activeSystems){cacheNativeTuplets(system);cacheNativeArcObstacles(system)}
-  if (!proxyRows) for (const [system, snapshot] of reused) restoreNativeRowRelations(system, snapshot)
+  if (!proxyRows) for (const system of reused) restoreNativeRowRelations(system, rowCache!.rows!.get(rowKeys![system.index]!)!)
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
@@ -868,11 +925,13 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if (options.numericLayout) {
       if (reused.has(system)) return rowCache!.blocks.get(rowKeys![system.index]!)!
       const block = nativeRowGeometry(system, measurer, margin, nativeCoreGap(document))
+      if (proxyRows && !proxyRows.has(proxyKeys![system.index]!)) proxyRows.set(proxyKeys![system.index]!, {
+        left:system.measures[0]!.start,right:system.measures.at(-1)!.end,block })
       if (rowKeys) {
         rowCache!.blocks.set(rowKeys[system.index]!, block)
-        rowCache!.rows!.set(rowKeys[system.index]!, captureNativeRow(system))
-        if (proxyRows && !proxyRows.has(proxyKeys![system.index]!)) proxyRows.set(proxyKeys![system.index]!, {
-          left:system.measures[0]!.start,right:system.measures.at(-1)!.end,block,snapshot:rowCache!.rows!.get(rowKeys[system.index]!)! })
+        // Surrogate rows publish only immutable pagination geometry. Glyph
+        // snapshots are needed solely when restoring an exact row.
+        if (!proxyRows) rowCache!.rows!.set(rowKeys[system.index]!, captureNativeRow(system))
         const next = systems[system.index+1]
         if (!dependencies.has(system) && !options.equalMeasures && system.unitRhythmicGap !== undefined
           && Math.abs(system.measures.at(-1)!.end-(options.width-margin))<1e-6) {
@@ -917,22 +976,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if (rowKeys) rowCache!.blocks.set(rowKeys[system.index]!, block)
     return block
   })]
-  const resultSystems = measurement ? measuredSystems.map(system => ({ ...system,
-    measures: system.measures.map(measure => ({ ...measure })) })) : measuredSystems
-  const layout: NativeLayout = { document, headerDocument, projection, systems:resultSystems, pages: [], relations, options, measurer, headerHeight, margin,
-    pagination: prepareScorePagination(blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerBlocks: onlyRow===undefined ? header.blocks : [] }
-  if(onlyRow!==undefined)return layout
-  const gap = options.coreGap ?? (nativeCoreGap(document))
-  const pageFitStarted = timings ? performance.now() : 0
-  const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, headerGap: nativeHeaderGap(document), maxGap: options.numericLayout ? gap : options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
-  // Internal numeric trials need only page membership. The public entry point
-  // fits the winner's vertical spacing and publishes coordinates exactly once.
-  if(options.numericLayout)layout.pages=pagination.heights.map((height,index)=>({index,width:options.width,height,systems:[]}))
-  else positionNativeLayout(layout, pagination)
-  if (timings) timings.pageFitMs = (timings.pageFitMs ?? 0) + performance.now() - pageFitStarted
-  record('verticalPaginationMs')
-  return layout
+  return finishLayout(blocks,measuredSystems,onlyRow)
   } }
 }
 

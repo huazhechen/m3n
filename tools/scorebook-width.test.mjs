@@ -566,3 +566,32 @@ test('all editorial chapters permit reordering', async () => {
   const plan = JSON.parse(await readFile(new URL('../config/scorebook/editorial-plan.json', import.meta.url), 'utf8'))
   assert(plan.sections.every(section => section.reorderForSharing === true))
 })
+
+
+test('experimental multi-page verification checks a hidden endpoint page transition',async()=>{
+  const item=(width,pageCount,totalCost)=>({width,pageCount,totalCost,rows:8,outside:[],overlaps:[]})
+  const visited=[]
+  const result=await verifyEstimatedWidthCandidates([item(534,2,.1),item(720,2,4)],width=>{
+    visited.push(width);return item(width,width===720 ? 1 : 2,width===720 ? 4 : .1)
+  },{verifyWidestWhenMultipage:true})
+  assert.deepEqual(visited,[720,534])
+  assert.equal(result.best.width,720)
+  assert.equal(result.best.pageCount,1)
+  const failed=await verifyEstimatedWidthCandidates([item(534,2,.1),item(720,2,4)],width=>{
+    if(width===720)throw new Error('endpoint failed')
+    return item(width,2,.1)
+  },{verifyWidestWhenMultipage:true})
+  assert.equal(failed.best.width,534)
+  assert.deepEqual(failed.failures,[{width:720,error:'endpoint failed'}])
+})
+
+
+test('a valid endpoint does not hide an underestimated winner during verification',async()=>{
+  const item=(width,pageCount,totalCost)=>({width,pageCount,totalCost,rows:8,outside:[],overlaps:[]})
+  const visited=[]
+  const result=await verifyEstimatedWidthCandidates([item(534,2,.1),item(540,2,.2),item(720,2,4)],width=>{
+    visited.push(width);return item(width,width===534 ? 3 : 2,width===720 ? 4 : .2)
+  },{verifyWidestWhenMultipage:true})
+  assert.deepEqual(visited,[720,534,540])
+  assert.equal(result.best.width,540)
+})

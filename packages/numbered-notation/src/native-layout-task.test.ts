@@ -138,3 +138,26 @@ it('keeps measured preparation independent across gap floors and equal-measure s
     actual.projection.measures[0]!.columns[0]!.minimumStart = -100000
   }
 })
+
+
+it('compiled surrogate plans preserve unplaced inputs and leave exact final geometry available', () => {
+  const document = parseM3NDocument('{4/4}\nN: ' + '{lg}1 2 3 4{/} |{br} '.repeat(18))
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  const options = {width:528,numericLayout:true,pageMargin:0,layoutTask,textMeasurementCache}
+  vi.stubGlobal('__m3nExperimentalRowReuse',true)
+  vi.stubGlobal('__m3nExperimentalInkBin',12)
+  PreparedNumberedNotationScore.measure(document,options)
+  const preparation = layoutTask.preparationFor(document,options,textMeasurementCache)
+  const unplaced = structuredClone(preparation.measuredProjections)
+  const timings:Record<string,number> = {}
+  const surrogate = PreparedNumberedNotationScore.measure(document,{...options,width:576},timings)
+  expect(timings.compiledProxyPlans).toBeGreaterThan(0)
+  expect(preparation.measuredProjections).toEqual(unplaced)
+  const quality = structuredClone(surrogate.quality)
+  vi.stubGlobal('__m3nExperimentalRowReuse',false)
+  const final = new PreparedNumberedNotationScore(document,{...options,width:576})
+  const fresh = new PreparedNumberedNotationScore(document,{width:576,numericLayout:true,pageMargin:0})
+  expect(final.renderPaged()).toEqual(fresh.renderPaged())
+  expect(final.renderContinuous()).toEqual(fresh.renderContinuous())
+  expect(surrogate.quality).toEqual(quality)
+})

@@ -44,7 +44,7 @@ export async function search(source, auditLayout = false, prune = false, pageCon
     globalThis.__m3nExperimentalRowReuse = false
     globalThis.__m3nExperimentalGreedyCeiling = false
     try {
-      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureNumberedWidth(score,width,{settings}).candidate)
+      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureNumberedWidth(score,width,{settings}).candidate,{verifyWidestWhenMultipage:true})
       exactWinner = verified.best
       result.verifiedCandidates = verified.verifiedCandidates
       result.verificationFailures = verified.failures

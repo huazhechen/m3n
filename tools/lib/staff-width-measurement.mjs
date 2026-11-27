@@ -10,7 +10,9 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   const started = performance.now(), timings = {}
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
-  if (!auditLayout && minimumQuality !== undefined && !render.canBeatPageQuality(maximumPageCount, minimumQuality)) throw new WidthSearchPruned()
+  // Candidate proxies are cheaper to paginate than to screen using a second
+  // complete lower-bound graph. Exact and audited measurements retain it.
+  if (!globalThis.__m3nExperimentalRowReuse && !auditLayout && minimumQuality !== undefined && !render.canBeatPageQuality(maximumPageCount, minimumQuality)) throw new WidthSearchPruned()
   const info = auditLayout ? render.layoutInfo() : render.measurementInfo()
   const { lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity } = info.quality
   const pageCount = render.pageCount(true)
