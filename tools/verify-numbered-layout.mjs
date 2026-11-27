@@ -16,6 +16,7 @@ try {
   const entry = join(temp, 'entry.ts')
   writeFileSync(entry, [
     `export {createSvgInkMeasurer} from ${JSON.stringify(join(root, 'tools/lib/svg-ink-bounds.mjs'))};`,
+    `export {fontDesignMeasurer} from ${JSON.stringify(join(root, 'packages/numbered-notation/src/font-design.ts'))};`,
     `export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/src/index.ts'))};`,
     `export * from ${JSON.stringify(join(root, 'packages/numbered-notation/src/index.ts'))};`,
   ].join('\n'))
@@ -47,6 +48,7 @@ try {
       const scoreDocument = m3n.parseM3NDocument(source)
       let pages
       try {
+        await m3n.prepareNumberedNotationFonts(scoreDocument)
         const score = m3n.NumberedNotationScore.create(scoreDocument)
         pages = score.render({ width, paged })
         if (width === 800 && !paged) summaries.push({ file, title: scoreDocument.title, events: [...scoreDocument.parts.values()].reduce((sum, part) => sum + [...part.melody, ...part.bass].reduce((sum, measure) => sum + measure.events.length, 0), 0), diagnostics: score.diagnostics })
@@ -67,8 +69,16 @@ try {
         if (headingLines.map(node=>node.textContent).join('').replace(/\s/g,'') !== text.replace(/\s/g,'')) issues.push({file,width,paged,heading:text,missingHeading:true})
         for(const heading of headingLines) {
         const box = inkBounds(heading)
-        if (Math.abs(box.x + box.width / 2 - width / 2) > 0.5) {
-          issues.push({ file, width, paged, heading: text, center: box.x + box.width / 2 })
+        // Layout centers design outlines. Canvas raster bounds can round each
+        // side differently by over half a pixel, depending on the platform.
+        const style = getComputedStyle(heading)
+        const metrics = m3n.fontDesignMeasurer().measureText(heading.textContent, {
+          fontFamily: style.fontFamily, fontSize: parseFloat(style.fontSize),
+          fontWeight: Number(style.fontWeight), fontStyle: style.fontStyle,
+        })
+        const center = Number(heading.getAttribute('x')) - metrics.advance / 2 + (metrics.inkLeft + metrics.inkRight) / 2
+        if (Math.abs(center - width / 2) > 0.01) {
+          issues.push({ file, width, paged, heading: text, center })
         }
         if (box) for (const other of heading.ownerSVGElement.querySelectorAll('text')) {
           if (other === heading) continue
@@ -187,6 +197,7 @@ try {
   console.log(JSON.stringify({ checks: report.checks, issues: report.issues.length, timing: report.timing, examples: report.issues.slice(0, 8) }, null, 2))
   await page.evaluate(async () => {
     const scoreDocument = m3n.parseM3NDocument('{title=简谱回归示例} {key=D} {6/8} {90qpm}\nN: ||: {lg}(1 2 3) (4 5 6){/} | 1e^.{fermata} :||\nL1: 春天，花开满园\nL2: 清风拂过田野\nB: 1d 3d 5d | [1d3d5d:h]^. |||')
+    await m3n.prepareNumberedNotationFonts(scoreDocument)
     document.querySelector('main').innerHTML = m3n.NumberedNotationScore.create(scoreDocument).render({ width: 800, paged: false }).join('')
     await document.fonts.ready
   })
@@ -198,7 +209,9 @@ try {
       await page.evaluate(async ({ source, width, paged }) => {
         const main = document.querySelector('main')
         main.style.width = `${width}px`
-        main.innerHTML = m3n.NumberedNotationScore.create(m3n.parseM3NDocument(source)).render({ width, paged }).join('')
+        const scoreDocument = m3n.parseM3NDocument(source)
+        await m3n.prepareNumberedNotationFonts(scoreDocument)
+        main.innerHTML = m3n.NumberedNotationScore.create(scoreDocument).render({ width, paged }).join('')
         await document.fonts.ready
       }, { source, width, paged })
       await page.locator('main').screenshot({ path: join(auditOutput, `${file}-${width}.png`) })

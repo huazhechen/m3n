@@ -1,3 +1,4 @@
+import { SCORE_WIDTH_MULTIPLE_MIN, SCORE_WIDTH_MULTIPLE_MAX } from '../../src/lib/renderer-settings'
 import { waitForEditor } from './editor-state'
 import { navigateScore, nextScorePath } from './score-navigation'
 import { expect, test } from '@playwright/test'
@@ -124,7 +125,7 @@ test('width resets to the automatically selected width for each score', async ({
     await expect.poll(async () => Number(await slider.inputValue()) * 24).toBe(Number(await page.locator('.score-paper').getAttribute('data-selected-width')))
     const width = await slider.inputValue()
     await openScoreSettings(page)
-    await slider.fill('40')
+    await slider.fill(String(SCORE_WIDTH_MULTIPLE_MAX))
     await openScoreSettings(page)
     await page.getByRole('button', { name: '还原宽度' }).click()
     await openScoreSettings(page)
@@ -153,8 +154,8 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   const slider = page.getByRole('slider', { name: '乐谱宽度', exact: true })
   const minus = page.getByRole('button', { name: '减小乐谱宽度', exact: true })
   const plus = page.getByRole('button', { name: '增大乐谱宽度', exact: true })
-  await expect(slider).toHaveAttribute('min', '20')
-  await expect(slider).toHaveAttribute('max', '40')
+  await expect(slider).toHaveAttribute('min', String(SCORE_WIDTH_MULTIPLE_MIN))
+  await expect(slider).toHaveAttribute('max', String(SCORE_WIDTH_MULTIPLE_MAX))
   await expect(slider).toHaveAttribute('step', '0.25')
   await openScoreSettings(page)
   await slider.fill('27')
@@ -168,18 +169,18 @@ test('width buttons snap to adjacent grid points and dragging commits on release
   await plus.click()
   await expect(paper.locator('svg').first()).toHaveAttribute('width', '654')
   await openScoreSettings(page)
-  await slider.fill('20')
+  await slider.fill(String(SCORE_WIDTH_MULTIPLE_MIN))
   await openScoreSettings(page)
   await expect(minus).toBeDisabled()
   await openScoreSettings(page)
-  await slider.fill('40')
+  await slider.fill(String(SCORE_WIDTH_MULTIPLE_MAX))
   await openScoreSettings(page)
   await expect(plus).toBeDisabled()
   await openScoreSettings(page)
   await slider.fill('25')
   await openScoreSettings(page)
   const bounds = (await slider.boundingBox())!
-  await page.mouse.move(bounds.x + bounds.width * (25 - 20) / 20, bounds.y + bounds.height / 2)
+  await page.mouse.move(bounds.x + bounds.width * (25 - SCORE_WIDTH_MULTIPLE_MIN) / (SCORE_WIDTH_MULTIPLE_MAX - SCORE_WIDTH_MULTIPLE_MIN), bounds.y + bounds.height / 2)
   await page.mouse.down()
   await page.mouse.move(bounds.x + bounds.width * .75, bounds.y + bounds.height / 2, { steps: 30 })
   const finalWidth = String(Number(await slider.inputValue()) * 24)

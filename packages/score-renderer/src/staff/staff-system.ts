@@ -221,13 +221,21 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         // Connect staves without repainting the bar inside each staff.
         const y1 = model.staves[0]!.y + staffMusicSize(), y2 = model.staves.at(-1)!.y + staffMusicSize() * 2
         const connectorTop = y1 + staffMusicSize(), connectorBottom = y2 - staffMusicSize()
-        if (connectorBottom > connectorTop && member.measure.source.right !== 'invis' && !suppressEndRepeat) measureNode.children.push(element('g', { class: 'staff-bar' }, [element('path', {
-          d: `M${x + target} ${connectorTop} V${connectorBottom}`, stroke: '#000',
-          'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none',
-          // A tie may cross this continuation just as it crosses the bar
-          // inside either staff. Preserve that same explicit join contract.
-          'data-m3n-join': `bar-${x + target},${connectorTop}`,
-        })]))
+        if (connectorBottom > connectorTop && member.measure.source.right !== 'invis' && !suppressEndRepeat) {
+          // The continuation and both staff endpoints are one compound bar.
+          // Repeat rules can be offset from the nominal bar x; retain their
+          // actual identities so a painted endpoint join is not a collision.
+          const endpointJoins = findAll(measureNode, n => hasClass(n, 'staff-bar'))
+            .flatMap(bar => findAll(bar, n => Boolean(n.attributes['data-m3n-join'])))
+            .map(rule => rule.attributes['data-m3n-join']!).join(' ')
+          measureNode.children.push(element('g', { class: 'staff-bar' }, [element('path', {
+            d: `M${x + target} ${connectorTop} V${connectorBottom}`, stroke: '#000',
+            'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none',
+            // A tie may cross this continuation just as it crosses the bar
+            // inside either staff. Preserve that same explicit join contract.
+            'data-m3n-join': `bar-${x + target},${connectorTop} ${endpointJoins}`,
+          })]))
+        }
         if ((member.measure.source.repeatCount ?? 2) > 2) measureNode.children.push(text(`×${member.measure.source.repeatCount}`, x + target - engine.navigationBarInset, engine.navigationY, style.repeatCount, 'repeatMark'))
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target

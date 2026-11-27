@@ -195,7 +195,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     for (const key of ['strokeEdge', 'above', 'below', 'tiny']) assert.equal(geometry[key].outside.length, 1, key)
     const basics = readFileSync(join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), 'utf8')
     const basicsLayout = await page.evaluate(source => window.scorebook.auditWidth(source, 590), basics)
-    assert.equal(basicsLayout.pageCount, 4)
+    assert.equal(basicsLayout.pageCount, 3)
     assert.deepEqual(basicsLayout.outside, [])
     assert.deepEqual(basicsLayout.overlaps, [])
     for (const width of [580, 720]) {
@@ -320,6 +320,6 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       assert.equal(result.before, result.exported, `${result.width}px: final rendering must match measurement`)
       assert.equal(result.rowsBefore, result.rowsAfter)
     }
-    assert.equal(stable.at(-1).exported, 3, 'The 720px opening work uses the fully prepared book fonts')
+    assert.equal(stable.at(-1).exported, 2, 'The 720px opening work uses the fully prepared book fonts')
   } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
 })

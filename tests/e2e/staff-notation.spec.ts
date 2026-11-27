@@ -339,7 +339,7 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
     expect(brackets[index + 1]!.left - brackets[index]!.right).toBeGreaterThanOrEqual(2)
   }
 
-  await page.goto('/scores/fly_me_to_the_moon_01')
+  await page.goto('/scores/besame_mucho_01')
   await selectNotationMode(page, '五线谱')
   await expect(paper).not.toHaveAttribute('aria-busy', 'true')
   await page.addScriptTag({ content: staffInkBounds.toString() })
@@ -347,9 +347,7 @@ test('staff volta hooks, separation, and music clearance stay correct', async ({
     const ending = system.querySelector('g.ending.voltaBracket, g.ending .voltaBracket')
     const staff = system.querySelector('g.staff')
     if (!ending || !staff || !ending.querySelector('path')) return []
-    const staffBox = staff.getBoundingClientRect()
-    const lines = [...staff.querySelectorAll('path')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
-      .filter(box => box.width > staffBox.width * .7 && box.height < 2)
+    const lines = [...staff.querySelectorAll('path.staff-line')].map(path => (path as SVGGraphicsElement).getBoundingClientRect())
     if (!lines.length) return []
     const svg = system.ownerSVGElement!
     const ink = (group: Element) => {

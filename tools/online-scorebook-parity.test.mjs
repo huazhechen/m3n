@@ -24,6 +24,8 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       export {probeWidthCandidates, chooseBestWidth, widthCandidates} from ${JSON.stringify(join(root, 'tools/scorebook-width.mjs'))};
       export {chooseNumberedScoreWidth, chooseStaffScoreWidth} from ${JSON.stringify(join(root, 'src/lib/render-score.ts'))};
       export {parseM3NDocument} from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))};
+      export {measureNumberedWidth} from ${JSON.stringify(join(root, 'tools/lib/numbered-width-measurement.mjs'))};
+      export {NumberedLayoutTask, NumberedTextMeasurementCache} from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))};
       export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
       export {optimizeScorebook, refineSharedWidths} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
     await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle'), fixtures: { plan, sources, files } })
@@ -38,10 +40,13 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     const comparison = await page.evaluate(async ({ sources, plan }) => {
       const api = window.scorebook
       await api.prepareSources(sources)
-      const first = await api.measure(sources[0], 540)
-      const repeated = await api.measure(sources[0], 540)
-      await api.prepareSources(sources)
-      const fresh = await api.measure(sources[0], 540)
+      const document = api.parseM3NDocument(sources[0])
+      const cachedSettings = () => ({ layoutTask: new api.NumberedLayoutTask(), textMeasurementCache: new api.NumberedTextMeasurementCache() })
+      const settings = cachedSettings()
+      const measure = settings => api.measureNumberedWidth(document, 540, { settings, detailedTimings: true }).candidate
+      const first = measure(settings)
+      const repeated = measure(settings)
+      const fresh = measure(cachedSettings())
       const cacheLifecycle = { first: first.timings.textMeasureCalls ?? 0, repeated: repeated.timings.textMeasureCalls ?? 0,
         fresh: fresh.timings.textMeasureCalls ?? 0, hits: repeated.timings.textMeasureCacheHits ?? 0 }
       const entries = [], auditedEntries = []

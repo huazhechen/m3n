@@ -27,7 +27,7 @@ it('retains bar crossing identities on grand-staff connectors for ties', () => {
   for (const bar of bars) {
     const join = bar.attributes['data-m3n-join']
     expect(join).toBeTruthy()
-    for (const tie of ties) expect(tie.attributes['data-m3n-join']!.split(' ')).toContain(join)
+    for (const tie of ties) for (const identity of join!.split(' ')) expect(tie.attributes['data-m3n-join']!.split(' ')).toContain(identity)
   }
 })
 
@@ -157,4 +157,16 @@ it.each([1, -1])('bends ties around a crossed signature without detaching endpoi
     if (direction === 1) expect(inner).toBeGreaterThanOrEqual(obstacle.bottom + 3.99)
     else expect(inner).toBeLessThanOrEqual(obstacle.top - 3.99)
   }
+})
+
+it('joins grand-staff continuations to the actual end-repeat rules', () => {
+  const [system] = systems('{4/4}\nN: ||: 1 2 3 4 :|||\nB: 1d 2d 3d 4d |')
+  const bars = findAll(system!.node, node => hasClass(node, 'staff-bar'))
+  const continuation = bars.find(bar => bar.children.some(child => child.attributes.d?.includes(' V')))
+  expect(continuation).toBeTruthy()
+  const joins = continuation!.children[0]!.attributes['data-m3n-join']!.split(' ')
+  const staffRules = bars.filter(bar => bar !== continuation)
+    .flatMap(bar => findAll(bar, node => Boolean(node.attributes['data-m3n-join'])))
+  expect(staffRules.length).toBeGreaterThan(0)
+  for (const rule of staffRules) expect(joins).toContain(rule.attributes['data-m3n-join'])
 })

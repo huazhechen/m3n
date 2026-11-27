@@ -18,13 +18,13 @@
     "notation": "1365cbb1fa829375959278a37bcf12646537bb31df1bac8583ccb96be39b955b"
   },
   "an_xiang_01.m3n": {
-    "beats": 300,
-    "notes": 296,
-    "events": 388,
+    "beats": 260,
+    "notes": 222,
+    "events": 323,
     "lyrics": 222,
-    "music": "c496492dbbf81b3181012ca2358d48f18a4baa288fbf2ede4a87ce61f81c1ada",
-    "lyricsHash": "e4caf5a7dfe1ff753830063b508c5e913ed193d0db29e9c955d46c923947cd03",
-    "notation": "31450c4031d3aaad0ec36388c23681341ce577564ea9b6517baf83f2dde8ff45"
+    "music": "6e26719d663391d82ab55fb2a46da6e691513287b0631263251e2d2a30cdb066",
+    "lyricsHash": "52099c23a5eb23b4f77e85cad88c2cd3b076c47e6b055da7e03071278dd0bf93",
+    "notation": "a9f0e2540c680f772ef360fc3d971e624a9e2f8f6baed9b7dd56ce46b32a3b6d"
   },
   "annie_01.m3n": {
     "beats": 272,
