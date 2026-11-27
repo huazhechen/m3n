@@ -902,7 +902,9 @@ textarea::selection {
   main:has(> .score-reader .score-paper[data-viewport-paged="true"]) {
     width: calc(100vw - 32px);
   }
+}
 
+@media screen {
   .score-reader .score-paper[data-viewport-paged="true"] {
     display: flex;
     flex-wrap: wrap;
@@ -1755,8 +1757,12 @@ a.action-button {
 }
 .export-error { color: #9a3a25; padding: 8px 16px; margin: 0; }
 
-/* Mobile scores sit directly on the page; pagination remains in the engraving. */
+/* Mobile scores sit directly on the page; reader pages fit the viewport. */
 @media (max-width: 720px), (pointer: coarse) and (hover: none) {
+  main:has(> .score-reader .score-paper[data-viewport-paged="true"]) {
+    width: calc(100vw - 18px);
+  }
+
   .score-reader > .score-renderer {
     margin-inline: 0;
   }
@@ -1780,6 +1786,16 @@ a.action-button {
 
   .score-renderer .score-paper .score-page-sheet:last-child {
     margin-bottom: 0;
+  }
+
+  .score-reader .score-paper[data-viewport-paged="true"] {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .score-reader .score-paper[data-viewport-paged="true"] .score-page-sheet {
+    flex: none;
+    margin: 0;
   }
 }
 

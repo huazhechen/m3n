@@ -84,19 +84,22 @@ test('wide desktop readers use the available window width for side-by-side pages
   })).toEqual({ sideBySide: true, fitsHeight: true, fillsWindow: true, horizontalScroll: false })
 })
 
-test('narrow screens keep full-width vertical pages and mode changes restore continuous layout', async ({ page }) => {
+test('narrow screens fit whole vertical pages and mode changes restore continuous layout', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/scores/local-pages-30')
   const paper = page.locator('.score-paper')
   await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
   for (const width of [720, 390]) {
     await page.setViewportSize({ width, height: 844 })
-    await expect(paper).not.toHaveAttribute('data-viewport-paged')
+    await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
     await expect(paper.locator('.score-page-sheet').nth(1)).toBeVisible()
     const bounds = await paper.boundingBox()
     const first = (await paper.locator('.score-page-sheet').nth(0).boundingBox())!
     const second = (await paper.locator('.score-page-sheet').nth(1).boundingBox())!
-    expect(first.width).toBeCloseTo(bounds!.width, 0)
+    expect(first.width).toBeLessThanOrEqual(bounds!.width + 1)
+    const transport = (await page.locator('.control-transport').boundingBox())!
+    expect(first.y + first.height).toBeLessThanOrEqual(transport.y)
+    expect(first.x + first.width / 2).toBeCloseTo(bounds!.x + bounds!.width / 2, 0)
     expect(second.y).toBeGreaterThan(first.y + first.height)
   }
   await page.setViewportSize({ width: 1280, height: 900 })
@@ -121,7 +124,7 @@ test('a non-touch portrait window keeps desktop page fitting', async ({ page }) 
 test.describe('touch tablets', () => {
   test.use({ hasTouch: true })
 
-  test('iPad mini pages use the full width in both orientations and in split view', async ({ page }, info) => {
+  test('iPad mini pages fit the available viewport in both orientations and in split view', async ({ page }, info) => {
     await page.setViewportSize({ width: 744, height: 1133 })
     await page.goto('/scores/local-pages-30')
     const paper = page.locator('.score-paper')
@@ -134,16 +137,18 @@ test.describe('touch tablets', () => {
       { width: 507, height: 1133 },
     ]) {
       await page.setViewportSize(viewport)
-      await expect(paper).not.toHaveAttribute('data-viewport-paged')
+      await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
       await expect(page.locator('.top-nav .nav-action-label').first()).toBeHidden()
       await expect.poll(() => paper.evaluate(element => {
         const sheets = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
         return {
-          fullWidth: Math.abs(sheets[0]!.width - (innerWidth - 18)) < 1,
+          fitsWidth: sheets[0]!.width <= innerWidth - 18 + 1,
+          fitsHeight: sheets[0]!.bottom <= document.querySelector('.control-transport')!.getBoundingClientRect().top,
+          centered: Math.abs((sheets[0]!.left + sheets[0]!.right) / 2 - innerWidth / 2) < 1,
           stacked: sheets[1]!.top >= sheets[0]!.bottom + 15,
           horizontalScroll: document.documentElement.scrollWidth > innerWidth,
         }
-      })).toEqual({ fullWidth: true, stacked: true, horizontalScroll: false })
+      })).toEqual({ fitsWidth: true, fitsHeight: true, centered: true, stacked: true, horizontalScroll: false })
     }
     await page.setViewportSize({ width: 1133, height: 744 })
     await page.screenshot({ path: info.outputPath('tablet-landscape-reader.png') })
@@ -164,6 +169,49 @@ test.describe('touch tablets', () => {
       }
     })).toEqual({ frameFillsReader: true, symmetricPadding: true, fourPercentFrame: true, horizontalScroll: false })
   })
+
+  for (const notation of ['movable', 'staff']) {
+    test(`${notation}: immersion refits a whole page and resets manual zoom on a narrow screen`, async ({ page }) => {
+      await page.addInitScript(notation => localStorage.setItem('m3n:notation-mode', notation), notation)
+      await page.setViewportSize({ width: 720, height: 600 })
+      await page.goto('/scores/local-pages-30')
+      const paper = page.locator('.score-paper')
+      await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
+      await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+      const sheet = paper.locator('.score-page-sheet').first()
+      const svg = sheet.locator('svg').first()
+      await svg.evaluate(element => element.setAttribute('data-original-page', 'true'))
+      const normalWidth = (await sheet.boundingBox())!.width
+      await paper.evaluate(element => {
+        const bounds = element.getBoundingClientRect()
+        element.dispatchEvent(new WheelEvent('wheel', {
+          deltaY: -200, clientX: bounds.left + 50, clientY: bounds.top + 50, cancelable: true,
+        }))
+      })
+      await expect(paper).toHaveAttribute('data-zoomed', 'true')
+      await page.getByRole('button', { name: '沉浸浏览', exact: true }).click()
+      await expect(page.locator('.top-nav')).toBeHidden()
+      await expect(paper).not.toHaveAttribute('data-zoomed', 'true')
+      await expect.poll(async () => (await sheet.boundingBox())!.width).toBeGreaterThan(normalWidth + 10)
+      for (const viewport of [{ width: 720, height: 600 }, { width: 600, height: 720 }]) {
+        await page.setViewportSize(viewport)
+        await expect.poll(() => sheet.evaluate(element => {
+          const bounds = element.getBoundingClientRect()
+          return bounds.top >= 0 && bounds.bottom <= (visualViewport?.height ?? innerHeight)
+            && bounds.width <= innerWidth - 18 + 1
+        })).toBe(true)
+      }
+      await page.getByRole('button', { name: '退出沉浸浏览', exact: true }).click()
+      await expect(page.locator('.top-nav')).toBeVisible()
+      await expect.poll(() => sheet.evaluate(element => {
+        const bounds = element.getBoundingClientRect()
+        const header = document.querySelector('.top-nav')!.getBoundingClientRect()
+        const controls = document.querySelector('.control-transport')!.getBoundingClientRect()
+        return bounds.top >= header.bottom && bounds.bottom <= controls.top
+      })).toBe(true)
+      await expect(svg).toHaveAttribute('data-original-page', 'true')
+    })
+  }
 
   test('tablet editor switches panes without losing input and library uses compact cards', async ({ page }) => {
     await page.setViewportSize({ width: 1133, height: 744 })

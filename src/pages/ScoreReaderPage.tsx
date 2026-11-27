@@ -79,11 +79,16 @@ export function ScoreReaderPage({ collection = 'scores' }: { collection?: 'score
           immersive={immersive}
           onImmersiveChange={() => {
             const paper = readerRef.current?.querySelector('.score-paper')
-            const anchor = [...paper?.querySelectorAll('g.measure') ?? []].find(element => element.getBoundingClientRect().bottom > 100)
+            const paged = paper?.getAttribute('data-render-mode') === 'paged'
+            const selector = paged ? '.score-page-sheet' : 'g.measure'
+            const anchor = [...paper?.querySelectorAll(selector) ?? []].find(element => element.getBoundingClientRect().bottom > 100)
             const top = anchor?.getBoundingClientRect().top
             setImmersive(value => !value)
             requestAnimationFrame(() => requestAnimationFrame(() => {
-              if (anchor && top !== undefined) window.scrollBy({ top: anchor.getBoundingClientRect().top - top, behavior: 'instant' })
+              const targetTop = paged && paper
+                ? paper.getBoundingClientRect().top + window.scrollY
+                : top
+              if (anchor && targetTop !== undefined) window.scrollBy({ top: anchor.getBoundingClientRect().top - targetTop, behavior: 'instant' })
             }))
           }}
           fitPagedToViewport

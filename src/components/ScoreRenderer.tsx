@@ -210,6 +210,9 @@ export function ScoreRenderer({
   ))
   const [renderMode, setRenderMode] = useState<RenderMode>(compact ? 'continuous' : readRenderMode())
   usePagedReaderLayout(paperRef, fitPagedToViewport && renderMode === 'paged', immersive)
+  useEffect(() => {
+    if (fitPagedToViewport && renderMode === 'paged') zoomRef.current?.reset()
+  }, [immersive, fitPagedToViewport, renderMode])
   const bpmRef = useRef(playbackBpm)
   bpmRef.current = playbackBpm
   const transposeRef = useRef(playbackTranspose)
