@@ -1,11 +1,16 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { SCORE_LATIN_FONT, SCORE_NUMBER_FONT } from './font-family.js'
-import { prepareNumberedNotationFonts } from './fonts.js'
+import { prepareNumberedNotationFonts, registerScoreFontBundle } from './fonts.js'
 import { numberFontCss } from './number-font-css.js'
+import { readFileSync } from 'node:fs'
+vi.mock('./font-design.js', () => ({ prepareFontDesigns: vi.fn() }))
 
 afterEach(() => vi.unstubAllGlobals())
 
 it('shares the original Medium face between score numbers and Latin text', async () => {
+  const root = new URL('../../../tools/fonts/library/', import.meta.url)
+  const resources = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8')).fonts
+  registerScoreFontBundle(resources.map((font: { file: string; characters: string }) => ({ ...font, url: '', data: new Uint8Array(readFileSync(new URL(font.file, root))) })))
   const faces: { family: string; weight?: string }[] = []
   const add = vi.fn()
   vi.stubGlobal('document', { fonts: { add } })

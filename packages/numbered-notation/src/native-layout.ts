@@ -12,6 +12,7 @@ import { scoreLyricGapScale, scoreMaximumCoreGap } from './layout/policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { scoreNumberedFontCost } from './layout/quality.js'
 import { nativeLayoutQuality } from './native-quality.js'
+import { fontDesignMeasurer } from './font-design.js'
 import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
@@ -187,16 +188,17 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const minimumNoteGapFloor = supplied.minimumNoteGapFloor ?? 0
   if (!Number.isFinite(minimumNoteGapFloor) || minimumNoteGapFloor < 0 || minimumNoteGapFloor > minimumNoteGap) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
   const options = { ...supplied, width: Math.max(nativeStyle.minimumWidth, Math.round(supplied.width)), minimumNoteGap, minimumNoteGapFloor, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
-  const margin = options.pageMargin ?? nativeStyle.defaultPageMargin
-  if (margin * 2 + nativeStyle.minimumContentWidth > options.width) throw new Error('简谱页边距过大。')
   let measurer = options.textMeasurer
   if(!measurer && preparation?.runtimeMeasurer?.timings===timings)measurer=preparation?.runtimeMeasurer?.value
+  if (!measurer && !options.systemCjk) measurer = fontDesignMeasurer(options.textMeasurementCache, timings)
   if (!measurer && typeof window !== 'undefined' && typeof CanvasRenderingContext2D !== 'undefined') {
     const context = preparation?.canvas ?? window.document.createElement('canvas').getContext('2d')
     if(context && preparation)preparation.canvas=context
     if (context) measurer = new CanvasTextMeasurer(context, timings, options.textMeasurementCache, true, options.systemCjk)
   }
   measurer ??= new DefaultTextMeasurer()
+  const margin = Math.max(options.pageMargin ?? nativeStyle.defaultPageMargin, measurer.designMetrics ? nativeStyle.designInkEdgeGuard : 0)
+  if (margin * 2 + nativeStyle.minimumContentWidth > options.width) throw new Error('简谱页边距过大。')
   if(preparation && !options.textMeasurer)preparation.runtimeMeasurer={timings,value:measurer}
   if(preparation){preparation.lyricHeights ??= new WeakMap();cacheNativeLyricHeights(measurer,preparation.lyricHeights)}
   const projectionStarted = timings ? performance.now() : 0

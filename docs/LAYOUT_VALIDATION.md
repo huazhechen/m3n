@@ -26,6 +26,8 @@
 - `npm run test:notation-density`：真实字体双谱式回归，校验物理尺度、连续高度、行数及墨迹安全。
 - `node tools/compare-notation-density.mjs --all --widths=640`：全库同宽双谱式检查；`--screenshots`、`--pdfs` 保存实绘，`--profile` 输出逐行／逐小节诊断。
 - `node tools/compare-optimal-notation-pages.mjs`：两种谱式分别完整选宽后检查页数与墨迹。
+- `node tools/verify-numbered-font-design.mjs`：简谱设计度量在Chromium／WebKit、桌面／平板模拟中的候选评分与几何一致性，小节号显隐不变性，PNG／PDF显式样式及最终墨迹审计。
+- `node tools/review-numbered-widths.mjs`：逐曲核对真实阅读器，并完整枚举41档同页更大字体候选；选定替代方案另作墨迹审计。
 - `npm run check:score-artifacts`：生成物摘要一致性。
 
 `--metrics-only` 只适合测量，不作为墨迹验收。检查报告和图像写入忽略的 `.tmp/`；CI 保存报告与失败日志。显示展开量不同的曲目仍参与安全与页数检查，按事件数归一的统计单独处理。

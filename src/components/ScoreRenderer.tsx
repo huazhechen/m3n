@@ -177,7 +177,7 @@ export function ScoreRenderer({
   const highlightedMeasuresRef = useRef<SVGGElement[]>([])
   const hasRenderedRef = useRef(false)
   const manualWidthRef = useRef(false)
-  const autoWidthSelectionRef = useRef<{ scoreDocument: ScoreDocument; notationMode: NotationMode; width: number } | null>(null)
+  const autoWidthSelectionRef = useRef<{ scoreDocument: ScoreDocument; settings: string; width: number } | null>(null)
   const [message, setMessage] = useState('')
   const [savedPlaybackTone, changePlaybackTone] = usePlaybackTone()
   const playbackTone = playbackOnly ? 'synth' : savedPlaybackTone
@@ -219,6 +219,7 @@ export function ScoreRenderer({
   const [fitWidth, setFitWidth] = useState(compact && !playbackOnly)
   const fixedDo = notationMode === 'fixed'
   const [measureNumbers, setMeasureNumbers] = useState(() => !playbackOnly && readRendererSetting('m3n:measure-numbers', 0, 0, 1) === 1)
+  const autoWidthSettings = JSON.stringify([systemCjk, notationMode, fixedDo, playbackTranspose, tempoScale])
   const [contentWidth, setContentWidth] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPlayerLoading, setIsPlayerLoading] = useState(false)
@@ -302,7 +303,7 @@ export function ScoreRenderer({
     void (async () => {
       try {
         const selectedWidth = autoWidthSelectionRef.current
-        const autoWidth = autoSearchWidth && !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.notationMode !== notationMode)
+        const autoWidth = autoSearchWidth && !manualWidthRef.current && renderMode === 'paged' && !compact && !previewWidth && (selectedWidth?.scoreDocument !== scoreDocument || selectedWidth.settings !== autoWidthSettings)
         const { message, width } = await renderScoreInto(paper, {
           scoreDocument, systemCjk, width: requestedWidth ?? selectedWidth?.width, autoWidth, paged: renderMode === 'paged', notationMode, measureNumbers, fixedDo, transpose: playbackTranspose, tempoScale,
           sheetClass: 'score-page-sheet', signal: controller.signal,
@@ -311,7 +312,7 @@ export function ScoreRenderer({
         if (cancelled) return
         if (autoWidth) {
           if (width !== undefined) setLayoutWidth(current => current === width ? current : width)
-          if (width !== undefined) autoWidthSelectionRef.current = { scoreDocument, notationMode, width }
+          if (width !== undefined) autoWidthSelectionRef.current = { scoreDocument, settings: autoWidthSettings, width }
         }
         paper.querySelectorAll<SVGGElement>('g.measure').forEach(measure => {
           // Use the same engraved boundaries as the measure highlights, including
@@ -350,7 +351,7 @@ export function ScoreRenderer({
       controller.abort()
 
     }
-  }, [systemCjk, autoSearchWidth, compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
+  }, [systemCjk, autoSearchWidth, autoWidthSettings, compact, invalidMeasureIds, previewWidth, renderMode, requestedWidth, scoreDocument, measureNumbers, notationMode, fixedDo, playbackTranspose, tempoScale])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -713,7 +714,7 @@ export function ScoreRenderer({
         onResetWidth={() => {
           manualWidthRef.current = false
           const selected = autoWidthSelectionRef.current
-          const width = autoSearchWidth && selected?.scoreDocument === scoreDocument && selected.notationMode === notationMode
+          const width = autoSearchWidth && selected?.scoreDocument === scoreDocument && selected.settings === autoWidthSettings
             ? selected.width
             : defaultWidth
           setFitWidth(false)

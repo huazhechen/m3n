@@ -113,7 +113,7 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
           const weight = Number.parseInt(style.fontWeight, 10)
           const bold = weight >= 600
           const italic = style.fontStyle === 'italic'
-          page.pushOperators(blackFill, blackStroke, textBegin)
+          page.pushOperators(blackFill, blackStroke, style.strokeLinejoin === 'round' ? roundJoin : miterJoin, textBegin)
           // Resolved engine glyphs have one character at the local baseline
           // origin. Their enclosing group supplies the complete placement.
           const originGlyph = [...text.textContent ?? ''].length === 1
@@ -141,12 +141,13 @@ export async function vectorScorePdf(pages: readonly SVGSVGElement[], onProgress
               character = showText(font.encodeText(char))
               characters.set(cacheKey, character)
             }
-            const syntheticBold = bold && resource.file === fonts.cjk.file
-            const styleKey = `${resource.file}:${fontSize}:${syntheticBold}`
+            const outlineWidth = style.stroke !== 'none' && Number.parseFloat(style.strokeWidth) > 0
+              ? Number.parseFloat(style.strokeWidth) : bold && resource.file === fonts.cjk.file ? fontSize * .015 : 0
+            const styleKey = `${resource.file}:${fontSize}:${outlineWidth}`
             let operators = textStyles.get(styleKey)
             if (!operators) {
               operators = [setFontAndSize(name, fontSize),
-                setTextRenderingMode(syntheticBold ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill), setLineWidth(fontSize * 0.015)]
+                setTextRenderingMode(outlineWidth > 0 ? TextRenderingMode.FillAndOutline : TextRenderingMode.Fill), setLineWidth(outlineWidth)]
               if (textStyles.size >= 512) textStyles.clear()
               textStyles.set(styleKey, operators)
             }

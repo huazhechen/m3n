@@ -65,13 +65,16 @@ it.each(['|', '||', '|||', ':||'])('aligns the white-backed number to the painte
   expect(text!.bottom).toBeCloseTo(barInk.top - 2, 4)
 })
 
-it.each([false, true].flatMap(paged => ['', '{lg}1 2 3 4{/} |{br}'].map(decoration => ({ paged, decoration }))))('reserves the same actual number bounds with labels shown or hidden ($paged/$decoration)', ({ paged, decoration }) => {
+it.each([false, true].flatMap(paged =>
+  [false, true].flatMap(numericLayout =>
+    ['', '{lg}1 2 3 4{/} |{br}'].map(decoration => ({ paged, numericLayout, decoration })))))('reserves the same actual number bounds with labels shown or hidden ($paged/$numericLayout/$decoration)', ({ paged, numericLayout, decoration }) => {
   const document = parseM3NDocument('{4/4}\nN: ' + decoration + '1 2 3 4 |{br} '.repeat(24))
-  const options = { width: 320, pageMargin: 0, paged, textMeasurer: measurer }
+  const options = { width: 320, pageMargin: 0, paged, numericLayout, textMeasurer: measurer }
   const hidden = layoutNativeScore(document, options)
   const visible = layoutNativeScore(document, { ...options, measureNumbers: true })
   const geometry = (layout: typeof hidden) => ({
     pages: layout.pages.map(page => [page.height, page.coreGap]),
+    blocks: layout.verticalBlocks,
     systems: layout.systems.map(system => [system.page, system.top, system.bottom, ...system.lanes.map(lane => lane.y)]),
     notes: layout.projection.glyphs.map(glyph => [glyph.x, glyph.y]),
   })

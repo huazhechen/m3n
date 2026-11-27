@@ -63,6 +63,9 @@ const numbered = {
   collisionGapRatio: page.collisionGapRatio,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
   defaultPageMargin: 32, minimumWidth: 320, minimumContentWidth: 40,
+  // Hinting and raster coverage can extend past the mathematical outline.
+  // Keep their fixed frame allowance separate from the glyph design metrics.
+  designInkEdgeGuard: 2,
   headerWrapInset: 2,
   frameStroke: 1,
   navigationGap: 4.4,

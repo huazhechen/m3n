@@ -20,7 +20,9 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
     top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
   primitives.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
   const ink = primitives
-  const boundaryInk = (system.decorationLayout ?? []).filter(item => !item.hidden && isNativeMeasureNumber(item))
+  // Visibility controls painting only. Reserve identical page bounds so toggling
+  // measure numbers cannot change pagination or automatic width selection.
+  const boundaryInk = (system.decorationLayout ?? []).filter(isNativeMeasureNumber)
     .flatMap(item => {
       const y = system.lanes.find(lane => lane.id === item.lane)!.y
       return nativeSvgPieces(item.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))

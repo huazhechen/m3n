@@ -4,7 +4,7 @@ import { defaultBravuraCharacterMetrics } from './bravura-characters.js'
 /** Platform-independent text measurement contract used by the native engine. */
 export type TextStyle = { fontFamily?: string; fontSize: number; fontWeight?: number; fontStyle?: 'normal' | 'italic'; textAlign?: 'left' | 'center' | 'right' }
 export type TextMetrics = { w: number; h: number; baseline: number; inkBottom?: number; centerOffset?: number; advance?: number; inkLeft?: number; inkRight?: number }
-export type TextMeasurer = { measureText(text: string, style: TextStyle): TextMetrics; fixedSymbol?<T extends object>(key: string, create: () => T): T }
+export type TextMeasurer = { readonly designMetrics?: boolean; measureText(text: string, style: TextStyle): TextMetrics; fixedSymbol?<T extends object>(key: string, create: () => T): T }
 
 /** Owned by one render/export task, never shared by independent tasks. */
 export class NumberedTextMeasurementCache {

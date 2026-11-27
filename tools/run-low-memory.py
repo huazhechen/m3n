@@ -41,7 +41,7 @@ def active_job(ignore=()):
     for pid, _, comm, args in rows:
         if pid in excluded or 'crashpad' in comm.lower():
             continue
-        heavy = any(name in comm.lower() for name in ['node', 'vitest', 'esbuild', 'chromium', 'chrome']) or ('python' in comm and any(name in args for name in ['prepare-score-fonts', 'prepare-staff-glyphs', 'subset-builtin-pdf-font']))
+        heavy = any(name in comm.lower() for name in ['node', 'vitest', 'esbuild', 'chromium', 'chrome', 'webkit', 'minibrowser', 'wpe']) or ('python' in comm and any(name in args for name in ['prepare-score-fonts', 'prepare-staff-glyphs', 'subset-builtin-pdf-font']))
         # A guarded batch remains active in the gaps between its commands.
         driver = 'python' in comm and 'tools/run-low-memory.py' in args and any(
             parent == pid and child_comm not in ['ps', 'sleep'] for _, parent, child_comm, _ in rows)
@@ -89,7 +89,7 @@ try:
             if len(parts) != 4 or int(parts[0]) == os.getpid():
                 continue
             _, rss, comm, args = parts
-            if any(name in comm.lower() for name in ['node', 'chrome', 'chromium', 'vitest', 'esbuild']) or ('python' in comm and any(name in args for name in ['font', 'score', 'm3n'])):
+            if any(name in comm.lower() for name in ['node', 'chrome', 'chromium', 'vitest', 'esbuild', 'webkit', 'minibrowser', 'wpe']) or ('python' in comm and any(name in args for name in ['font', 'score', 'm3n'])):
                 total += int(rss)
         peak = max(peak, total)
         if total >= limit_mib * 1024:

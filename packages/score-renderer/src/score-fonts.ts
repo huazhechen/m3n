@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, fontDesignGlyphPath } from '@m3n/numbered-notation'
 import fontkit from '@pdf-lib/fontkit'
 import { loadScoreFont, prepareNumberedNotationFonts, scoreCjkFont, scoreFontForCharacter, type ScoreFontResource } from '@m3n/numbered-notation'
 
@@ -60,10 +60,15 @@ export async function outlineScoreText(svg: SVGSVGElement) {
         const parsed = fonts.parsed.get(font.file)!
         const glyph = parsed.glyphForCodePoint(char.codePointAt(0)!)
         const path = document.createElementNS(ns, 'path')
-        path.setAttribute('d', glyph.path.toSVG())
+        path.setAttribute('d', fontDesignGlyphPath(glyph).toSVG())
         path.setAttribute('fill', style.fill)
         path.setAttribute('transform', `translate(${position.x} ${position.y}) rotate(${rotation}) scale(${size / parsed.unitsPerEm} ${-size / parsed.unitsPerEm})`)
-        if (font.file === fonts.cjk.file && weight >= 600) {
+        if (style.stroke !== 'none' && Number.parseFloat(style.strokeWidth) > 0) {
+          path.setAttribute('stroke', style.stroke)
+          path.setAttribute('stroke-width', String(Number.parseFloat(style.strokeWidth) * parsed.unitsPerEm / size))
+          path.setAttribute('stroke-linejoin', style.strokeLinejoin)
+          path.setAttribute('stroke-linecap', style.strokeLinecap)
+        } else if (font.file === fonts.cjk.file && weight >= 600) {
           path.setAttribute('stroke', style.fill); path.setAttribute('stroke-width', String(parsed.unitsPerEm * .015))
         }
         group.append(path)

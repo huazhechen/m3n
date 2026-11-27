@@ -9,6 +9,7 @@ import { nativeMeterGeometry } from './native-meter.js'
 import { nativeStyle } from './native-style.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import type { NativePitch, NativeControl } from './native-model.js'
+import { designTextStyle } from './font-design.js'
 import { nativeKeyGeometry } from './native-key.js'
 import { nativeAccidentalGeometry, type NativeAccidentalGlyph } from './native-accidentals.js'
 import { nativeArticulationSvg } from './native-articulations.js'
@@ -42,6 +43,15 @@ export class NativeSymbols {
     const fontWeight = extra['font-weight'] ?? (family === SCORE_TEXT_FONT ? SCORE_TEXT_WEIGHT : scoreLayoutConfig.fonts.regularWeight)
     const center = extra['text-anchor'] === 'middle'
     const offset = center ? this.measurer.measureText(text, { fontFamily: family, fontSize: size, fontWeight: Number(fontWeight), fontStyle: extra['font-style'] === 'italic' ? 'italic' : 'normal', textAlign: 'center' }).centerOffset ?? 0 : 0
+    if (this.measurer.designMetrics) {
+      const bold = Number(fontWeight) >= scoreLayoutConfig.fonts.boldWeight, italic = extra['font-style'] === 'italic'
+      const { 'font-style': _style, 'font-weight': _weight, ...attributes } = extra
+      const transform = italic ? `matrix(1 0 ${n(-designTextStyle.italicShear)} 1 ${n(designTextStyle.italicShear * y)} 0)` : undefined
+      return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, 'font-weight': SCORE_TEXT_WEIGHT,
+        'font-synthesis': 'none', 'font-style': 'normal', fill: '#000', 'xml:space': 'preserve', ...attributes,
+        ...(bold ? { stroke: '#000', 'stroke-width': size * designTextStyle.boldStrokeEm, 'stroke-linejoin': 'round' } : {}),
+        ...(transform ? { transform } : {}) })}>${xml(text)}</text>`
+    }
     return `<text${attrs({ x: x - offset, y, 'font-size': size, 'font-family': family, 'font-weight': fontWeight, fill: '#000', 'xml:space': 'preserve', ...extra })}>${xml(text)}</text>`
   }
 

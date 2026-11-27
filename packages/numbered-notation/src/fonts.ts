@@ -1,6 +1,7 @@
 import { SCORE_MUSIC_FONT, SCORE_CJK_FONT, SCORE_LATIN_FONT } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { LATIN_FONTS, CJK_FONTS, BRAVURA_FONTS } from './font-resources.js'
+import { prepareFontDesigns } from './font-design.js'
 
 export type ScoreFontResource = { file: string; url: string; webUrl?: string; characters: string; weight?: number; style?: string }
 const buffers = new Map<string, Promise<Uint8Array>>()
@@ -98,4 +99,6 @@ export async function prepareNumberedNotationFonts(value?: unknown, options: { s
     ...LATIN_FONTS.map(font => install(font, SCORE_LATIN_FONT)),
     install(BRAVURA_FONTS[0], SCORE_MUSIC_FONT), ...(cjk ? [install(cjk, SCORE_CJK_FONT)] : []),
   ])
+  if (cjk) await prepareFontDesigns(await Promise.all([...LATIN_FONTS, BRAVURA_FONTS[0], cjk]
+    .map(async font => ({ ...font, data: await loadScoreFont(font) }))))
 }
