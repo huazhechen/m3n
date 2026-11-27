@@ -822,11 +822,11 @@ textarea::selection {
   font-synthesis: weight style;
 }
 
-/* The frame is 112% of the SVG width: 6% of the score on each side. */
+/* The screen frame is 108% of the SVG width: 4% on each side. */
 .score-renderer > .score-paper[data-render-mode="continuous"] {
   box-sizing: border-box;
   width: 100%;
-  padding: calc(100% * 6 / 112);
+  padding: calc(100% * 4 / 108);
 }
 
 .score-paper[aria-busy="true"] {
@@ -1863,14 +1863,14 @@ a.action-button {
 .scorebook-current-title { overflow-wrap: anywhere; }
 
 @media screen {
-  /* A4-equivalent width: 6mm per side. Keep the engraved 186:273 content
-     undistorted as it grows to 198mm; extend the screen sheet accordingly. */
+  /* A4-equivalent width: 8mm per side. Keep the engraved 186:273 content
+     undistorted as it grows to 194mm; extend the screen sheet accordingly. */
   .score-paper[data-render-mode="paged"] .score-page-sheet {
-    aspect-ratio: 210 / 302.6129032258;
+    aspect-ratio: 210 / 300.7419354839;
   }
   .score-paper[data-render-mode="paged"] .score-page-sheet svg {
-    inset: calc(100% * 6 / 302.6129032258) calc(100% * 6 / 210);
-    width: calc(100% * 198 / 210);
-    height: calc(100% * 290.6129032258 / 302.6129032258);
+    inset: calc(100% * 8 / 300.7419354839) calc(100% * 8 / 210);
+    width: calc(100% * 194 / 210);
+    height: calc(100% * 284.7419354839 / 300.7419354839);
   }
 }

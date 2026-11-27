@@ -17,8 +17,8 @@ export function usePagedReaderLayout(paperRef: RefObject<HTMLDivElement | null>,
       if (mobile.matches) { clear(); return }
       const pages = [...paper.querySelectorAll<SVGSVGElement>(':scope > .score-page-sheet > svg')]
       if (!pages.length) { clear(); return }
-      // Screen content keeps its aspect ratio with 6mm margins at A4-equivalent width.
-      const aspect = (198 * 273 / 186 + 12) / 210
+      // Screen content keeps its aspect ratio with 8mm margins at A4-equivalent width.
+      const aspect = (194 * 273 / 186 + 16) / 210
       if (!Number.isFinite(aspect) || aspect <= 0) return
       let bottomSpace = 0
       for (let ancestor = paper.parentElement; ancestor; ancestor = ancestor.parentElement) {

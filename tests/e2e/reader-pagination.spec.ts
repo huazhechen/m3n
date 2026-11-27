@@ -37,7 +37,7 @@ test('desktop pages fit the remaining height, center each row and respond to res
         }, [])
         return {
           firstRowFits: rows[0]!.every(sheet => sheet.top >= 0 && sheet.bottom <= innerHeight),
-          wholePages: sheets.every(sheet => Math.abs(sheet.height / sheet.width - 302.6129032258 / 210) < 0.001),
+          wholePages: sheets.every(sheet => Math.abs(sheet.height / sheet.width - 300.7419354839 / 210) < 0.001),
           wrappingMatchesSpace: (rows.length === 1) === shouldShareRow,
           centered: rows.every(row => Math.abs((row[0]!.left + row.at(-1)!.right) / 2 - (bounds.left + bounds.right) / 2) < 1),
           scrollingMatchesRows: (document.documentElement.scrollHeight > innerHeight + 1) === (rows.length > 1),
@@ -159,10 +159,10 @@ test.describe('touch tablets', () => {
       return {
         frameFillsReader: Math.abs(frame.width - element.parentElement!.getBoundingClientRect().width) < 1,
         symmetricPadding: Math.abs(left - right) < 1,
-        sixPercentFrame: Math.abs(left / svg.width - 0.06) < 0.001,
+        fourPercentFrame: Math.abs(left / svg.width - 0.04) < 0.001,
         horizontalScroll: document.documentElement.scrollWidth > innerWidth,
       }
-    })).toEqual({ frameFillsReader: true, symmetricPadding: true, sixPercentFrame: true, horizontalScroll: false })
+    })).toEqual({ frameFillsReader: true, symmetricPadding: true, fourPercentFrame: true, horizontalScroll: false })
   })
 
   test('tablet editor switches panes without losing input and library uses compact cards', async ({ page }) => {
