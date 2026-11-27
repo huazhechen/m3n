@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { SCORE_LATIN_FONT, SCORE_NUMBER_FONT } from './font-family.js'
 import { prepareNumberedNotationFonts, registerScoreFontBundle } from './fonts.js'
+import { CJK_FONTS } from './font-resources.js'
 import { numberFontCss } from './number-font-css.js'
 import { readFileSync } from 'node:fs'
 vi.mock('./font-design.js', () => ({ prepareFontDesigns: vi.fn() }))
@@ -30,4 +31,12 @@ it('shares the original Medium face between score numbers and Latin text', async
   expect(add).toHaveBeenCalledTimes(3)
   expect(numberFontCss).toContain("font-family: 'Barlow Semi Condensed'")
   expect(numberFontCss).toContain('font-weight:500;')
+})
+
+it('includes generated header labels in every score subset', () => {
+  for (const font of CJK_FONTS.filter(font => font.file !== 'NotoSansSC-full.ttf')) {
+    for (const char of new Set('演唱作词作曲音域：→演奏顺序：')) {
+      expect(font.characters, `${font.file}: ${char}`).toContain(char)
+    }
+  }
 })

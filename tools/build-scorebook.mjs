@@ -68,11 +68,11 @@ try {
   for (const [index, entry] of plan.entries.entries()) {
     const scoreStarted = performance.now()
     const source = sources.get(entry.id)
-    const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source) && item.renderCache?.strategy === widthSearchStrategy + (auditLayout ? '' : '-local'))
+    const cached = reused?.entries.find(item => item.file === entry.file && item.sourceSha256 === hash(source) && item.renderCache?.strategy === widthSearchStrategy)
     const { candidates, renderCache } = cached ?? await probeWidthCandidates((width, best) => page.evaluate(async ({ source, width, auditLayout, minimumQuality }) => {
       try { return await window.scorebook.measure(source, width, true, undefined, undefined, auditLayout, minimumQuality) }
       catch (error) { return { width, error: error.message } }
-    }, { source, width, auditLayout, minimumQuality: !auditLayout && best?.pageCount === 1 ? numberedLayoutScore(best) : undefined }), { prune: !auditLayout, localRefine: !auditLayout })
+    }, { source, width, auditLayout, minimumQuality: !auditLayout && best?.pageCount === 1 ? numberedLayoutScore(best) : undefined }), { prune: !auditLayout })
     const best = chooseBestWidth(candidates)
     assert(best, `${entry.title}: no safe web layout: ${JSON.stringify(candidates)}`)
     records.push({ ...entry, width: best.width, sourceSha256: hash(source), systems: best.rows, pageCount: best.pageCount, candidates, renderCache, measurement: { wallMs: performance.now() - scoreStarted, reused: Boolean(cached) } })

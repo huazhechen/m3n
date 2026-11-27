@@ -110,6 +110,19 @@ describe('numbered automatic width margins', () => {
     expect(new Set(numberedQuality.mock.calls.map(([, options]) => options.layoutTask)).size).toBe(1)
   })
 
+  it('finds a better 6px break outside the best coarse width neighbourhood', async () => {
+    numberedQuality.mockReset()
+    // 暗香: the 696px coarse winner used to hide a better 660px break.
+    numberedQuality.mockImplementation((_document, { width }) => ({ pageCount: 1,
+      totalCost: width === 660 ? 2.0264406766514726 : width === 696 ? 2.2679697579457536
+        : 4 + 4 * ((width - 528) / 240) ** 2 }))
+
+    const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
+
+    expect(selected).toBe(660)
+    expect(numberedQuality.mock.calls.some(([, options]) => options.width === 660)).toBe(true)
+  })
+
   it('starts every independent selection with fresh preparation', async () => {
     numberedQuality.mockReset()
     numberedQuality.mockReturnValue({ pageCount: 1, lineDensityVariation: 0, lastLineSlack: 0 })

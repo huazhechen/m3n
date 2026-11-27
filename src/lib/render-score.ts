@@ -49,7 +49,7 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
     await yieldToBrowser()
     signal?.throwIfAborted()
     return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined }).candidate
-  }, { signal, prune: true, localRefine: true })
+  }, { signal, prune: true })
   return best.width
 }
 

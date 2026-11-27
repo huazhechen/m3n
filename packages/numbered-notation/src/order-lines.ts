@@ -7,12 +7,14 @@ import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
  * A section label stays indivisible; only the boundary before it may wrap.
  */
 export function numberedOrderLines(order: readonly string[] | undefined, available: number, measurer: TextMeasurer = new DefaultTextMeasurer(), fontSize = nativeStyle.text): string[][] {
+  const names = order?.filter(Boolean) ?? []
+  if (!names.length) return []
   const text = (value: string, weight = SCORE_TEXT_WEIGHT) => measurer.measureText(value, { fontSize, fontFamily: SCORE_TEXT_FONT, fontWeight: weight }).w
   const gap = fontSize * 0.25, frameInset = fontSize * (3.5 / 16)
   const arrow = text('→'), continuation = arrow + gap
   const lines: string[][] = []
   let line: string[] = [], used = text('演奏顺序：') + gap
-  for (const name of order?.filter(Boolean) ?? []) {
+  for (const name of names) {
     const framed = text(name, scoreLayoutConfig.fonts.boldWeight) + frameInset * 2
     const addition = framed + (line.length ? arrow + gap * 2 : 0)
     if (used + addition > available + 1e-6 && line.length) {

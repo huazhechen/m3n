@@ -15,7 +15,7 @@ const summarize = ({ candidate, prepared }) => {
 
 /** Enumerate every automatic-search grid point without pruning or page caps.
  * Keep the production search separate, so missed alternatives remain visible. */
-export async function review(source) {
+export async function review(source, referenceCandidates) {
   const started = performance.now()
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid source')
@@ -27,10 +27,10 @@ export async function review(source) {
   const production = await selectBestWidth((width, best) => measureNumberedWidth(score, width, {
     settings: productionSettings, maximumPageCount: best?.pageCount,
     minimumQuality: best ? numberedLayoutScore(best) : undefined,
-  }).candidate, { prune: true, localRefine: true })
+  }).candidate, { prune: true })
   const productionMs = performance.now() - productionStarted
-  const candidates = []
-  for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4) {
+  const candidates = referenceCandidates ?? []
+  if (!referenceCandidates) for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4) {
     candidates.push(summarize(measureNumberedWidth(score, width, { settings: settings() })))
     if (typeof globalThis.gc === 'function') globalThis.gc()
   }

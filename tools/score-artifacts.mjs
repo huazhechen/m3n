@@ -97,7 +97,7 @@ export async function prepareScoreArtifacts({ check = false, staged = false } = 
   for (const file of sourceFiles()) {
     const { numberedWidth: _numberedWidth, numberedPages: _numberedPages, ...previousResult } = previous.entries[file] ?? {}
     const source = read(file).toString()
-    const chars = [...new Set(source + '演唱作词作曲音域：→')].filter(c => !/\s|[\u200B\u2800]/u.test(c) && !LATIN_FONTS[0].characters.includes(c) && !BRAVURA_FONTS[0].characters.includes(c))
+    const chars = [...new Set(source + '演唱作词作曲音域：→演奏顺序：')].filter(c => !/\s|[\u200B\u2800]/u.test(c) && !LATIN_FONTS[0].characters.includes(c) && !BRAVURA_FONTS[0].characters.includes(c))
     const font = CJK_FONTS.filter(font => chars.every(c => font.characters.includes(c))).sort((a, b) => a.bytes - b.bytes)[0]
     assert(font, `Missing font subset: ${file}`)
     entries[file] = { ...previousResult, sourceSha256: hash(source), font: font.file, fontSha256: hash(readFileSync(fileURLToPath(font.url))) }

@@ -9,27 +9,40 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const output = resolve(argument('output') ?? '.tmp/numbered-width-review')
 const base = argument('base') ?? 'http://127.0.0.1:8787/score/'
 const distribution = argument('dist')
+const baselinePath = argument('verify-baseline')
+const baselineBytes = baselinePath ? readFileSync(resolve(baselinePath)) : undefined
+const baseline = baselineBytes ? JSON.parse(baselineBytes) : undefined
+if (baseline) assert(baseline.complete, 'Verification requires a complete independent enumeration')
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'entry.ts'), `export * from ${JSON.stringify(resolve('tools/numbered-width-review-layout.mjs'))}\n`)
 execFileSync(process.execPath, ['tools/build-numbered-audit-bundle.mjs', output], { stdio: 'inherit' })
 const digest = bytes => createHash('sha256').update(bytes).digest('hex')
 const bundleHash = digest(readFileSync(join(output, 'bundle/bundle.js')))
 const fonts = JSON.parse(readFileSync('tools/fonts/library/manifest.json', 'utf8')).fonts
+if (baseline) assert.deepEqual(baseline.fontHashes, fonts.map(({ file, sha256 }) => ({ file, sha256 })), 'Enumeration fonts changed')
 for (const font of fonts) assert.equal(digest(readFileSync(join('tools/fonts/library', font.file))), font.sha256)
 const reportPath = join(output, 'report.json')
 const previous = process.argv.includes('--resume') && existsSync(reportPath) ? JSON.parse(readFileSync(reportPath, 'utf8')) : undefined
-if (previous) assert.equal(previous.bundleHash, bundleHash, 'Review code changed')
+if (previous) {
+  assert.equal(previous.bundleHash, bundleHash, 'Review code changed')
+  assert.equal(previous.baseline?.sha256, baselineBytes ? digest(baselineBytes) : undefined, 'Enumeration reference changed')
+  assert.deepEqual(previous.fontHashes, fonts.map(({ file, sha256 }) => ({ file, sha256 })), 'Review fonts changed')
+}
 const report = { revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), bundleHash, base,
+  baseline: baseline ? { revision: baseline.revision, sha256: digest(baselineBytes), bundleHash: baseline.bundleHash, enumerationBatches: baseline.enumerationBatches } : undefined,
   fontHashes: fonts.map(({ file, sha256 }) => ({ file, sha256 })), complete: false, entries: previous?.entries ?? [] }
 const save = () => writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n')
 const inputs = ['scores', 'works', 'examples'].flatMap(scope => readdirSync('src/' + scope).filter(file => file.endsWith('.m3n')).sort().map(file => `${scope}/${file}`))
-  .filter(file => !argument('score') || file.includes(argument('score')))
+  .filter(file => !argument('score') || argument('score').split(',').some(part => file.includes(part)))
 const launch = () => chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true,
   args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--expose-gc --max-old-space-size=256'] })
 for (const file of inputs) {
   const source = readFileSync('src/' + file, 'utf8'), sourceHash = digest(source)
+  const reference = baseline?.entries.find(entry => entry.file === file)
+  if (baseline) { assert(reference, `Missing enumerated score: ${file}`); assert.equal(reference.sourceHash, sourceHash, 'Enumeration source changed') }
   const previous = report.entries.find(entry => entry.file === file)
   if (previous) { assert.equal(previous.sourceHash, sourceHash); continue }
+  globalThis.gc?.()
   let browser = await launch()
   try {
     let page = await browser.newPage()
@@ -48,14 +61,18 @@ for (const file of inputs) {
     const route = file.startsWith('examples/') ? 'scores/ban_yin_jie_kou_qin_ji_ben_gong_01' : file.slice(0, -4)
     const webStarted = performance.now()
     await page.goto(new URL(route, base).href)
+    let webError
     try {
       await page.waitForFunction(() => document.querySelector('[data-selected-width]')
         || document.querySelector('.render-message')?.textContent, undefined, { timeout: 120000 })
-      assert(await page.locator('[data-selected-width]').count(), `${file}: ${await page.locator('.render-message').allTextContents()}`)
+      if (!await page.locator('[data-selected-width]').count()) {
+        webError = (await page.locator('.render-message').allTextContents()).join('; ')
+        assert(process.argv.includes('--record-reader-errors'), `${file}: ${webError}`)
+      }
     } catch (error) { throw new Error(`${file}: ${error.message}; ${errors.join('; ')}`) }
-    const webWidth = Number(await page.locator('[data-selected-width]').first().getAttribute('data-selected-width'))
+    const webWidth = webError ? null : Number(await page.locator('[data-selected-width]').first().getAttribute('data-selected-width'))
     const webMs = performance.now() - webStarted
-    assert.equal(await page.locator('.score-paper svg').first().getAttribute('data-m3n-metrics'), 'font-design')
+    if (!webError) assert.equal(await page.locator('.score-paper svg').first().getAttribute('data-m3n-metrics'), 'font-design')
     if (file.includes('ban_yin_jie_kou_qin_ji_ben_gong_01')) {
       const geometry = () => page.locator('.score-paper').evaluate(paper => ({
         pages: [...paper.querySelectorAll('svg[data-engine]')].map(svg => svg.getAttribute('viewBox')),
@@ -81,14 +98,18 @@ for (const file of inputs) {
     // Closing a page alone can retain its renderer and compiled engine. Release
     // the entire reader process before creating the independent audit browser.
     await browser.close()
+    globalThis.gc?.()
     browser = await launch()
     page = await browser.newPage()
     page.on('pageerror', error => errors.push(error.message))
     await page.route('**/__review-fonts/*', route => route.fulfill({ path: join('tools/fonts/library', new URL(route.request().url()).pathname.split('/').at(-1)), contentType: 'font/ttf', headers: { 'Access-Control-Allow-Origin': '*' } }))
-    await page.addScriptTag({ content: readFileSync(join(output, 'bundle/bundle.js'), 'utf8') })
+    const bundleUrl = new URL('__review-bundle.js', base).href
+    await page.route(bundleUrl, route => route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' }))
+    await page.addScriptTag({ url: bundleUrl })
     await page.evaluate(fonts => m3n.initialize(fonts), fonts.map(font => ({ ...font, url: new URL('__review-fonts/' + font.file, base).href })))
-    const result = await page.evaluate(source => m3n.review(source), source)
-    if (!file.startsWith('examples/')) assert.equal(result.production.width, webWidth, `Reader/offline mismatch: ${file}`)
+    const result = await page.evaluate(({ source, candidates }) => m3n.review(source, candidates), { source, candidates: reference?.candidates })
+    if (reference) assert.equal(result.production.width, reference.globalBest.width, `Production missed independent grid winner: ${file}`)
+    if (!webError && !file.startsWith('examples/')) assert.equal(result.production.width, webWidth, `Reader/offline mismatch: ${file}`)
     assert.equal(result.selected.pageCount, result.production.pageCount, 'Pruned/unpruned pages differ')
     assert(Math.abs(result.selected.totalCost - result.production.totalCost) < 1e-8, 'Pruned/unpruned costs differ')
     const validationIssues = []
@@ -98,13 +119,18 @@ for (const file of inputs) {
       const candidate = result.candidates.find(candidate => candidate.width === audit.width)
       assert.equal(audit.pageCount, candidate.pageCount)
       assert(Math.abs(audit.totalCost - candidate.totalCost) < 1e-8)
+      assert.deepEqual(audit.measureRows, candidate.measureRows, 'Enumerated and freshly audited breaks differ')
+      assert.deepEqual(audit.intervals, candidate.intervals, 'Enumerated and freshly audited intervals differ')
+      for (const key of ['spacingUnevenCost', 'spacingCrampedCost', 'spacingExpandedCost', 'fontSizeCost'])
+        assert(Math.abs(audit[key] - candidate[key]) < 1e-8, `${file}: changed ${key}`)
     }
     assert.equal(errors.length, 0, errors.join('\n'))
     report.entries.push({ file, title: source.match(/\{title=([^}]+)\}/)?.[1] ?? file, sourceHash,
+      webError, baselineWidth: reference?.selected.width, baselinePages: reference?.selected.pageCount,
       webWidth: file.startsWith('examples/') ? null : webWidth, webMs, webFonts, validationIssues, ...result })
     save()
     console.log(`${report.entries.length}/${inputs.length} ${file}: selected ${result.selected.width}, minimum same-page ${result.minimum.width}, complete winner ${result.globalBest.width}`)
-  } finally { await browser.close() }
+  } finally { await browser.close(); globalThis.gc?.() }
 }
 report.complete = true
 save()

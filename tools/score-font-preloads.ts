@@ -10,7 +10,7 @@ export type FontPreload = { url: string; as: 'font' | 'fetch' }
 
 /** Match the renderer's font selection before the browser has fetched the source. */
 export async function scoreFontPreloads(source: string, emit: (name: string, source: Buffer) => string, watch: (path: string) => void, production: boolean) {
-  const cjk = scoreCjkFont(scoreFontText(parseM3NDocument(source)) + '演唱作词作曲音域：→')
+  const cjk = scoreCjkFont(scoreFontText(parseM3NDocument(source)) + '演唱作词作曲音域：→演奏顺序：')
   const fonts: ScoreFontResource[] = [...LATIN_FONTS, BRAVURA_FONTS[0], cjk]
   return Promise.all(fonts.map(async font => {
     const path = fileURLToPath(font.webUrl ?? font.url)

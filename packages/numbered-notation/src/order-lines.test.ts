@@ -31,3 +31,8 @@ it('preserves label order, repetitions and indivisible names when even one label
     expect(numberedOrderLines(['', 'WWWW', 'i', 'WWWW', ''], 30, measured)).toEqual([['WWWW'], ['i'], ['WWWW']]);
     expect(numberedOrderLines(undefined, 100, measured)).toEqual([]);
 });
+
+it.each([{ order: undefined }, { order: [] }, { order: ['', ''] }])('does not measure an absent order row ($order)', ({ order }) => {
+    const unavailable: TextMeasurer = { measureText() { throw new Error('Invisible text must not require a glyph'); } };
+    expect(numberedOrderLines(order, 528, unavailable)).toEqual([]);
+});

@@ -31,3 +31,7 @@
 - `npm run check:score-artifacts`：生成物摘要一致性。
 
 `--metrics-only` 只适合测量，不作为墨迹验收。检查报告和图像写入忽略的 `.tmp/`；CI 保存报告与失败日志。显示展开量不同的曲目仍参与安全与页数检查，按事件数归一的统计单独处理。
+
+同页更大字体的逐曲分析见[简谱选宽全量复查](NUMBERED_WIDTH_REVIEW.md)。完整枚举和生产验证分开执行；当只调整搜索配置、评分及实际几何不变时，可用 `--verify-baseline=<完整枚举report.json>` 复用41档候选，并重新运行每首生产搜索、核对实际网页、审计选中及替代方案。该模式校验谱源、TTF摘要，以及重新测量的页数、断行、逐间隔统计和各评分分量，报告保留引用基线及代码包摘要。
+
+建议使用 `python3 tools/run-low-memory.py node --expose-gc --max-old-space-size=192 tools/review-numbered-widths.mjs`；驱动按曲关闭整个浏览器并回收临时传输数据。`--resume` 仅接受相同工具、字体、谱源和引用基线。浏览器失败应保留失败；`--record-reader-errors` 仅用于诊断收集，最终验收不使用此开关。

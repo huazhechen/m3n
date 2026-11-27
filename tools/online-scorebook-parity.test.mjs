@@ -74,7 +74,8 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       for (const source of sources) {
         const document = api.parseM3NDocument(source)
         readerWidths.push(await api.chooseNumberedScoreWidth(document, { paged: true }))
-        const local = await api.staffSearch(source)
+        // Compare the pruned reader with a reference that measures every local candidate.
+        const local = await api.staffSearch(source, { prune: false, localRefine: true })
         const best = api.chooseBestWidth(local.candidates)
         staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
           candidates: local.candidates.map(candidate => candidate.width) })

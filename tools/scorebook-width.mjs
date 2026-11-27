@@ -6,7 +6,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v39`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v40`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -38,7 +38,7 @@ export function chooseBestWidth(candidates) {
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
-/** Search coarse levels, then refine within the winning level’s neighbors. */
+/** Search the full additive-cost grid, or the explicitly requested local mode. */
 export async function probeWidthCandidates(measure, { verify, signal, prune = false, localRefine = false } = {}) {
   const candidates = []
   const skippedWidths = []
