@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "8ac02d4a53613f087999993e4b5f9823a7486c87098018d8ccfd7f6d9845abdf",
+  "rendererSha256": "d8c94a69bd53851f1dad11d5855e969202f33dcc2214e2d271d4ab87121ef9ce",
   "fontManifestSha256": "1613eeb56fb352eba8ec3ea5b908f5cae989b1424cc1db7f1de02ec50a858f2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {

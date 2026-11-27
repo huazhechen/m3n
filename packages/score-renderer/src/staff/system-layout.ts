@@ -76,6 +76,7 @@ export function arrangeStaffSystem(
   width: number,
   sectionHeadings: Set<string>,
   deferPieces = false,
+  tupletsPlaced = false,
 ): StaffSystem {
   const inkIndices = new WeakMap<Ink[], InkRangeIndex>()
   const nearby = (music: Ink[], pieces: readonly Ink[], gap: number) => {
@@ -160,7 +161,9 @@ export function arrangeStaffSystem(
   // packing verses, so a later collision pass cannot push a numeral below text.
   const tuplets = new Set(byClass('m3n-tuplet-label'))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
-  placeStaffTuplets(node, geometry, [...tuplets])
+  // The engine resolves rhythm labels before adding slurs. Everything added
+  // afterwards is excluded by that pass, so repeating it sees identical music.
+  if (!tupletsPlaced) placeStaffTuplets(node, geometry, [...tuplets])
   const verses = byClass('verse')
   for (const verse of verses) if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) verse.children = []
   // Pack actual lyric ink for each staff independently, with no phantom row

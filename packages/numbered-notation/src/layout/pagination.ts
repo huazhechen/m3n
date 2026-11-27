@@ -6,7 +6,7 @@ import { scorePageCollision, scorePageDistance, type ScoreCollision } from './pa
 import type { ScoreInk, ScorePageBlock, ScoreBlockPosition } from './geometry.js'
 export type { ScorePageBlock, ScoreBlockPosition } from './geometry.js'
 type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
-type NormalizedBlock={block:ScorePageBlock;axis:number;ink:ScoreInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:ScoreInk[];edgeInk:(ScoreInk & {gap:number})[];sortState:{sorted:boolean}}
+type NormalizedBlock={block:ScorePageBlock;axis:number;ink:ScoreInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:ScoreInk[];edgeInk:(ScoreInk & {gap:number})[];edgeGap:number;sortState:{sorted:boolean}}
 const normalizedBlocks=new WeakMap<ScorePageBlock,NormalizedBlock>()
 const immutableCollisions=new WeakMap<ScorePageBlock,WeakMap<ScorePageBlock,ScoreCollision>>()
 
@@ -59,18 +59,18 @@ export function fitScoreCoreGap(heightAt: (gap: number) => number, capacity: num
 export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy: { immutableBlocks?:boolean } = {}) {
   const normalized = blocks.map((block, index) => {
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
-    if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,sortState:saved.sortState,index}
+    if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,edgeGap:saved.edgeGap,sortState:saved.sortState,index}
     const axis = block.baseline ?? 0
     const geometry = scorePageGeometry(block)
-    const { ink, boundaryInk, edgeInk, top, bottom: lower } = geometry
+    const { ink, boundaryInk, edgeInk, edgeGap, top, bottom: lower } = geometry
     const core = { top: geometry.coreTop, bottom: geometry.coreBottom }
-    const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, sortState:{sorted:false} }
+    const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, edgeGap, sortState:{sorted:false} }
     if(policy.immutableBlocks)normalizedBlocks.set(block,value)
-    return {block,axis,ink,top,lower,core,boundaryInk,edgeInk,sortState:value.sortState,index}
+    return {block,axis,ink,top,lower,core,boundaryInk,edgeInk,edgeGap,sortState:value.sortState,index}
   })
   type Placed = typeof normalized[number] & { baseline: number }
   const atBaseline=(item:typeof normalized[number],baseline:number):Placed=>({block:item.block,axis:item.axis,ink:item.ink,top:item.top,
-    lower:item.lower,core:item.core,boundaryInk:item.boundaryInk,edgeInk:item.edgeInk,sortState:item.sortState,index:item.index,baseline})
+    lower:item.lower,core:item.core,boundaryInk:item.boundaryInk,edgeInk:item.edgeInk,edgeGap:item.edgeGap,sortState:item.sortState,index:item.index,baseline})
   // Cache actual ink overlap constraints while trying different core values.
   // Each pair is measured once; fitting then evaluates scalar maxima only.
   const collisions = new Map<number, Map<number, ScoreCollision>>()
@@ -110,7 +110,8 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
           const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
           // A collision cannot exceed the two complete ink envelopes. Distant
           // rows already clear this upper bound; avoid sweeping their pieces.
-          if(!prior.edgeInk.length && !item.edgeInk.length && prior.baseline+prior.lower-item.top+localGap*scoreLayoutConfig.page.collisionGapRatio<=baseline)continue
+          const clearance=Math.max(localGap*scoreLayoutConfig.page.collisionGapRatio,prior.edgeGap,item.edgeGap)
+          if(prior.baseline+(prior.lower-item.top+clearance)<=baseline)continue
           const pair = collisionDistance(prior, item)
           baseline = Math.max(baseline, prior.baseline + scorePageDistance(pair, localGap, -Infinity))
         }

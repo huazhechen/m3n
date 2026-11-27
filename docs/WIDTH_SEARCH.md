@@ -81,3 +81,5 @@
 候选雕版前的全图页数预检查及共享的按需几何／可行路径复用，见[预检查性能测量](WIDTH_SEARCH_PREFLIGHT_PERFORMANCE.md)。路径只负责提前保留候选；失败后继续完整图检查，不能仅凭贪心路径失败淘汰宽度。
 
 共享分页对不可变图元、固定附件和精确极值轮廓的复用及两种谱式全量性能，见[碰撞数据复用](WIDTH_COLLISION_PERFORMANCE.md)。
+
+固定附件也可使用完整包络安全跳过远行扫描，证明及后续全量实测见[固定附件碰撞上界](WIDTH_COLLISION_ENVELOPE_PERFORMANCE.md)。

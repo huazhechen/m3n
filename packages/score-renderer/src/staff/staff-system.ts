@@ -288,7 +288,6 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         staff.children.push(element('g', { class: 'tie', 'data-m3n-join': barJoins }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX,
           line.target - inset - engine.endingBarInset, tieSignatures[staff.attributes['data-staff'] === 'bass' ? 1 : 0])))
       }
-      placeStaffTuplets(node, tieGeometry)
       const slurMusic: Array<Ink[] | undefined> = []
       // Place inner bows first so enclosing bows clear existing relation ink.
       const span = ({ start, end }: typeof intervals[number]) =>
@@ -300,6 +299,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       }).sort((a, b) =>
         a.interval.kind === 'lg' && b.interval.kind === 'lg' ? span(a) - span(b)
           : Number(b.interval.kind === 'lg') - Number(a.interval.kind === 'lg'))
+      const tupletsPlaced = orderedIntervals.some(({ interval }) => interval.kind === 'lg')
+      if (tupletsPlaced) placeStaffTuplets(node, tieGeometry)
       for (const { interval, start, end } of orderedIntervals) {
         const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
         if (lineIndex < from || lineIndex > to) continue
@@ -339,7 +340,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + style.sectionLabelInset > width / 2)
       }).map(m => m.id))
       const geometry = tieGeometry
-      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces)
+      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced)
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system
     }

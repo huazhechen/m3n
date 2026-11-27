@@ -4,7 +4,7 @@ import type { ScorePageBlock } from './geometry.js'
 
 export type ScorePageGeometry = {
   top: number; bottom: number; coreTop: number; coreBottom: number; music: boolean
-  scale: number; gap?: number; before: number; resolved: boolean; sorted: boolean
+  scale: number; gap?: number; edgeGap: number; before: number; resolved: boolean; sorted: boolean
   ink: ScoreInk[]; boundaryInk: ScoreInk[]; edgeInk: (ScoreInk & { gap: number })[]
 }
 
@@ -21,6 +21,6 @@ export function scorePageGeometry(block: ScorePageBlock): ScorePageGeometry {
   }
   return { ink, boundaryInk, edgeInk, top, bottom, coreTop: block.core ? block.core.top - axis : top,
     coreBottom: block.core ? block.core.bottom - axis : bottom, music: Boolean(block.core),
-    scale: block.coreGapScale ?? 1, gap: block.coreGapBefore, before: block.gapBefore ?? 0,
+    scale: block.coreGapScale ?? 1, gap: block.coreGapBefore, edgeGap: Math.max(0, ...edgeInk.map(piece => piece.gap)), before: block.gapBefore ?? 0,
     resolved: Boolean(block.resolvedInk), sorted: false }
 }

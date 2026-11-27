@@ -4,6 +4,7 @@ import { nativeLanePieces } from '../native-lanes.js';
 import { layoutNativeScore, repaginateNativeLayout } from '../native-layout.js';
 import { nativeSystemCore } from '../native-core.js';
 import { paginateScoreBlocks, prepareScorePagination } from './pagination.js';
+import type { ScoreInk, ScorePageBlock } from './geometry.js';
 const options = { pageHeight: 400, margin: 20, gap: 10 };
 describe('native measured-block pagination', () => {
     it('keeps the header and all pages at natural gaps, leaving unused space below', () => {
@@ -193,4 +194,46 @@ it('shares exact fixed attachment clearance with remote-row checks and baseline 
     expect(result.positions.map(position => position.top)).toEqual([-10, 30, 107]);
     // The fixed 7px clearance is independent of the 0.5 * core-gap rule.
     expect(prepareScorePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 40 }).positions[1]!.top).toBe(107);
+});
+
+it('preserves exhaustive remote collisions with fixed clearances on both rows', () => {
+    let seed = 88131;
+    const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+    const piece = () => {
+        const left = Math.floor(random() * 100), top = -Math.floor(random() * 80);
+        return { left, right: left + 1 + Math.floor(random() * 30), top, bottom: Math.floor(random() * 100) };
+    };
+    for (let trial = 0; trial < 80; trial++) {
+        const blocks: ScorePageBlock[] = Array.from({ length: 12 }, () => ({
+            height: 200, baseline: Math.floor(random() * 20), core: { top: -5, bottom: 5 },
+            ink: Array.from({ length: 6 }, piece), boundaryInk: [piece()],
+            edgeInk: Array.from({ length: 3 }, () => ({ ...piece(), gap: Math.floor(random() * 80) })),
+        }));
+        const normalized = blocks.map(block => {
+            const shift = <T extends ScoreInk>(p: T): T => ({ ...p, top: p.top - block.baseline!, bottom: p.bottom - block.baseline! });
+            const ink = block.ink!.map(shift), boundary = block.boundaryInk!.map(shift), edge = block.edgeInk!.map(shift);
+            return { ink, boundary, edge, top: Math.min(0, ...[...ink, ...boundary, ...edge].map(p => p.top)) };
+        });
+        const baselines: number[] = [];
+        const separation = (upper: readonly ScoreInk[], lower: readonly ScoreInk[]) => {
+            let result = -Infinity;
+            for (const a of upper) for (const b of lower)
+                if (a.left < b.right && a.right > b.left) result = Math.max(result, a.bottom - b.top);
+            return result;
+        };
+        for (const [index, block] of normalized.entries()) {
+            let baseline = 10 - block.top;
+            if (index) baseline = Math.max(baseline, baselines[index - 1]! + 5 - blocks[index - 1]!.baseline! + 5 + blocks[index]!.baseline! + 24);
+            for (let before = 0; before < index; before++) {
+                const upper = normalized[before]!;
+                const collision = separation(upper.ink, block.ink);
+                const edge = Math.max(separation([...upper.ink, ...upper.boundary], block.edge.map(p => ({ ...p, top: p.top - p.gap }))),
+                    separation(upper.edge.map(p => ({ ...p, bottom: p.bottom + p.gap })), block.ink));
+                baseline = Math.max(baseline, baselines[before]! + Math.max(collision + 12, edge));
+            }
+            baselines.push(baseline);
+        }
+        const result = prepareScorePagination(blocks, { immutableBlocks: true })({ pageHeight: Infinity, margin: 10, gap: 24 });
+        result.positions.forEach((position, index) => expect(position.top + blocks[index]!.baseline!).toBeCloseTo(baselines[index]!, 9));
+    }
 });

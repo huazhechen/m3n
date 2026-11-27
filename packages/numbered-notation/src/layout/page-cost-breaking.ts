@@ -2,6 +2,7 @@ import { scoreLineStateHull, insertScoreLineStateHull, type ScoreLineStatisticPl
 import type { ScorePageBlock } from './geometry.js'
 import { scorePageCollision, scorePageDistance } from './page-collision.js'
 import { scorePageGeometry, type ScorePageGeometry } from './page-geometry.js'
+import { scoreLayoutConfig } from '../score-layout-config.js'
 
 type Box=ScorePageGeometry
 type State=ScoreLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
@@ -39,7 +40,8 @@ export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCan
   const separation=prior.music && item.music ? local : options.headerGap
   const core=prior.coreBottom-item.coreTop+separation
   let collision=-Infinity,edge=-Infinity
-  if(prior.resolved && item.resolved && (prior.edgeInk.length || item.edgeInk.length || scorePageDistance({collision:prior.bottom-item.top,edge:-Infinity},local,-Infinity)>core)) {
+  const clearance=Math.max(local*scoreLayoutConfig.page.collisionGapRatio,prior.edgeGap,item.edgeGap)
+  if(prior.resolved && item.resolved && prior.bottom-item.top+clearance>core) {
    if(!prior.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sorted=true}
    if(!item.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sorted=true}
    const pair=scorePageCollision(prior,item);collision=pair.collision;edge=pair.edge
