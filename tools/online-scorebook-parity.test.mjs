@@ -98,11 +98,56 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
     for (const staff of comparison.staffWidths) {
       assert.equal(staff.reader, staff.local)
-      assert.deepEqual(staff.candidates.filter(width => width % 24 === 0), Array.from({ length: 11 }, (_, i) => 528 + i * 24))
-      assert(staff.candidates.every(width => width >= 528 && width <= 768 && width % 6 === 0))
-      assert(staff.candidates.length >= 14 && staff.candidates.length <= 17)
+      assert.deepEqual(staff.candidates.filter(width => width % 24 === 0), Array.from({ length: 9 }, (_, i) => 528 + i * 24))
+      assert(staff.candidates.every(width => width >= 528 && width <= 720 && width % 6 === 0))
+      assert(staff.candidates.length >= 12 && staff.candidates.length <= 15)
     }
     assert.equal(comparison.soloSharedPages, 0)
     assert.deepEqual(comparison.soloOnline, comparison.soloLocal.map(group => Array(group.end - group.start).fill(group.width)))
+  } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
+})
+
+test('both notations reorder a chapter around a solo-only work with identical bounded and exhaustive PDFs', async () => {
+  const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-reordered-book-'))
+  const files = ['xiao_xing_xing_01.m3n', 'solo-fixture.m3n', 'hong_he_gu_01.m3n']
+  const sources = [files[0], files[0], files[2]].map(file => readFileSync(join(root, 'src/scores', file), 'utf8'))
+  const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowHeightEm: 1.25 },
+    sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: true }],
+    entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '独占曲目', '红河谷'][index],
+      section: 'basics', sharePage: index !== 1 })) }
+  const fontAssets = browserTestFontAssets(root, { fontFile: join(temp, 'bundle/fixture-font.ttf') })
+  let browser
+  try {
+    const entry = join(temp, 'entry.mjs')
+    writeFileSync(entry, `export {buildOnlineScorebook} from ${JSON.stringify(join(root, 'src/lib/online-scorebook.ts'))};`)
+    await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle'), fixtures: { plan, sources, files } })
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true,
+      args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+    const page = await browser.newPage()
+    await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined
+      : new URL(route.request().url()).pathname === '/bundle.js'
+        ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
+        : route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html>' }))
+    await page.goto('http://scorebook.local/')
+    await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
+    for (const notationMode of ['movable', 'staff']) {
+      const result = await page.evaluate(async notationMode => {
+        const build = options => window.scorebook.buildOnlineScorebook(new AbortController().signal, () => {}, { notationMode, ...options })
+        const summary = book => ({ groups: book.measurementTimings.groups, sharedPages: book.sharedPages,
+          pages: book.pages.map(svg => svg.outerHTML),
+          order: book.pages.slice(2).flatMap(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.dataset.scoreSlug)) })
+        const full = summary(await build({ pruneSearch: false }))
+        const pruned = summary(await build({ pruneSearch: true }))
+        // Audit mode independently checks the final shared SVG's actual ink.
+        const audited = await build({ auditLayout: true })
+        return { full, pruned, auditedGroups: audited.measurementTimings.groups }
+      }, notationMode)
+      assert.deepEqual(result.pruned, result.full, notationMode + ' must preserve final SVG pages and groups')
+      assert.deepEqual(result.auditedGroups, result.full.groups)
+      assert.equal(result.full.sharedPages, 1)
+      assert.deepEqual(result.full.order, ['0', '2', '1'])
+      assert.deepEqual(result.full.groups.map(group => group.files), [[files[0], files[2]], [files[1]]])
+      assert(result.full.groups[0].width >= 528 && result.full.groups[0].width <= 624 && result.full.groups[0].width % 6 === 0)
+    }
   } finally { await browser?.close(); rmSync(temp, { recursive: true, force: true }) }
 })

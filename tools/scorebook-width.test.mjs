@@ -37,21 +37,20 @@ test('larger type outweighs a small density improvement without adding pages', a
 
 const candidate = (width, naturalHeight, pageCount = 1, extra = {}) => ({ width, naturalHeight, pageCount, rows: 2, outside: [], overlaps: [],
   ...extra })
-const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates: candidates.some(item => item.width === 624)
-  ? candidates : [...candidates, candidate(624, candidates.at(-1)?.naturalHeight, candidates.at(-1)?.pageCount ?? 1)], ...extra })
+const entry = (title, candidates, extra = {}) => ({ title, section: 'basics', candidates, ...extra })
 
-test('624px determines admission and sharing searches down to 528px', () => {
+test('sharing remains possible when the 624px candidate is unsafe', () => {
   assert.equal(sharedPreferredWidth, 528)
   const make = height => widthCandidates.map(width => candidate(width, height))
   const entries = [entry('A', make(320)), entry('B', make(320))]
   assert.deepEqual(packScorebook(entries), [{ start: 0, end: 2, width: 528, pageCount: 1 }])
   entries[1].candidates.find(item => item.width === 624).overlaps.push('lyric')
-  assert.equal(packScorebook(entries).length, 2)
+  assert.equal(packScorebook(entries).length, 1)
 })
 
 test('shared widths stop at 624px while solo selection can still choose 720px', () => {
   assert.equal(sharedWidthMaximum, 624)
-  assert.deepEqual(sharedWidthCandidates, [528, 552, 576, 600, 624])
+  assert.deepEqual(sharedWidthCandidates, Array.from({ length: 17 }, (_, index) => 528 + index * 6))
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
     { qualityScore: width === 720 ? 10 : width === 696 ? 8 : width === 576 ? 2 : 1 }))))
   assert.equal(chooseBestWidth(entries[0].candidates).width, 720)
@@ -59,20 +58,21 @@ test('shared widths stop at 624px while solo selection can still choose 720px', 
   assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups[0].width, 576)
 })
 
-test('passing wider widths cannot bypass 624px admission', () => {
+test('nonmonotonic layouts can share at 600px despite failing at 624px', () => {
   for (const atAdmission of [candidate(624, 250, 2), candidate(624, 520)]) {
     const entries = ['A', 'B'].map(title => entry(title, [atAdmission, candidate(600, 250), candidate(720, 250)]))
-    assert.equal(packScorebook(entries).length, 2)
-    assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups.length, 2)
+    assert.equal(packScorebook(entries).length, 1)
+    assert.equal(optimizeScorebook(entries, new Set(['basics'])).groups.length, 1)
   }
 })
 
-test('a shared page can use the admission width when it scores highest', () => {
+test('a shared page can use 624px when it scores highest', () => {
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250, 1,
     { qualityScore: width === 624 ? 2 : .5 })) ))
   assert.equal(packScorebook(entries)[0].width, 624)
   entries[1].candidates.find(item => item.width === 624).outside.push('ink')
-  assert.equal(packScorebook(entries).length, 2)
+  assert.equal(packScorebook(entries).length, 1)
+  assert.notEqual(packScorebook(entries)[0].width, 624)
 })
 
 test('packing optimizes the complete sequence instead of greedily choosing the narrowest first page', () => {
@@ -148,7 +148,7 @@ test('chapter works can share across distant positions while preserving chapter 
   assert.equal(new Set(ordered).size, entries.length)
   assert(ordered.some((work, index) => Math.abs(entries.indexOf(work) - index) > 3))
   assert.deepEqual(reorderForSharing(entries, new Set(['classic', 'golden', 'pop', 'instrumental'])), entries)
-  for (const extra of [{ section: 'next' }, { breakBefore: true }, { sharePage: false }]) {
+  for (const extra of [{ section: 'next' }, { breakBefore: true }]) {
     const blocked = entries.map(work => ({ ...work }))
     Object.assign(blocked[1], extra)
     assert.deepEqual(reorderForSharing(blocked), blocked)
@@ -166,22 +166,29 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
   assert.equal(sharedScoreGap, 36)
   const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 455), candidate(600, 455), candidate(720, 515)]))
-  // The 576px admission check rejects the combined height, even if 720px fits.
+  // No shared grid width fits, even if the solo-only 720px width fits.
   assert.equal(packScorebook(entries).length, 2)
   for (const work of entries) work.candidates[1] = candidate(600, 450)
   assert.equal(packScorebook(entries).length, 2) // 936px exceeds the 600px capacity.
 })
 
-test('exact chapter set partitioning matches exhaustive permutation search', () => {
-  const entries = [480, 420, 330, 280, 220, 170].map((height, index) => entry(String(index), [candidate(576, height), candidate(600, height)]))
+test('joint width and chapter set partitioning matches exhaustive permutation search', () => {
+  const entries = [480, 420, 330, 280, 220, 170].map((height, index) => entry(String(index),
+    sharedWidthCandidates.map((width, level) => candidate(width, height + (level * 19 + index * 31) % 120 - 60,
+      1, { totalCost: ((level + index * 3) % 11) / 10 }))))
   const result = optimizeScorebook(entries, new Set(['basics']))
-  let minimum = Infinity
+  let minimum
   function permute(prefix, remaining) {
-    if (!remaining.length) { minimum = Math.min(minimum, optimizeScorebook(prefix).metrics.cost); return }
+    if (!remaining.length) {
+      const metrics = optimizeScorebook(prefix).metrics
+      if (!minimum || metrics.pages < minimum.pages || metrics.pages === minimum.pages && metrics.cost < minimum.cost) minimum = metrics
+      return
+    }
     for (let index = 0; index < remaining.length; index++) permute([...prefix, remaining[index]], remaining.filter((_, other) => other !== index))
   }
   permute([], entries)
-  assert(Math.abs(result.metrics.cost - minimum) < 1e-9)
+  assert.equal(result.metrics.pages, minimum.pages)
+  assert(Math.abs(result.metrics.cost - minimum.cost) < 1e-9)
   assert.equal(new Set(result.entries).size, entries.length)
   const locked = optimizeScorebook(entries, new Set(['classic']))
   assert.deepEqual(locked.entries, entries)
@@ -202,7 +209,8 @@ test('forced solo works in a large chapter do not change the optimal partition o
   const solos = Array.from({ length: 35 }, (_, index) => entry(`solo-${index}`, [candidate(576, undefined, 2), candidate(600, undefined, 2)]))
   const expected = optimizeScorebook(shorts, new Set(['basics']))
   const result = optimizeScorebook([...solos, ...shorts], new Set(['basics']))
-  assert(Math.abs(result.metrics.cost - expected.metrics.cost - 70) < 1e-9)
+  const soloCost = optimizeScorebook(solos).metrics.cost
+  assert(Math.abs(result.metrics.cost - expected.metrics.cost - soloCost) < 1e-9)
   assert.equal(result.metrics.pages, expected.metrics.pages + 70)
   assert.deepEqual(result.entries.slice(35), expected.entries)
 })
@@ -237,11 +245,11 @@ test('cancellation between levels stops further measurements', async () => {
   assert.deepEqual(measured, [528, 552, 576, 600, 624])
 })
 
-test('shared packing ignores off-level candidates outside the coarse winner neighborhood', () => {
+test('shared packing includes isolated winners outside the coarse winner neighborhood', () => {
   const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 250))))
   for (const work of entries) work.candidates.push(candidate(618, 250, 1, { qualityScore: 100 }))
-  assert.equal(packScorebook(entries)[0].width, 528)
-  assert(sharedWidthCandidates.every(width => widthCandidates.includes(width) && width <= 624))
+  assert.equal(packScorebook(entries)[0].width, 618)
+  assert(sharedWidthCandidates.every(width => width % 6 === 0 && width <= 624))
 })
 
 for (const coarseBest of [528, 648, 720]) {
@@ -280,14 +288,14 @@ test('cancellation during refinement stops immediately', async () => {
 const refinementEntries = () => ['A', 'B'].map(title => entry(title, widthCandidates.map(width =>
   candidate(width, 300, 1, { qualityScore: width === 720 ? 10 : width === 600 ? 2 : 1 }))))
 
-test('sharing refines its own coarse winner and preserves independent solo candidates', async () => {
+test('sharing measures the complete grid and preserves independent solo candidates', async () => {
   const entries = refinementEntries(), original = structuredClone(entries), requests = []
   await refineSharedWidths(entries, async (work, width) => {
     requests.push(`${work.title}:${width}`)
     return candidate(width, 300, 1, { qualityScore: width === 606 ? 3 : 1 })
   })
   assert.equal(new Set(requests).size, requests.length)
-  assert.equal(requests.length, 12)
+  assert.equal(requests.length, 24)
   assert(entries.every((work, index) => JSON.stringify(work.candidates) === JSON.stringify(original[index].candidates)))
   assert.equal(chooseBestWidth(entries[0].candidates).width, 720)
   assert.equal(packScorebook(entries)[0].width, 606)
@@ -304,15 +312,16 @@ test('every member must pass page count, capacity and safety checks at a refined
   }
 })
 
-test('shared refinement includes distant legal groups but respects chapter anchors', async () => {
+test('shared search includes distant groups and solo-only works but respects chapter anchors', async () => {
   const entries = refinementEntries()
   entries.splice(1, 0, entry('solo', widthCandidates.map(width => candidate(width, undefined, 2))))
   const measured = []
   const measure = async (work, width) => { measured.push(work.title); return candidate(width, 300) }
   await refineSharedWidths(entries, measure)
-  assert.equal(measured.length, 0)
+  assert.deepEqual(new Set(measured), new Set(['A', 'solo', 'B']))
+  const count = measured.length
   await refineSharedWidths(entries, measure, { movableSections: new Set(['basics']) })
-  assert.deepEqual(new Set(measured), new Set(['A', 'B']))
+  assert.equal(measured.length, count)
   const blocked = refinementEntries(); blocked[1].breakBefore = true
   await refineSharedWidths(blocked, async () => { throw new Error('must not cross an anchor') })
   assert(blocked.every(work => !work.sharedCandidates))
@@ -470,4 +479,59 @@ test('local refinement searches only the coarse winner neighbourhood and keeps s
   assert(!local.candidates.some(c => c.width === 534))
   assert(local.renderCache.strategy.endsWith('-local'))
   assert(local.renderCache.skippedWidths.includes(720))
+})
+
+
+test('a group can be admitted only at an isolated fine width, even when all coarse widths fail', async () => {
+  for (const prune of [false, true]) {
+    const entries = ['A', 'B'].map(title => entry(title, widthCandidates.map(width => candidate(width, 900))))
+    await refineSharedWidths(entries, async (_entry, width) => candidate(width, width === 618 ? 300 : 900), { prune })
+    const result = optimizeScorebook(entries, new Set(['basics']))
+    assert.deepEqual(result.groups, [{ start: 0, end: 2, width: 618, pageCount: 1 }])
+  }
+})
+
+test('shared width jointly trades reading cost against actual page density', () => {
+  // 528 has the better engraving score, but wastes much more of the page.
+  const entries = ['A', 'B'].map(title => entry(title, [
+    candidate(528, 120, 1, { totalCost: 0 }),
+    candidate(600, 310, 1, { totalCost: .1 }),
+    candidate(624, 900, 1, { totalCost: .5 }),
+  ]))
+  assert.equal(chooseBestWidth(entries[0].candidates).width, 528)
+  for (const movable of [new Set(), new Set(['basics'])]) {
+    const result = optimizeScorebook(entries, movable)
+    assert.equal(result.groups[0].width, 600)
+    assert.equal(result.metrics.readingCost, .1)
+  }
+  // Sufficient engraving loss outweighs the density benefit in the same objective.
+  for (const work of entries) work.candidates.find(c => c.width === 600).totalCost = 5
+  assert.equal(packScorebook(entries)[0].width, 528)
+})
+
+test('paper use takes priority over density and engraving cost in chapter packing', () => {
+  const entries = ['A', 'B'].map(title => entry(title, [
+    candidate(528, 400, 1, { totalCost: 0 }),
+    candidate(600, 300, 1, { totalCost: 100 }),
+    candidate(624, 900, 1, { totalCost: 100 }),
+  ]))
+  // Only 600px can share; its high cost still cannot justify an extra page.
+  const result = optimizeScorebook(entries, new Set(['basics']))
+  assert.equal(result.metrics.pages, 1)
+  assert.equal(result.groups[0].width, 600)
+})
+
+test('solo-only works can move without preventing distant short works from pairing', () => {
+  const entries = [entry('A', [candidate(576, 300)]),
+    entry('solo', [candidate(576, 900)], { sharePage: false }), entry('B', [candidate(576, 300)])]
+  const result = optimizeScorebook(entries, new Set(['basics']))
+  assert.equal(result.metrics.pages, 2)
+  assert.deepEqual(result.metrics.pageGroups.map(group => group.titles), [['A', 'B'], ['solo']])
+  assert.equal(result.metrics.pageGroups.find(group => group.titles.includes('solo')).titles.length, 1)
+})
+
+test('all editorial chapters permit reordering', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const plan = JSON.parse(await readFile(new URL('../config/scorebook/editorial-plan.json', import.meta.url), 'utf8'))
+  assert(plan.sections.every(section => section.reorderForSharing === true))
 })

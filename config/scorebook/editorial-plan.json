@@ -6,13 +6,13 @@
       "id": "basics",
       "title": "第一章　基础练习曲",
       "description": "常规基本功贯穿全程；旋律由稳定拍点、基本时值与连奏，逐步进入弱起、附点、切分及十六分音符。",
-      "reorderForSharing": false
+      "reorderForSharing": true
     },
     {
       "id": "advanced",
       "title": "第二章　进阶练习曲",
       "description": "围绕节奏、音区、气息、半音和转调组织的教学选曲；兼顾专项训练与完整演奏。",
-      "reorderForSharing": false
+      "reorderForSharing": true
     },
     {
       "id": "instrumental",

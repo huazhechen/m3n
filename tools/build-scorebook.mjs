@@ -158,7 +158,7 @@ const report = { title: plan.title, edition: plan.edition, version: plan.version
   packing: { policy: packingPolicy, ...optimizedPacking.metrics },
   widthSearch: { strategy: widthSearchStrategy, minimum: widthMinimum, maximum: widthMaximum, step: widthStep, priority: ['pageCount', 'qualityScore', 'width'] }, pageMarginPx: 0, a4MarginMm: 12, coreSpacing: { continuous: 28, pagedMinimum: 28, defaultLeadingPx: 28, pagedMaximum: 32, collisionRatio: .5, shared: 'page' },
   sharedPages: musicGroups.map(({ musicStart, ...group }) => ({ page: frontCount + musicStart + 1, ...group })), sharedScoreGap, sharedPreferredWidth,
-  sharedWidthSearch: { minimum: widthMinimum, maximum: sharedWidthMaximum, step: widthStep, eligibilityWidth: sharedWidthMaximum },
+  sharedWidthSearch: { minimum: widthMinimum, maximum: sharedWidthMaximum, step: 6, eligibility: 'any-feasible-width' },
   entries: records, validation: { outside: auditLayout ? 0 : null, overlaps: auditLayout ? 0 : null, geometryAudited: auditLayout, sourceCoverage: true } }
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'layout-record.json'), JSON.stringify(report, null, 2) + '\n')

@@ -6,12 +6,12 @@ export const sharedPreferredWidth: number
 export const sharedWidthMaximum: number
 export const sharedWidthCandidates: number[]
 export function refineSharedWidths<T extends PackingEntry>(entries: T[], measure: (entry: T, width: number) => Promise<WidthMeasurement>, options?: { movableSections?: Set<string>; signal?: AbortSignal; prune?: boolean }): Promise<void>
-export const packingPolicy: Readonly<{ targetFill: number; sparseBelow: number; crowdedAbove: number; sparseWeight: number; crowdedWeight: number; balanceWeight: number; pageWeight: number }>
+export const packingPolicy: Readonly<{ targetFill: number; sparseBelow: number; crowdedAbove: number; sparseWeight: number; crowdedWeight: number; balanceWeight: number; pageWeight: number; qualityWeight: number }>
 export function pageDensityPenalty(fill: number): number
 export function optimizeScorebook<T extends PackingEntry>(entries: T[], movableSections?: Set<string>): {
   entries: T[]
   groups: PackingGroup[]
-  metrics: { cost: number; pages: number; densityPenalty: number; pageGroups: { titles: string[]; width: number; pageCount: number; naturalFill: number | null }[] }
+  metrics: { cost: number; readingCost: number; pages: number; densityPenalty: number; pageGroups: { titles: string[]; width: number; pageCount: number; naturalFill: number | null }[] }
 }
 export function packScorebook(entries: PackingEntry[]): PackingGroup[]
 export function reorderForSharing<T extends PackingEntry>(entries: T[], movableSections?: Set<string>): T[]

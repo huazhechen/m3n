@@ -37,7 +37,7 @@ function deferredStaffScore(staff: typeof import('@m3n/score-renderer/staff'), d
 }
 
 // Retain the immutable inputs, not every candidate's placed rows. Rebuild only
-// the widths selected by chapter packing, using the same task/font preparation.
+// the widths selected by chapter packing, using the same text metrics and fonts.
 function deferredNumberedScore(document: ScoreDocument,
   settings: ConstructorParameters<typeof PreparedNumberedNotationScore>[1], signal: AbortSignal): PreparedBookScore {
   const prepare = () => {
@@ -52,8 +52,12 @@ function deferredNumberedScore(document: ScoreDocument,
 
 /** Both book formats use the reader's measurement adapters and export primitives. */
 export async function prepareScorebookRenderer(settings: ScorebookDisplaySettings, signal: AbortSignal, auditLayout: boolean) {
+  // Only the current song needs cross-width preparations. Deferred winners
+  // keep immutable inputs and shared text metrics, never a task holding every
+  // measured song's geometry. Final engraving rebuilds the exact selected width.
   const numberedSettings = { fixedDo: settings.notationMode === 'fixed', measureNumbers: settings.measureNumbers,
     textMeasurementCache: new NumberedTextMeasurementCache(), layoutTask: new NumberedLayoutTask() }
+  let numberedDocument: ScoreDocument | undefined
   const staff = settings.notationMode === 'staff' ? await import('@m3n/score-renderer/staff') : undefined
   const staffMeasure = staff ? await import('../../tools/lib/staff-width-measurement.mjs') : undefined
   const tasks = new Map<ScoreDocument, StaffMeasurementTask>()
@@ -77,12 +81,20 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     cacheStats,
     seal(document: ScoreDocument) {
       sealed.add(document)
+      if (numberedDocument === document) {
+        numberedDocument = undefined
+        numberedSettings.layoutTask = new NumberedLayoutTask()
+      }
     },
     async measure(document: ScoreDocument, width: number, best?: WidthMeasurement | null): Promise<{ candidate: WidthMeasurement & { timings: WidthTimings }; prepared: PreparedBookScore }> {
       signal.throwIfAborted()
       if (!staff || !staffMeasure) {
+        if (numberedDocument !== document) {
+          numberedDocument = document
+          numberedSettings.layoutTask = new NumberedLayoutTask()
+        }
         const measured = measureNumberedWidth(document, width, { signal, auditLayout, settings: numberedSettings, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined })
-        return { candidate: measured.candidate, prepared: deferredNumberedScore(document, { ...numberedSettings, width, pageMargin: 0 }, signal) }
+        return { candidate: measured.candidate, prepared: deferredNumberedScore(document, { ...numberedSettings, layoutTask: undefined, width, pageMargin: 0 }, signal) }
       }
       const task = await staffTask(document)
       let render!: StaffRender

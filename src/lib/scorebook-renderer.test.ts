@@ -79,16 +79,27 @@ it('retains the solo winner through supplemental widths and consumes it once', a
 
 it('releases numbered candidate layouts and rebuilds only the selected width', async () => {
   const discarded = { renderPaged() { throw new Error('Candidate must not be retained') } }
-  mocks.numberedMeasure.mockImplementation((_document, width) => ({ candidate: { width, pageCount: 1, timings: {} }, prepared: discarded }))
+  const tasks: unknown[] = []
+  mocks.numberedMeasure.mockImplementation((_document, width, options) => {
+    tasks.push(options.settings.layoutTask)
+    return { candidate: { width, pageCount: 1, timings: {} }, prepared: discarded }
+  })
   const controller = new AbortController()
   const renderer = await prepareScorebookRenderer({ notationMode: 'movable', measureNumbers: true }, controller.signal, false)
   const document = {} as ScoreDocument
   await renderer.measure(document, 528)
   const selected = await renderer.measure(document, 624)
+  expect(tasks[0]).toBe(tasks[1])
+  renderer.seal(document)
+  await renderer.measure({} as ScoreDocument, 528)
+  await renderer.measure(document, 600)
+  expect(tasks[2]).not.toBe(tasks[0])
+  expect(tasks[3]).not.toBe(tasks[2])
+  expect(tasks[3]).not.toBe(tasks[0])
   expect(mocks.numberedPrepare).not.toHaveBeenCalled()
   mocks.numberedPages.mockReturnValue(['<svg />'])
   expect(selected.prepared.renderPaged()).toEqual(['<svg />'])
-  expect(mocks.numberedPrepare).toHaveBeenCalledExactlyOnceWith(document, expect.objectContaining({ width: 624, measureNumbers: true, pageMargin: 0 }))
+  expect(mocks.numberedPrepare).toHaveBeenCalledExactlyOnceWith(document, expect.objectContaining({ width: 624, measureNumbers: true, pageMargin: 0, layoutTask: undefined }))
   expect(selected.prepared.numbered).not.toBe(discarded)
   controller.abort()
   expect(() => selected.prepared.renderPaged()).toThrowError(/abort/i)
