@@ -1,4 +1,4 @@
-import { scoreCoreGap } from './layout/policy.js'
+import { scoreCoreGap, scoreHeaderGap } from './layout/policy.js'
 import type { ScoreDocument } from '@m3n/notation'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
@@ -8,6 +8,11 @@ export const nativeStyle = scoreLayoutConfig.numbered
 
 /** Base vertical clearance in score px; configured in em of the music font. */
 export const nativeCoreGap = (document?: Pick<ScoreDocument, 'coreGapEm'>) => scoreCoreGap(document)
+
+export const nativeHeaderGap = (document?: Pick<ScoreDocument, 'coreGapEm'>) => scoreHeaderGap(nativeCoreGap(document))
+
+/** Shared attachment clearance, also used between music and lyric tiers. */
+export const nativeAttachmentGap = (coreGap = nativeCoreGap()) => coreGap * scoreLayoutConfig.page.attachmentGapRatio
 
 export function nativeDesignPath(d: string): string {
   return d.replace(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g, value => String(n(Number(value))))

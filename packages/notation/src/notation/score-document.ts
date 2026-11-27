@@ -83,7 +83,7 @@ export type ScoreLyricBlock = {
 export type ScoreDocument = {
   /** Equal visible measure widths within each engraved system. */
   equalMeasures?: boolean
-  /** Core vertical spacing in music-font em, set by the leading directive. */
+  /** Dimensionless core-gap multiplier set by leading (default 1); legacy field name. */
   coreGapEm?: number
   /** Written sections are printed once; order determines performance visits. */
   order?: string[]

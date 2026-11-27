@@ -1,6 +1,6 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from './lyric-spacing.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeAttachmentGap, nativeStyle } from './native-style.js'
 import type { NativeLane, NativeSystem } from './native-layout-model.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer, TextMetrics } from './native-measure.js'
@@ -170,7 +170,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
   }
   let bottom = lane.lyricBottom ?? lane.bodyBottom ?? 0
   const baselines: number[] = []
-  for (const [index, tier] of tiers.entries()) {
+  for (const tier of tiers) {
     const boxes = tier.filter(({glyph,row}) => {
       const data = glyph.lyrics.get(row)!
       return data.annotation || data.texts.some(text => text.replaceAll('\u200B','').trim())
@@ -180,7 +180,7 @@ export function placeNativeLyrics(system: NativeSystem, lane: NativeLane, measur
     const fallback = boxes.length ? undefined : measurer.measureText('M',{fontSize:nativeStyle.lyric,fontFamily:SCORE_TEXT_FONT})
     const top = fallback ? -fallback.baseline : Math.min(...boxes.map(b => b.top))
     const lower = fallback ? fallback.h-fallback.baseline : Math.max(...boxes.map(b => b.bottom))
-    const y = bottom + (index ? ((system.coreGap ?? nativeCoreGap()) * .15) : ((system.coreGap ?? nativeCoreGap()) * .2)) - top
+    const y = bottom + nativeAttachmentGap(system.coreGap) - top
     baselines.push(y); bottom = y+lower
   }
   // Empty slots retain their rendition metadata even when the whole system

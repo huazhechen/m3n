@@ -17,7 +17,7 @@ import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarInk, nativeLaneBarPositions } from './native-bars.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeHeaderGap, nativeStyle } from './native-style.js'
 import { isNativeMeasureNumber, placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
 import { placeNativeVoltas } from './native-volta-layout.js'
 import { cacheNativeLyricHeights, releaseNativeLyricHeights, type NativeLyricHeightCache, placeNativeLyrics } from './native-lyrics.js'
@@ -286,7 +286,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   if (preparation) preparation.commonHeader ??= new Map()
   const headerKey=`geometry:${minimumNoteGap}:${nativeCoreGap(document)}`
   let header=preparation?.header.get(headerKey) as ReturnType<typeof nativeHeaderGeometry>|undefined
-  if(!header){header=nativeHeaderGeometry(headerDocument, options.width, margin, measurer, (nativeCoreGap(document) * .8), options, preparation?.header, preparation?.commonHeader);preparation?.header.set(headerKey,header)}
+  if(!header){header=nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeHeaderGap(document), options, preparation?.header, preparation?.commonHeader);preparation?.header.set(headerKey,header)}
   recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
   record('projectionMs')
@@ -542,14 +542,14 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       if(!witnessCache)preparation.feasibilityWitnesses.set(horizontalKey,witnessCache={})
       return scorePageFeasibility(linePlan.candidates,fixedCoreLowerBound,headers,{
         pageHeight:Math.floor(options.width*A4_CONTENT_ASPECT_RATIO),margin,
-        gap:nativeCoreGap(document),headerGap:nativeCoreGap(document)*.8,witnessCache,
+        gap:nativeCoreGap(document),headerGap:nativeHeaderGap(document),witnessCache,
       })(linePlan.candidates,ceiling)
     } : undefined,
     pageFloorFor:options.numericLayout ? (ends,headers)=>{
     let start=0
     const blocks=ends.map(end=>{const block=fixedCoreLowerBound(start,end);start=end;return block})
     return scoreCorePageLowerBound([...headers,...blocks],{pageHeight:Math.floor(options.width*A4_CONTENT_ASPECT_RATIO),margin,
-      gap:nativeCoreGap(document),headerGap:nativeCoreGap(document)*.8})
+      gap:nativeCoreGap(document),headerGap:nativeHeaderGap(document)})
   } : undefined, get endingReference(){return endingBoundsPrepared ? {required:(at:number)=>referenceSections.has(sectionIds[at]!),section:(at:number)=>sectionIds[at]!,gap:gapFor,
     terminal:(_start:number,end:number)=>end===plannedFragments.length || sectionIds[end]!==sectionIds[end-1]} : undefined}, restrictBounds, tightenRowBounds: options.numericLayout ? (cache,rows)=>{
     endingBoundsPrepared=true
@@ -714,7 +714,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   if (onlyRow===undefined && pageLimit !== undefined && rowKeys && rowKeys.every(key => rowCache!.blocks.has(key))) {
     const cachedBlocks = [...headerBlocks, ...rowKeys.map(key => rowCache!.blocks.get(key)!)]
     const pagination = prepareScorePagination(cachedBlocks, { immutableBlocks: true })({ pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO),
-      margin, gap: options.coreGap ?? nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8 })
+      margin, gap: options.coreGap ?? nativeCoreGap(document), headerGap: nativeHeaderGap(document) })
     if (timings) timings.pageBoundCachedPaginationChecks = (timings.pageBoundCachedPaginationChecks ?? 0) + 1
     if (pagination.heights.length > pageLimit) {
       if (timings) timings.pageBoundCachedRejections = (timings.pageBoundCachedRejections ?? 0) + 1
@@ -925,7 +925,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const gap = options.coreGap ?? (nativeCoreGap(document))
   const pageFitStarted = timings ? performance.now() : 0
   const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin, gap, headerGap: nativeCoreGap(document) * .8, maxGap: options.numericLayout ? gap : options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
+    margin, gap, headerGap: nativeHeaderGap(document), maxGap: options.numericLayout ? gap : options.coreGap ?? (options.paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(document)), gap) : gap) })
   // Internal numeric trials need only page membership. The public entry point
   // fits the winner's vertical spacing and publishes coordinates exactly once.
   if(options.numericLayout)layout.pages=pagination.heights.map((height,index)=>({index,width:options.width,height,systems:[]}))

@@ -94,11 +94,11 @@ it('reduces only gaps following visible lyrics, including after repagination', (
     expect(gaps()[1]).toBeCloseTo(28.8);
 });
 
-it.each([0.6, 0.8, 1.2])('keeps a tighter explicit leading of %sem for lyric rows', leading => {
+it.each([0.6, 0.8, 1.2])('keeps a tighter explicit leading multiplier of %s for lyric rows', leading => {
     const document = parseM3NDocument(`{leading=${leading}}{4/4}\nN: 1 2 3 4 | {br} 1 2 3 4 |||\nL: 春风花开山间流水`);
     const layout = layoutNativeScore(document, { width: 600, paged: false, minimumNoteGap: 9 });
     const gap = nativeSystemCore(layout.systems[1]!, layout.measurer)!.top - nativeSystemCore(layout.systems[0]!, layout.measurer)!.bottom;
-    expect(gap).toBeCloseTo(Math.min(leading, .8) * 24);
+    expect(gap).toBeCloseTo(Math.min(leading * 28.8, .8 * 24));
 });
 
 it('fits lyric gaps between 0.8em and the unchanged maximum while preserving collision clearance', () => {

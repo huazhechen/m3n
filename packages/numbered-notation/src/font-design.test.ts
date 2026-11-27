@@ -104,7 +104,9 @@ it('reserves a fixed raster edge guard without changing design glyph metrics', (
 // This score used to leave local hairpin rows unresolved, causing thousands
 // of disjoint-prefix searches at the 600px candidate.
 it('resolves local hairpin geometry before falling back to partition enumeration', () => {
-  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8'))
+  // Keep the original 19.2px regression fixture independent of source leading edits.
+  const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
+  const document = parseM3NDocument(source.replace(/\{leading=[^}]+\}/, `{leading=${2 / 3}}`))
   const timings: Record<string, number> = {}
   const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
   expect(layout.pages.length).toBe(3)

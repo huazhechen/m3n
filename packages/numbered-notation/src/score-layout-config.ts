@@ -3,8 +3,8 @@
  * Presentation scales the whole SVG. Font ink and final coordinates stay fractional.
  * Music-attached geometry is derived from the core font em at its use sites.
  */
-// 共用歌词：字号、横向留白、音乐到歌词的净空、歌词行间净空。
-const lyrics = { fontSize: 16, horizontalPadding: 1, preferredExtraGap: 2, musicGap: 6, rowGap: 4 } as const
+// 共用歌词字号与横向留白；纵向净空直接引用各谱式的附件净空。
+const lyrics = { fontSize: 16, horizontalPadding: 1, preferredExtraGap: 2 } as const
 
 const fontFamilies = {
   latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',
@@ -27,7 +27,8 @@ const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRat
 const typography = { title: 32, subtitle: 16, credit: 14, text: 16, annotation: 14,
   navigation: 16, fine: 16.8, measureNumber: 10, fingering: 12, expression: 13, voltaLabel: 14.4, repeatCount: 13 }
 
-const page = { collisionGapRatio: 0.5 } as const
+// 附件及歌词净空统一为该曲基础核心行距的0.1倍。
+const page = { collisionGapRatio: 0.5, attachmentGapRatio: 0.1 } as const
 
 const numbered = {
   ...typography,
@@ -38,7 +39,7 @@ const numbered = {
   durationDotRadiusEm: .09,
   accidentalScale: 1.15,
   // 核心上下间距，以 music 为1em；外层净空在使用处乘系数。
-  coreGapEm: numberedCoreGapEm, // 谱源 leading 以em覆盖，作用于全部派生上下间距。
+  coreGapEm: numberedCoreGapEm, // 谱源 leading 作为倍率缩放，默认1。
   lyric: lyrics.fontSize,
   grace: 13,
 
@@ -81,26 +82,30 @@ const staff = {
   tempo: typography.annotation, chord: typography.annotation, dynamic: typography.expression,
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
-  music: 24, // 四个6px谱间。
+  music: 26, // 四个6.5px谱间。
+  coreGapSpaces: 4, // 五线谱独立核心行间净空，随谱间缩放。
   // 既有五线谱独立几何以28px（四个7px谱间）为设计基准。
   get musicSizeRatio(): number { return this.music / 28 },
   spacingIncrementSpaces: 1.2,
 
-  headerRowGap: 5, headerSideGap: 14, headerBottomGap: 7,
+  headerRowGap: 5, headerSideGap: 14,
   headerWrapInset: 2, orderTopGap: 12, orderItemGap: 4,
   orderArrowWidth: 14, orderArrowHeight: 10, orderArrowTip: 4, orderArrowAdvance: 20,
   orderFramePadding: 4, frameStroke: 1,
   sectionLabelInset: 21, contentEdgeInset: 4,
-  get attachmentGap(): number { return 6 * this.musicSizeRatio },
+  get attachmentGap(): number { return this.music / 4 * this.coreGapSpaces * page.attachmentGapRatio },
   attachmentWrapInset: 12,
   lyricUnderlineHalfWidth: 0.5,
   measureNumberPadding: 2, measureNumberBarGap: 2, attachmentRowTolerance: 10,
-  attachmentStandaloneGap: 12, attachmentHorizontalGap: 3.5, attachmentFramePadding: 4, repeatMarkGap: 4,
-  headingLeftInset: 0.5, edgeGap: 2, sectionGap: 12, pageInset: 2,
+  get attachmentStandaloneGap(): number { return this.attachmentGap },
+  get attachmentHorizontalGap(): number { return this.attachmentGap },
+  attachmentFramePadding: 4,
+  get repeatMarkGap(): number { return this.attachmentGap },
+  headingLeftInset: 0.5, edgeGap: 2, pageInset: 2,
   minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
   groupSpacingRatio: 1,
-  minimumNoteGap: 0.6,
-  noteGapCandidates: [0.6, 1.8] as readonly number[],
+  minimumNoteGap: 0.8,
+  noteGapCandidates: [0.8, 2.4] as readonly number[],
   // 引擎坐标变换保持不变；音乐附属距离按既有28px设计比例随music变化。
   // 歌词、文字占宽及曲线包络分片精度继续使用独立尺寸。
   engine: {
@@ -115,7 +120,7 @@ const staff = {
     get dynamicBottomGap(): number { return 35 * staff.musicSizeRatio },
     get navigationBarInset(): number { return 15 * staff.musicSizeRatio },
     get navigationY(): number { return -10 * staff.musicSizeRatio },
-    restCountGap: 2,
+    get restCountGap(): number { return staff.attachmentGap },
     get measureNumberOffset(): number { return 10 * staff.musicSizeRatio },
     get endingBarInset(): number { return 3 * staff.musicSizeRatio },
     get endingTextInset(): number { return 4 * staff.musicSizeRatio },

@@ -1,4 +1,4 @@
-import { compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -32,7 +32,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   measurements.assertCompatible(score, settings)
   signal?.throwIfAborted()
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
-  const minimumGap = settings.coreGap ?? scoreCoreGap(score)
+  const minimumGap = settings.coreGap ?? scoreCoreGap(score, 'staff')
+  const headerGap = scoreHeaderGap(scoreCoreGap(score, 'staff'))
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {
@@ -128,9 +129,9 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           hasLyrics: members.some(e => e.hasLyrics) }
         return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: false,
           coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
-          ...(start ? {} : { coreGapBefore: 0 }) }
+          coreGapBefore: graph.measured[start]!.measure.coreGapBefore }
       }, [staffHeaderBlock(header.height)], { pageHeight: a4SourcePageHeight(candidateWidth) - 2 * margin,
-        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, witnessCache })
+        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap, witnessCache })
       if (feasible(graph.candidates, ceiling)) return true
     }
     return false
@@ -203,7 +204,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const evaluate = (ends: number[]) => {
         signal?.throwIfAborted()
         const systems = systemsFor(ends)
-        try { return { ends, pages: paginateStaff(systems, height, header.height, minimumGap, true, minimumGap).length, value: ends } }
+        try { return { ends, pages: paginateStaff(systems, height, header.height, minimumGap, true, minimumGap, headerGap).length, value: ends } }
         catch (error) {
           if (!(error instanceof Error) || !error.message.includes('单个谱行')) throw error
           return { ends, pages: Infinity, value: ends }
@@ -213,7 +214,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const greedy = measureScoreGreedyPageCeiling(graph.candidates, optimum, evaluate)
       const lowerRows = optimum.pages > greedy.pages ? graph.measured.map(({ measure }) => lowerEnvelopeFor(measure)) : undefined
       const plan = lowerRows ? planScoreLinesWithRefinedPages(graph.candidates, greedy, optimum, evaluate,
-        staffPageCostModel(graph, rowCache, lowerRows, Boolean(score.equalMeasures), minimumGap, height, header.height)) : optimum
+        staffPageCostModel(graph, rowCache, lowerRows, Boolean(score.equalMeasures), minimumGap, height, header.height, headerGap)) : optimum
       const lines = linesFor(plan.ends)
       let rowStart = 0
       const finalSystems = lines.map((line, index) => {
@@ -229,7 +230,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     // Reuse the chosen row nodes for output as well as numeric pagination.
     const systems = trial.proxies
     let pages: StaffPage[] = [], paginationError: Error | undefined
-    try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap) }
+    try { pages = paginateStaff(systems, height, header.height, minimumGap, true, minimumGap, headerGap) }
     catch (error) {
       if (!(error instanceof Error) || !error.message.includes('单个谱行')) throw error
       paginationError = new Error('单个五线谱谱行无法放入A4页面。')
@@ -258,9 +259,9 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     if (!Number.isFinite(gap) || gap < 0) throw new Error('五线谱行距无效。')
     if (paged && coreGap === undefined) {
       if (result.paginationError) throw result.paginationError
-      return result.fittedPages ??= paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, true)
+      return result.fittedPages ??= paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, true, scoreMaximumCoreGap(gap), headerGap)
     }
-    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, paged, coreGap === undefined ? scoreMaximumCoreGap(gap) : gap)
+    return paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, gap, paged, coreGap === undefined ? scoreMaximumCoreGap(gap) : gap, headerGap)
   }
   const engrave = (paged: boolean, coreGap = settings.coreGap) => {
     const saved = cache.get(paged)
@@ -373,7 +374,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         quality: { ...result.quality },
         headerHeight: result.header.height,
         pageFit: {
-          minimumHeight: paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, minimumGap, false)[0]!.height,
+          minimumHeight: paginateStaff(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin, result.header.height, minimumGap, false, minimumGap, headerGap)[0]!.height,
           capacity: a4SourcePageHeight(candidateWidth) - 2 * margin - scoreLayoutConfig.staff.pageInset,
           pageRows: result.pages.map(page => page.systems.length),
         },

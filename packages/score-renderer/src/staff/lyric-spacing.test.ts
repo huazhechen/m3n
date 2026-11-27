@@ -2,6 +2,7 @@
 import { expect, it } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
 import { lyricSpacing } from '@m3n/numbered-notation'
+import { scoreAttachmentGap } from '@m3n/numbered-notation/layout'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasure, drawStaffMeasure, STAFF_SCALE } from './staff-engine.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
@@ -30,7 +31,7 @@ it.each([0.25, 0.28125, 0.3125, 0.34375, 0.375])('reserves 1px per lyric edge wi
   }
 })
 
-it('uses the numbered lyric font size and 6px/4px vertical gaps', () => {
+it('uses the shared lyric font and staff attachment clearance for both vertical gaps', () => {
   const document = projectStaffDocument(analyzeM3N(source).score)
   const lines = planStaffLines(document, 720, false, measureText, 0.25)
   const system = engraveStaffSystems(document, lines, 720, measureText, 0.25, false)[0]!
@@ -43,8 +44,8 @@ it('uses the numbered lyric font size and 6px/4px vertical gaps', () => {
   const music = findAll(system.node, node => hasClass(node, 'staff')).flatMap(staff => geometry.withoutClasses(staff, ['verse']))
   const lyricPieces = first.flatMap(verse => geometry.pieces(verse))
   const clearances = lyricPieces.flatMap(lyric => music.filter(piece => overlapsX(piece, lyric)).map(piece => (lyric.top - piece.bottom) * STAFF_SCALE))
-  expect(Math.min(...clearances)).toBeCloseTo(lyricSpacing.musicGap)
-  expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(lyricSpacing.rowGap)
+  expect(Math.min(...clearances)).toBeCloseTo(scoreAttachmentGap(undefined, 'staff'))
+  expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(scoreAttachmentGap(undefined, 'staff'))
 })
 
 it('includes lyric underline stroke caps in the 2px minimum clearance', () => {

@@ -140,5 +140,5 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
     }
     y = rowTop + rowHeight
   }
-  return { height: children.length ? y + style.headerBottomGap : 0, node: element('g', { 'data-m3n-role': 'header' }, children) }
+  return { height: children.length ? Math.max(labels.length ? y : 0, ...bounds.map(ink => ink.bottom)) : 0, node: element('g', { 'data-m3n-role': 'header' }, children) }
 }

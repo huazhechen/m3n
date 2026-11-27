@@ -21,12 +21,12 @@ async function prepare(source: string, width = 720) {
   return prepareStaffScore(analysis.score, { width })
 }
 describe('staff layout contract', () => {
-  it('keeps the opening system within 12px of the title ink', () => {
+  it('keeps header bounds at title ink while pagination owns the row clearance', () => {
     const score = analyzeM3N('{title=标题}{4/4}{120qpm}\nN: 1 2 3 4 |||').score
     const measure = textMeasurer()
     const header = staffHeader(score, 720, measure)
     const title = findAll(header.node, node => node.tagName === 'text')[0]!
-    expect(header.height - new SvgGeometry(header.node, measure).ink(title).bottom).toBeCloseTo(12)
+    expect(header.height - new SvgGeometry(header.node, measure).ink(title).bottom).toBeCloseTo(0)
   })
 
   it('packs tempo next to local music and raises it for high notes', () => {
@@ -115,7 +115,7 @@ describe('staff layout contract', () => {
     const geometry = new SvgGeometry(node, textMeasurer())
     const system = arrangeStaffSystem(node, geometry, 224, new Set())
     expect(geometry.ink(tempo).bottom + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE).toBeLessThanOrEqual(geometry.ink(octave).top + 1e-6)
-    expect(geometry.ink(octave).top).toBeCloseTo(-60.5)
+    expect(geometry.ink(octave).bottom + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE).toBeCloseTo(geometry.ink(staff).top)
     expect(system.ink.top).toBeLessThan(geometry.ink(octave).top * STAFF_SCALE)
   })
 
@@ -153,7 +153,8 @@ describe('staff layout contract', () => {
     expect(lyrics.core).toEqual(plain.core)
     expect(plain.core.bottom - plain.core.top).toBeCloseTo(41 * STAFF_SCALE)
     const base = systemDistance(plain, plain, 26.4)
-    expect(systemDistance(lyrics, plain, 26.4)).toBeGreaterThan(base)
+    const lyricBase = systemDistance({ ...plain, hasLyrics: true }, plain, 26.4)
+    expect(systemDistance(lyrics, plain, 26.4)).toBeGreaterThan(lyricBase)
     expect(systemDistance({ ...outside, hasLyrics: false }, plain, 26.4)).toBeCloseTo(base)
   })
   it('does not lower lyrics for nonoverlapping clef tails or isolated low notes', () => {
@@ -397,8 +398,8 @@ describe('staff layout contract', () => {
     expect(info.headerHeight).toBeGreaterThan(32)
     expect(info.spacing).toBeGreaterThanOrEqual(0.25)
     for (const page of info.pages) {
-      expect(page.gap).toBeGreaterThanOrEqual(19.2)
-      expect(page.gap).toBeLessThanOrEqual(21.12 + 1e-9)
+      expect(page.gap).toBeGreaterThanOrEqual(20.8)
+      expect(page.gap).toBeLessThanOrEqual(22.88 + 1e-9)
       for (const system of page.systems) {
         expect(system.ink.top + system.y).toBeGreaterThanOrEqual(-1e-6)
         expect(system.ink.bottom + system.y).toBeLessThanOrEqual(page.height + 1e-6)
@@ -420,7 +421,7 @@ describe('staff layout contract', () => {
   })
   it('keeps continuous engraving available when the header and first system exceed A4', async () => {
     const render = await prepare(`{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`, 320)
-    expect([.6, 1.8]).toContain(render.layoutInfo().spacing)
+    expect(scoreLayoutConfig.staff.noteGapCandidates).toContain(render.layoutInfo().spacing)
     expect(render.pageCount(false)).toBe(1)
     expect(() => render.pageCount(true)).toThrow('单个五线谱谱行')
     expect(() => render(true)).toThrow('单个五线谱谱行')
@@ -552,7 +553,7 @@ it('fits a volta around high central music using its strokes instead of its empt
   arrangeStaffSystem(node, geometry, 320, new Set())
   const strokes = geometry.pieces(ending)
   const horizontal = strokes.find(piece => piece.right - piece.left > 100)!
-  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.staff.music * .07)
+  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
   expect(Math.max(...strokes.map(piece => piece.bottom))).toBeGreaterThan(geometry.ink(highNote).top)
 })
 

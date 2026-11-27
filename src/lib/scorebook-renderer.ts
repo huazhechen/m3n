@@ -114,7 +114,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
-      const minimum = Math.max(...scores.map(score => scoreCoreGap(score.staff!.document)))
+      const minimum = Math.max(...scores.map(score => scoreCoreGap(score.staff!.document, 'staff')))
       const capacity = a4SourcePageHeight(width)
       // Row engraving does not depend on the shared page's vertical gap.
       // Keep only this group's prepared rows while fitting scalar pagination.

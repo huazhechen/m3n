@@ -69,7 +69,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
   preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly) {
-  const scale = STAFF_SCALE, rawWidth = width / scale
+  const scale = STAFF_SCALE, rawWidth = width / scale, attachmentGap = preparation.attachmentGap
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
     return element('g', { class: cls, ...(lane === undefined ? {} : { 'data-m3n-staff': lane }) }, [
@@ -190,7 +190,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
               || entryIndex > 0 && event.tempo !== undefined && event.tempo !== entries[entryIndex - 1]!.item.event.tempo)
             if (event.text) measureNode.children.push(wrap(event.text, cx, top, 'dir'))
             if (event.expression && !combinedTempo) measureNode.children.push(wrap(event.expression, cx, top, 'dir'))
-            if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, style.attachmentGap / scale, top, 'reh', true))
+            if (event.sectionLabel) measureNode.children.push(wrap(event.sectionLabel, attachmentGap / scale, top, 'reh', true))
             if (event.dynamic || event.prefix) {
               const value = event.dynamic ?? event.prefix!
               const shape = scoreDynamicGlyph(value)
@@ -215,7 +215,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if (member.measure.source.multiRest || member.measure.source.interlude) {
           const cx = x + model.start + (target - model.endInset - model.start) / 2, cy = (model.staves[0]!.y + (staffMusicSize() * 1.5))
           const count = member.measure.source.interlude ? '' : String(member.measure.source.multiRest)
-          const countY = model.staves[0]!.y + staffMusicSize() - (staffMusicSize() / 4 * 0.1) / 2 - engine.restCountGap / scale - measureText(count, style.restCount / scale, true).descent
+          const countY = model.staves[0]!.y + staffMusicSize() - (staffMusicSize() / 4 * 0.1) / 2 - attachmentGap / scale - measureText(count, style.restCount / scale, true).descent
           measureNode.children.push(element('g', { class: 'rest multi-rest' + (member.measure.source.interlude ? ' interlude' : ''), ...(member.measure.source.interlude ? { 'data-m3n-role': 'interlude' } : {}) }, [element('path', { d: `M${cx - (staffMusicSize() / 4 * 2)} ${cy} h${(staffMusicSize() / 4 * 2) * 2} M${cx - (staffMusicSize() / 4 * 2)} ${cy - (staffMusicSize() / 4 * 0.8)} v${(staffMusicSize() / 4 * 0.8) * 2} M${cx + (staffMusicSize() / 4 * 2)} ${cy - (staffMusicSize() / 4 * 0.8)} v${(staffMusicSize() / 4 * 0.8) * 2}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.3)), fill: 'none' }), ...(count ? nodes(text(count, cx, countY, style.restCount, 'rest', { 'text-anchor': 'middle', 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) })) : [])]))
         }
         // Connect staves without repainting the bar inside each staff.
@@ -300,7 +300,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         a.interval.kind === 'lg' && b.interval.kind === 'lg' ? span(a) - span(b)
           : Number(b.interval.kind === 'lg') - Number(a.interval.kind === 'lg'))
       const tupletsPlaced = orderedIntervals.some(({ interval }) => interval.kind === 'lg')
-      if (tupletsPlaced) placeStaffTuplets(node, tieGeometry)
+      if (tupletsPlaced) placeStaffTuplets(node, tieGeometry, undefined, attachmentGap)
       for (const { interval, start, end } of orderedIntervals) {
         const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
         if (lineIndex < from || lineIndex > to) continue
@@ -315,7 +315,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
-          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left))
+          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left), attachmentGap)
           slur.attributes['data-m3n-staff'] = String(lane)
           node.children.push(slur)
           music.push(...tieGeometry.pieces(slur))
@@ -340,7 +340,8 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + style.sectionLabelInset > width / 2)
       }).map(m => m.id))
       const geometry = tieGeometry
-      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced)
+      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced, attachmentGap)
+      system.coreGapBefore = models[0]?.measure.coreGapBefore
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system
     }

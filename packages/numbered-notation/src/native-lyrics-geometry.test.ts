@@ -45,11 +45,11 @@ describe('native lyric and music lower envelopes', () => {
     const bodyBottom = numeral.inkBottom! - numeral.baseline
     expect(first.bodyBottom).toBeCloseTo(7.8)
     expect(first.lyricBottom).toBeCloseTo(bodyBottom)
-    expect(first.bottom).toBeCloseTo(bodyBottom + 5.76 + lyricMetrics.inkBottom!)
+    expect(first.bottom).toBeCloseTo(bodyBottom + 2.88 + lyricMetrics.inkBottom!)
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
-    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 5.76 + lyricMetrics.baseline, 4)
+    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 2.88 + lyricMetrics.baseline, 4)
     const firstCore = nativeSystemCore(score.systems[0]!, score.measurer)!
     const secondCore = nativeSystemCore(score.systems[1]!, score.measurer)!
     expect(firstCore.bottom).toBeCloseTo(first.y + first.bottom)

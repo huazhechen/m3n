@@ -2,7 +2,7 @@ import { SCORE_NUMBER_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT, SCORE_TITLE_FONT
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeCoreGap, nativeHeaderGap, nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
@@ -20,7 +20,7 @@ export { wrapNativeText }
 export type NativeHeaderPreparation = Map<string, unknown>
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = (nativeCoreGap(document) * .8), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation, commonPreparation?: NativeHeaderPreparation) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeHeaderGap(document), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation, commonPreparation?: NativeHeaderPreparation) {
   const once = <T>(key: string, create: () => T): T => {
     if (!preparation) return create()
     if (preparation.has(key)) return preparation.get(key) as T

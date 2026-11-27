@@ -459,7 +459,7 @@ it('reserves an independent flag at its actual downward stem position', () => {
   const head = staffGlyphMetrics(note.prepared.head, note.prepared.size)
   expect(note.prepared.after).toBeCloseTo(Math.max(head.right - head.left, note.stemX - note.x + flag.right), 8)
   expect(note.prepared.after).toBeLessThan(head.right - head.left + staffGlyphMetrics('flag8Up', note.prepared.size).right)
-  expect(note.x + note.prepared.after).toBeGreaterThanOrEqual(note.stemX + flag.right)
+  expect(note.x + note.prepared.after).toBeGreaterThanOrEqual(note.stemX + flag.right - 1e-9)
 })
 
 it.each([.6, 1.8])('opens the long side of staff syncopation at spacing %s', async spacing => {

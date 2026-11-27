@@ -45,7 +45,7 @@ it('scopes leading to each score and scales lyric tiers without changing global 
   const options = { width: 800, paged: false, minimumNoteGap: 9 }
   const normal = layoutNativeScore(normalDocument, options)
   const compact = layoutNativeScore(compactDocument, options)
-  for (const [score, gap] of [[normal, 28.8], [compact, 19.2]] as const) {
+  for (const [score, gap] of [[normal, 28.8], [compact, 23.04]] as const) {
     expect(score.pages[0]!.coreGap).toBeCloseTo(gap)
     expect(score.systems[0]!.coreGap).toBeCloseTo(gap)
     const header = nativeHeaderGeometry(score.document, 800, 32, score.measurer)
@@ -57,7 +57,7 @@ it('scopes leading to each score and scales lyric tiers without changing global 
       return { top: Math.min(...pieces.map(piece => piece.top)), bottom: Math.max(...pieces.map(piece => piece.bottom)) }
     })
     expect(rows).toHaveLength(2)
-    expect(rows[1]!.top - rows[0]!.bottom).toBeCloseTo(gap * .15)
+    expect(rows[1]!.top - rows[0]!.bottom).toBeCloseTo(gap * .1)
   }
   expect(compact.projection.glyphs.map(note => note.x)).toEqual(normal.projection.glyphs.map(note => note.x))
   expect(nativeStyle.coreGapEm).toBe(1.2)
