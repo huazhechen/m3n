@@ -9,12 +9,22 @@ import { SCORE_LATIN_FONT, SCORE_TEXT_FONT, SCORE_MUSIC_FONT, SCORE_CJK_FONT } f
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { fontDesignGlyphPath, fontDesignPathInk } from './font-design-path.js'
+import { measureNativeControl } from './native-controls.js'
+import { NativeNumberedNotationScore } from './native-score.js'
 
 const root = new URL('../../../tools/fonts/library/', import.meta.url)
 const resources = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8')).fonts.map((font: { file: string; characters: string }) => ({
   ...font, url: '', data: new Uint8Array(readFileSync(new URL(font.file, root))),
 }))
 beforeAll(() => prepareFontDesigns(resources))
+
+it('measures Segno from the painted SMuFL glyph and renders Flower Dance with the real fonts', () => {
+  const measurer = fontDesignMeasurer()!
+  expect(measureNativeControl('segno', '𝄋', measurer).width).toBeGreaterThan(0)
+  const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8')
+  const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 720, paged: true, textMeasurer: measurer })
+  expect(pages.length).toBeGreaterThan(0)
+})
 
 it('preserves TrueType contours starting off-curve without inserting an extra segment', () => {
   const font = fontkit.create(resources.find((font: { file: string }) => font.file === 'Bravura.ttf').data)

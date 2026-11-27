@@ -16,16 +16,19 @@ const summarize = ({ candidate, prepared }) => {
 /** Enumerate every automatic-search grid point without pruning or page caps.
  * Keep the production search separate, so missed alternatives remain visible. */
 export async function review(source) {
+  const started = performance.now()
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid source')
   const score = analysis.score
   await prepareNumberedNotationFonts(score)
   const settings = () => ({ layoutTask: new NumberedLayoutTask(), textMeasurementCache: new NumberedTextMeasurementCache() })
   const productionSettings = settings()
+  const productionStarted = performance.now()
   const production = await selectBestWidth((width, best) => measureNumberedWidth(score, width, {
     settings: productionSettings, maximumPageCount: best?.pageCount,
     minimumQuality: best ? numberedLayoutScore(best) : undefined,
   }).candidate, { prune: true, localRefine: true })
+  const productionMs = performance.now() - productionStarted
   const candidates = []
   for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4) {
     candidates.push(summarize(measureNumberedWidth(score, width, { settings: settings() })))
@@ -44,5 +47,6 @@ export async function review(source) {
     audits.push(summarize(measureNumberedWidth(score, width, { settings: settings(), auditLayout: true })))
     if (typeof globalThis.gc === 'function') globalThis.gc()
   }
-  return { selected, production: production.best, globalBest, minimum, bestLarger, sameBreakMinimum: sameBreak[0], comfortableMinimum: comfortable[0], candidates, audits }
+  return { selected, production: production.best, productionMs, totalMs: performance.now() - started,
+    globalBest, minimum, bestLarger, sameBreakMinimum: sameBreak[0], comfortableMinimum: comfortable[0], candidates, audits }
 }

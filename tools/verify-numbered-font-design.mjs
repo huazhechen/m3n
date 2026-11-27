@@ -14,14 +14,14 @@ writeFileSync(join(output, 'entry.ts'), `export * from ${JSON.stringify(resolve(
 execFileSync(process.execPath, ['tools/build-numbered-audit-bundle.mjs', output], { stdio: 'inherit' })
 const fonts = JSON.parse(readFileSync('tools/fonts/library/manifest.json', 'utf8')).fonts
 for (const font of fonts) assert.equal(createHash('sha256').update(readFileSync(join('tools/fonts/library', font.file))).digest('hex'), font.sha256)
-const fixtures = ['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01', 'ai_de_li_zan_01']
+const fixtures = argument('score') ? [argument('score')] : ['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01', 'ai_de_li_zan_01']
 const report = { complete: false, fontHashes: fonts.map(({ file, sha256 }) => ({ file, sha256 })), entries: [] }
 const save = () => writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n')
-for (const engine of ['chromium', 'webkit']) {
+for (const engine of argument('engine') ? [argument('engine')] : ['chromium', 'webkit']) {
   const browser = await (engine === 'chromium' ? chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true,
     args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--max-old-space-size=256'] })
     : webkit.launch({ headless: true, executablePath: argument('webkit-executable') }))
-  try { for (const form of ['desktop', 'tablet']) {
+  try { for (const form of argument('form') ? [argument('form')] : ['desktop', 'tablet']) {
     const context = await browser.newContext(form === 'tablet' ? { ...devices['iPad Mini'] } : {})
     try {
       const page = await context.newPage()

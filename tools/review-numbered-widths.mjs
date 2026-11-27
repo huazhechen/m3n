@@ -46,9 +46,15 @@ for (const file of inputs) {
     // Record the real reader before releasing its DOM and compiled engine.
     // The standalone example has no reader route, so use the library entry.
     const route = file.startsWith('examples/') ? 'scores/ban_yin_jie_kou_qin_ji_ben_gong_01' : file.slice(0, -4)
+    const webStarted = performance.now()
     await page.goto(new URL(route, base).href)
-    await page.locator('[data-selected-width]').waitFor({ timeout: 120000 })
+    try {
+      await page.waitForFunction(() => document.querySelector('[data-selected-width]')
+        || document.querySelector('.render-message')?.textContent, undefined, { timeout: 120000 })
+      assert(await page.locator('[data-selected-width]').count(), `${file}: ${await page.locator('.render-message').allTextContents()}`)
+    } catch (error) { throw new Error(`${file}: ${error.message}; ${errors.join('; ')}`) }
     const webWidth = Number(await page.locator('[data-selected-width]').first().getAttribute('data-selected-width'))
+    const webMs = performance.now() - webStarted
     assert.equal(await page.locator('.score-paper svg').first().getAttribute('data-m3n-metrics'), 'font-design')
     if (file.includes('ban_yin_jie_kou_qin_ji_ben_gong_01')) {
       const geometry = () => page.locator('.score-paper').evaluate(paper => ({
@@ -95,7 +101,7 @@ for (const file of inputs) {
     }
     assert.equal(errors.length, 0, errors.join('\n'))
     report.entries.push({ file, title: source.match(/\{title=([^}]+)\}/)?.[1] ?? file, sourceHash,
-      webWidth: file.startsWith('examples/') ? null : webWidth, webFonts, validationIssues, ...result })
+      webWidth: file.startsWith('examples/') ? null : webWidth, webMs, webFonts, validationIssues, ...result })
     save()
     console.log(`${report.entries.length}/${inputs.length} ${file}: selected ${result.selected.width}, minimum same-page ${result.minimum.width}, complete winner ${result.globalBest.width}`)
   } finally { await browser.close() }
