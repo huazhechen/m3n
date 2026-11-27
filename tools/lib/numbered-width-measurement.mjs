@@ -5,8 +5,10 @@ import { inspectScorePages } from './score-geometry.mjs'
 
 /** One candidate measurement for reader, online PDF and local PDF. Fonts are
  * prepared once by the caller. Production reads layout metadata only; opt-in
- * audits mount SVG without changing the layout or its avoidance constraints. */
-export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, minimumQuality, maximumPageCount } = {}) {
+ * audits mount SVG without changing the layout or its avoidance constraints.
+ * Summary timings stay enabled; hot-path engine counters are opt-in, or on
+ * by default for audits. They do not participate in layout decisions. */
+export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, detailedTimings = auditLayout, minimumQuality, maximumPageCount } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
   let prepared
@@ -14,9 +16,10 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
     const options = { ...settings, width, pageMargin: settings.pageMargin ?? 0 }
     const qualityBound = auditLayout || settings.numericLayout === false && maximumPageCount > 1 ? undefined : minimumQuality
     const pageBound = auditLayout ? undefined : maximumPageCount
+    const layoutTimings = detailedTimings ? timings : undefined
     prepared = auditLayout
-      ? new PreparedNumberedNotationScore(documentScore, options, timings, qualityBound, pageBound)
-      : PreparedNumberedNotationScore.measure(documentScore, options, timings, qualityBound, pageBound)
+      ? new PreparedNumberedNotationScore(documentScore, options, layoutTimings, qualityBound, pageBound)
+      : PreparedNumberedNotationScore.measure(documentScore, options, layoutTimings, qualityBound, pageBound)
   }
   catch (error) {
     if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') {

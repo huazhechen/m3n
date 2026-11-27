@@ -21,8 +21,8 @@ it('production selection runs the layout while skipping SVG generation, DOM moun
   mocks.height.mockReturnValue(666)
   const score = {} as ScoreDocument
   const { candidate } = measureNumberedWidth(score, 560)
-  expect(mocks.measure).toHaveBeenCalledExactlyOnceWith(score, { width: 560, pageMargin: 0 }, expect.any(Object), undefined, undefined)
-  expect(mocks.layout).toHaveBeenCalledExactlyOnceWith(score, { width: 560, pageMargin: 0 }, expect.any(Object), undefined, undefined)
+  expect(mocks.measure).toHaveBeenCalledExactlyOnceWith(score, { width: 560, pageMargin: 0 }, undefined, undefined, undefined)
+  expect(mocks.layout).toHaveBeenCalledExactlyOnceWith(score, { width: 560, pageMargin: 0 }, undefined, undefined, undefined)
   expect(candidate).toMatchObject({ width: 560, pageCount: 1, rows: 12, naturalHeight: 666 })
   expect(candidate.qualityScore).toBeCloseTo((528 / 560) ** 2 / 1.2)
   expect(mocks.render).not.toHaveBeenCalled()
@@ -30,4 +30,14 @@ it('production selection runs the layout while skipping SVG generation, DOM moun
   expect(candidate.timings).not.toHaveProperty('svgRenderMs')
   expect(candidate.timings).not.toHaveProperty('inkBoundsMs')
   expect(candidate.timings).not.toHaveProperty('collisionsMs')
+})
+
+it('collects detailed engine counters only when explicitly requested',()=>{
+  vi.clearAllMocks()
+  mocks.measure.mockImplementationOnce((_score,_options,timings)=>{timings.textMeasureCalls=3})
+  const score={} as ScoreDocument
+  const {candidate}=measureNumberedWidth(score,560,{detailedTimings:true})
+  expect(mocks.measure).toHaveBeenCalledExactlyOnceWith(score,{width:560,pageMargin:0},expect.any(Object),undefined,undefined)
+  expect(candidate.timings.textMeasureCalls).toBe(3)
+  expect(candidate.timings.totalMs).toBeGreaterThanOrEqual(0)
 })

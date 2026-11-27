@@ -23,6 +23,7 @@ vi.mock('@m3n/numbered-notation', () => ({
   numberedLayoutQuality: mocks.quality,
   prepareNumberedNotationFonts: mocks.prepare,
   PreparedNumberedNotationScore: class {
+    static measure(document: { title: string }, options: { width: number }) { return new this(document, options) }
     pageCount = 1
     systemCount = 1
     title: string
@@ -137,7 +138,7 @@ describe('online scorebook with per-run layout reuse', () => {
   it('measures the full shared grid independently from each solo winner', async () => {
     layouts()
     mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1,
-      lineDensityVariation: width === 720 || width === 606 ? 0 : width === 600 ? 1 : 3, lastLineSlack: 0 }))
+      lineDensityVariation: width === 720 ? 0 : width === 606 ? .5 : width === 600 ? 1 : 3, lastLineSlack: 0 }))
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.shared).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ title: 'first', width: 606 }), expect.objectContaining({ title: 'second', width: 606 }),

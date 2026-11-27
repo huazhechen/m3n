@@ -54,11 +54,13 @@ if (checkpoint) {
   assert.equal(Boolean(checkpoint.experimentalTierReuse), process.argv.includes('--cross-tier'), 'Cannot resume with different tier reuse')
   assert.equal(Boolean(checkpoint.experimentalGreedyCeiling), experimentalGreedyCeiling, 'Cannot resume with different ceiling solving')
   assert.equal(checkpoint.warmupIterations ?? 0, warmupIterations, 'Cannot resume with a different warmup count')
+  assert.equal(Boolean(checkpoint.detailedTimings), auditLayout || process.argv.includes('--detailed-timings'), 'Cannot resume with different timing collection')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
 const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, numericLayout, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
 report.bundleFlags = bundleFlags
+report.detailedTimings = auditLayout || process.argv.includes('--detailed-timings')
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalRowReuse) report.experimentalRowReuse = true
 if (process.argv.includes('--cross-tier')) report.experimentalTierReuse = true
@@ -100,6 +102,7 @@ try {
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))
   await page.evaluate(size => { globalThis.__m3nExperimentalInkBin = size }, experimentalInkBin)
   await page.evaluate(enabled => { globalThis.__m3nExperimentalTierReuse = enabled }, process.argv.includes('--cross-tier'))
+  await page.evaluate(enabled => { globalThis.__m3nDetailedLayoutTimings = enabled }, process.argv.includes('--detailed-timings'))
   for (const file of scores) {
     const source = readFileSync(join(sourceRoot, file), 'utf8')
     const sourceHash = createHash('sha256').update(source).digest('hex')

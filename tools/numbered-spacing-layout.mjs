@@ -22,6 +22,7 @@ export async function search(source, auditLayout = false, prune = false, pageCon
   await prepareNumberedNotationFonts(score)
   const settings = { numericLayout, pageConstrainedBreaks, layoutTask: new NumberedLayoutTask(), textMeasurementCache }
   const searchStarted = performance.now()
+  const detailedTimings = auditLayout || Boolean(globalThis.__m3nDetailedLayoutTimings)
   const timings = {}
   const accumulate = partial => {
     for (const [key, value] of Object.entries(partial ?? {}))
@@ -30,7 +31,7 @@ export async function search(source, auditLayout = false, prune = false, pageCon
   const result = await selectBestWidth((width, best) => {
     if (globalThis.__m3nTraceWidths) console.log('width-start ' + width)
     try {
-      const measured = measureNumberedWidth(score, width, { settings,
+      const measured = measureNumberedWidth(score, width, { settings, detailedTimings,
         maximumPageCount: prune && !auditLayout ? best?.pageCount : undefined,
         minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined })
       accumulate(measured.candidate.timings)
@@ -44,7 +45,7 @@ export async function search(source, auditLayout = false, prune = false, pageCon
     globalThis.__m3nExperimentalRowReuse = false
     globalThis.__m3nExperimentalGreedyCeiling = false
     try {
-      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureNumberedWidth(score,width,{settings}).candidate,{verifyWidestWhenMultipage:true})
+      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureNumberedWidth(score,width,{settings,detailedTimings}).candidate,{verifyWidestWhenMultipage:true})
       exactWinner = verified.best
       result.verifiedCandidates = verified.verifiedCandidates
       result.verificationFailures = verified.failures
@@ -55,8 +56,8 @@ export async function search(source, auditLayout = false, prune = false, pageCon
   }
   const searchMs = performance.now() - searchStarted
   const best = exactWinner ?? (auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best)
-  return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks ? '-page-bound' : '') + (numericLayout ? '-numeric' : '') }, textMeasureCalls: timings.textMeasureCalls ?? 0,
-    textMeasureCacheHits: timings.textMeasureCacheHits ?? 0,
+  return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks ? '-page-bound' : '') + (numericLayout ? '-numeric' : '') }, textMeasureCalls: detailedTimings ? timings.textMeasureCalls ?? 0 : undefined,
+    textMeasureCacheHits: detailedTimings ? timings.textMeasureCacheHits ?? 0 : undefined,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
     meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingMeanUnevenCost: best.spacingMeanUnevenCost, spacingWorstUnevenCost: best.spacingWorstUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingExpandedCost: best.spacingExpandedCost, spacingCost: best.spacingCost,
     layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
