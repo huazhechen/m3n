@@ -5,7 +5,7 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 // jsdom has no SVG character-position API; compare engraving before browser
 // text resolution here. Full PDF parity covers real browser text placement.
 vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
-import { scorePhysicalSpacing } from '@m3n/numbered-notation/layout'
+import { scorePhysicalSpacing, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
@@ -66,7 +66,8 @@ describe('staff page packing', () => {
     expect(info.pageCount).toBe(1)
     for (const spacing of [.6, 1.8]) {
       const lines = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
-      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), 12.6, 4.2,
+      const space = scoreLayoutConfig.staff.music / 4
+      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), space * 1.8, space * .6,
         lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
       expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
     }
