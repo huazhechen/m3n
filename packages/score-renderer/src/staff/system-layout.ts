@@ -103,22 +103,10 @@ export function arrangeStaffSystem(
   }
   index(node)
   const byClass = (name: string) => classes.get(name) ?? []
-  // With neither text nor movable attachments, arranging cannot change ink.
-  // In measurement mode avoid compiling a tree solely to traverse it once.
-  if (deferPieces && !needsArrangement) {
-    const scale = STAFF_SCALE
-    const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
-      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
-    const bounds = geometry.ink(node)
-    const result: StaffSystem = { node, core, ink: { left: bounds.left * scale, right: bounds.right * scale,
-      top: bounds.top * scale, bottom: bounds.bottom * scale }, pieces: [], spacingPieces: [], edgePieces: [],
-      section: false, staffSpacing: 0, hasLyrics: false }
-    result.materializeInk = () => {
-      const complete = arrangeStaffSystem(node, geometry, width, sectionHeadings)
-      Object.assign(result, complete, { materializeInk: undefined })
-    }
-    return result
-  }
+  // With no movable attachments or lyrics, every arrangement pass is a
+  // no-op. Collect the final exact partition directly, including when the
+  // paginator consumes it immediately; do not compile a one-use music tree.
+  if (!needsArrangement) return finishStaffSystem(node, geometry, byClass, 0, deferPieces)
   geometry.compileStatic(node, n => isDecoration(n) || hasClass(n, 'verse'), [...decorations, 'verse'])
   const scale = STAFF_SCALE,
     gap = style.attachmentGap / scale
@@ -422,13 +410,18 @@ export function arrangeStaffSystem(
     detach(node)
     node.children = [element('g', { transform: `translate(${inset} 0)` }, node.children), label]
   }
+  return finishStaffSystem(node, geometry, byClass, staffSpacing, deferPieces)
+}
+function finishStaffSystem(node: XmlNode, geometry: SvgGeometry, byClass: (name: string) => XmlNode[],
+  staffSpacing: number, deferPieces: boolean): StaffSystem {
+  const scale = STAFF_SCALE
   // The stave itself is the stable core. Notes, lyrics and controls only
   // enlarge a particular row gap when their actual ink requires clearance.
   const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
     .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   const result: StaffSystem = { node, pieces: [], spacingPieces: [], edgePieces: [],
     ink: { left: 0, right: 0, top: 0, bottom: 0 }, core,
-    section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
+    section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: byClass('verse').some(verse => verse.children.length > 0) }
   const materialize = () => {
     const partition = geometry.partitionWithoutClasses(node, ['mNum', 'staff-clef'])
     // The shared paginator already sees ordinary music ink. Only symbols
