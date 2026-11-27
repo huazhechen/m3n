@@ -38,7 +38,7 @@ import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type Nativ
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { placedNativeControlInk } from './native-controls.js'
-import { nativeSystemCore } from './native-core.js'
+import { nativeCoreInkBox, nativeSystemCore } from './native-core.js'
 import { scoreCorePageLowerBound, scorePageFeasibility } from './layout/height-feasibility.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 
@@ -476,8 +476,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const extents=plannedFragments.map(measure=>{
       let top=-Infinity,bottom=Infinity
       for(const column of measure.columns)for(const glyph of column.glyphs) {
-        top=Math.max(top,Math.min(0,...(glyph.coreInk ?? []).map(piece=>piece.top)))
-        bottom=Math.min(bottom,Math.max(0,...(glyph.coreInk ?? []).map(piece=>piece.bottom)))
+        const box=glyph.coreInk ? nativeCoreInkBox(glyph.coreInk) : undefined
+        top=Math.max(top,Math.min(0,box?.top ?? 0))
+        bottom=Math.min(bottom,Math.max(0,box?.bottom ?? 0))
       }
       return {top:Number.isFinite(top) ? top : 0,bottom:Number.isFinite(bottom) ? bottom : 0}
     })

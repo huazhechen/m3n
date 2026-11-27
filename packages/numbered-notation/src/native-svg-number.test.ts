@@ -18,5 +18,12 @@ it('preserves decimal quantization, including adjacent floats, ties and signed z
       values.push(value, adjacent(value, -1n), adjacent(value, 1n))
     }
   }
+  // Unquantized coordinates across the exponent range exercise the arithmetic
+  // fast path; half-unit cases above continue testing the exact fallback.
+  for (let i = 0; i < 20_000; i++) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+    const value = (seed / 2 ** 32 - .5) * 10 ** (i % 620 - 310)
+    values.push(value, adjacent(value, -1n), adjacent(value, 1n))
+  }
   for (const value of values) expect(nativeSvgNumber(value)).toBe(original(value))
 })

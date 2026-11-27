@@ -6,7 +6,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v43`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v44`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -38,8 +38,8 @@ export function chooseBestWidth(candidates) {
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
-/** Search the full additive-cost grid, or the explicitly requested local mode. */
-export async function probeWidthCandidates(measure, { verify, signal, prune = false, localRefine = false } = {}) {
+/** Search the complete 6px grid, skipping only certified losers. */
+export async function probeWidthCandidates(measure, { verify, signal, prune = false } = {}) {
   const candidates = []
   const skippedWidths = []
   let requests = 0
@@ -78,20 +78,12 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     ? [...widthCandidates.filter((_, index) => index % 2 === 0), ...widthCandidates.filter((_, index) => index % 2 === 1)]
     : widthCandidates
   for (const width of coarseOrder) await consider(width)
-  const coarseBest = chooseBestWidth(candidates)
-  if (coarseBest?.totalCost !== undefined && !localRefine) {
-    // A break can improve abruptly in any coarse interval. Numbered notation
-    // visits the entire 6px grid, pruning only by the certified font-cost bound.
-    const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
-    for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4)
-      if (!measured.has(width)) await consider(width)
-  } else if (coarseBest) {
-    const lower = Math.max(widthMinimum, coarseBest.width - widthStep)
-    const upper = Math.min(widthMaximum, coarseBest.width + widthStep)
-    const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
-    for (let width = lower; width <= upper; width += widthStep / 4) if (!measured.has(width)) await consider(width)
-  }
-  return { candidates, renderCache: { strategy: widthSearchStrategy + (localRefine ? '-local' : ''), requests,
+  // A break can improve abruptly in any interval, including when every coarse
+  // candidate failed. Always cover the entire grid for both notations.
+  const measured = new Set([...candidates.map(candidate => candidate.width), ...skippedWidths])
+  for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4)
+    if (!measured.has(width)) await consider(width)
+  return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
     uniqueWidths: requests, hits: 0, verifiedWidths, skippedWidths } }
 }
 

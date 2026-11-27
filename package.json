@@ -41,7 +41,7 @@
     "prepare:scores": "node tools/score-artifacts.mjs",
     "prepare:library-fonts": "node tools/prepare-library-fonts.mjs",
     "check:score-artifacts": "node tools/score-artifacts.mjs --check",
-    "test:staff-spacing-regression": "npm run build:packages && node tools/benchmark-numbered-spacing.mjs --staff --check --prune --local-refine",
+    "test:staff-spacing-regression": "npm run build:packages && node tools/benchmark-numbered-spacing.mjs --staff --check --prune",
     "test:spacing-regression": "npm run build:packages && node tools/benchmark-numbered-spacing.mjs --check --numeric-layout --prune"
   },
   "dependencies": {

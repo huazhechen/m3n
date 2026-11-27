@@ -61,7 +61,7 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
     await yieldToBrowser()
     signal?.throwIfAborted()
     return measureStaffWidth(scoreDocument, width, settings, signal, { task, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined })
-  }, { signal, prune: true, localRefine: true })
+  }, { signal, prune: true })
   return best.width
 }
 

@@ -61,10 +61,10 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
     if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,edgeGap:saved.edgeGap,sortState:saved.sortState,index}
     const axis = block.baseline ?? 0
-    const geometry = scorePageGeometry(block)
+    const geometry = scorePageGeometry(block, Boolean(policy.immutableBlocks))
     const { ink, boundaryInk, edgeInk, edgeGap, top, bottom: lower } = geometry
     const core = { top: geometry.coreTop, bottom: geometry.coreBottom }
-    const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, edgeGap, sortState:{sorted:false} }
+    const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, edgeGap, sortState:geometry }
     if(policy.immutableBlocks)normalizedBlocks.set(block,value)
     return {block,axis,ink,top,lower,core,boundaryInk,edgeInk,edgeGap,sortState:value.sortState,index}
   })

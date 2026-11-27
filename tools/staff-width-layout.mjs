@@ -14,11 +14,11 @@ function readScore(source) {
   return analysis.score
 }
 
-export async function search(source, { auditLayout = false, prune = !auditLayout, localRefine = !auditLayout } = {}) {
+export async function search(source, { auditLayout = false, prune = !auditLayout } = {}) {
   const started = performance.now()
   const score = readScore(source)
   const task = await prepareStaffMeasurementTask(score)
-  const result = await probeWidthCandidates((width, best) => measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount }), { prune: prune && !auditLayout, localRefine: localRefine && !auditLayout })
+  const result = await probeWidthCandidates((width, best) => measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount }), { prune: prune && !auditLayout })
   const searchMs = performance.now() - started
   return { ...result, searchMs }
 }
@@ -37,9 +37,9 @@ export async function preview(source,width,settings = {}) {
 
 /** Shared all-score benchmark adapter; one browser and font cache per batch. */
 export { initialize } from './numbered-spacing-layout.mjs'
-export async function searchSpacing(source, auditLayout = false, prune = false, localRefine = false) {
+export async function searchSpacing(source, auditLayout = false, prune = false) {
   const started = performance.now()
-  const result = await search(source, { auditLayout, prune, localRefine })
+  const result = await search(source, { auditLayout, prune })
   const best = chooseBestWidth(result.candidates)
   if (!best) throw new Error('没有可用的五线谱排版候选。' + JSON.stringify(result.candidates))
   return { ...best, pages: best.pageCount, searchMs: result.searchMs,

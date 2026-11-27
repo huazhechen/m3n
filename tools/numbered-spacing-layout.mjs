@@ -14,7 +14,7 @@ export async function initialize(fonts) {
   textMeasurementCache.synchronizeFonts()
 }
 
-export async function search(source, auditLayout = false, prune = false, localRefine = false, pageConstrainedBreaks = false, numericLayout = false) {
+export async function search(source, auditLayout = false, prune = false, pageConstrainedBreaks = false, numericLayout = false) {
   const started = performance.now()
   const analysis = analyzeM3N(source)
   if (analysis.diagnostics.some(item => item.severity === 'error')) throw new Error('Invalid score source')
@@ -37,7 +37,7 @@ export async function search(source, auditLayout = false, prune = false, localRe
       if (globalThis.__m3nTraceWidths) console.log('width-done ' + JSON.stringify({width,pages:measured.candidate.pageCount,rows:measured.candidate.rows,ms:measured.candidate.timings.totalMs}))
       return measured.candidate
     } catch (error) { accumulate(error.timings); throw error }
-  }, { prune: prune && !auditLayout, localRefine: localRefine && !auditLayout })
+  }, { prune: prune && !auditLayout })
   const searchMs = performance.now() - searchStarted
   const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
   return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks ? '-page-bound' : '') + (numericLayout ? '-numeric' : '') }, textMeasureCalls: timings.textMeasureCalls ?? 0,

@@ -105,7 +105,7 @@ export function completePageConstrainedTrial(document: ScoreDocument, supplied: 
   if (supplied.numericLayout && trial.coreLowerBound) return planScoreLinesWithRefinedPages(trial.candidates, greedy, optimum, evaluate, {
     blockFor: (start, end, previousStart, reference) => trial.coreLowerBound!(start, end, rowCache, previousStart, reference),
     headers: greedy.value.verticalBlocks.slice(0, greedy.value.headerBlocks.length),
-    options: { pageHeight: Math.floor(supplied.width * A4_CONTENT_ASPECT_RATIO), margin: greedy.value.margin,
+    options: { immutableBlocks: true, pageHeight: Math.floor(supplied.width * A4_CONTENT_ASPECT_RATIO), margin: greedy.value.margin,
       gap: nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8,},
     reference: () => trial.endingReference,
     restrict: trial.restrictBounds,

@@ -42,3 +42,21 @@ it('does not cache mutable callers or lose infinite header spans',()=>{
   lower.ink[0]!.top=-100;lower.edgeInk[0]!.gap=150
   expect(scorePageCollision(upper,lower)).toEqual(exhaustive(upper,lower))
 })
+
+it('shares opted-in immutable geometry without exposing it through mutable queries', () => {
+  const ink = [{ left: 20, right: 30, top: 5, bottom: 12 }, { left: 0, right: 10, top: -3, bottom: 4 }]
+  const block = { height: 20, baseline: 7, core: { top: 0, bottom: 10 }, ink,
+    edgeInk: [{ left: 1, right: 2, top: -5, bottom: 3, gap: 8 }] }
+  const cached = scorePageGeometry(block, true)
+  cached.ink.sort((a,b) => a.left-b.left); cached.sorted = true
+  expect(scorePageGeometry(block, true)).toBe(cached)
+  expect(ink[0]!.left).toBe(20)
+  const fresh = scorePageGeometry(block)
+  expect(fresh.ink).toEqual([cached.ink[1], cached.ink[0]])
+  fresh.ink[0]!.top = -1000
+  expect(scorePageGeometry(block).ink[0]!.top).toBe(-2)
+  expect(cached.ink[1]!.top).toBe(-2)
+  block.baseline = 9
+  expect(scorePageGeometry(block).coreTop).toBe(-9)
+  expect(scorePageGeometry(block).edgeInk[0]!.top).toBe(-14)
+})

@@ -74,11 +74,11 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       for (const source of sources) {
         const document = api.parseM3NDocument(source)
         readerWidths.push(await api.chooseNumberedScoreWidth(document, { paged: true }))
-        // Compare the pruned reader with a reference that measures every local candidate.
-        const local = await api.staffSearch(source, { prune: false, localRefine: true })
-        const best = api.chooseBestWidth(local.candidates)
-        staffWidths.push({ local: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
-          candidates: local.candidates.map(candidate => candidate.width) })
+        // Compare the pruned reader with a reference that measures every grid candidate.
+        const full = await api.staffSearch(source, { prune: false })
+        const best = api.chooseBestWidth(full.candidates)
+        staffWidths.push({ full: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
+          candidates: full.candidates.map(candidate => candidate.width) })
       }
       return { staffExport, cacheLifecycle, productionCandidates: entries.map(entry => entry.candidates.map(({ timings: _timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
@@ -97,10 +97,10 @@ test('reader, online and local PDF paths share safe width selection; staff reade
     assert.deepEqual(comparison.sharedOnline, comparison.sharedLocal.map(group => Array(group.end - group.start).fill(group.width)))
     assert.deepEqual(comparison.readerWidths, comparison.soloLocal.map(group => group.width))
     for (const staff of comparison.staffWidths) {
-      assert.equal(staff.reader, staff.local)
+      assert.equal(staff.reader, staff.full)
       assert.deepEqual(staff.candidates.filter(width => width % 24 === 0), Array.from({ length: 9 }, (_, i) => 528 + i * 24))
       assert(staff.candidates.every(width => width >= 528 && width <= 720 && width % 6 === 0))
-      assert(staff.candidates.length >= 12 && staff.candidates.length <= 15)
+      assert.equal(staff.candidates.length, 33)
     }
     assert.equal(comparison.soloSharedPages, 0)
     assert.deepEqual(comparison.soloOnline, comparison.soloLocal.map(group => Array(group.end - group.start).fill(group.width)))

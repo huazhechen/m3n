@@ -91,7 +91,7 @@ vi.mock('../../tools/lib/staff-width-measurement.mjs', () => ({
     const densities = info.lines.map((line: { minimum: number }) => line.minimum / info.availableWidth)
     const mean = densities.reduce((a: number, b: number) => a + b, 0) / densities.length
     const lineDensityVariation = Math.sqrt(densities.reduce((sum: number, density: number) => sum + (density - mean) ** 2, 0) / densities.length) / mean
-    return { width, pageCount: staffPageCount(true, width), rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation,
+    return { width, totalCost: info.totalCost, pageCount: staffPageCount(true, width), rows: info.lines.length, outside: [], overlaps: [], lineDensityVariation,
       lastLineSlack: 1 - info.lines.at(-1).target / info.availableWidth }
   },
 }))
@@ -192,9 +192,19 @@ describe('staff automatic width range', () => {
     expect(selected).toBe(Math.max(528, Math.ceil(requiredWidth / 6) * 6))
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
-    expect(staffTaskUses).toHaveBeenCalledTimes(requiredWidth <= 528 ? 12 : 15)
+    expect(staffTaskUses).toHaveBeenCalledTimes(33)
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 528 && width <= 720)).toBe(true)
+  })
+
+  it('finds a staff break outside the best coarse neighbourhood on the full grid', async () => {
+    staffPageCount.mockReturnValue(2)
+    staffLayoutInfo.mockImplementation(width => ({ availableWidth: width,
+      totalCost: width === 660 ? 2.1 : width === 696 ? 3.1 : 5,
+      lines: [{ minimum: width * 0.6, target: width }] }))
+    expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(660)
+    expect(new Set(staffPageCount.mock.calls.map(([, width]) => width))).toEqual(
+      new Set(Array.from({ length: 33 }, (_, index) => 528 + index * 6)))
   })
 
   it('creates a fresh measurement task for every selection', async () => {

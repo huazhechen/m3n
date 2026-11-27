@@ -45,7 +45,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
   }
   return {
     headers: [staffHeaderBlock(headerHeight)],
-    options: { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap: 0, },
+    options: { immutableBlocks: true, pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap: 0, },
     revision: () => rowCache.size,
     reference: () => ({ emptyMean: -Infinity, required: () => !equal, section: at => section[at]!,
       gap: (start, end) => fullLine(start, end).unitRhythmicGap, terminal }),
@@ -62,7 +62,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
       const system = contextual ? rowCache.get(`${start}:${end}:${target}`) : undefined
       if (system) {
         let block = preciseBlocks.get(system)
-        if (!block) { block = { ...staffRowBlock(system, start, gap), resolvedInk: true }; preciseBlocks.set(system, block) }
+        if (!block) { block = staffRowBlock(system, start, gap); preciseBlocks.set(system, block) }
         return block
       }
       return lowerBlock(start, end)

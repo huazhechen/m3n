@@ -19,7 +19,7 @@ export async function exportStyle() {
 }
 
 export async function parity(source) {
-  const result = await search(source, false, true, false, false, true)
+  const result = await search(source, false, true, false, true)
   const score = analyzeM3N(source).score
   const settings = { measureNumbers: true, layoutTask: new NumberedLayoutTask(), textMeasurementCache: new NumberedTextMeasurementCache() }
   const visibleSearch = await selectBestWidth((width, best) => measureNumberedWidth(score, width, { settings,

@@ -101,6 +101,9 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
 export function isNativeMeasureNumber(item: { measureNumber?: boolean; svg: string }): boolean {
   return item.measureNumber ?? item.svg.includes('data-m3n-role="measure-number"')
 }
-export function copyNativeDecoration<T extends { measureNumber?: boolean; svg: string }>(item: T): T {
-  return item.measureNumber ? Object.create(Object.getPrototypeOf(item), Object.getOwnPropertyDescriptors(item)) : { ...item }
+export function copyNativeDecoration(item: NonNullable<NativeSystem['decorationLayout']>[number]) {
+  // Measure-number geometry is immutable. Copy only mutable row metadata and
+  // retain lazy SVG access without allocating descriptors for every property.
+  return item.measureNumber ? { lane: item.lane, measureNumber: item.measureNumber, hidden: item.hidden,
+    ink: item.ink, get svg() { return item.svg } } : { ...item }
 }

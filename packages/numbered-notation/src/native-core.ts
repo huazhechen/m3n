@@ -9,7 +9,7 @@ import { placedNativeLyricPieces } from './native-lyrics.js'
 type Extent = { top: number; bottom: number }
 export type NativeCoreProfile = NativeInk & { range?: (left: number, right: number) => Extent | undefined }
 const coreBoxes=new WeakMap<NativeInk[],NativeInk>()
-function coreBox(pieces:NativeInk[]) {
+export function nativeCoreInkBox(pieces:NativeInk[]) {
   let box=coreBoxes.get(pieces)
   if(!box){box=unionNativeInk(pieces);coreBoxes.set(pieces,box)}
   return box
@@ -60,7 +60,7 @@ export function nativeSystemCore(system: NativeSystem, measurer: TextMeasurer): 
       for(const g of column.glyphs)if(g.lane===lane.id) {
         glyphs.push(g)
         const numeric=system.numericGeometry && g.coreInk
-        const box=numeric ? coreBox(g.coreInk!) : unionNativeInk(painter.musicPieces({...g,y:0},undefined,true))
+        const box=numeric ? nativeCoreInkBox(g.coreInk!) : unionNativeInk(painter.musicPieces({...g,y:0},undefined,true))
         const offset=numeric && g.coreInk!.length ? g.x : 0
         left=Math.min(left,box.left+offset);right=Math.max(right,box.right+offset)
         top=Math.min(top,box.top);bottom=Math.max(bottom,box.bottom)

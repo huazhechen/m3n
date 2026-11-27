@@ -118,8 +118,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
     measurementTimings.stages.fontPreparationMs = performance.now() - started
     const measurementStarted = performance.now()
     const renderer = await prepareScorebookRenderer({ notationMode, measureNumbers }, signal, auditLayout)
-    const localRefine = notationMode === 'staff' && !auditLayout
-    const maximumWidths = localRefine ? widthCandidates.length + 6 : (widthCandidates.length - 1) * 4 + 1
+    const maximumWidths = (widthCandidates.length - 1) * 4 + 1
     for (const [index, entry] of plan.entries.entries()) {
       signal.throwIfAborted()
       let lastProgress = -Infinity
@@ -153,10 +152,10 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
           } finally {
             timings.totalMs ??= performance.now() - widthStarted
             scoreTiming.candidates.push({ width, timings })
-            // Full search covers every 6px interval; staff retains its local mode.
+            // Both notations cover every 6px interval.
             progress(++completedWidths / maximumWidths)
           }
-        }, { signal, prune: pruneSearch && !auditLayout, localRefine })
+        }, { signal, prune: pruneSearch && !auditLayout })
         renderer.seal(document)
         progress(1)
         Object.assign(scoreTiming, { selectedWidth: best.width })

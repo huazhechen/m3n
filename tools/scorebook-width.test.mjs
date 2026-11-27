@@ -3,6 +3,8 @@ import { test } from 'node:test'
 import { chooseBestWidth, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates, refineSharedWidths } from './scorebook-packing.mjs'
 
+const fullWidthOrder = [...widthCandidates, ...Array.from({ length: 33 }, (_, index) => 528 + index * 6).filter(width => !widthCandidates.includes(width))]
+
 test('the shared online and offline search uses nine 24px levels from 528–720px', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 9 }, (_, index) => 528 + index * 24))
 })
@@ -99,17 +101,17 @@ test('search selects a level across a page-count transition', async () => {
     measured.push(width)
     return candidate(width, 100, width < 624 ? 2 : 1)
   })
-  assert.deepEqual(measured, [...widthCandidates, 606, 612, 618, 630, 636, 642])
-  assert.equal(renderCache.uniqueWidths, 15)
+  assert.deepEqual(measured, fullWidthOrder)
+  assert.equal(renderCache.uniqueWidths, 33)
   assert.equal(chooseBestWidth(candidates).width, 624)
 })
 
 test('scoring checks every formal width and chooses the best composite score', async () => {
   const result = await probeWidthCandidates(async width => candidate(width, 100, 1,
     { qualityScore: width === 648 ? 2 : .5 }))
-  assert.deepEqual(result.candidates.map(item => item.width), [...widthCandidates, 630, 636, 642, 654, 660, 666])
+  assert.deepEqual(result.candidates.map(item => item.width), fullWidthOrder)
   assert.equal(chooseBestWidth(result.candidates).width, 648)
-  assert.equal(result.renderCache.uniqueWidths, 15)
+  assert.equal(result.renderCache.uniqueWidths, 33)
 })
 
 test('nonmonotone pagination is evaluated across the complete grid', async () => {
@@ -126,7 +128,7 @@ test('SVG checks verify coarse and refined candidates', async () => {
     },
   })
   assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.deepEqual(verified, [...widthCandidates, 582, 588, 594, 606, 612, 618])
+  assert.deepEqual(verified, fullWidthOrder)
 })
 
 test('failed renders are recorded and excluded', async () => {
@@ -135,7 +137,7 @@ test('failed renders are recorded and excluded', async () => {
     return candidate(width, 100)
   })
   assert.equal(chooseBestWidth(result.candidates).width, 600)
-  assert.equal(result.candidates.filter(c => c.error).length, 6)
+  assert.equal(result.candidates.filter(c => c.error).length, 12)
   const failed = await probeWidthCandidates(async () => { throw new Error('unrenderable') })
   assert.equal(chooseBestWidth(failed.candidates), null)
 })
@@ -224,15 +226,15 @@ test('common selection propagates cancellation and rejects every unsafe candidat
   await assert.rejects(selectBestWidth(async width => candidate(width, 100, 1, { overlaps: ['lyric'] })), /排版候选/)
 })
 
-test('search visits coarse levels once before refining between both neighbors', async () => {
+test('search visits coarse levels once before filling the complete fine grid', async () => {
   const measured = []
   const result = await selectBestWidth(async width => {
     measured.push(width)
     return candidate(width, 100, 1, { qualityScore: width === 648 ? 2 : 1 })
   })
-  assert.deepEqual(measured, [...widthCandidates, 630, 636, 642, 654, 660, 666])
+  assert.deepEqual(measured, fullWidthOrder)
   assert.equal(result.best.width, 648)
-  assert.equal(result.renderCache.requests, 15)
+  assert.equal(result.renderCache.requests, 33)
 })
 
 test('cancellation between levels stops further measurements', async () => {
@@ -264,7 +266,7 @@ for (const coarseBest of [528, 648, 720]) {
     assert.equal(new Set(measured).size, measured.length)
     assert(measured.every(width => width >= 528 && width <= 720))
     assert.equal(result.best.width, fineBest)
-    assert.equal(measured.length, coarseBest === 648 ? 15 : 12)
+    assert.equal(measured.length, 33)
   })
 }
 
@@ -366,7 +368,7 @@ test('audited search retains all candidates even when pruning was requested', as
   const result = await probeWidthCandidates(async width => candidate(width, 200), {
     prune: true, verify: async () => ({}),
   })
-  assert.equal(result.renderCache.requests, 12)
+  assert.equal(result.renderCache.requests, 33)
   assert.deepEqual(result.renderCache.skippedWidths, [])
 })
 
@@ -467,20 +469,16 @@ test('numbered pruning uses the normalized font curve and preserves a 552px winn
 })
 
 
-test('local refinement searches only the coarse winner neighbourhood and keeps safe pruning', async () => {
-  const fontCost = width => 4 * ((width - 528) / 192) ** 2
-  const measure = async width => ({ width, pageCount: 1, rows: 8, outside: [], overlaps: [],
-    totalCost: fontCost(width) + (width === 648 ? .05 : width === 534 ? .3 : 3) })
-  const full = await selectBestWidth(measure, { prune: true })
-  const local = await selectBestWidth(measure, { prune: true, localRefine: true })
-  assert.equal(local.best.width, 648)
-  assert.equal(full.best.width, 534)
-  assert(local.candidates.every(c => c.width % 24 === 0 || c.width >= 624 && c.width <= 672))
-  assert(!local.candidates.some(c => c.width === 534))
-  assert(local.renderCache.strategy.endsWith('-local'))
-  assert(local.renderCache.skippedWidths.includes(720))
+test('full search finds an isolated safe fine width when every coarse render fails', async () => {
+  for (const prune of [false, true]) {
+    const result = await selectBestWidth(async width => {
+      if (width !== 618) throw new Error('unrenderable at this width')
+      return candidate(width, 100, 1, { totalCost: 1 })
+    }, { prune })
+    assert.equal(result.best.width, 618)
+    assert.equal(result.renderCache.requests + result.renderCache.skippedWidths.length, 33)
+  }
 })
-
 
 test('a group can be admitted only at an isolated fine width, even when all coarse widths fail', async () => {
   for (const prune of [false, true]) {

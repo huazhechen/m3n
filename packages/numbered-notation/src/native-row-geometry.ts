@@ -5,7 +5,7 @@ import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal, 
 import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
-import { nativeSystemCore } from './native-core.js'
+import { nativeCoreInkBox, nativeSystemCore } from './native-core.js'
 import { scoreLyricGapScale } from './layout/policy.js'
 import { nativeSvgPieces } from './native-ink.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
@@ -47,7 +47,7 @@ export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: Tex
   placeNativeLyrics(system, lane, measurer)
   const bottom = Math.max(0, ...members.flatMap(glyph => [...(glyph.lyricBaselines ?? [])].flatMap(([row,baseline]) =>
     nativeLyricPieces(glyph.lyrics.get(row)!,glyph.x,baseline,measurer).map(piece=>piece.bottom))))
-  const top = members.length ? Math.max(...members.map(glyph => Math.min(0, ...(glyph.coreInk ?? []).map(piece => piece.top)))) : 0
+  const top = members.length ? Math.max(...members.map(glyph => Math.min(0, glyph.coreInk ? nativeCoreInkBox(glyph.coreInk).top : 0))) : 0
   let core = { top, bottom }
   if (horizontal) {
     // Both endpoint probes consume the same immutable constraint chain.
