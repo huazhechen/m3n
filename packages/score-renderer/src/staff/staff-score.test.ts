@@ -66,7 +66,8 @@ describe('staff page packing', () => {
     expect(info.pageCount).toBe(1)
     for (const spacing of [.6, 1.2]) {
       const lines = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
-      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), 8.4)
+      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), 8.4, 4.2,
+        lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
       expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
     }
   })

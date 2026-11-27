@@ -12,7 +12,8 @@ export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'marg
   const lastLineSlack = lastMeasure ? Math.max(0, Math.min(1, (rightEdge - lastMeasure.end) / available)) : 0
   const costs = scoreNumberedCost(width, densities)
   const [tight, loose] = scoreLayoutConfig.numbered.noteGapCandidates
-  const spacing = scoreNumberedSpacing(layout.systems.flatMap(system => system.rhythmicGaps ?? []), loose, tight)
+  const spacing = scoreNumberedSpacing(layout.systems.flatMap(system => system.rhythmicGaps ?? []), loose, tight,
+    layout.systems.flatMap(system => system.unitRhythmicGap === undefined ? [] : [system.unitRhythmicGap]))
   return { ...costs, ...spacing, totalCost: spacing.spacingCost + costs.overflowCost + costs.fontSizeCost, pageCount: layout.pages.length, ...scoreLineQuality(densities, lastLineSlack) }
 }
 

@@ -40,20 +40,22 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
   return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost }
 }
 
-/** Each normalized interval gets one vote, including comfortable zero-cost
- * intervals. Uniformity remains diagnostic, not a reward for reducing font size.
- * The comfort band runs from the tier midpoint to 1.5 times the loose tier. */
-export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16, tightGap = referenceGap / 2) {
+/** Each normalized interval gets one comfort vote, including zero-cost samples.
+ * Uniformity compares the rows' inherited rhythmic gaps, so musical variation
+ * inside a row does not masquerade as an uneven line break. Mean + worst row
+ * deviation keep an isolated stretched row visible even in a long score. */
+export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16, tightGap = referenceGap / 2, rowGaps: readonly number[] = gaps) {
   if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
   const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
-  const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
-  const deviations = gaps.map(gap => (gap - meanRhythmicGap) ** 2 / denominator)
-  const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / gaps.length
-  const spacingWorstUnevenCost = Math.max(...deviations)
+  const meanRowGap = rowGaps.reduce((sum, gap) => sum + gap, 0) / Math.max(1, rowGaps.length)
+  const denominator = Math.max(Number.EPSILON, meanRowGap) ** 2
+  const deviations = rowGaps.map(gap => (gap - meanRowGap) ** 2 / denominator)
+  const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / Math.max(1, rowGaps.length)
+  const spacingWorstUnevenCost = Math.max(0, ...deviations)
   const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
   const lower = (tightGap + referenceGap) / 2, upper = referenceGap * 1.5
   const spacingCrampedCost = gaps.reduce((sum, gap) => sum + Math.max(0, lower / Math.max(Number.EPSILON, gap) - 1) ** 2, 0) / gaps.length
   const spacingExpandedCost = gaps.reduce((sum, gap) => sum + Math.max(0, gap / upper - 1) ** 2, 0) / gaps.length
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
-    spacingCost: spacingCrampedCost + spacingExpandedCost }
+    spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
 }

@@ -30,16 +30,20 @@ lower = (tightGap + looseGap) / 2
 upper = looseGap * 1.5
 spacingCrampedCost = average(gaps.map(g => max(0, lower / max(EPSILON, g) - 1) ** 2))
 spacingExpandedCost = average(gaps.map(g => max(0, g / upper - 1) ** 2))
-spacingCost = spacingCrampedCost + spacingExpandedCost
+rowGaps = lines.map(line => line.unitRhythmicGap).filter(defined)
+mean = average(rowGaps)
+deviations = rowGaps.map(g => ((g - mean) / max(EPSILON, mean)) ** 2)
+spacingUnevenCost = average(deviations) + max(deviations)
+spacingCost = spacingCrampedCost + spacingExpandedCost + spacingUnevenCost
 fontSizeCost = 4 * max(0, (版宽 - 528) / 240) ** 2
 totalCost = spacingCost + fontSizeCost + overflowCost
 ```
 
-舒适区两端及内部的间距代价为零，拥挤和过疏项系数均为1；不再持续奖励扩大留白。平均间距及平均／最差相对不均匀度保留为诊断，不参加最终排名，避免舒适区内因细微均匀度收益牺牲字号。同宽度先按页数、再按 `spacingCost + overflowCost`，完全同分取松档。跨宽度先按页数、再按 `totalCost`，再同分取较窄宽度。两项间距代价均非负，保持字体代价上界剪枝安全。不可拆超宽对象保留 `100 * max(0, M/W-1)²` 溢出惩罚。无可伸展音乐间隔的行不贡献样本。`layoutCost`及旧拉伸统计只作断行诊断，不参与最终排名。连续与分页选择一致，末行按铺满评分，实际渲染仍可缩短。
+舒适区两端及内部的拥挤、过疏代价为零，两项系数均为1；不再持续奖励扩大留白。不均匀度仍参与最终评分，取各行单位节奏间距相对行均值偏差平方的平均值与最大值之和，系数为1。平均项表达整体均匀性，最差项避免极端拉伸短行被长曲的平均稀释；行内因歌词等占位产生的正常间隔差异不计入行间均匀度；即使所有间隔都在舒适区内，行间不均匀代价也不一定为零。同宽度先按页数、再按 `spacingCost + overflowCost`，完全同分取松档。跨宽度先按页数、再按 `totalCost`，再同分取较窄宽度。全部间距代价均非负，保持字体代价上界剪枝安全。不可拆超宽对象保留 `100 * max(0, M/W-1)²` 溢出惩罚。无可伸展音乐间隔的行不贡献样本。`layoutCost`及旧拉伸统计只作断行诊断，不参与最终排名。连续与分页选择一致，末行按铺满评分，实际渲染仍可缩短。
 
 末行撑满／缩短的几何规则仍读取原有按节奏权重汇总的行平均间距，不改为逐间隔评分的算术平均，避免无关的末行几何变化。五线谱边界的两个半时值间隔分别归一化、分别评分，不能先合并后计算代价。
 
-本轮全库选宽变化及验证记录见[逐间隔舒适区评分对照](SPACING_COMFORT_REVIEW.md)。
+逐间隔舒适区首次对照见[逐间隔舒适区评分对照](SPACING_COMFORT_REVIEW.md)，恢复均匀度后的复核见[均匀度与异常短行修复](SPACING_UNIFORMITY_REVIEW.md)。
 
 ## 全曲最优的求解
 

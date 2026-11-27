@@ -24,10 +24,13 @@ it('keeps stretch in the break diagnostics without defining the final spacing co
   expect(scoreNumberedCost(528, [.5, .75, .5, .75]).layoutCost).toBeCloseTo(cost.layoutCost * 2)
 })
 
-it('has zero spacing cost throughout the comfort band, independently of uniformity', async () => {
+it('has zero crowding and expansion cost in the comfort band while retaining uniformity', async () => {
   const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
-  for (const gaps of [[12], [24], [12, 16, 24], [12, 12, 24, 24]])
-    expect(cost(gaps).spacingCost).toBe(0)
+  for (const gaps of [[12], [24], [12, 16, 24], [12, 12, 24, 24]]) {
+    expect(cost(gaps).spacingCrampedCost).toBe(0)
+    expect(cost(gaps).spacingExpandedCost).toBe(0)
+    expect(cost(gaps).spacingCost).toBe(cost(gaps).spacingUnevenCost)
+  }
   expect(cost([12, 24]).spacingUnevenCost).toBeGreaterThan(0)
   expect(cost([]).spacingCost).toBe(0)
 })
@@ -40,8 +43,9 @@ it('scores individual gaps before averaging and includes comfortable gaps in the
   expect(cost([8, 40]).spacingExpandedCost).toBeCloseTo((40 / 24 - 1) ** 2 / 2)
   expect(cost([6, 12, 16, 24]).spacingCrampedCost).toBeCloseTo(1 / 4)
   expect(cost([12, 16, 24, 48]).spacingExpandedCost).toBeCloseTo(1 / 4)
-  expect(cost([6, 48, 12, 24]).spacingCost).toBeCloseTo(.5)
-  expect(cost([6, 48, 12, 24, 6, 48, 12, 24]).spacingCost).toBeCloseTo(.5)
+  const gaps = [6, 48, 12, 24]
+  expect(cost(gaps).spacingCost - cost(gaps).spacingUnevenCost).toBeCloseTo(.5)
+  expect(cost([...gaps, ...gaps]).spacingCost).toBeCloseTo(cost(gaps).spacingCost)
 })
 
 it('calibrates font loss at the readable and small-font ends of the search range', async () => {
@@ -67,10 +71,36 @@ it('keeps an exceptional row visible instead of averaging its unevenness away', 
 
 it('uses the same comfort rules at each notation scale and both endpoints', async () => {
   const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
-  expect(cost([12, 24]).spacingCost).toBe(0)
+  expect(cost([12, 24]).spacingCrampedCost + cost([12, 24]).spacingExpandedCost).toBe(0)
   expect(cost([11.99]).spacingCrampedCost).toBeGreaterThan(0)
   expect(cost([24.01]).spacingExpandedCost).toBeGreaterThan(0)
-  expect(cost([6.3, 8.4, 12.6], 8.4).spacingCost).toBeCloseTo(0)
+  expect(cost([6.3, 8.4, 12.6], 8.4).spacingCost).toBeCloseTo(cost([12, 16, 24]).spacingCost)
   expect(cost([6, 48]).spacingCost).toBeCloseTo(cost([3.15, 25.2], 8.4).spacingCost)
-  expect(cost([10, 20], 16, 4).spacingCost).toBe(0)
+  expect(cost([10, 20], 16, 4).spacingCost).toBe(cost([10, 20], 16, 4).spacingUnevenCost)
+})
+
+it('does not trade an isolated stretched tail for a marginally larger font', async () => {
+  const { scoreNumberedSpacing: cost, scoreNumberedFontCost: font } = await import('./layout/quality.js')
+  const ordinary = Array<number>(1100).fill(18)
+  const isolated = cost([...ordinary, ...Array<number>(12).fill(120)])
+  const balanced = cost([...ordinary, ...Array<number>(12).fill(42)])
+  expect(isolated.spacingExpandedCost).toBeGreaterThan(balanced.spacingExpandedCost)
+  expect(isolated.spacingWorstUnevenCost).toBeGreaterThan(balanced.spacingWorstUnevenCost)
+  // Averaged expansion alone would choose the isolated row for its font gain.
+  expect(isolated.spacingExpandedCost + font(738)).toBeLessThan(balanced.spacingExpandedCost + font(744))
+  expect(balanced.spacingCost + font(744)).toBeLessThan(isolated.spacingCost + font(738))
+})
+
+it('compares row uniformity separately from individual interval comfort', async () => {
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
+  const gaps = [6, 12, 24, 48]
+  const balanced = cost(gaps, 16, 8, [18, 18])
+  const uneven = cost(gaps, 16, 8, [12, 24])
+  expect(balanced.spacingUnevenCost).toBe(0)
+  expect(uneven.spacingUnevenCost).toBeGreaterThan(0)
+  expect(balanced.spacingCrampedCost).toBeCloseTo(.25)
+  expect(balanced.spacingExpandedCost).toBeCloseTo(.25)
+  expect(uneven.spacingCrampedCost).toBe(balanced.spacingCrampedCost)
+  expect(uneven.spacingExpandedCost).toBe(balanced.spacingExpandedCost)
+  expect(cost(gaps, 16, 8, []).spacingUnevenCost).toBe(0)
 })
