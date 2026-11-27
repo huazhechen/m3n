@@ -7,6 +7,7 @@ import type { ScoreLineCandidate } from './line-breaking.js'
 it('matches exhaustive full-width primitive pagination including headers, lyrics, fixed gaps and asymmetric cores', () => {
   let seed = 37
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
+  const witnessCache: {ends?:number[]} = {}
   for (let trial = 0; trial < 100; trial++) {
     const count = 4 + trial % 4
     const graph: ScoreLineCandidate[][] = Array.from({ length: count }, (_, start) =>
@@ -23,7 +24,7 @@ it('matches exhaustive full-width primitive pagination including headers, lyrics
     const headers = [{ resolvedInk: true, height: 30, ink: [{ left: 0, right: 100, top: 0, bottom: 30 }] }]
     const blockFor = (start: number, end: number) => blocks[start]!.get(end)!
     const options = { pageHeight: 160 + random() * 120, margin: 5, gap: 20, headerGap: 17,}
-    const feasible = scorePageFeasibility(graph, blockFor, headers, options)
+    const feasible = scorePageFeasibility(graph, blockFor, headers, {...options,witnessCache})
     const restricted = graph.map(rows => rows.filter((_, index) => index === 0 || random() > .3))
     const paths = (start = 0): number[][] => start === count ? [[]] : restricted[start]!.flatMap(row =>
       paths(row.end).map(rest => [row.end, ...rest]))
@@ -98,4 +99,26 @@ it('reuses fixed-prefix pagination across branches and changing ceilings without
    expect(witness).toEqual(expected)
   }
  }
+})
+
+it('resolves only the rows of an optimistic greedy witness before expanding alternatives',()=>{
+ const count=20,graph:ScoreLineCandidate[][]=Array.from({length:count},(_,start)=>
+  Array.from({length:Math.min(3,count-start)},(_,i)=>({end:start+i+1,density:.7})))
+ let measured=0
+ const blockFor=():ScorePageBlock=>{measured++;return {height:20,core:{top:0,bottom:20},ink:[{left:0,right:100,top:0,bottom:20}]}}
+ const feasible=scorePageFeasibility(graph,blockFor,[],{pageHeight:1000,margin:0,gap:10,headerGap:0})
+ expect(measured).toBe(0)
+ expect(feasible(graph,1)).toBe(true)
+ expect(measured).toBe(7)
+ expect(feasible(graph,1)).toBe(true)
+ expect(measured).toBe(7)
+})
+
+it('explores alternatives when the optimistic greedy witness does not fit',()=>{
+ const graph:ScoreLineCandidate[][]=[[{end:1,density:.5},{end:2,density:.8}],[{end:3,density:.8}],[],[{end:4,density:.5}]]
+ const feasible=scorePageFeasibility(graph,(start,end)=>{
+  const height=start===0 && end===2 ? 200 : 20
+  return {height,core:{top:0,bottom:height},ink:[{left:0,right:100,top:0,bottom:height}]}
+ },[],{pageHeight:100,margin:0,gap:5,headerGap:0})
+ expect(feasible(graph,1)).toBe(true)
 })

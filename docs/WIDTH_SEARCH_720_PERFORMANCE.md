@@ -21,3 +21,11 @@
 python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --numeric-layout --prune --output=.tmp/range720/numbered.json
 python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staff --prune --local-refine --output=.tmp/range720/staff-local.json
 ```
+
+## 小节号数值几何
+
+同日后续优化将简谱小节号及其白色底框直接转换为分页墨迹，采用与绘制相同的字体设计度量和坐标舍入，延后SVG字符串生成。小节号隐藏时仍保留相同边界。包含真实字体的测试覆盖多位数字、分数坐标及左右裁切边界；四首乐曲在600／720px、小节号开／关下共16份最终SVG与改动前逐字相同。
+
+以本页720px基线为对照，完整搜索117首的所有候选、赢家、分页、行数和评分保持一致（数值误差阈值1e-8）。累计选宽30.638秒降至28.296秒（7.6%），基本功1560.6ms降至1460.1ms，超过600ms由13首降至11首。新浏览器单曲冷测基本功1864.3ms降至1753.6ms。聚合RSS峰值1531MiB。此改动针对简谱适配器的墨迹生成，五线谱未改动，未达到全部曲目600ms的目标。
+
+原始报告：`.tmp/numeric-label/numbered.json`；对照仍为`.tmp/range720/numbered.json`。这些批内数据与单曲冷测分别报告，不互相替代。

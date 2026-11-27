@@ -38,9 +38,18 @@ const box = (block: ScorePageBlock): Box => {
  * Tail redistribution and gap fitting never change the number of pages. */
 export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCandidate[])[],
   blockFor: (start: number, end: number) => ScorePageBlock, headers: readonly ScorePageBlock[],
-  options: { pageHeight: number; margin: number; gap: number; headerGap: number; onWitness?: (ends: number[]) => void }) {
+  options: { pageHeight: number; margin: number; gap: number; headerGap: number; onWitness?: (ends: number[]) => void; witnessCache?: { ends?: number[] } }) {
   const { pageHeight, margin, gap, headerGap } = options
-  const boxes = candidates.map((rows, start) => new Map(rows.map(row => [row.end, box(blockFor(start, row.end))])))
+  const tracksWitness=Boolean(options.onWitness || options.witnessCache)
+  const boxes = Array<Map<number,Box>|undefined>(candidates.length)
+  const rowBox=(start:number,end:number)=>{
+    let rows=boxes[start]
+    const saved=rows?.get(end)
+    if(saved)return saved
+    const value=box(blockFor(start,end))
+    if(!rows){rows=new Map();boxes[start]=rows}
+    rows.set(end,value);return value
+  }
   const advance = (item: Box, previous?: State, best?: State, ceiling=Infinity): State | undefined => {
     if (item.bottom - item.top > pageHeight - 2 * margin + 1e-6) return
     let baseline = margin - item.top, page = previous?.page ?? 0
@@ -67,24 +76,40 @@ export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCan
   const noHeader = {}
   let cachedTransitions = 0
   const publishWitness = (winner: State | undefined) => {
-    if (!options.onWitness) return
+    if (!tracksWitness) return
     const ends: number[] = []
     for(let state=winner;state?.end!==undefined;state=state.previous)ends.push(state.end)
-    options.onWitness(ends.reverse())
+    ends.reverse()
+    if(options.witnessCache)options.witnessCache.ends=ends
+    options.onWitness?.(ends)
   }
   return (restricted: readonly (readonly ScoreLineCandidate[])[], ceiling: number): boolean => {
     if (!restricted.length) return false
+    // Recheck a prior width's witness against this graph and its current
+    // geometry. Reuse the path only, never a page count or feasibility result.
+    const cached=options.witnessCache?.ends
+    if(cached?.at(-1)===restricted.length) {
+      let start=0,prior=header
+      for(const end of cached) {
+        if(!restricted[start]?.some(row=>row.end===end))break
+        const next=advance(rowBox(start,end),prior,undefined,ceiling)
+        if(!next)break
+        if(tracksWitness){next.previous=prior;next.end=end}
+        prior=next;start=end
+      }
+      if(start===restricted.length){publishWitness(prior);return true}
+    }
     // Lawler branches share long fixed prefixes. Their exact pagination is
     // deterministic and independent of the cost/page ceiling being queried.
     let beginning=0,initial=header
     while (beginning<restricted.length && restricted[beginning]!.length===1) {
-      const row=restricted[beginning]![0]!,item=boxes[beginning]!.get(row.end)!,key=initial ?? noHeader
+      const row=restricted[beginning]![0]!,item=rowBox(beginning,row.end),key=initial ?? noHeader
       let peers=prefixTransitions.get(key)
       let next: State | undefined
       if (peers?.has(item)) next=peers.get(item)
       else {
         next=advance(item,initial)
-        if (next && options.onWitness) {next.previous=initial;next.end=row.end}
+        if (next && tracksWitness) {next.previous=initial;next.end=row.end}
         // Bound retained cache memory, never the number of paths searched.
         if (cachedTransitions<8192) {
           if (!peers) {peers=new WeakMap();prefixTransitions.set(key,peers)}
@@ -95,6 +120,19 @@ export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCan
       initial=next;beginning=row.end
     }
     if (beginning===restricted.length) {publishWitness(initial);return true}
+    // A cheap feasible witness keeps this candidate alive without building
+    // every possible row bound. Failure proves nothing: the full graph below
+    // still explores all legal partitions with the original dominance rule.
+    let at=beginning,witness=initial
+    while(at<restricted.length) {
+      const end=Math.max(...restricted[at]!.map(row=>row.end))
+      if(!Number.isFinite(end) || end<=at)break
+      const next=advance(rowBox(at,end),witness,undefined,ceiling)
+      if(!next)break
+      if(tracksWitness){next.previous=witness;next.end=end}
+      witness=next;at=end
+    }
+    if(at===restricted.length){publishWitness(witness);return true}
     // Each (start,end) row contributes at most one state, visited in ascending
     // start order. Appending preserves Map insertion order without allocating
     // a Map and a copied values array at every (often unreachable) endpoint.
@@ -103,12 +141,12 @@ export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCan
       const previous = start === beginning ? [initial] : states[start]
       if (!previous?.length) continue
       for (const row of restricted[start]!) {
-        const item = boxes[start]!.get(row.end)!
+        const item = rowBox(start,row.end)
         let best: State | undefined
         for (const prior of previous) {
           const next = advance(item, prior, best, ceiling)
           if (!next) continue
-          if (options.onWitness) { next.previous = prior; next.end = row.end }
+          if (tracksWitness) { next.previous = prior; next.end = row.end }
           best = next
         }
         if (best) (states[row.end] ??= []).push(best)
@@ -116,7 +154,7 @@ export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCan
       states[start] = undefined
     }
     const winners = states[restricted.length] ?? []
-    if (options.onWitness && winners.length) {
+    if (tracksWitness && winners.length) {
       const winner = winners.sort((a,b)=>a.page-b.page || a.baseline-b.baseline)[0]!
       publishWitness(winner)
     }

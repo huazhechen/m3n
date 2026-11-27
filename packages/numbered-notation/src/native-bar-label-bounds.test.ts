@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { copyNativeDecoration, isNativeMeasureNumber, placeNativeBarLabels } from './native-system-labels.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
+import { NativeSymbols } from './native-symbols.js'
 
 const measurer = new DefaultTextMeasurer()
 
@@ -18,14 +19,18 @@ it('defers hidden numeric labels through row snapshots and preserves their SVG',
     if(text==='1234')labelsMeasured++
     return measurer.measureText(text,style)
   }}
+  const painted = vi.spyOn(NativeSymbols.prototype, 'text')
   placeNativeBarLabels(system,[],probe,false,width)
   const hidden=system.decorationLayout!.find(isNativeMeasureNumber)!
   const snapshot=copyNativeDecoration(hidden)
-  expect(labelsMeasured).toBe(0)
+  expect(labelsMeasured).toBe(1)
+  expect(painted).not.toHaveBeenCalled()
+  expect(snapshot.ink).toEqual(hidden.ink)
+  painted.mockRestore()
   system.decorationLayout=[]
   placeNativeBarLabels(system,[],measurer,true,width)
   expect(snapshot.svg).toBe(system.decorationLayout!.find(isNativeMeasureNumber)!.svg)
-  expect(labelsMeasured).toBeGreaterThan(0)
+  expect(labelsMeasured).toBe(1)
 })
 
 describe('bar labels with small page margins', () => {

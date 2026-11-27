@@ -116,6 +116,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const envelopes = graph.measured.map(({ measure }) => lowerEnvelopeFor(measure))
+      let witnessCache=measurements.feasibilityWitnesses.get(spacing)
+      if(!witnessCache)measurements.feasibilityWitnesses.set(spacing,witnessCache={})
       const feasible = scorePageFeasibility(graph.candidates, (start, end) => {
         const members = envelopes.slice(start, end)
         const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
@@ -127,7 +129,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
           ...(start ? {} : { coreGapBefore: 0 }) }
       }, [staffHeaderBlock(header.height)], { pageHeight: a4SourcePageHeight(candidateWidth) - 2 * margin,
-        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, })
+        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, witnessCache })
       if (feasible(graph.candidates, ceiling)) return true
     }
     return false

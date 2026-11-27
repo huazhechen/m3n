@@ -23,6 +23,7 @@ export type NativePageTrialCache = {
 }
 
 export type NativeGapTrial = {
+  canFitPageCeiling?: (ceiling: number) => boolean
   readonly pageFloor: number
   pageFloorFor?: (ends: readonly number[], headers: readonly ScorePageBlock[]) => number
   readonly endingReference?: {

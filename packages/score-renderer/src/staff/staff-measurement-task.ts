@@ -19,6 +19,7 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const preparation = createStaffPreparation(document)
   const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
   return {
+    feasibilityWitnesses: new Map<number,{ends?:number[]}>(),
     lowerEnvelopes: new WeakMap<StaffMeasure, ScoreHeightEnvelope>(),
     document, measure, preparation, minimum,
     assertCompatible(candidate: ScoreDocument, next: ProjectionSettings) {

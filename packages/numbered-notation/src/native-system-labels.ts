@@ -1,11 +1,11 @@
-import { SCORE_TEXT_FONT } from './font-family.js'
+import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import type { NativeSystem } from './native-layout-model.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
 import { NativeSymbols, n } from './native-symbols.js'
-import { nativeSvgInk } from './native-ink.js'
+import { nativeSvgInk, type NativeInk } from './native-ink.js'
 
 export function placeNativeNavigation(system: NativeSystem) {
   const lane = system.lanes.find(l => l.id === 'melody')
@@ -17,6 +17,26 @@ export function placeNativeNavigation(system: NativeSystem) {
     lane.lyricBottom = Math.max(lane.lyricBottom ?? 0, ink.bottom)
     system.decorationLayout ??= []; system.decorationLayout.push({ lane: lane.id, svg })
   }
+}
+
+/** The number and its white frame share the painter's coordinate rounding.
+ * Numeric pagination consumes these same primitives without serializing SVG. */
+function nativeMeasureNumberGeometry(text: string, barX: number, barInk: NativeInk, width: number, measurer: TextMeasurer) {
+  const size = nativeStyle.measureNumber
+  const metrics = measurer.measureText(text, { fontSize: n(size), fontFamily: SCORE_TEXT_FONT, fontWeight: SCORE_TEXT_WEIGHT, fontStyle: 'normal' })
+  const inkAt = (x: number): NativeInk => ({ left: n(x) - (metrics.advance ?? metrics.w) + (metrics.inkLeft ?? 0),
+    right: n(x) - (metrics.advance ?? metrics.w) + (metrics.inkRight ?? metrics.w),
+    top: -metrics.baseline, bottom: -metrics.baseline + (metrics.inkBottom ?? metrics.h) })
+  let ink = inkAt(barX)
+  const dx = Math.max(-ink.left, Math.min(barInk.right - ink.right, width - ink.right))
+  const x = barX + dx
+  if (dx) ink = inkAt(x)
+  const y = barInk.top - nativeStyle.measureNumberBarGap - ink.bottom, dy = n(y)
+  const frame = { x: n(ink.left - nativeStyle.measureNumberPadding), y: n(ink.top - nativeStyle.measureNumberPadding),
+    width: n(ink.right - ink.left + nativeStyle.measureNumberPadding), height: n(ink.bottom - ink.top + 2 * nativeStyle.measureNumberPadding) }
+  const pieces: NativeInk[] = [{ left: frame.x, right: frame.x + frame.width, top: frame.y + dy, bottom: frame.y + frame.height + dy },
+    { ...ink, top: ink.top + dy, bottom: ink.bottom + dy }]
+  return { x, y, frame, pieces }
 }
 
 /** Always measure row-end numbers for page bounds; visibility only controls painting. */
@@ -36,34 +56,40 @@ export function placeNativeBarLabels(system: NativeSystem, regions: NativeRegion
     const place = (text: string, size: number, meta: Record<string, string>) => {
       const rightAligned = meta['data-m3n-role'] === 'measure-number'
       const anchor = rightAligned ? 'end' : 'middle'
+      if (rightAligned) {
+        const geometry = nativeMeasureNumberGeometry(text, bar.x, barInk, width, measurer)
+        let svg: string | undefined
+        system.decorationLayout ??= []
+        system.decorationLayout.push({ lane: lane.id, measureNumber: true, hidden: !measureNumbers,
+          ...(system.numericGeometry ? { ink: geometry.pieces } : {}),
+          get svg() {
+            if (svg === undefined) {
+              const { x, y, frame } = geometry
+              svg = `<g transform="translate(0 ${n(y)})"><rect x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" fill="#fff"/>`
+                + painter.text(text, x, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta }) + '</g>'
+            }
+            return svg
+          } })
+        return
+      }
       const draw = () => {
         let raw = painter.text(text, bar.x, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
         let ink = nativeSvgInk(raw, measurer)
         // A small page margin must not clip multi-digit labels or font overhang.
-        // Measure numbers end at the bar's outer painted edge.
         // Repeat counts retain centred alignment unless they leave the canvas.
-        const dx = Math.max(-ink.left, Math.min(rightAligned ? barInk.right - ink.right : 0, width - ink.right))
+        const dx = Math.max(-ink.left, Math.min(0, width - ink.right))
         if (dx) {
           raw = painter.text(text, bar.x + dx, 0, size, SCORE_TEXT_FONT, { 'text-anchor': anchor, ...meta })
           ink = nativeSvgInk(raw, measurer)
         }
-        const y = (rightAligned ? barInk.top - nativeStyle.measureNumberBarGap : top - nativeStyle.music * 0.12) - ink.bottom
-        if (rightAligned) {
-          raw = `<rect x="${n(ink.left - nativeStyle.measureNumberPadding)}" y="${n(ink.top - nativeStyle.measureNumberPadding)}" width="${n(ink.right - ink.left + nativeStyle.measureNumberPadding)}" height="${n(ink.bottom - ink.top + 2 * nativeStyle.measureNumberPadding)}" fill="#fff"/>${raw}`
-        } else {
-          top = y + ink.top
-          lane.top = Math.max(lane.top, -top)
-          regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
-        }
+        const y = (top - nativeStyle.music * 0.12) - ink.bottom
+        top = y + ink.top
+        lane.top = Math.max(lane.top, -top)
+        regions.push({ lane: lane.id, left: ink.left, right: ink.right, top: -top })
         return `<g transform="translate(0 ${n(y)})">${raw}</g>`
       }
       system.decorationLayout ??= []
-      if (rightAligned && system.numericGeometry && !measureNumbers) {
-        let svg: string | undefined
-        system.decorationLayout.push({ lane: lane.id, measureNumber: true, hidden: true,
-          get svg() { return svg ??= draw() } })
-      } else system.decorationLayout.push({ lane: lane.id, svg: draw(), measureNumber: rightAligned,
-        ...(rightAligned && !measureNumbers ? { hidden: true } : {}) })
+      system.decorationLayout.push({ lane: lane.id, svg: draw() })
     }
     if ((measure.source.repeatCount ?? 2) > 2) place(`×${measure.source.repeatCount}`, nativeStyle.repeatCount, { 'data-m3n-role': 'repeat-count' })
     const first = glyphs[0]

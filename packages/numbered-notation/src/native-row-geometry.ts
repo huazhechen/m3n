@@ -25,7 +25,7 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
   const boundaryInk = (system.decorationLayout ?? []).filter(isNativeMeasureNumber)
     .flatMap(item => {
       const y = system.lanes.find(lane => lane.id === item.lane)!.y
-      return nativeSvgPieces(item.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
+      return (item.ink ?? nativeSvgPieces(item.svg, measurer)).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
     })
   return { resolvedInk: true, height, baseline: system.lanes[0]?.y ?? 0, core, ink, boundaryInk,
     coreGapBefore: system.measures[0]?.coreGapBefore,

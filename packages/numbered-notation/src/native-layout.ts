@@ -39,7 +39,8 @@ import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSystemCore } from './native-core.js'
-import { scoreCorePageLowerBound } from './layout/height-feasibility.js'
+import { scoreCorePageLowerBound, scorePageFeasibility } from './layout/height-feasibility.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 
 export type { NativeRenderOptions, NativeRelation, NativeLane, NativeSystem, NativePage, NativeLayout } from './native-layout-model.js'
 import type { NativeRenderOptions, NativeRelation, NativeSystem, NativeLayout } from './native-layout-model.js'
@@ -58,7 +59,7 @@ type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | '
   columns: Array<{ minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number }>
 }>
 type NativeLayoutPreparation = { canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
-  horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
+  feasibilityWitnesses?:Map<string,{ends?:number[]}>; horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
   arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
 }
 
@@ -108,6 +109,14 @@ export function layoutNativeScore(document: ScoreDocument, supplied: NativeRende
     const fontCannotWin=minimumQuality!==undefined && 1/(1+scoreNumberedFontCost(supplied.width))<minimumQuality
     if(trials.every(({trial})=>trial.pageFloor>maximumPageCount || fontCannotWin && trial.pageFloor>=maximumPageCount))
       throw Object.assign(new Error('Page and font lower bounds cannot improve the winner'),{code:'M3N_WIDTH_QUALITY_PRUNED'})
+    const ceiling=maximumPageCount-(fontCannotWin ? 1 : 0)
+    const since=timings ? performance.now() : 0
+    const impossible=trials.every(({trial})=>trial.canFitPageCeiling?.(ceiling)===false)
+    if(timings)timings.pageFeasibilityMs=(timings.pageFeasibilityMs ?? 0)+performance.now()-since
+    if(impossible) {
+      if(timings)timings.pageFeasibilityPrunes=(timings.pageFeasibilityPrunes ?? 0)+1
+      throw Object.assign(new Error('Optimistic row graph cannot reach the incumbent page ceiling'),{code:'M3N_WIDTH_QUALITY_PRUNED'})
+    }
   }
   trials.sort((a, b) => a.trial.tierCost - b.trial.tierCost || b.minimumNoteGap - a.minimumNoteGap)
   let selected: NativeLayout | undefined, selectedCost = Infinity
@@ -489,23 +498,36 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     // legal partitions, independent of either tier's chosen horizontal plan.
     return pageFloor=Math.max(1,Math.ceil((suffix[0]!-1e-6)/(Math.floor(options.width*A4_CONTENT_ASPECT_RATIO)-2*margin+gap)))
   }
-  return { get pageFloor(){return options.numericLayout ? minimumPages() : 1}, pageFloorFor:options.numericLayout ? (ends,headers)=>{
+  const fixedCoreLowerBound=(start:number,end:number)=>{
+    const measures=plannedFragments.slice(start,end)
+    // Bound the weighted static core over every possible ending width,
+    // rather than retaining only the shallowest individual note. Search
+    // widths share the same interval; wider public API calls get a new key.
+    const maximumWidth=Math.max(scoreLayoutConfig.pageWidth.unit*scoreLayoutConfig.pageWidth.maximumMultiple,options.width)-2*margin-arcLeading(measures)
+    const key=measures.every(measure=>!measure.continuation && measure.lastFragment) ? `${horizontalKey}:${maximumWidth}:${boundKey(start,end)}` : undefined
+    if(preparation)preparation.fixedCoreBounds ??= new Map()
+    let block=key===undefined ? undefined : preparation?.fixedCoreBounds?.get(key)
+    if(!block) {
+      block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:maximumWidth},templates)
+      if(key!==undefined)preparation?.fixedCoreBounds?.set(key,block)
+    }
+    return block
+  }
+  return { get pageFloor(){return options.numericLayout ? minimumPages() : 1},
+    canFitPageCeiling: options.numericLayout ? ceiling=>{
+      const headers=header.blocks.map(block=>({height:block.height,ink:nativeSvgPieces(block.svg,measurer)}))
+      preparation ??= {header:new Map()}
+      preparation.feasibilityWitnesses ??= new Map()
+      let witnessCache=preparation.feasibilityWitnesses.get(horizontalKey)
+      if(!witnessCache)preparation.feasibilityWitnesses.set(horizontalKey,witnessCache={})
+      return scorePageFeasibility(linePlan.candidates,fixedCoreLowerBound,headers,{
+        pageHeight:Math.floor(options.width*A4_CONTENT_ASPECT_RATIO),margin,
+        gap:nativeCoreGap(document),headerGap:nativeCoreGap(document)*.8,witnessCache,
+      })(linePlan.candidates,ceiling)
+    } : undefined,
+    pageFloorFor:options.numericLayout ? (ends,headers)=>{
     let start=0
-    const blocks=ends.map(end=>{
-      const measures=plannedFragments.slice(start,end)
-      // Bound the weighted static core over every possible ending width,
-      // rather than retaining only the shallowest individual note. Search
-      // widths share the same interval; wider public API calls get a new key.
-      const maximumWidth=Math.max(768,options.width)-2*margin-arcLeading(measures)
-      const key=measures.every(measure=>!measure.continuation && measure.lastFragment) ? `${horizontalKey}:${maximumWidth}:${boundKey(start,end)}` : undefined
-      if(preparation)preparation.fixedCoreBounds ??= new Map()
-      let block=key===undefined ? undefined : preparation?.fixedCoreBounds?.get(key)
-      if(!block) {
-        block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:maximumWidth},templates)
-        if(key!==undefined)preparation?.fixedCoreBounds?.set(key,block)
-      }
-      start=end;return block
-    })
+    const blocks=ends.map(end=>{const block=fixedCoreLowerBound(start,end);start=end;return block})
     return scoreCorePageLowerBound([...headers,...blocks],{pageHeight:Math.floor(options.width*A4_CONTENT_ASPECT_RATIO),margin,
       gap:nativeCoreGap(document),headerGap:nativeCoreGap(document)*.8})
   } : undefined, get endingReference(){return endingBoundsPrepared ? {required:(at:number)=>referenceSections.has(sectionIds[at]!),section:(at:number)=>sectionIds[at]!,gap:gapFor,

@@ -112,3 +112,28 @@ it('resolves local hairpin geometry before falling back to partition enumeration
   expect(timings.numericEndingBoundsMs).toBeGreaterThan(0)
   expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
 }, 30000)
+
+it('uses the painted number and white frame as numeric row-edge geometry, including page-edge clamps', async () => {
+  const { placeNativeBarLabels } = await import('./native-system-labels.js')
+  const { nativeSvgPieces } = await import('./native-ink.js')
+  const measurer = fontDesignMeasurer()!
+  const layout = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), {width:528,paged:true,textMeasurer:measurer,numericLayout:true})
+  const system = layout.systems[0]!, measure = system.measures[0]!
+  for (const number of [1, 12, 123, 9999]) for (const width of [128, 528, 720])
+    for (const x of [-2.1234567, 3.1234567, width - .1234567, width + 5.1234567]) {
+      measure.number = number; measure.barX = x
+      system.decorationLayout = []
+      placeNativeBarLabels(system, [], measurer, false, width)
+      const label = system.decorationLayout.find(label => label.measureNumber)!
+      expect(label.ink).toEqual(nativeSvgPieces(label.svg, measurer))
+    }
+})
+
+it('rejects a width by the full optimistic row graph before engraving either spacing tier',()=>{
+  const score=parseM3NDocument(readFileSync(new URL('../../../src/scores/feng_01.m3n',import.meta.url),'utf8'))
+  const timings:Record<string,number>={}
+  expect(()=>layoutNativeScore(score,{width:696,paged:true,pageMargin:0,numericLayout:true,textMeasurer:fontDesignMeasurer()},timings,.7,2))
+    .toThrow('Optimistic row graph cannot reach the incumbent page ceiling')
+  expect(timings.pageFeasibilityPrunes).toBe(1)
+  expect(timings.completedLayoutTrials).toBeUndefined()
+})
