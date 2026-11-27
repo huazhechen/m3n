@@ -99,8 +99,8 @@ const staff = {
   headingLeftInset: 0.5, edgeGap: 2, sectionGap: 12, pageInset: 2,
   minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
   groupSpacingRatio: 1,
-  minimumNoteGap: 1.2,
-  noteGapCandidates: [1.2, 2.4] as readonly number[],
+  minimumNoteGap: 1.0,
+  noteGapCandidates: [1.0, 2.4] as readonly number[],
   // 引擎坐标变换保持不变；音乐附属距离按既有28px设计比例随music变化。
   // 歌词、文字占宽及曲线包络分片精度继续使用独立尺寸。
   engine: {
