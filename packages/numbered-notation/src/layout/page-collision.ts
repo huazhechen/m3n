@@ -24,7 +24,13 @@ export function scorePageCollision(upper: ScoreCollisionInk, lower: ScoreCollisi
     return distance
   }
   let edge = -Infinity
-  if (lower.edgeInk?.length) edge = separation(boundaryPieces(upper), edgePieces(lower.edgeInk, true))
+  if (lower.edgeInk?.length) {
+    const fixed = edgePieces(lower.edgeInk, true)
+    // The maximum over a union is the maximum of each part. Reuse ordinary
+    // ink's contour instead of copying and sorting a second complete row.
+    edge = separation(upper.ink, fixed)
+    if (upper.boundaryInk?.length) edge = Math.max(edge, separation(boundaryPieces(upper.boundaryInk), fixed))
+  }
   if (upper.edgeInk?.length) edge = Math.max(edge, separation(edgePieces(upper.edgeInk, false), lower.ink))
   return { collision: separation(upper.ink, lower.ink), edge }
 }
@@ -34,21 +40,13 @@ export function scorePageDistance(pair: ScoreCollision, localGap: number, coreDi
   return Math.max(coreDistance, pair.collision + localGap * scoreLayoutConfig.page.collisionGapRatio, pair.edge)
 }
 
-const boundaryCache = new WeakMap<readonly ScoreInk[], WeakMap<readonly ScoreInk[], ScoreInk[]>>()
-const emptyBoundary: readonly ScoreInk[] = []
-function boundaryPieces(shape: ScoreCollisionInk): ScoreInk[] {
-  const boundary = shape.boundaryInk ?? emptyBoundary
-  const reusable = hasCachedScoreInkSeparation(shape.ink) && (!boundary.length || hasCachedScoreInkSeparation(boundary))
-  let variants = reusable ? boundaryCache.get(shape.ink) : undefined
-  const saved = variants?.get(boundary)
+const boundaryCache = new WeakMap<readonly ScoreInk[], ScoreInk[]>()
+function boundaryPieces(ink: readonly ScoreInk[]): ScoreInk[] {
+  const reusable = hasCachedScoreInkSeparation(ink)
+  const saved = reusable ? boundaryCache.get(ink) : undefined
   if (saved) return saved
-  // Boundary ink may include the ordinary ink by identity. Repeated copies
-  // cannot strengthen a maximum-separation constraint.
-  const pieces = [...new Set([...shape.ink, ...boundary])].sort((a,b)=>a.left-b.left)
-  if (reusable) {
-    if (!variants) { variants = new WeakMap(); boundaryCache.set(shape.ink, variants) }
-    variants.set(boundary, pieces); cacheScoreInkSeparation(pieces)
-  }
+  const pieces = [...ink].sort((a,b)=>a.left-b.left)
+  if (reusable) { boundaryCache.set(ink, pieces); cacheScoreInkSeparation(pieces) }
   return pieces
 }
 const edgeCache = new WeakMap<readonly (ScoreInk & { gap: number })[], { top?: ScoreInk[]; bottom?: ScoreInk[] }>()

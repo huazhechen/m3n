@@ -52,3 +52,33 @@ it('preserves infinite header spans and fresh results for mutable public arrays'
  row[1]!.top=-30
  expect(sortedScoreInkSeparation(header,row)).toBe(60)
 })
+
+
+it('preserves late intersections behind expired leaders and ignores disjoint tails', () => {
+  const tail = Array.from({ length: 200 }, (_, i) => ({
+    left: 1000 + i * 3, right: 1002 + i * 3, top: -10000, bottom: 10000,
+  }))
+  const fixed = [
+    { left: 0, right: 100, top: -10, bottom: 20 },
+    { left: 1, right: 2, top: -100, bottom: 200 },
+  ]
+  for (const last of [2, 99, 100, 101]) compare(fixed, [
+    { left: last, right: last + 1, top: 0, bottom: 5 }, ...tail,
+  ])
+  compare(fixed, tail)
+  compare(tail, fixed)
+})
+
+
+it('matches exhaustive single-interval queries with finite and unbounded spans', () => {
+  const row = [
+    { left: -20, right: -10, top: -12, bottom: 30 },
+    { left: 0, right: 10, top: -8, bottom: 17 },
+    { left: 5, right: 5, top: -1000, bottom: 1000 },
+    { left: 10, right: 20, top: -15, bottom: 25 },
+  ]
+  for (const [left, right] of [[-Infinity, Infinity], [-10, 0], [0, 0], [5, 12], [20, 30]]) {
+    const single = [{ left: left!, right: right!, top: -4, bottom: 11 }]
+    compare(single, row); compare(row, single); compare(single, single)
+  }
+})

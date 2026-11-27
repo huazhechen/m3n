@@ -4,12 +4,26 @@ import type { ScoreInk } from './geometry.js'
  * are sorted by left edge. Sweep starts, discarding expired heap leaders;
  * only the highest upper bottom / lowest lower top can constrain placement. */
 export function sortedScoreInkSeparation(upper: readonly ScoreInk[], lower: readonly ScoreInk[]): number {
+  if (!upper.length || !lower.length) return -Infinity
   const a = contours.get(upper), b = contours.get(lower)
   if (a && b) {
     a.bottomUses++; b.topUses++
     // One-off pairs are cheaper as a direct sweep. Compile a direction's
     // exact contour only when it is reused against another neighbour.
     if (a.bottomUses > 1 && b.topUses > 1) return contourSeparation(contour(upper, false), contour(lower, true))
+  }
+  // A header or a single fixed rule needs no active heap at all. Keep the
+  // same strict overlap test, including infinite spans and zero-width ink.
+  if (upper.length === 1 || lower.length === 1) {
+    const singleUpper = upper.length === 1, fixed = singleUpper ? upper[0]! : lower[0]!
+    if (fixed.right <= fixed.left) return -Infinity
+    let distance = -Infinity
+    for (const piece of singleUpper ? lower : upper) {
+      if (piece.left >= fixed.right) break
+      if (piece.right <= piece.left || piece.right <= fixed.left) continue
+      distance = Math.max(distance, singleUpper ? fixed.bottom - piece.top : piece.bottom - fixed.top)
+    }
+    return distance
   }
   const high: ScoreInk[] = [], low: ScoreInk[] = []
   const priority = (ink: ScoreInk, highest: boolean) => highest ? ink.bottom : -ink.top
@@ -44,13 +58,17 @@ export function sortedScoreInkSeparation(upper: readonly ScoreInk[], lower: read
       if (ink.right <= ink.left) continue
       discardExpired(low, ink.left, false)
       if (low.length) distance = Math.max(distance, ink.bottom - low[0]!.top)
-      push(high, ink, true)
+      else if (j === lower.length) break
+      // Once every lower interval has started, only its active heap can
+      // intersect later upper ink. No future lower start can query this heap.
+      if (j < lower.length) push(high, ink, true)
     } else {
       const ink = lower[j++]!
       if (ink.right <= ink.left) continue
       discardExpired(high, ink.left, true)
       if (high.length) distance = Math.max(distance, high[0]!.bottom - ink.top)
-      push(low, ink, false)
+      else if (i === upper.length) break
+      if (i < upper.length) push(low, ink, false)
     }
   }
   return distance
