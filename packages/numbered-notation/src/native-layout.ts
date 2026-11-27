@@ -70,7 +70,7 @@ type NativeLayoutPreparation = { canvas?:CanvasRenderingContext2D; runtimeMeasur
 export class NativeLayoutTask {
   private readonly scores = new WeakMap<ScoreDocument, Map<string, {
     cache: NumberedTextMeasurementCache; revision: number; measurer?: TextMeasurer
-    preparation: NativeLayoutPreparation; headers: Map<string, NativeHeaderPreparation>
+    preparation: NativeLayoutPreparation; headers: Map<string, NativeHeaderPreparation>; width?: number
   }>>()
   preparationFor(document: ScoreDocument, options: NativeRenderOptions, cache: NumberedTextMeasurementCache): NativeLayoutPreparation {
     let variants = this.scores.get(document)
@@ -81,7 +81,16 @@ export class NativeLayoutTask {
       entry = { cache, revision: cache.revision, measurer: options.textMeasurer, preparation: { header: new Map() }, headers: new Map() }
       variants.set(key, entry)
     }
-    const headerKey = JSON.stringify([Math.max(nativeStyle.minimumWidth, Math.round(options.width)), options.pageMargin ?? nativeStyle.defaultPageMargin])
+    const width = Math.max(nativeStyle.minimumWidth, Math.round(options.width))
+    if (entry.width !== width) {
+      // These results contain the current width's candidate graph / gaps.
+      // Keep only that width; completed layouts own their geometry, while a
+      // revisited width can rebuild from the immutable horizontal preparation.
+      entry.preparation.lineGraphs?.clear()
+      entry.preparation.unitGaps?.clear()
+      entry.width = width
+    }
+    const headerKey = JSON.stringify([width, options.pageMargin ?? nativeStyle.defaultPageMargin])
     let header = entry.headers.get(headerKey)
     if (!header) { header = new Map(); entry.headers.set(headerKey, header) }
     entry.preparation.header = header

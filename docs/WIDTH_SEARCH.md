@@ -82,4 +82,6 @@
 
 固定附件也可使用完整包络安全跳过远行扫描，证明及后续全量实测见[固定附件碰撞上界](WIDTH_COLLISION_ENVELOPE_PERFORMANCE.md)。
 
-当前7px五线谱规则下的不可变图元复用、分页图元直接收集及两种谱式全量对照，见[墨迹复用性能](WIDTH_INK_REUSE_PERFORMANCE.md)。
+此前7px五线谱规则下的不可变图元复用、分页图元直接收集及两种谱式全量对照，见[墨迹复用性能](WIDTH_INK_REUSE_PERFORMANCE.md)。
+
+切换宽度时释放简谱宽度相关缓存的内存及耗时对照，以及6px五线谱规则下的新基线，见[宽度缓存生命周期](WIDTH_CACHE_LIFETIME_PERFORMANCE.md)。

@@ -10,7 +10,7 @@ afterEach(() => vi.unstubAllGlobals())
 it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('shares unplaced preparation across widths and settings without sharing placement: %s', file => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
   const before = structuredClone(document), layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
-  const variants = [{}, { fixedDo: true }, { includeBass: false }, { transpose: 5 }, { tempoScale: 1.2 }, { measureNumbers: true, equalMeasures: true }]
+  const variants = [{}, { numericLayout: true }, { fixedDo: true }, { includeBass: false }, { transpose: 5 }, { tempoScale: 1.2 }, { measureNumbers: true, equalMeasures: true }]
   for (const variant of variants) for (const width of [480, 720, 540, 640, 480]) {
     const options = { width, pageMargin: 0, paged: true, ...variant }
     const timings: Record<string, number> = {}
