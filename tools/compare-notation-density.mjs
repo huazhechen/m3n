@@ -6,7 +6,7 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
 // Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
-// Keep the existing height ceilings; musical size is calibrated to 24px em / 6px spaces.
+// Keep the existing height ceilings; musical size is calibrated to 26px em / 6.5px spaces.
 // lyric/music sizes, ink audits and the numbered optimal-width gate stay fixed.
 const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')
@@ -20,7 +20,8 @@ const densityLimits = {
   flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.44 },
   mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.43 },
   guo_huo_01: { staffHeight: 1130, staffRows: 11, numberedHeight: 760, numberedRows: 9, heightRatio: 1.57 },
-  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 1 } },
+  // 6.5px staff spaces with 1.2/2.4 minimum tiers select two rows at 640px.
+  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 2 } },
   ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.49 },
   ni_shi_wo_xin_ai_de_gu_niang_01: { staffHeight: 1300, staffRows: 10, numberedHeight: 1060, numberedRows: 9, heightRatio: 1.26 },
 }
@@ -134,7 +135,7 @@ if (process.argv.includes('--bundle-only')) {
           if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
           if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
           // A density improvement must retain the calibrated musical and lyric sizes.
-          for (const [key, expected] of Object.entries({ staffFrameMm: 6.975, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
+          for (const [key, expected] of Object.entries({ staffFrameMm: 7.55625, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
             if (Math.abs(result.readability[key] - expected * 640 / width) > .001) failures.push(key)
           }
           if (failures.length) {
