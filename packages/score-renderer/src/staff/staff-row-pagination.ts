@@ -10,10 +10,10 @@ export function staffRowBlock(system: StaffSystem, index: number, gap: number): 
   const key = `${index === 0}:${gap}`
   let variants = rowBlocks.get(system)
   const saved = variants?.get(key)
-  if (saved && saved.ink === system.spacingPieces && saved.core === system.core && saved.boundaryInk === system.pieces) return saved
+  if (saved && saved.ink === system.spacingPieces && saved.core === system.core && saved.boundaryInk === (system.boundaryPieces ?? system.pieces)) return saved
   system.materializeInk?.()
   const block: ScorePageBlock = { resolvedInk: true, height: system.ink.bottom - system.ink.top, core: system.core,
-    ink: system.spacingPieces, boundaryInk: system.pieces, edgeInk: system.edgePieces,
+    ink: system.spacingPieces, boundaryInk: system.boundaryPieces ?? system.pieces, edgeInk: system.edgePieces,
     coreGapScale: system.hasLyrics ? scoreLyricGapScale(gap) : 1,
     ...(index === 0 ? { coreGapBefore: 0 } : {}),
     gapBefore: index > 0 && system.section ? scoreLayoutConfig.staff.sectionGap : 0 }

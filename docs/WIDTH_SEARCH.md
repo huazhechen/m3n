@@ -91,3 +91,5 @@
 简谱将横向度量并入未放置投影、避免复制后再次回填的全量对照，见[未放置度量投影复用](WIDTH_MEASURED_PROJECTION_PERFORMANCE.md)。
 
 五线谱候选字形的临时数组消除、精确缩放结果复用及全量复测见[字形墨迹追加性能](WIDTH_GLYPH_APPEND_PERFORMANCE.md)。
+
+五线谱适配器保留完整图元，将额外页边界通道缩减为谱号、小节号等独立图元；表示等价性与全量复测见[分页边界图元去重](WIDTH_BOUNDARY_EXTRA_PERFORMANCE.md)。

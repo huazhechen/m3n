@@ -7,6 +7,7 @@ import { prepareStaffScore, prepareStaffMeasurementTask } from './staff-score.js
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { xml } from './layout-svg.js'
+import { paginateStaffRows, staffRowBlock } from './staff-row-pagination.js'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 const source = '{title=测量任务}{key=G}{4/4}\nN: 1# (2 3) 4 5 | ([6 7 1e:2]) 2e 3e 4e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\nL: 春夏秋冬 | 山川天地 |'
@@ -89,4 +90,24 @@ it('breaks rapid groups using shared pair minima without shrinking the music fon
   const staff = await prepareStaffScore(score, { width: 640 })
   expect(staff.layoutInfo().lines.map(line => line.measures.length)).toEqual([2, 2, 2, 2])
   expect(scoreLayoutConfig.staff.music).toBe(size)
+})
+
+
+it('preserves exact pagination when page-boundary ink contains only excluded symbols', async () => {
+  const score = analyzeM3N(source).score, task = await prepareStaffMeasurementTask(score)
+  for (const width of [528, 640]) for (const numbers of [false, true]) {
+    const lines = planStaffLines(task.document, width, false, task.measure, .6)
+    const systems = engraveStaffSystems(task.document, lines, width, task.measure, .6, numbers, 1, task.preparation)
+    for (const system of systems) {
+      const ordinary = new Set(system.spacingPieces)
+      expect(system.boundaryPieces).toEqual(system.pieces.filter(piece => !ordinary.has(piece)))
+      expect(staffRowBlock(system, 0, 40).boundaryInk!.length).toBeLessThan(system.pieces.length)
+    }
+    const legacy = systems.map(system => ({ ...system, boundaryPieces: undefined }))
+    for (const height of [300, 900, Infinity]) for (const maximum of [40, 50]) {
+      const summarize = (rows: typeof systems) => paginateStaffRows(rows, height, 50, 40, Number.isFinite(height), maximum)
+        .map(page => ({ rows: page.systems.length, ys: page.ys, height: page.height, gap: page.gap }))
+      expect(summarize(systems)).toEqual(summarize(legacy))
+    }
+  }
 })

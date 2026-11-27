@@ -18,7 +18,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
+export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; boundaryPieces?: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -431,17 +431,20 @@ export function arrangeStaffSystem(
     section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
   const materialize = () => {
     const partition = geometry.partitionWithoutClasses(node, ['mNum', 'staff-clef'])
-    const pieces: Ink[] = [], spacingPieces: Ink[] = []
+    // The shared paginator already sees ordinary music ink. Only symbols
+    // excluded from row spacing need the separate page-boundary channel.
+    const pieces: Ink[] = [], spacingPieces: Ink[] = [], boundaryPieces: Ink[] = []
     let spacingIndex = 0
     for (const p of partition.all) {
       const scaled = { left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }
       pieces.push(scaled)
       if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
+      else boundaryPieces.push(scaled)
     }
     const edgePieces = ['staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
       (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
         .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: style.music * .1 })))
-    result.pieces = pieces; result.spacingPieces = spacingPieces; result.edgePieces = edgePieces
+    result.pieces = pieces; result.spacingPieces = spacingPieces; result.boundaryPieces = boundaryPieces; result.edgePieces = edgePieces
     result.ink = union(pieces)
     result.materializeInk = undefined
   }
@@ -457,7 +460,7 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   previous.materializeInk?.(); next.materializeInk?.()
   const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
   const shape = (system: StaffSystem) => ({ ink: system.spacingPieces.slice().sort((a,b)=>a.left-b.left),
-    boundaryInk: system.pieces, edgeInk: system.edgePieces })
+    boundaryInk: system.boundaryPieces ?? system.pieces, edgeInk: system.edgePieces })
   const pair = scorePageCollision(shape(previous), shape(next))
   return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top) + (next.section ? style.sectionGap : 0)
 }
