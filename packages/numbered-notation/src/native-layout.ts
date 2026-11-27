@@ -1,7 +1,7 @@
 import { nativeEndingReferences } from './native-ending-reference.js'
 import { cacheNativeArcObstacles, releaseNativeArcObstacles } from './native-arc.js'
 import { intersectNativeRowBounds } from './native-row-bound.js'
-import { planNativeLinesWithPageCost, createNativePageCostCache } from './native-page-cost-breaking.js'
+import { planNativeLinesWithRefinedPages, measureNativeGreedyPageCeiling } from './native-refined-page-breaking.js'
 import { captureNativeRowHorizontal, restoreNativeRowHorizontal, type NativeRowHorizontal, captureNativeRow, restoreNativeRow, restoreNativeRowRelations, type NativeRowSnapshot } from './native-row-cache.js'
 import { nativeRowGeometry, nativeRowCoreLowerBound, type NativeAvoidance } from './native-row-geometry.js'
 import { scoreLyricGapScale, scoreMaximumCoreGap } from './score-layout-policy.js'
@@ -27,7 +27,7 @@ import { paginateNativeBlocks, prepareNativePagination, type NativePageBlock } f
 import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { splitNativeMeasure } from './native-wrapping.js'
 import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
-import { greedyNativeLines, planNativeLinesWithinPages, nativeLinePlanCost, improveFeasibleNativeLines } from './native-page-line-breaking.js'
+import { greedyNativeLines, planNativeLinesWithinPages } from './native-page-line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { cacheNativeHorizontal, type NativeHorizontalTemplates, measureNativeHorizontal, nativeMeasureHorizontalRanges, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
@@ -380,23 +380,22 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
   let optimumValue: NativeLayout | undefined
   try { optimumValue=trial.complete(rowCache) }
   catch(error){if(!(error instanceof Error && error.message.includes('单个谱行')))throw error}
-  // One page is already below every possible greedy ceiling. No second
-  // engraving is needed to prove the unconstrained optimum remains valid.
-  if(optimumValue?.pages.length===1)return optimumValue
-  if(optimumValue && trial.pageFloorFor) {
-    const started=timings ? performance.now() : 0
-    const floor=trial.pageFloorFor(greedyEnds,optimumValue.verticalBlocks.slice(0,optimumValue.headerBlocks.length))
-    if(timings)timings.greedyPageFloorMs=(timings.greedyPageFloorMs ?? 0)+performance.now()-started
-    if(floor>=optimumValue.pages.length) {
-      if(timings)timings.greedyPageFloorPrunes=(timings.greedyPageFloorPrunes ?? 0)+1
-      return optimumValue
-    }
-  }
   if(optimumValue)plans.set(trial.ends.join(':'),{ends:trial.ends,pages:optimumValue.pages.length,value:optimumValue})
   const started = timings ? performance.now() : 0
   let greedy: ReturnType<typeof measure>
-  try { greedy = measure(greedyEnds) }
-  catch (error) {
+  try {
+    greedy = measureNativeGreedyPageCeiling(trial.candidates,
+      optimumValue ? { ends: trial.ends, pages: optimumValue.pages.length, value: optimumValue } : undefined, measure,
+      optimumValue && trial.pageFloorFor ? ends => {
+        const since = timings ? performance.now() : 0
+        const floor = trial.pageFloorFor!(ends, optimumValue!.verticalBlocks.slice(0, optimumValue!.headerBlocks.length))
+        if (timings) {
+          timings.greedyPageFloorMs = (timings.greedyPageFloorMs ?? 0) + performance.now() - since
+          if (floor >= optimumValue!.pages.length) timings.greedyPageFloorPrunes = (timings.greedyPageFloorPrunes ?? 0) + 1
+        }
+        return floor
+      } : undefined)
+  } catch (error) {
     if (error instanceof Error && error.message.includes('单个谱行')) return trial.complete(rowCache)
     throw error
   }
@@ -407,77 +406,7 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
     console.log('numeric-tier '+JSON.stringify({width:supplied.width,gap:supplied.minimumNoteGap,greedy:[greedy.pages,greedy.ends.length],optimum:[optimum.pages,optimum.ends.length]}))
   if (optimum.pages <= greedy.pages) return optimum.value
   exactPageCeiling = greedy.pages
-  let feasibleWitness: { ends: number[]; pages: number; value: NativeLayout } | undefined
-  const pageCostCache=createNativePageCostCache()
-  const rowsToResolve=new Set<string>()
-  const certifiedCosts=new WeakMap<object,number>()
-  const unconstrainedCosts=new WeakMap<object,number>()
-  const solveRestricted = supplied.numericLayout && trial.coreLowerBound ? (restricted: readonly (readonly NativeLineCandidate[])[], maximumCost: number, knownUnconstrained?: number[]) => {
-    const started=timings ? performance.now() : 0
-    const certified=certifiedCosts.get(restricted)
-    if(certified!==undefined && certified>maximumCost+1e-12)return undefined
-    let unconstrainedCost=unconstrainedCosts.get(restricted)
-    if(unconstrainedCost===undefined) {
-      const unconstrained=knownUnconstrained ?? planNativeLines(restricted,undefined,maximumCost)
-      if(!unconstrained) {
-        if(timings)timings.numericPageHorizontalPrunes=(timings.numericPageHorizontalPrunes ?? 0)+1
-        return undefined
-      }
-      unconstrainedCost=nativeLinePlanCost(restricted,unconstrained)
-      unconstrainedCosts.set(restricted,unconstrainedCost)
-    }
-    // Even perfect pagination cannot improve the unconstrained horizontal
-    // optimum. Reject these branches before preparing reference/height bounds.
-    if(unconstrainedCost>maximumCost+1e-12) {
-      if(timings)timings.numericPageHorizontalPrunes=(timings.numericPageHorizontalPrunes ?? 0)+1
-      return undefined
-    }
-    trial.restrictBounds?.(restricted)
-    let maximum=Math.min(maximumCost,Math.max(unconstrainedCost,
-      certified===undefined ? 0 : certified+.05))
-    let result:number[]|undefined
-    for(;;) {
-    result=planNativeLinesWithPageCost(restricted,(start,end,previousStart,reference)=>trial.coreLowerBound!(start,end,rowCache,previousStart,reference),
-      greedy.value.verticalBlocks.slice(0,greedy.value.headerBlocks.length),{
-        pageHeight:Math.floor(supplied.width*A4_CONTENT_ASPECT_RATIO),margin:greedy.value.margin,
-        gap:nativeCoreGap(document),headerGap:nativeCoreGap(document)*.8,ratio:.3,wholeRows:supplied.avoidance==='row',
-        ceiling:greedy.pages,maximumCost:maximum,reference:trial.endingReference,cache:pageCostCache,rowsToResolve},timings)
-    // A relaxed optimum is a lower bound on every truly feasible plan, even
-    // after later geometry refinements. Reuse that proof instead of restarting
-    // each solve at the original unconstrained cost.
-    certifiedCosts.set(restricted,Math.max(certifiedCosts.get(restricted) ?? 0,
-      result ? nativeLinePlanCost(restricted,result) : maximum))
-    if(result || maximum>=maximumCost)break
-    maximum=Math.min(maximumCost,maximum*1.25+.05)
-    }
-    if(timings) timings.numericPageCostMs=(timings.numericPageCostMs ?? 0)+performance.now()-started
-    return result
-  } : undefined
-  if(solveRestricted){
-
-    // A feasible optimum of the optimistic model proves the true optimum.
-    // Otherwise learn its resolved rows and tighten the model before branching.
-    for(;;){
-      const revision=rowCache?.coreRevision ?? 0
-      rowsToResolve.clear()
-      const witness=solveRestricted(trial.candidates,nativeLinePlanCost(trial.candidates,greedy.ends))
-      if(!witness) throw new Error('Numerical page lower bound rejected the known feasible greedy plan')
-      try {
-        const measured=measure(witness)
-        if(measured.pages<=greedy.pages)return measured.value
-
-      } catch(error){if((error as {code?:string}).code!=='M3N_PAGE_BOUND_REJECTED')throw error}
-      if(rowCache && trial.tightenRowBounds)trial.tightenRowBounds(rowCache,rowsToResolve)
-      if((rowCache?.coreRevision ?? 0)===revision)break
-    }
-    const balanceStarted=timings ? performance.now() : 0
-    feasibleWitness=improveFeasibleNativeLines(trial.candidates,greedy,ends=>{
-      try{return measure(ends)}catch(error){if((error as {code?:string}).code==='M3N_PAGE_BOUND_REJECTED')return {pages:Infinity};throw error}
-    },timings)
-    if(timings)timings.numericBalanceMs=(timings.numericBalanceMs ?? 0)+performance.now()-balanceStarted
-
-  }
-  return planNativeLinesWithinPages(trial.candidates, greedy, optimum, ends => {
+  const evaluate = (ends: number[]) => {
     try {
       const measured = measure(ends)
       return { pages: measured.pages, value: measured.value }
@@ -487,7 +416,18 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
       if (error instanceof Error && error.message.includes('单个谱行')) return { pages: Infinity }
       throw error
     }
-  }, timings, undefined, ()=>feasibleWitness, solveRestricted).value
+  }
+  if (supplied.numericLayout && trial.coreLowerBound) return planNativeLinesWithRefinedPages(trial.candidates, greedy, optimum, evaluate, {
+    blockFor: (start, end, previousStart, reference) => trial.coreLowerBound!(start, end, rowCache, previousStart, reference),
+    headers: greedy.value.verticalBlocks.slice(0, greedy.value.headerBlocks.length),
+    options: { pageHeight: Math.floor(supplied.width * A4_CONTENT_ASPECT_RATIO), margin: greedy.value.margin,
+      gap: nativeCoreGap(document), headerGap: nativeCoreGap(document) * .8, ratio: .3, wholeRows: supplied.avoidance === 'row' },
+    reference: () => trial.endingReference,
+    restrict: trial.restrictBounds,
+    revision: () => rowCache?.coreRevision ?? 0,
+    tighten: rows => { if (rowCache) trial.tightenRowBounds?.(rowCache, rows) },
+  }, timings).value
+  return planNativeLinesWithinPages(trial.candidates, greedy, optimum, evaluate, timings).value
 }
 
 function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>, preparation?: NativeLayoutPreparation, endsOverride?: readonly number[], heightProbe = false, endingMode?: 'full' | 'inherited', onlyRow?:number): NativeGapTrial {
@@ -914,7 +854,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       if(preparation)preparation.fixedCoreBounds ??= new Map()
       let block=key===undefined ? undefined : preparation?.fixedCoreBounds?.get(key)
       if(!block) {
-        block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:maximumWidth})
+        block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:maximumWidth},templates)
         if(key!==undefined)preparation?.fixedCoreBounds?.set(key,block)
       }
       start=end;return block
@@ -970,7 +910,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const key=boundKey(start,end)
     const pair=previousStart===undefined ? undefined : cache?.endingPairs?.get(key)?.get(previousStart)
     if(pair) {
-      if(options.equalMeasures)return pair.lower
+      if(options.equalMeasures)return pair.inherited
       const reference=references?.[start],gap=gapFor(start,end)
       if(exactReference!==undefined && referenceSections.has(sectionIds[start]!)) return !options.equalMeasures && gap!==undefined && gap<=exactReference*1.5 ? pair.full : pair.inherited
       if(reference && gap!==undefined && !options.equalMeasures) {
@@ -996,7 +936,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     let bound = foundationBounds.get(key)
     if (!bound) {
       const measures=plannedFragments.slice(start,end)
-      bound = nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:available-arcLeading(measures)})
+      bound = nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:available-arcLeading(measures)},templates)
       foundationBounds.set(key,bound)
     }
     return bound

@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, greedyScoreLines, planScoreLinesWithinPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { prepareStaffLineGraph, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -13,6 +13,7 @@ import { compareStaffAvoidance } from './staff-avoidance-comparison.js'
 import { staffGlyphMetrics } from './staff-music-font.js'
 import { staffMusicCentre, staffHeaderBlock } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
+import { staffPageCostModel } from './staff-page-model.js'
 
 const ns = 'http://www.w3.org/2000/svg'
 export type StaffSettings = {
@@ -190,25 +191,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }
       }
       const optimum = evaluate(planScoreLinesGlobally(graph.candidates))
-      const greedyEnds = greedyScoreLines(graph.candidates)
-      // A one-page optimum cannot violate the greedy page ceiling.
-      const greedy = optimum.pages === 1 || greedyEnds.every((end, i) => end === optimum.ends[i]) && greedyEnds.length === optimum.ends.length
-        ? optimum : evaluate(greedyEnds)
+      const greedy = measureScoreGreedyPageCeiling(graph.candidates, optimum, evaluate)
       const lowerRows = optimum.pages > greedy.pages ? graph.measured.map(({ measure }) => lowerEnvelopeFor(measure)) : undefined
-      const canFit = lowerRows ? scoreWholeRowFeasibility(graph.candidates,
-        (start, end) => {
-          const members = lowerRows.slice(start, end)
-          const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
-          const envelope = { coreAbove, coreBelow,
-            extraAbove: Math.max(...members.map(e => e.coreAbove + e.extraAbove)) - coreAbove,
-            extraBelow: Math.max(...members.map(e => e.coreBelow + e.extraBelow)) - coreBelow,
-            hasLyrics: members.some(e => e.hasLyrics) }
-          return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: true,
-            coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
-            ...(start ? {} : { coreGapBefore: 0 }) }
-        }, [staffHeaderBlock(header.height)],
-        { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3, primitivePairs: true, wholeRows: true }) : undefined
-      const plan = planScoreLinesWithinPages(graph.candidates, greedy, optimum, evaluate, undefined, canFit)
+      const plan = lowerRows ? planScoreLinesWithRefinedPages(graph.candidates, greedy, optimum, evaluate,
+        staffPageCostModel(graph, rowCache, lowerRows, Boolean(score.equalMeasures), minimumGap, height, header.height)) : optimum
       const lines = linesFor(plan.ends)
       let rowStart = 0
       const finalSystems = lines.map((line, index) => {

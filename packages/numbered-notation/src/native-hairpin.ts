@@ -1,9 +1,11 @@
 import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout.js'
+import type { NativeGlyph } from './native-model.js'
 
 export type NativeHairpinSegment = { system: NativeSystem; left: number; right: number; startHalf: number; endHalf: number; stroke: number }
-const contexts=new WeakMap<readonly NativeSystem[],Map<NativeRelation,NativeHairpinSegment[]>>()
-export function cacheNativeHairpins(systems:readonly NativeSystem[]){contexts.set(systems,new Map())}
+type HairpinContext = { segments: Map<NativeRelation, NativeHairpinSegment[]>; positions?: Map<NativeGlyph, number>; members: WeakMap<NativeSystem, Map<string, NativeGlyph[]>> }
+const contexts=new WeakMap<readonly NativeSystem[],HairpinContext>()
+export function cacheNativeHairpins(systems:readonly NativeSystem[]){contexts.set(systems,{segments:new Map(),members:new WeakMap()})}
 export function releaseNativeHairpins(systems:readonly NativeSystem[]){contexts.delete(systems)}
 
 /** One continuous wedge, cut at the final system boundaries. Opening progress
@@ -11,11 +13,30 @@ export function releaseNativeHairpins(systems:readonly NativeSystem[]){contexts.
  * Endpoints cover the host's measured music, including a single-event range.
  */
 export function nativeHairpinSegments(relation: NativeRelation, systems: readonly NativeSystem[]): NativeHairpinSegment[] {
-  const cache=contexts.get(systems),saved=cache?.get(relation)
+  const context=contexts.get(systems),cache=context?.segments,saved=cache?.get(relation)
   if(saved)return saved
-  const members = (system: NativeSystem) => system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs)).filter(g => g.lane === relation.first.lane)
-  const begin = systems.findIndex(system => members(system).includes(relation.first))
-  const end = systems.findIndex(system => members(system).includes(relation.last))
+  const members = (system: NativeSystem) => {
+    let lanes = context?.members.get(system)
+    if (!lanes) {
+      lanes = new Map<string, NativeGlyph[]>()
+      for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs) {
+        let lane = lanes.get(glyph.lane)
+        if (!lane) { lane = []; lanes.set(glyph.lane, lane) }
+        lane.push(glyph)
+      }
+      context?.members.set(system, lanes)
+    }
+    return lanes.get(relation.first.lane) ?? []
+  }
+  if (context && !context.positions) {
+    context.positions = new Map()
+    systems.forEach((system, index) => {
+      for (const measure of system.measures) for (const column of measure.columns) for (const glyph of column.glyphs)
+        if (!context.positions!.has(glyph)) context.positions!.set(glyph, index)
+    })
+  }
+  const begin = context ? context.positions!.get(relation.first) ?? -1 : systems.findIndex(system => members(system).includes(relation.first))
+  const end = relation.last.lane !== relation.first.lane ? -1 : context ? context.positions!.get(relation.last) ?? -1 : systems.findIndex(system => members(system).includes(relation.last))
   if (begin < 0 || end < begin) return []
   const size = nativeStyle.music, stroke = size*.035
   const ranges = systems.slice(begin,end+1).flatMap((system,index) => {

@@ -13,13 +13,24 @@ export function intersectNativeRowBounds(blocks: readonly NativePageBlock[]): Na
       core:{top:block.core!.top-axis,bottom:block.core!.bottom-axis}}
   })
   const edges=[...new Set(variants.flatMap(v=>v.ink.flatMap(p=>[p.left,p.right])))].sort((a,b)=>a-b)
+  const sweeps=variants.map(variant=>{
+    const ink=variant.ink.filter(piece=>piece.right>piece.left)
+    return {starts:[...ink].sort((a,b)=>a.left-b.left),ends:[...ink].sort((a,b)=>a.right-b.right),
+      start:0,end:0,active:new Set<NativeInk>()}
+  })
   const ink:NativeInk[]=[]
   for(let i=1;i<edges.length;i++) {
     const left=edges[i-1]!,right=edges[i]!
-    const columns=variants.map(v=>v.ink.filter(p=>p.left<right && p.right>left))
-    if(columns.some(p=>!p.length))continue
-    const top=Math.max(...columns.map(p=>Math.min(...p.map(p=>p.top))))
-    const bottom=Math.min(...columns.map(p=>Math.max(...p.map(p=>p.bottom))))
+    let top=-Infinity,bottom=Infinity,covered=true
+    for(const sweep of sweeps) {
+      while(sweep.start<sweep.starts.length && sweep.starts[sweep.start]!.left<=left)sweep.active.add(sweep.starts[sweep.start++]!)
+      while(sweep.end<sweep.ends.length && sweep.ends[sweep.end]!.right<=left)sweep.active.delete(sweep.ends[sweep.end++]!)
+      if(!sweep.active.size){covered=false;continue}
+      let upper=Infinity,lower=-Infinity
+      for(const piece of sweep.active){upper=Math.min(upper,piece.top);lower=Math.max(lower,piece.bottom)}
+      top=Math.max(top,upper);bottom=Math.min(bottom,lower)
+    }
+    if(!covered)continue
     if(bottom<top)continue
     const previous=ink.at(-1)
     if(previous?.right===left && previous.top===top && previous.bottom===bottom)previous.right=right

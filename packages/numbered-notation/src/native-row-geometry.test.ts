@@ -64,6 +64,8 @@ it('numerical annotation bounds match the rendered text and frame', () => {
 it('keeps row-cache output identical to uncached geometry evaluation', async () => {
   const { renderNativePages } = await import('./native-svg.js')
   const { nativeRowCoreLowerBound } = await import('./native-row-geometry.js')
+  const { cacheNativeHorizontal, nativeHorizontalSpacing } = await import('./native-horizontal.js')
+  const templates = new Map()
   const source = readFileSync(new URL('../../../src/works/snail-mushroom-waves.m3n', import.meta.url), 'utf8')
   const document = parseM3NDocument(source)
   const options = {numericLayout:true,width:624,paged:true,pageMargin:0,minimumNoteGap:8}
@@ -77,6 +79,12 @@ it('keeps row-cache output identical to uncached geometry evaluation', async () 
     expect(block.resolvedInk).toBe(true)
     for(const horizontal of [undefined,{minimumNoteGap:8,width:768}]) {
     const lower=nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!,horizontal)
+    if(horizontal) {
+      const context={...horizontal}
+      cacheNativeHorizontal(context,templates)
+      nativeHorizontalSpacing(row.measures,context)
+      expect(nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!,{...horizontal},templates)).toEqual(lower)
+    }
     expect(lower.core!.bottom).toBeLessThanOrEqual(block.core!.bottom-block.baseline!+1e-5)
     expect(lower.core!.top).toBeGreaterThanOrEqual(block.core!.top-block.baseline!-1e-5)
     expect(Math.max(...lower.ink!.map(p=>p.bottom))).toBeLessThanOrEqual(Math.max(...block.ink!.map(p=>p.bottom-block.baseline!))+1e-5)

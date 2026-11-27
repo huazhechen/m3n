@@ -137,9 +137,11 @@ it('reuses compiled pieces only for unchanged ancestor transforms and immutable 
  const first=borrowed.pieces(root),again=borrowed.pieces(root)
  expect(again).toEqual(copied.pieces(root))
  expect(again[0]).toBe(first[0])
+ expect(borrowed.ink(root)).toEqual(copied.ink(root))
  for(const transform of ['translate(8 11)','scale(-2 3)','rotate(30)','matrix(1 .5 .2 1 3 4)']){
   root.attributes.transform=transform
   expect(borrowed.pieces(root)).toEqual(copied.pieces(root))
+  expect(borrowed.ink(root)).toEqual(copied.ink(root))
  }
  const publicPieces=copied.pieces(root)
  publicPieces[0]!.left=-999

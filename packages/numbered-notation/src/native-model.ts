@@ -298,17 +298,43 @@ export function cloneNativeProjection(source: NativeProjection, selected?: Reado
   const glyphs = new Map<NativeGlyph,NativeGlyph>(),copies:NativeGlyph[]=[]
   for(const glyph of source.glyphs) {
     const copy=selected && !selected.has(glyph) && !glyph.instrumental ? glyph : {
-    ...glyph,
+    // All trials use one object shape. Spreading glyphs whose optional
+    // geometry was added in different orders creates many shapes and makes
+    // every later geometry lookup polymorphic as well as slowing the copy.
+    event:glyph.event,id:glyph.id,xmlId:glyph.xmlId,measureId:glyph.measureId,
+    staff:glyph.staff,lane:glyph.lane,slot:glyph.slot,time:glyph.time,beats:glyph.beats,
+    writtenBeats:glyph.writtenBeats,sustain:glyph.sustain,pitches:glyph.pitches,
+    pitchOffsets:glyph.pitchOffsets,graces:glyph.graces,lyrics:glyph.lyrics,
+    lyricBaselines:glyph.lyricBaselines,passes:glyph.passes,marks:glyph.marks,
+    annotations:glyph.annotations,tempoAnnotation:glyph.tempoAnnotation,
+    arpeggioLayout:glyph.arpeggioLayout,annotationLayout:glyph.annotationLayout,
+    inkLeft:glyph.inkLeft,inkRight:glyph.inkRight,musicBottom:glyph.musicBottom,
+    graceLayout:glyph.graceLayout,musicLeft:glyph.musicLeft,musicRight:glyph.musicRight,
+    musicTop:glyph.musicTop,lyricLeft:glyph.lyricLeft,lyricRight:glyph.lyricRight,
+    lyricHyphenEnds:glyph.lyricHyphenEnds,lyricTiers:glyph.lyricTiers,tieTop:glyph.tieTop,
+    coreInk:glyph.coreInk,musicInk:glyph.musicInk,left:glyph.left,right:glyph.right,
+    top:glyph.top,bottom:glyph.bottom,x:glyph.x,y:glyph.y,multiRest:glyph.multiRest,
+    interlude:glyph.interlude,paragraph:glyph.paragraph,instrumental:glyph.instrumental,
+    parenthesisLeft:glyph.parenthesisLeft,parenthesisRight:glyph.parenthesisRight,parenthesisGap:glyph.parenthesisGap,
     controls: glyph.controls.map(control => {
       let copy = controls.get(control)
       if (!copy) { copy = {...control}; controls.set(control,copy) }
       return copy
     }),
     markLayout: glyph.markLayout?.map(mark=>({...mark})),
-    }
+    } satisfies Record<keyof NativeGlyph, unknown>
     glyphs.set(glyph,copy);copies.push(copy)
   }
   return {...source, diagnostics:[...source.diagnostics], glyphs:copies,
-    measures:source.measures.map(measure=>selected && measure.columns.every(column=>column.glyphs.every(glyph=>!selected.has(glyph) && !glyph.instrumental)) ? measure : ({...measure, navigation:measure.navigation?.map(mark=>({...mark})),
-      columns:measure.columns.map(column=>({...column,glyphs:column.glyphs.map(glyph=>glyphs.get(glyph)!)}))}))}
+    measures:source.measures.map(measure=>selected && measure.columns.every(column=>column.glyphs.every(glyph=>!selected.has(glyph) && !glyph.instrumental)) ? measure : ({
+      id:measure.id,source:measure.source,part:measure.part,index:measure.index,beats:measure.beats,
+      breakBefore:measure.breakBefore,breakAfter:measure.breakAfter,coreGapBefore:measure.coreGapBefore,
+      minimum:measure.minimum,label:measure.label,start:measure.start,end:measure.end,
+      continuation:measure.continuation,lastFragment:measure.lastFragment,number:measure.number,
+      minimumStart:measure.minimumStart,minimumEnd:measure.minimumEnd,naturalStart:measure.naturalStart,naturalEnd:measure.naturalEnd,
+      barX:measure.barX,openingBarX:measure.openingBarX,navigation:measure.navigation?.map(mark=>({...mark})),
+      columns:measure.columns.map(column=>({time:column.time,left:column.left,right:column.right,x:column.x,
+        minimumStart:column.minimumStart,minimumEnd:column.minimumEnd,naturalStart:column.naturalStart,naturalEnd:column.naturalEnd,
+        glyphs:column.glyphs.map(glyph=>glyphs.get(glyph)!)} satisfies Record<keyof NativeColumn,unknown>))
+    } satisfies Record<keyof NativeMeasure,unknown>))}
 }

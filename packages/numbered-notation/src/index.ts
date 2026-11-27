@@ -40,3 +40,5 @@ export { nativeWholeRowFeasibility as scoreWholeRowFeasibility } from './native-
 export { prepareNativePagination as prepareScorePagination, type NativePageBlock as ScorePageBlock } from './native-pagination.js'
 export { nativeHeightEnvelope as scoreHeightEnvelope, mergeNativeHeightEnvelopes as mergeScoreHeightEnvelopes, nativeEnvelopeBlock as scoreEnvelopeBlock, type NativeHeightEnvelope as ScoreHeightEnvelope } from './native-height-envelope.js'
 export { scoreNumberedSpacing as scorePhysicalSpacing, scoreNumberedCost as scoreLayoutCosts } from './layout-quality.js'
+
+export { planNativeLinesWithRefinedPages as planScoreLinesWithRefinedPages, measureNativeGreedyPageCeiling as measureScoreGreedyPageCeiling, type NativePageCostModel as ScorePageCostModel } from './native-refined-page-breaking.js'

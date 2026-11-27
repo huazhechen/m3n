@@ -1,7 +1,7 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
 import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
 import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
-import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'
+import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
@@ -56,7 +56,7 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
  * shallowest sounding-body top; omit all other lanes/attachments. Their
  * real geometry can only require more space. This bound cannot reject a plan
  * made feasible by horizontal interleaving. */
-export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: TextMeasurer, gap: number, horizontal?: { width: number; minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }): NativePageBlock {
+export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: TextMeasurer, gap: number, horizontal?: { width: number; minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }, templates?: NativeHorizontalTemplates): NativePageBlock {
   const cloned = cloneNativeProjection({measures,glyphs:measures.flatMap(m=>m.columns.flatMap(c=>c.glyphs)),diagnostics:[],hasBass:false}).measures
   const glyphs = cloned.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
   const ids = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a,b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))
@@ -71,7 +71,7 @@ export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: Tex
   let core = { top, bottom }
   if (horizontal) {
     // Both endpoint probes consume the same immutable constraint chain.
-    cacheNativeHorizontal(horizontal)
+    cacheNativeHorizontal(horizontal, templates)
     // With no dynamic profiles, each cell weight is affine in line width.
     // Its weighted core is a ratio of affine functions and is monotone.
     // Endpoints therefore bound every justified or shortened ending width.

@@ -2,10 +2,25 @@
 import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { nativeHairpinSegments } from './native-hairpin.js'
+import { cacheNativeHairpins, releaseNativeHairpins, nativeHairpinSegments } from './native-hairpin.js'
 import { renderNativePages } from './native-svg.js'
 import { nativeStyle } from './native-style.js'
 import { nativeSvgInk } from './native-ink.js'
+
+it('shares endpoint indexing across wedges without changing segment geometry', () => {
+  const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {cresc}1 2 | {br}3 4{/} | {br}{decres}5 6 | {br}7 1e{/} |||'), {width:540,paged:true})
+  const relations = layout.relations.filter(r => r.kind === 'cresc' || r.kind === 'decres')
+  const expected = relations.map(r => nativeHairpinSegments(r, layout.systems))
+  cacheNativeHairpins(layout.systems)
+  try {
+    relations.forEach((relation, index) => {
+      const actual = nativeHairpinSegments(relation, layout.systems)
+      expect(actual).toEqual(expected[index])
+      expect(nativeHairpinSegments(relation, layout.systems)).toBe(actual)
+    })
+  } finally { releaseNativeHairpins(layout.systems) }
+  expect(nativeHairpinSegments(relations[0]!, layout.systems)).toEqual(expected[0])
+})
 
 it.each([320,600,800,1000])('continues hairpin opening through systems in continuous and paged layouts at width %s', width => {
   for (const paged of [false,true]) for (const kind of ['cresc','decres'] as const) {

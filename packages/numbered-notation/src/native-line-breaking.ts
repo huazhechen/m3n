@@ -93,11 +93,13 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
     best = append(best, row); start = row.end
   }
   let bestCost = Math.min(objective(best), maximumCost)
-  const states = Array.from({ length: count }, () => new Map<number, Plan[]>())
-  states[root.end]!.set(root.count, [root])
+  const states: Array<Map<number, Plan[]> | undefined> = []
+  states[root.end] = new Map([[root.count, [root]]])
   for (let start = root.end; start < count; start++) {
-    for (const points of states[start]!.values()) {
-      const retained = hull(points)
+    const current = states[start]
+    if (!current) continue
+    for (const points of current.values()) {
+      const retained = points.length === 1 ? points : hull(points)
       if (timings) {
         timings.linePlanningRetainedStates = (timings.linePlanningRetainedStates ?? 0) + retained.length
         timings.linePlanningMaximumHull = Math.max(timings.linePlanningMaximumHull ?? 0, retained.length)
@@ -118,7 +120,7 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
               best = plan; bestCost = cost
             }
           } else {
-            const target = states[row.end]!
+            const target = states[row.end] ??= new Map<number, Plan[]>()
             const list = target.get(plan.count)
             if (list) list.push(plan)
             else target.set(plan.count, [plan])
@@ -126,7 +128,7 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
         }
       }
     }
-    states[start]!.clear()
+    states[start] = undefined
   }
   return objective(best) <= maximumCost + epsilon ? ends(best) : undefined
 }

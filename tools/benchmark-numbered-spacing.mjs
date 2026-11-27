@@ -28,6 +28,8 @@ const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bund
 const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
 const localRefine = process.argv.includes('--local-refine')
+const warmupIterations = Number(argument('warmup') ?? 0)
+assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
 const numericLayout = process.argv.includes('--numeric-layout')
 const avoidance = argument('avoidance') ?? 'element'
 assert(['row', 'measure', 'element'].includes(avoidance), 'Invalid avoidance mode')
@@ -47,10 +49,12 @@ if (checkpoint) {
   assert.equal(checkpoint.auditLayout, auditLayout, 'Cannot resume with a different ink audit setting')
   assert.equal(checkpoint.prune, prune, 'Cannot resume with a different pruning setting')
   assert.equal(Boolean(checkpoint.localRefine), localRefine, 'Cannot resume with a different refinement setting')
+  assert.equal(checkpoint.warmupIterations ?? 0, warmupIterations, 'Cannot resume with a different warmup count')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
 const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
 const browser = await chromium.launch({ executablePath, headless: true,
@@ -83,6 +87,12 @@ try {
     const sourceHash = createHash('sha256').update(source).digest('hex')
     const saved = report.entries.find(entry => entry.file === file)
     if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
+    for (let iteration = 0; iteration < warmupIterations; iteration++) {
+      await page.evaluate(async ({ source, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks }) => {
+        await m3n.search(source, false, prune, localRefine, pageConstrainedBreaks, rowEnvelope, measureAvoidance, numericLayout, avoidance)
+        if (typeof globalThis.gc === 'function') globalThis.gc()
+      }, { source, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks })
+    }
     const profiling=Boolean(argument('cpu-profile')) && (!argument('profile-score') || file.includes(argument('profile-score')))
     const profiler=profiling ? await page.context().newCDPSession(page) : undefined
     if(profiler){await profiler.send('Profiler.enable');await profiler.send('Profiler.start')}

@@ -7,7 +7,7 @@ type Box={top:number;bottom:number;coreTop:number;coreBottom:number;music:boolea
 type State=NativeLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
 type HeightBounds={boxes:Box[];remaining:Map<number,number>[];pricedHeight:Map<number,number[]>[]}
 export function createNativePageCostCache(){return {heightBounds:new WeakMap<object,HeightBounds>(),boxes:new WeakMap<NativePageBlock,Box>(),distances:new WeakMap<Box,WeakMap<Box,number>>(),policy:''}}
-type Options={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ratio:number;wholeRows:boolean;ceiling:number;maximumCost:number;reference?:{required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
+export type NativePageCostOptions={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ratio:number;wholeRows:boolean;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
 const box=(block:NativePageBlock):Box=>{
  const axis=block.baseline ?? 0
  const ink=(block.ink ?? []).map(piece=>({left:piece.left,right:piece.right,top:piece.top-axis,bottom:piece.bottom-axis}))
@@ -24,6 +24,7 @@ const ends=(state:NativeLineStatisticPlan)=>{
 }
 const objective=(state:NativeLineStatisticPlan)=>2*state.square-state.sum*state.sum/state.count+state.penalty
 const earlier=(a:NativeLineStatisticPlan,b:NativeLineStatisticPlan)=>{const x=ends(a),y=ends(b);for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return x[i]!>y[i]!;return false}
+const comparePositions=(a:State,b:State)=>a.page-b.page || a.baseline-b.baseline
 
 /** Minimum horizontal cost in an optimistic Markov pagination model. The
  * full paginator also checks remote rows; unknown/ending shapes use lower
@@ -32,7 +33,7 @@ const earlier=(a:NativeLineStatisticPlan,b:NativeLineStatisticPlan)=>{const x=en
  * A point above the statistic hull of lower-position states cannot minimize
  * the concave final objective. No height quantization or frontier size cap. */
 export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineCandidate[])[],
- blockFor:(start:number,end:number,previousStart?:number,reference?:number)=>NativePageBlock,headers:readonly NativePageBlock[],options:Options,timings?:Record<string,number>):number[]|undefined {
+ blockFor:(start:number,end:number,previousStart?:number,reference?:number)=>NativePageBlock,headers:readonly NativePageBlock[],options:NativePageCostOptions,timings?:Record<string,number>):number[]|undefined {
  const reusable=options.cache ?? createNativePageCostCache()
  const policy=`${options.gap}:${options.headerGap}:${options.ratio}:${options.wholeRows}`
  if(reusable.policy!==policy){reusable.policy=policy;reusable.distances=new WeakMap();reusable.heightBounds=new WeakMap()}
@@ -60,7 +61,6 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  }
  const cache=reusable.boxes,ids=new Map<Box,number>()
  const getBox=(block:NativePageBlock)=>{let item=cache.get(block);if(!item){item=box(block);cache.set(block,item)}if(!ids.has(item))ids.set(item,ids.size);return item}
- const contextBoxes=graph.map(()=>new Map<number,Map<number,Box>>())
  // Prefix restrictions leave unreachable graph nodes in place. Their rows
  // cannot occur in any completion and need neither geometry nor height bounds.
  const reachable=new Uint8Array(graph.length+1);reachable[0]=1
@@ -127,55 +127,74 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
   }
   return false
  }
- const states=Array.from({length:graph.length+1},()=>new Map<string,State[]>())
- states[0]!.set('root',[root])
+ // Each legal (start,end) row contributes each resource group once. Append
+ // those frontiers in the same order as the former endpoint Map, without
+ // constructing string keys and empty Maps at unreachable endpoints.
+ const states:Array<State[][]|undefined>=[]
+ states[0]=[[root]]
  let generated=0,retained=0,largest=0
  for(let start=0;start<graph.length;start++){
+  const previous=states[start]
+  if(!previous?.length)continue
   for(const row of graph[start]!){
    const r=Math.max(0,1-row.density),penalty=(row.penalty ?? 0)+100*Math.max(0,row.density-1)**2
+   const reference=options.reference,tracksReference=reference && (!reference.required || reference.required(start))
+   const gap=tracksReference ? reference?.gap(start,row.end) : undefined,terminal=reference?.terminal(start,row.end)
+   let memo:Map<number,Box>|undefined
    const groups=new Map<string|number,State[]>()
-   for(const frontier of states[start]!.values())for(const prior of frontier){
+   for(const frontier of previous)for(const prior of frontier){
     const square=prior.square+r*r,totalPenalty=prior.penalty+penalty
     const prefixVariance=Math.max(0,square-(prior.sum+r)**2/(prior.count+1))
     if(square+totalPenalty+prefixVariance+suffix[row.end]!>options.maximumCost+1e-12)continue
     // Reject horizontally hopeless prefixes before preparing row geometry.
     if(!canFinish(prior.sum+r,square,prior.count+1,totalPenalty,row.end))continue
-    const reference=options.reference
     const first=prior.start<0 || reference && reference.section(start)!==reference.section(prior.start)
-    const average=first ? Infinity : prior.gapCount ? prior.gapSum/prior.gapCount : 0
-    let memo=contextBoxes[start]!.get(row.end)
-    if(!memo){memo=new Map();contextBoxes[start]!.set(row.end,memo)}
-    let item=reference ? getBox(blockFor(start,row.end,prior.start,average)) : memo.get(prior.start)
-    if(!item){item=getBox(blockFor(start,row.end,prior.start));memo.set(prior.start,item)}
+    const average=first ? Infinity : prior.gapCount ? prior.gapSum/prior.gapCount : reference?.emptyMean ?? 0
+    // Sections certified independent of their running mean still depend on
+    // the preceding row, but not on each frontier state's copy of that row.
+    let item=tracksReference ? getBox(blockFor(start,row.end,prior.start,average)) : memo?.get(prior.start)
+    if(!item){item=getBox(blockFor(start,row.end,prior.start,reference ? average : undefined));(memo ??= new Map()).set(prior.start,item)}
     const position=advance(item,prior);if(!position)continue
     if(options.ceiling===1 && position.baseline+remaining[start]!.get(row.end)!>options.pageHeight-options.margin+1e-6)continue
     const priced=pricedHeight[start]?.get(row.end)
     if(priced?.some((bound,index)=>square+totalPenalty+prefixVariance+bound-multipliers[index]!*(options.pageHeight-options.margin-position.baseline)>options.maximumCost+1e-10))continue
 
-    const gap=reference?.required && !reference.required(start) ? undefined : reference?.gap(start,row.end),terminal=reference?.terminal(start,row.end)
     const gapSum=terminal ? 0 : (first ? 0 : prior.gapSum)+(gap ?? 0)
     const gapCount=terminal ? 0 : (first ? 0 : prior.gapCount)+(gap===undefined ? 0 : 1)
     const state:State={page:position.page,baseline:position.baseline,start,gapSum,gapCount,box:item,end:row.end,count:prior.count+1,sum:prior.sum+r,square,penalty:totalPenalty,previous:prior}
-    const combined=ids.get(item)!*(graph.length+1)+state.count
-    const key=gapCount===0 && Number.isSafeInteger(combined) ? combined : `${state.count}:${ids.get(item)}:${gapSum}:${gapCount}`
-    const group=groups.get(key) ?? [];group.push(state);groups.set(key,group);generated++
+    const id=ids.get(item)!,combined=id*(graph.length+1)+state.count
+    const key=gapCount===0 && Number.isSafeInteger(combined) ? combined : `${state.count}:${id}:${gapSum}:${gapCount}`
+    const group=groups.get(key)
+    if(group)group.push(state);else groups.set(key,[state])
+    generated++
    }
-   for(const [groupKey,points] of groups){
-    points.sort((a,b)=>a.page-b.page || a.baseline-b.baseline || (earlier(a,b)?-1:1))
+   for(const points of groups.values()){
+    if(points.length===1){(states[row.end] ??= []).push(points);retained++;largest=Math.max(largest,1);continue}
+    points.sort(comparePositions)
     const hull:State[]=[]
     const frontier:State[]=[]
-    for(const point of points)if(insertNativeLineStateHull(hull,point))frontier.push(point)
-    if(frontier.length){states[row.end]!.set(`${start}:${groupKey}`,frontier);retained+=frontier.length;largest=Math.max(largest,frontier.length)}
+    // At identical page positions every suffix sees identical resources.
+    // Reduce that batch to its statistic hull first. Sorting paths for height
+    // ties otherwise reconstructs long prefixes thousands of times, only to
+    // keep states already dominated at that very same position.
+    for(let begin=0;begin<points.length;){
+     let end=begin+1
+     while(end<points.length && points[end]!.page===points[begin]!.page && points[end]!.baseline===points[begin]!.baseline)end++
+     const batch=end===begin+1 ? [points[begin]!] : nativeLineStateHull(points.slice(begin,end))
+     for(const point of batch)if(insertNativeLineStateHull(hull,point))frontier.push(point)
+     begin=end
+    }
+    if(frontier.length){(states[row.end] ??= []).push(frontier);retained+=frontier.length;largest=Math.max(largest,frontier.length)}
    }
   }
-  states[start]!.clear()
+  states[start]=undefined
  }
  let best:State|undefined
- for(const frontier of states[graph.length]!.values())for(const point of frontier){
+ for(const frontier of states[graph.length] ?? [])for(const point of frontier){
   if(objective(point)>options.maximumCost+1e-12)continue
   if(!best || objective(point)<objective(best)-1e-12 || Math.abs(objective(point)-objective(best))<=1e-12 && earlier(point,best))best=point
  }
- if(best && options.rowsToResolve)for(const frontier of states[graph.length]!.values())for(const point of frontier)
+ if(best && options.rowsToResolve)for(const frontier of states[graph.length] ?? [])for(const point of frontier)
   if(objective(point)<=options.maximumCost+1e-12)
    for(let row:State|undefined=point;row?.count;row=row.previous as State|undefined)options.rowsToResolve.add(`${row.start}:${row.end}`)
  if((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths)console.log('numeric-page-cost '+JSON.stringify({ceiling:options.maximumCost,states:generated,best:best ? objective(best) : null}))

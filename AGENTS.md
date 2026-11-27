@@ -12,6 +12,12 @@
 - When a task is complete and verification is finished, create a Git commit immediately. Do not wait for a separate request to commit.
 - Do not start a development server for the user unless the user explicitly asks for one.
 
+## Shared Layout Architecture
+
+- Numbered and staff notation must share width selection, line breaking, page-constrained cost solving, refinement/fallback orchestration, and scoring algorithms. Implement algorithmic optimizations once in the shared layer and verify both notations.
+- Notation adapters provide musical spacing rules, safe geometry bounds, exact row geometry, and ending-width context. Rendering differences do not justify duplicating search or pagination-cost algorithms.
+- Preserve exact geometry and complete search semantics when optimizing performance; do not replace curves with approximations or introduce lossy pruning without explicit user authorization.
+
 ## Hosted Build Output
 
 - This workspace is served by Code Shell from `dist/` at `/score/`. Read `docs/HOSTING.md` before building. Use `VITE_BASE_URL=/score/ VITE_SUBMIT_MODE=remote npm run build`, or an isolated output directory for build checks; never overwrite the hosted `dist/` with the default root-path build.
