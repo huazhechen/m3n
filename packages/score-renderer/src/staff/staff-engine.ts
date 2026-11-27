@@ -3,7 +3,7 @@ import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } fro
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
-import { staffCommandPath, staffLinePath } from './staff-glyph-primitive.js'
+import { staffCommandPath, staffLinePath, type StaffNumericPath } from './staff-glyph-primitive.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffCharacterInk, staffGlyphCharacter, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
 
 const style = scoreLayoutConfig.staff
@@ -727,10 +727,10 @@ function positionBeam(beam: StaffBeam) {
   }
   for (const note of beam.notes) note.stemEnd = origin + slope * (note.stemX - first.stemX)
 }
-function drawBeam(beam: StaffBeam): XmlNode {
+function drawBeam(beam: StaffBeam, numeric = false): XmlNode {
   const notes = beam.notes, direction = notes[0]!.direction, space = notes[0]!.prepared.size / 4
   const max = Math.max(...notes.map(n => Math.log2(n.prepared.dur / 4)))
-  const shapes: XmlNode[] = []
+  const paths: StaffNumericPath[] = []
   for (let level = 1; level <= max; level++) {
     let index = 0
     while (index < notes.length) {
@@ -746,13 +746,20 @@ function drawBeam(beam: StaffBeam): XmlNode {
         x2 = x1 + Math.sign(neighbor.stemX - x1) * Math.min(space, Math.abs(neighbor.stemX - x1) / 2)
         y2 = y1 + (neighbor.stemEnd - a.stemEnd) * (x2 - x1) / (neighbor.stemX - x1)
       }
-      const path = element('path', { fill: '#000', stroke: 'none' })
-      setNumericPath(path, staffCommandPath([{ kind: 0, values: [x1, y1] }, { kind: 1, values: [x2, y2] },
+      paths.push(staffCommandPath([{ kind: 0, values: [x1, y1] }, { kind: 1, values: [x2, y2] },
         { kind: 1, values: [x2, y2 + direction * (space * .4)] }, { kind: 1, values: [x1, y1 + direction * (space * .4)] }, { kind: 4, values: [] }]))
-      shapes.push(path)
     }
   }
-  return element('g', { class: 'beam', 'data-m3n-join': notes.map(note => `${note.stemX},${note.stemEnd}`).join(' ') }, shapes)
+  const attributes = { class: 'beam', 'data-m3n-join': notes.map(note => `${note.stemX},${note.stemEnd}`).join(' ') }
+  const render = () => element('g', attributes, paths.map(primitive => {
+    const path = element('path', { fill: '#000', stroke: 'none' })
+    setNumericPath(path, primitive)
+    return path
+  }))
+  // Candidate pagination needs the exact existing path boxes. Materialize
+  // path nodes and their lazy SVG attributes only when this row is painted.
+  return numeric ? { tagName: 'g', attributes, children: [], numericInk: paths.flatMap(path => path.boxes),
+    renderNodes: () => [render()] } : render()
 }
 function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, measureText: MeasureText): XmlNode {
   const pitched = notes.find(n => !n.prepared.rest), below = pitched?.direction === -1
@@ -860,7 +867,7 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
       staff.children.push(event)
       if (entry.item.children && entry.item.event.tuplet) staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
     }
-    for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam))
+    for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly))
     measureNode.children.push(staff)
   }
   return measureNode

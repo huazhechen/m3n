@@ -16,6 +16,29 @@ function model(source: string, spacing = .25) {
 }
 
 describe('staff rhythm engraving', () => {
+  it('keeps numeric beam geometry and painted paths identical across widths and transforms', () => {
+    for (const music of ['(1 2 3 4 5 6 7 1e)', '((1. 2 3. 4 5. 6 7. 1e))', '(((7 6 5 4 3 2 1 2))) 1 2 3', '([3 1 5:2]) ([7 5 3:2]) 1 2']) {
+      for (const extra of [0, 73.12345]) {
+        const source = `{4/4}\nN: ${music} |`
+        const make = (numeric: boolean) => {
+          const value = model(source)
+          const row = drawStaffMeasure(value, value.minimum + extra, -7.12345, false, numeric)
+          return findAll(row, node => node.attributes.class === 'beam')
+        }
+        const actual = make(true), expected = make(false)
+        expect(actual.length).toBeGreaterThan(0)
+        expect(actual).toHaveLength(expected.length)
+        actual.forEach((beam, index) => {
+          const reference = expected[index]!
+          for (const transform of ['', 'translate(-3.3333 7.00005)']) {
+            beam.attributes.transform = reference.attributes.transform = transform
+            expect(new SvgGeometry(beam, measureText).pieces(beam)).toEqual(new SvgGeometry(reference, measureText).pieces(reference))
+            expect(xml(beam)).toBe(xml(reference))
+          }
+        })
+      }
+    }
+  })
   it('keeps a start repeat clear of the first note, including after a row signature', () => {
     const score = projectStaffDocument(analyzeM3N(readFileSync(resolve('../../src/scores/butter_fly_01.m3n'), 'utf8')).score)
     for (const first of [false, true]) {
