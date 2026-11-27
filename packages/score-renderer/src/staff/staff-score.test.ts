@@ -64,9 +64,9 @@ describe('staff page packing', () => {
     const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
     expect(info.pageCount).toBe(1)
-    for (const spacing of [.6, 1.2]) {
+    for (const spacing of [.8, 1.6]) {
       const lines = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
-      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), 8.4, 4.2,
+      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), 11.2, 5.6,
         lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
       expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
     }
@@ -79,7 +79,7 @@ describe('staff page packing', () => {
     expect(info.lines).toHaveLength(1)
     expect(info.quality.lineDensityVariation).toBe(0)
     expect(info.quality.lastLineSlack).toBe(0)
-    expect(info.spacing).toBe(1.2)
+    expect(info.spacing).toBe(1.6)
     expect(render.pageCount(false)).toBe(1)
     expect(render.pageCount(true)).toBe(1)
   })

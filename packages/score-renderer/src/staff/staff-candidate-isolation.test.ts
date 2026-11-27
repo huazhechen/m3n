@@ -18,7 +18,7 @@ describe('native candidate isolation', () => {
   ])('keeps numeric candidate notes identical to eagerly drawn music: %s', source => {
     const document = projectStaffDocument(analyzeM3N(source).score)
     const task = createStaffPreparation()
-    for (const item of document.measures) for (const first of [false, true]) for (const spacing of [.6, 1.2]) {
+    for (const item of document.measures) for (const first of [false, true]) for (const spacing of [.8, 1.6]) {
       const eager = createStaffMeasure(item, first, document.hasBass, measure, spacing, 160, task)
       const numeric = createStaffMeasure(item, first, document.hasBass, measure, spacing, 160, task)
       for (const extra of [0, 37.3333, 117.6543]) {

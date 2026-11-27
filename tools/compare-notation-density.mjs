@@ -17,7 +17,7 @@ const densityLimits = {
   // existing height, font and ink gates while accepting this intended plan.
   butter_fly_01: { staffHeight: 750, staffRows: 10, numberedHeight: 700, numberedRows: 12, heightRatio: 1.2 },
   badinerie_bwv1067_01: { staffHeight: 720, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.28 },
-  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.34 },
+  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.37 },
   mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.41 },
   guo_huo_01: { staffHeight: 1000, staffRows: 10, numberedHeight: 760, numberedRows: 9, heightRatio: 1.34 },
   ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 1 } },

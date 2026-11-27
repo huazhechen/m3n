@@ -104,7 +104,7 @@ function tieCoordinates(node: Parameters<typeof xml>[0]) {
   return /d="([^"]+)"/.exec(xml(node))![1]!.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
 }
 
-it.each([.6, 1.2])('reserves readable ties at minimum width in spacing tier %s', spacing => {
+it.each([.8, 1.6])('reserves readable ties at minimum width in spacing tier %s', spacing => {
   // Both stem directions, chords and internal tuplet ties use the same hard
   // horizontal constraint, including at the tightest legal measure width.
   for (const notes of ['((1~ 1))', '((1e~ 1e))', '(([13:h]~ [13:h]))', '([3~ 3 3:2])']) {

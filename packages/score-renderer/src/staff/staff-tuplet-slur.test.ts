@@ -28,7 +28,7 @@ it.each([400, 640])('places the slur against the final tuplet numeral at width %
 
 // Slurs span the outer head edges and live above the staff. Unlike ties,
 // they must not need extra inter-note spacing or staff-rule apex correction.
-it.each([.6, 1.2])('keeps short slurs visible outside the staff in tier %s', spacing => {
+it.each([.8, 1.6])('keeps short slurs visible outside the staff in tier %s', spacing => {
   for (const music of ['{lg}((1 1)){/}', '{lg}((1e 1e)){/}', '{lg}1{/}']) {
     const doc = projectStaffDocument(analyzeM3N(`{2/4}\nN: ${music} |||`).score)
     const measure = textMeasurer(), preparation = createStaffPreparation(doc)
