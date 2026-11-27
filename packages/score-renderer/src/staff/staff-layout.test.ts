@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation/layout'
 import { staffMusicSize } from './staff-music-font.js'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
@@ -10,7 +10,7 @@ import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
 import { readXml, findAll, nodes, hasClass, SvgGeometry, textMeasurer, element, overlapsX } from './layout-svg.js'
 import { arrangeStaffSystem, systemDistance, type StaffSystem } from './system-layout.js'
 import { createStaffMeasure, drawStaffMeasure, STAFF_SCALE } from './staff-engine.js'
-import { planStaffLines, type StaffMeasureMinimum } from './line-layout.js'
+import { planStaffLines, prepareStaffLineGraph, type StaffMeasureMinimum } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { staffHeader } from './staff-header.js'
 
@@ -257,7 +257,7 @@ describe('staff layout contract', () => {
     for (const a of geometry.pieces(ending)) for (const b of geometry.pieces(slur))
       expect(overlapsX(a, b) && a.top < b.bottom && b.top < a.bottom).toBe(false)
   })
-  it('measures ending collision edges with their enclosing row transforms', () => {
+  it('keeps transformed ending strokes in ordinary collision ink', () => {
     const score = analyzeM3N(readFileSync('../../src/scores/zhi_ai_li_si_01.m3n', 'utf8')).score
     const document = projectStaffDocument(score), measure = textMeasurer()
     const lines = planStaffLines(document, 640, false, measure, 0.25)
@@ -267,10 +267,35 @@ describe('staff layout contract', () => {
     const geometry = new SvgGeometry(system.node, measure)
     const rows = findAll(system.node, node => hasClass(node, 'm3n-ending-row'))
     const expected = rows.flatMap(row => geometry.pieces(element('g', system.node.attributes, [row])))
-    expect(system.edgePieces.filter(piece => piece.gap === 2)).toEqual(expected.map(piece => ({
+    for (const piece of expected) expect(system.spacingPieces).toContainEqual({
       left: piece.left * STAFF_SCALE, right: piece.right * STAFF_SCALE,
-      top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE, gap: 2,
-    })))
+      top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE,
+    })
+    expect(system.edgePieces.every(piece => piece.gap === scoreLayoutConfig.staff.music * .1)).toBe(true)
+  })
+  it('keeps half the local lyric core gap between Ai Ru Chao Shui lyrics and the next row ending strokes', async () => {
+    const score = analyzeM3N(readFileSync('../../src/scores/ai_ru_chao_shui_01.m3n', 'utf8')).score
+    const info = (await prepareStaffScore(score, { width: 720 })).layoutInfo()
+    const document = projectStaffDocument(score), measure = textMeasurer()
+    const graph = prepareStaffLineGraph(document, 718, false, measure, info.spacing)
+    const ends = info.lines.map(line => graph.measured.findIndex(member => member.id === line.measures.at(-1)) + 1)
+    const systems = engraveStaffSystems(document, graph.makeLines(ends), 718, measure, info.spacing, false)
+    const upper = systems[1]!, lower = systems[2]!
+    const ending = new SvgGeometry(lower.node, measure).pieces(element('g', lower.node.attributes,
+      findAll(lower.node, node => hasClass(node, 'm3n-ending-row'))))
+      .map(piece => ({ left: piece.left * STAFF_SCALE, right: piece.right * STAFF_SCALE,
+        top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE }))
+    expect(upper.hasLyrics).toBe(true)
+    expect(ending.length).toBeGreaterThan(0)
+    let pairs = 0
+    const upperPlaced = info.pages[0]!.systems[1]!, lowerPlaced = info.pages[0]!.systems[2]!
+    const minimumGap = scoreCoreGap(score)
+    const gap = interpolateScoreCoreGap(minimumGap, scoreMaximumCoreGap(minimumGap), info.pages[0]!.gap, scoreLyricGapScale(minimumGap))
+    for (const a of upper.spacingPieces) for (const b of ending) if (overlapsX(a, b)) {
+      expect(lowerPlaced.y + b.top - upperPlaced.y - a.bottom).toBeGreaterThanOrEqual(gap * .5 - 1e-6)
+      pairs++
+    }
+    expect(pairs).toBeGreaterThan(0)
   })
   it('paints inline key changes as well as allocating their width', () => {
     const analysis = analyzeM3N('{4/4}\nN: 1 2 {key=G} 3 4 |||')

@@ -430,7 +430,7 @@ export function arrangeStaffSystem(
     ink: { left: 0, right: 0, top: 0, bottom: 0 }, core,
     section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: verses.some(verse => verse.children.length > 0) }
   const materialize = () => {
-    const partition = geometry.partitionWithoutClasses(node, ['ending', 'mNum', 'staff-clef'])
+    const partition = geometry.partitionWithoutClasses(node, ['mNum', 'staff-clef'])
     const pieces: Ink[] = [], spacingPieces: Ink[] = []
     let spacingIndex = 0
     for (const p of partition.all) {
@@ -438,9 +438,9 @@ export function arrangeStaffSystem(
       pieces.push(scaled)
       if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
     }
-    const edgePieces = ['ending', 'staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
+    const edgePieces = ['staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
       (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
-        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: kind === 'staff-clef' ? style.music * .1 : style.edgeGap })))
+        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: style.music * .1 })))
     result.pieces = pieces; result.spacingPieces = spacingPieces; result.edgePieces = edgePieces
     result.ink = union(pieces)
     result.materializeInk = undefined

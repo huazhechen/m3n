@@ -1,6 +1,6 @@
 {
-  "revision": "334d3b6738f1b913faebde3f4de961aa9a304513",
-  "rendererHash": "82c80c17095ffe104c021e00b9716b7e56ba61a5991485939812e15a6ac0d87d",
+  "revision": "195904bd85fd193f76f382c6075bc56095595a17",
+  "rendererHash": "fd53436eda8333948ade929933a06f2582f434738fe10948e6ee70de80522082",
   "fontHashes": [
     {
       "file": "NotoSansSC-library.ttf",
@@ -15,7 +15,7 @@
       "sha256": "7fc22989c142ed60715cafe452da9f01d61812f6895419adbad6ea97586fbb32"
     }
   ],
-  "strategy": "levels-1-9-quality-528-720-refine-6-v46",
+  "strategy": "levels-1-9-quality-528-720-refine-6-v47",
   "entries": [
     {
       "file": "examples/huan_le_song.m3n",
@@ -293,7 +293,7 @@
     {
       "file": "scores/lao_nan_hai_01.m3n",
       "sourceHash": "f657668e87910de663f527f58ee29fc951eb115b066a8daa733ad6ddd03a5b5b",
-      "width": 672,
+      "width": 678,
       "pages": 1,
       "rows": 9
     },
@@ -461,9 +461,9 @@
     {
       "file": "scores/ren_shi_jian_01.m3n",
       "sourceHash": "3a99cb213c35459b94dbc6dacf263d978e4c23ba904feab32afbfd21557a0881",
-      "width": 642,
+      "width": 654,
       "pages": 1,
-      "rows": 9
+      "rows": 8
     },
     {
       "file": "scores/ru_guo_you_ni_zai_01.m3n",
@@ -552,9 +552,9 @@
     {
       "file": "scores/ta_shuo_01.m3n",
       "sourceHash": "fe75c93c94ba9e9424aa135ebeadf7336cd6eeace399399e4fa9e3d2f9d71eef",
-      "width": 666,
+      "width": 672,
       "pages": 1,
-      "rows": 11
+      "rows": 10
     },
     {
       "file": "scores/tai_yang_zhao_chang_sheng_qi_01.m3n",
@@ -608,7 +608,7 @@
     {
       "file": "scores/tu_ran_hao_xiang_ni_01.m3n",
       "sourceHash": "077b8cc7da9627b05793c472d31daeec6eb68fec9d08c113d3aebb7769cb524e",
-      "width": 702,
+      "width": 708,
       "pages": 1,
       "rows": 11
     },
@@ -755,7 +755,7 @@
     {
       "file": "scores/yi_qian_ge_shang_xin_de_li_you_01.m3n",
       "sourceHash": "f9153332b8391634f12be51a448e3c4742bee6f44f9a301b3c237a03bfa5c75d",
-      "width": 660,
+      "width": 666,
       "pages": 1,
       "rows": 10
     },
@@ -783,7 +783,7 @@
     {
       "file": "scores/yue_ban_xiao_ye_qu_01.m3n",
       "sourceHash": "0a4a4bfbe7ce992d9f54f254671ce19c13d0f87251297f0bc6a2551eb41cc551",
-      "width": 636,
+      "width": 642,
       "pages": 1,
       "rows": 10
     },
