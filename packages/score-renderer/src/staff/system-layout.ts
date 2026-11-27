@@ -292,6 +292,7 @@ export function arrangeStaffSystem(
   const isStandaloneHeading = (attachment: XmlNode) =>
     hasClass(attachment, 'reh') && sectionHeadings.has(measures[0]?.attributes.id ?? '')
   const hasStandaloneHeading = sectionHeadings.has(measures[0]?.attributes.id ?? '')
+  const inlineHeading = hasStandaloneHeading ? undefined : byClass('reh')[0]
   const isHeadingTempo = (attachment: XmlNode) => hasStandaloneHeading && hasClass(attachment, 'tempo')
   const placementOrder = (attachment: XmlNode) =>
     isHeadingTempo(attachment) ? 4 : isStandaloneHeading(attachment) ? 3 :
@@ -333,6 +334,9 @@ export function arrangeStaffSystem(
       }))
       ink = geometry.ink(attachment)
     }
+    // This framed label is moved beside the stave after attachment placement.
+    // Its temporary position above the music must not lift tempo or directions.
+    if (attachment === inlineHeading) continue
     let dx = Math.max(0, -ink.left)
     if (ink.right + dx > width / scale) dx -= ink.right + dx - width / scale
     let dy = 0
@@ -395,11 +399,8 @@ export function arrangeStaffSystem(
     }
     if (isHairpin(attachment)) placed.forEach((piece) => hairpinPieces.add(piece))
   }
-  const inline = byClass('reh').filter(
-    () => !sectionHeadings.has(measures[0]?.attributes.id ?? ''),
-  )
-  if (inline.length) {
-    const label = inline[0]!,
+  if (inlineHeading) {
+    const label = inlineHeading,
       ink = geometry.ink(label)
     const content = textContent(label)
       .replace(/[\t\r\n]/g, '')

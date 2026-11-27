@@ -106,3 +106,23 @@ it.each([15.6, 26])('clears a framed section title from its caption at core gap 
   expect((captionInk.top - frameInk.bottom) * scale).toBeCloseTo(gap)
   expect(frameInk.left).toBeGreaterThanOrEqual(-1e-8)
 })
+
+it('does not lift tempo above the temporary position of an inline section frame', () => {
+  const place = (headingTop: number) => {
+    const rules = [40, 50, 60, 70, 80].map(y => element('path', {
+      class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1',
+    }))
+    const heading = element('g', { class: 'reh' }, [element('rect', { x: '0', y: String(headingTop), width: '80', height: '12' })])
+    const tempo = element('g', { class: 'tempo' }, [element('rect', { x: '20', y: '-100', width: '30', height: '12' })])
+    const node = element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+      element('g', { class: 'staff' }, rules), heading, tempo,
+    ])])
+    const geometry = new SvgGeometry(node, textMeasurer())
+    arrangeStaffSystem(node, geometry, 320, new Set())
+    return { tempo: geometry.ink(tempo), heading: geometry.ink(heading) }
+  }
+  const near = place(10), far = place(-100)
+  expect(far.tempo.bottom).toBeCloseTo(near.tempo.bottom)
+  expect((39.5 - far.tempo.bottom) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
+  expect((far.heading.top + far.heading.bottom) / 2).toBeCloseTo(60)
+})
