@@ -89,3 +89,20 @@ it.each(['dynam', 'hairpin'])('anchors a grand-staff %s to its own lane regardle
     if (!lane) expect(near.bottom).toBeLessThan(179.5)
   }
 })
+
+it.each([15.6, 26])('clears a framed section title from its caption at core gap %s', coreGap => {
+  const scale = scoreLayoutConfig.staff.engine.scale, gap = coreGap * scoreLayoutConfig.page.attachmentGapRatio
+  const rules = [40, 50, 60, 70, 80].map(y => element('path', {
+    class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1',
+  }))
+  const caption = element('g', { class: 'dir' }, [element('rect', { x: '10', y: '20', width: '60', height: '12' })])
+  const heading = element('g', { class: 'reh' }, [element('rect', { x: '0', y: '0', width: '80', height: '12' })])
+  const node = element('g', { class: 'system' }, [element('g', { class: 'measure', id: 'm-section' }, [
+    element('g', { class: 'staff' }, rules), caption, heading,
+  ])])
+  const geometry = new SvgGeometry(node, textMeasurer())
+  arrangeStaffSystem(node, geometry, 320, new Set(['m-section']), false, false, gap)
+  const frameInk = geometry.ink(heading), captionInk = geometry.ink(caption)
+  expect((captionInk.top - frameInk.bottom) * scale).toBeCloseTo(gap)
+  expect(frameInk.left).toBeGreaterThanOrEqual(-1e-8)
+})

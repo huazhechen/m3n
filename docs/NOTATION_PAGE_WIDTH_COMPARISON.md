@@ -1,6 +1,6 @@
 # 简谱与五线谱：页数及自动选宽对比
 
-本页记录8px谱间基线；当前采用6.5px谱间、1.0／2.4双档，最新结果见[横向调整评估](STAFF_GAP_10_24_REVIEW.md)，此前1.2／2.4结果见[6.5px谱间评估](STAFF_SPACE_65_COMPARISON.md)，6px结果见[紧档放宽评估](STAFF_GAP_12_24_REVIEW.md)，0.8／2.4结果见[间距放宽评估](STAFF_GAP_08_24_REVIEW.md)，此前尺度对照见[6px谱间评估](STAFF_SPACE_6_COMPARISON.md)，7px对照见[7px谱间评估](STAFF_SPACE_7_COMPARISON.md)。
+本页记录8px谱间基线；当前采用6.5px谱间、0.8／2.4双档，附件及歌词净空统一为基础核心行距的0.1倍，最新结果见[附件净空与双谱式选宽对比](ATTACHMENT_CORE_01_COMPARISON.md)；此前结果见[横向调整评估](STAFF_SPACE_65_GAP_08_24_REVIEW.md)，1.0／2.4结果见[间距评估](STAFF_GAP_10_24_REVIEW.md)，此前1.2／2.4结果见[6.5px谱间评估](STAFF_SPACE_65_COMPARISON.md)，6px结果见[紧档放宽评估](STAFF_GAP_12_24_REVIEW.md)，0.8／2.4结果见[间距放宽评估](STAFF_GAP_08_24_REVIEW.md)，此前尺度对照见[6px谱间评估](STAFF_SPACE_6_COMPARISON.md)，7px对照见[7px谱间评估](STAFF_SPACE_7_COMPARISON.md)。
 
 统计日期：2026-11-27；代码版本：`65e4000c`。范围包括曲库、独立作品和示例，共117份谱源；两种谱式逐首源文件SHA-256完全一致，且与当前文件一致。两组生产搜索均重新完成117首测量，串行执行，受2GB总内存限制。
 

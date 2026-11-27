@@ -1,4 +1,4 @@
-import { scoreEnvelopeBlock, mergeScoreHeightEnvelopes, type ScoreHeightEnvelope, type ScorePageBlock, type ScorePageCostModel, scoreLayoutConfig, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreEnvelopeBlock, mergeScoreHeightEnvelopes, type ScoreHeightEnvelope, type ScorePageBlock, type ScorePageCostModel, scoreLayoutConfig, scoreHeaderGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import type { prepareStaffLineGraph, StaffLine } from './line-layout.js'
 import { staffMusicCentre, staffHeaderBlock, staffRowBlock } from './staff-row-pagination.js'
 import type { StaffSystem } from './system-layout.js'
@@ -7,7 +7,7 @@ import type { StaffSystem } from './system-layout.js'
  * Unknown rows use immutable music bounds; measured rows use their exact ink.
  * Ending targets follow makeLines, including its section-mean safeguard. */
 export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGraph>, rowCache: ReadonlyMap<string, StaffSystem>,
-  envelopes: readonly ScoreHeightEnvelope[], equal: boolean, gap: number, height: number, headerHeight: number): ScorePageCostModel {
+  envelopes: readonly ScoreHeightEnvelope[], equal: boolean, gap: number, height: number, headerHeight: number, headerGap = scoreHeaderGap(gap)): ScorePageCostModel {
   const lowerBlocks = new Map<number, ScorePageBlock>(), preciseBlocks = new WeakMap<StaffSystem, ScorePageBlock>()
   const fullLines = new Map<number, StaffLine>(), section: number[] = []
   const fullLine = (start: number, end: number) => {
@@ -28,8 +28,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
       const envelope = mergeScoreHeightEnvelopes(envelopes.slice(start, end))
       block = { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: false,
         coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(gap) : 1,
-        ...(start ? {} : { coreGapBefore: 0 }),
-        gapBefore: start && graph.measured[start]!.measure.section ? scoreLayoutConfig.staff.sectionGap : 0 }
+        coreGapBefore: graph.measured[start]!.measure.coreGapBefore }
       lowerBlocks.set(key, block)
     }
     return block
@@ -45,7 +44,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
   }
   return {
     headers: [staffHeaderBlock(headerHeight)],
-    options: { immutableBlocks: true, pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap: 0, },
+    options: { immutableBlocks: true, pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap, },
     revision: () => rowCache.size,
     reference: () => ({ emptyMean: -Infinity, required: () => !equal, section: at => section[at]!,
       gap: (start, end) => fullLine(start, end).unitRhythmicGap, terminal }),

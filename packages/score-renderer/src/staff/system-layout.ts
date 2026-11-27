@@ -1,6 +1,6 @@
 import { paginateStaffRows } from './staff-row-pagination.js'
-import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
-import { lyricSpacing, SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
+import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreHeaderGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry, InkRangeIndex,
@@ -18,7 +18,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
+export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean; coreGapBefore?: number }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -36,7 +36,7 @@ function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode | un
  * Re-running during attachment layout is idempotent: outer slurs never push
  * their own enclosed numeral away from its music. */
 export function placeStaffTuplets(node: XmlNode, geometry: SvgGeometry,
-  tuplets = findAll(node, child => hasClass(child, 'm3n-tuplet-label'))) {
+  tuplets = findAll(node, child => hasClass(child, 'm3n-tuplet-label')), attachmentGap = style.attachmentGap) {
   const scale = STAFF_SCALE
   const rhythmObstacles = tuplets.length ? geometry.withoutClasses(node, [...decorations, 'verse', 'slur']) : []
   const tupletMusic = new Map<XmlNode, Ink[]>()
@@ -47,7 +47,7 @@ export function placeStaffTuplets(node: XmlNode, geometry: SvgGeometry,
     for (const label of labels) tupletMusic.set(label, music)
   }
   for (const label of tuplets) {
-    const below = label.attributes['data-m3n-below'] === 'true', clearance = (style.music * .1) / scale
+    const below = label.attributes['data-m3n-below'] === 'true', clearance = attachmentGap / scale
     // Re-anchor bracket strokes and numeral to this staff before
     // resolving collisions with the actual local music.
     const localMusic = tupletMusic.get(label)!
@@ -77,6 +77,7 @@ export function arrangeStaffSystem(
   sectionHeadings: Set<string>,
   deferPieces = false,
   tupletsPlaced = false,
+  attachmentGap = style.attachmentGap,
 ): StaffSystem {
   const inkIndices = new WeakMap<Ink[], InkRangeIndex>()
   const nearby = (music: Ink[], pieces: readonly Ink[], gap: number) => {
@@ -114,14 +115,14 @@ export function arrangeStaffSystem(
       top: bounds.top * scale, bottom: bounds.bottom * scale }, pieces: [], spacingPieces: [], edgePieces: [],
       section: false, staffSpacing: 0, hasLyrics: false }
     result.materializeInk = () => {
-      const complete = arrangeStaffSystem(node, geometry, width, sectionHeadings)
+      const complete = arrangeStaffSystem(node, geometry, width, sectionHeadings, false, tupletsPlaced, attachmentGap)
       Object.assign(result, complete, { materializeInk: undefined })
     }
     return result
   }
   geometry.compileStatic(node, n => isDecoration(n) || hasClass(n, 'verse'), [...decorations, 'verse'])
   const scale = STAFF_SCALE,
-    gap = style.attachmentGap / scale
+    gap = attachmentGap / scale
   for (const label of byClass('reh'))
     for (const text of findAll(label, (n) => n.tagName === 'text' || n.tagName === 'tspan'))
       text.attributes['font-size'] = String(scoreLayoutConfig.staff.annotation / scale)
@@ -163,7 +164,7 @@ export function arrangeStaffSystem(
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
   // The engine resolves rhythm labels before adding slurs. Everything added
   // afterwards is excluded by that pass, so repeating it sees identical music.
-  if (!tupletsPlaced) placeStaffTuplets(node, geometry, [...tuplets])
+  if (!tupletsPlaced) placeStaffTuplets(node, geometry, [...tuplets], attachmentGap)
   const verses = byClass('verse')
   for (const verse of verses) if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) verse.children = []
   // Pack actual lyric ink for each staff independently, with no phantom row
@@ -207,21 +208,19 @@ export function arrangeStaffSystem(
     // lower the whole verse. Staff rules preserve the common reading baseline.
     const rules = staffs.flatMap(staff => findAll(staff, child => hasClass(child, 'staff-line')).flatMap(rule => geometry.pieces(rule)))
     const musicBottom = Math.max(...rules.map(piece => piece.bottom),
-      ...music.filter(piece => lyricPieces.some(lyric => overlapsX(piece, lyric, lyricSpacing.musicGap / scale / 2))).map(piece => piece.bottom))
+      ...music.filter(piece => lyricPieces.some(lyric => overlapsX(piece, lyric, gap / 2))).map(piece => piece.bottom))
     let bottom = Number.isFinite(musicBottom) ? musicBottom : union(music).bottom
-    let first = true
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
         bounds = union(members.flatMap((v) => geometry.pieces(v)))
-      const dy = bottom + (first ? lyricSpacing.musicGap : lyricSpacing.rowGap) / scale - bounds.top
-      first = false
+      const dy = bottom + gap - bounds.top
       members.forEach((v) => translate(v, 0, dy))
       bottom = bounds.bottom + dy
     }
     if (lane + 1 < lanes) {
       const next = staffsByMeasure.flatMap(staffs => staffs[lane + 1] ?? [])
       const nextInk = union(next.flatMap((staff) => geometry.pieces(staff)))
-      const shift = Math.max(0, bottom + style.attachmentStandaloneGap / scale - nextInk.top)
+      const shift = Math.max(0, bottom + gap - nextInk.top)
       if (shift) {
         // Reopen the complete grand staff before drawing connecting barlines.
         staffSpacing = Math.max(staffSpacing, shift)
@@ -275,7 +274,7 @@ export function arrangeStaffSystem(
     const top = Math.min(...row.map(({ ink }) => ink.top))
     let right = Number.NEGATIVE_INFINITY
     for (const { ending, ink } of [...row].sort((a, b) => a.ink.left - b.ink.left)) {
-      const dx = Math.max(0, right + style.attachmentHorizontalGap / scale - ink.left)
+      const dx = Math.max(0, right + gap - ink.left)
       translate(ending, dx, top - ink.top)
       right = Math.max(right, ink.right + dx)
     }
@@ -322,26 +321,37 @@ export function arrangeStaffSystem(
   for (const attachment of attachments) {
     let ink = geometry.ink(attachment)
     if (ink.right === ink.left && ink.bottom === ink.top) continue
-    const padding = hasClass(attachment, 'reh') ? style.attachmentFramePadding / scale : 0
-    let dx = Math.max(0, padding - ink.left)
-    if (ink.right + dx + padding > width / scale) dx -= ink.right + dx + padding - width / scale
+    // Rehearsal frames are painted ink: include their padding and stroke in
+    // placement before solving clearance against music and other text.
+    if (hasClass(attachment, 'reh')) {
+      const padding = style.attachmentFramePadding / scale
+      attachment.children.unshift(element('rect', {
+        x: String(ink.left - padding), y: String(ink.top - padding),
+        width: String(ink.right - ink.left + padding * 2),
+        height: String(ink.bottom - ink.top + padding * 2),
+        fill: 'none', stroke: '#000', 'stroke-width': String(style.frameStroke / scale),
+      }))
+      ink = geometry.ink(attachment)
+    }
+    let dx = Math.max(0, -ink.left)
+    if (ink.right + dx > width / scale) dx -= ink.right + dx - width / scale
     let dy = 0
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
-    const localGap = hasClass(attachment, 'repeatMark') ? style.repeatMarkGap / scale : gap
+    const localGap = gap
     const attachmentLane = attachment.attributes['data-m3n-staff']
     const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
     const localUpperText = lanes === 1 && ['dir', 'harm', 'fing'].some(kind => hasClass(attachment, kind))
-    if (localUpperText || hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || (below && (lanes === 1 || attachmentLane !== undefined))) {
+    if (localUpperText || hasClass(attachment, 'tempo') || hasClass(attachment, 'repeatMark') || hasClass(attachment, 'octave') || (below && (lanes === 1 || attachmentLane !== undefined))) {
       // Start next to the local music, then let the normal ink avoidance
       // clear stems, curves and directions instead of preserving a fixed gap.
-      const local = (below && attachmentLane !== undefined ? belowMusic(Number(attachmentLane)) : music)
+      const local = (attachmentLane !== undefined ? belowMusic(Number(attachmentLane)) : music)
         .filter(other => overlapsX(moveInk(ink, dx, 0), other, localGap / 2))
       if (local.length) dy = below
         ? Math.max(...local.map(other => other.bottom)) + localGap - ink.top
         : Math.min(...local.map(other => other.top)) - localGap - ink.bottom
     }
-    if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - style.attachmentStandaloneGap / scale - ink.bottom
+    if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - gap - ink.bottom
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))
@@ -349,7 +359,7 @@ export function arrangeStaffSystem(
       ? [...Array.from({ length: lane + 1 }, (_, index) => belowMusic(index)).flat(),
         ...placedDecorations.filter(item => item.lane === undefined || item.lane <= lane).flatMap(item => item.pieces)] : obstacles
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
-    const clearance = ending ? (style.music * .07) / scale : localGap
+    const clearance = localGap
     const closePlacement = nearby(placementObstacles, attachmentPieces, clearance / 2)
     if (hasClass(attachment, 'tempo')) {
       // Octave lines belong to the notes. Tempo is always outside a crossed
@@ -373,20 +383,6 @@ export function arrangeStaffSystem(
       if (dy > interval.start && dy < interval.end) dy = below ? interval.end : interval.start
     if (dx || dy) translate(attachment, dx, dy)
     ink = moveInk(ink, dx, dy)
-    if (hasClass(attachment, 'reh')) {
-      const padding = style.attachmentFramePadding / scale
-      attachment.children.unshift(
-        element('rect', {
-          x: String(ink.left - dx - padding),
-          y: String(ink.top - dy - padding),
-          width: String(ink.right - ink.left + padding * 2),
-          height: String(ink.bottom - ink.top + padding * 2),
-          fill: 'none',
-          stroke: '#000',
-          'stroke-width': String(style.frameStroke / scale),
-        }),
-      )
-    }
     const placed = geometry.pieces(attachment)
     obstacles.push(...placed)
     if (hasClass(attachment, 'octave') && !below) upperOctaves.push(...placed)
@@ -440,7 +436,7 @@ export function arrangeStaffSystem(
     }
     const edgePieces = ['staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
       (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
-        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: style.music * .1 })))
+        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: attachmentGap })))
     result.pieces = pieces; result.spacingPieces = spacingPieces; result.edgePieces = edgePieces
     result.ink = union(pieces)
     result.materializeInk = undefined
@@ -455,14 +451,14 @@ export function arrangeStaffSystem(
 /** Public adjacent-row distance uses the same collision rule as pagination. */
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number, minimum = gap, maximum = gap): number {
   previous.materializeInk?.(); next.materializeInk?.()
-  const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
+  const coreGap = next.coreGapBefore ?? interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
   const shape = (system: StaffSystem) => ({ ink: system.spacingPieces.slice().sort((a,b)=>a.left-b.left),
     boundaryInk: system.pieces, edgeInk: system.edgePieces })
   const pair = scorePageCollision(shape(previous), shape(next))
-  return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top) + (next.section ? style.sectionGap : 0)
+  return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
 export function paginateStaff(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
-  paged: boolean, maximum = scoreMaximumCoreGap(minimum)): StaffPage[] {
-  return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum)
+  paged: boolean, maximum = scoreMaximumCoreGap(minimum), headerGap = scoreHeaderGap(minimum)): StaffPage[] {
+  return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum, headerGap)
 }

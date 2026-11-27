@@ -1,6 +1,6 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeAttachmentGap, nativeCoreGap, nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
@@ -133,7 +133,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
             .flatMap(label => nativeSvgPieces(label.svg, measurer))
             .filter(label => label.right > peerInk.left && label.left < peerInk.right)
           dy = Math.min(dy, ...[...peerBlockers, ...peerLabels]
-            .map(b => b.top - ((system.coreGap ?? nativeCoreGap()) * .1) - peerInk.bottom))
+            .map(b => b.top - nativeAttachmentGap(system.coreGap) - peerInk.bottom))
         }
       }
       const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
@@ -144,7 +144,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
-      dy = Math.min(dy, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-((system.coreGap ?? nativeCoreGap()) * .1)-ink.bottom))
+      dy = Math.min(dy, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-nativeAttachmentGap(system.coreGap)-ink.bottom))
     }
     if (isArc) {
       const arc = initialArc!

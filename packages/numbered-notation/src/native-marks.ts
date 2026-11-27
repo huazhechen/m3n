@@ -1,4 +1,4 @@
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap, nativeCoreGap } from './native-style.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
 import type { NativeGlyph } from './native-model.js'
@@ -32,7 +32,7 @@ export function nativeMarkStack(names: readonly string[], bodyTop: number, measu
       const overlapping = bodyPieces.filter(piece => piece.left < ink.right && piece.right > ink.left)
       if (overlapping.length) top = Math.max(...overlapping.map(piece => -piece.top))
     } else top = Math.max(top, bodyTop)
-    const y = -top - (coreGap * .1) - ink.bottom
+    const y = -top - nativeAttachmentGap(coreGap) - ink.bottom
     top = height - (y + ink.bottom)
     return { name, top: -top, height, y, left: ink.left, right: ink.right }
   })

@@ -1,10 +1,22 @@
 import { scoreLayoutConfig } from '../score-layout-config.js'
 
-/** Source leading is measured in the shared notation unit, never a font's
- * implementation em (SMuFL em and digit em describe different things). */
-export function scoreCoreGap(score?: { coreGapEm?: number }): number {
-  return scoreLayoutConfig.numbered.music * (score?.coreGapEm ?? scoreLayoutConfig.numbered.coreGapEm)
+/** Source leading is a dimensionless multiplier of each notation's base gap. */
+export function scoreCoreGap(score?: { coreGapEm?: number }, notation: 'numbered' | 'staff' = 'numbered'): number {
+  const base = notation === 'staff'
+    ? scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.coreGapSpaces
+    : scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.coreGapEm
+  return base * (score?.coreGapEm ?? 1)
 }
+/** Local attachment clearance follows the score baseline, not page stretching. */
+export const scoreAttachmentGap = (score?: { coreGapEm?: number }, notation: 'numbered' | 'staff' = 'numbered'): number =>
+  scoreCoreGap(score, notation) * scoreLayoutConfig.page.attachmentGapRatio
+
+/** Header spacing is based on the source gap and never stretched per page. */
+export const scoreHeaderGap = (minimum: number): number => minimum * .8
+/** Inline section starts replace the ordinary core gap; no additive spacer. */
+export const scoreSectionCoreGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
+  scoreLayoutConfig[notation].music * 1.5
+
 export const scoreMaximumCoreGap = (minimum: number): number => minimum * 1.1
 export const scoreLyricGapScale = (minimum: number): number => minimum > 0
   ? Math.min(1, scoreLayoutConfig.numbered.music * .8 / minimum) : 1

@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
@@ -200,13 +200,14 @@ function appendSignature(target: Signature, next: Signature) {
 type Head = { x: number; y: number }
 export type PreparedNote = {
   item: StaffEvent; dur: number; dots: number; size: number; rest: boolean; direction: number; head: StaffGlyph
-  heads: Head[]; symbols: SymbolPlacement[]; left: number; after: number; signature: Signature
+  attachmentGap: number; heads: Head[]; symbols: SymbolPlacement[]; left: number; after: number; signature: Signature
   graces: Array<{ note: PreparedNote; x: number; slash: boolean; group: number }>; graceWidth: number
 }
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
 export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
 export function createStaffPreparation(document?: StaffDocument) {
+  const attachmentGap = scoreAttachmentGap(document?.score, 'staff')
   const incomingTies = new Set<string>()
   for (const lane of ['melody', 'bass'] as const) {
     let previous: StaffEvent | undefined
@@ -217,20 +218,21 @@ export function createStaffPreparation(document?: StaffDocument) {
   }
   const measures = new WeakMap<StaffMeasure, Map<string, PreparedMeasure>>()
   return {
+    attachmentGap,
     lyricAttributes: new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts: new Map<string, StaffLyricText>(),
     measure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText) {
       let variants = measures.get(measure)
       if (!variants) { variants = new Map(); measures.set(measure, variants) }
       const key = `${first}:${hasBass}`
       let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies); variants.set(key, prepared) }
+      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE); variants.set(key, prepared) }
       return prepared
     },
   }
 }
 export type StaffPreparation = ReturnType<typeof createStaffPreparation>
 const marks: Record<string, StaffGlyph> = { str: 'articAccentAbove', tip: 'articStaccatoAbove', brk: 'articStaccatissimoAbove', hold: 'articTenutoAbove', fermata: 'fermataAbove', breath: 'breathMarkComma', tr: 'ornamentTrill', prall: 'ornamentShortTrill' }
-function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<string, string>, key: string, grace = false, beamedGrace = false): PreparedNote {
+function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<string, string>, key: string, grace = false, beamedGrace = false, attachmentGap = style.attachmentGap / STAFF_SCALE): PreparedNote {
   const { dur, dots } = staffDuration(item.beats), rest = item.event.kind === 'rest'
   const ys = rest ? [(staffMusicSize() * 1.5)] : item.pitches.map(p => staffPitchY(p.key, bass))
   const direction = grace || rest || ys.reduce((sum, y) => sum + y, 0) / ys.length > (staffMusicSize() * 1.5) ? 1 : -1
@@ -249,7 +251,7 @@ function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<strin
   // Grace accidentals precede host accidentals in performed order.
   if (!grace) for (const [groupIndex, group] of (item.graces ?? []).entries()) for (const [pitchIndex, pitch] of group.pitches.entries()) {
     const child = { ...item, pitches: [pitch], beats: 4 / group.duration, graces: [], lyrics: [], event: { ...item.event, kind: 'note' as const, postfixes: [] } }
-    const note = prepareNote(child, bass, accidentalState, key, true, group.pitches.length > 1)
+    const note = prepareNote(child, bass, accidentalState, key, true, group.pitches.length > 1, attachmentGap)
     graces.push({ note, x: graceWidth + note.left, slash: group.slash && pitchIndex === 0, group: groupIndex }); graceWidth += note.left + note.after + note.size / 4 * .5
   }
   let left = Math.max(0, -Math.min(...heads.map(h => h.x)))
@@ -282,27 +284,27 @@ function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<strin
     after = Math.max(after, headWidth + size / 4 * .35)
   }
   if (!grace) {
-    let markTop = Math.min(staffMusicSize(), ...ys) - (staffMusicSize() / 4 * 1)
+    let markTop = Math.min(staffMusicSize(), ...ys) - attachmentGap
     for (const value of item.event.postfixes) if (marks[value]) {
       const glyph = marks[value]!, base = staffGlyphMetrics(glyph)
       const height = scoreAttachmentHeight(value)
       const size = height === undefined ? staffMusicSize() : staffMusicSize() * height / STAFF_SCALE / (base.bottom - base.top)
       const m = staffGlyphMetrics(glyph, size)
       symbols.push({ glyph, size, x: headWidth / 2 - (m.left + m.right) / 2, y: markTop - m.bottom })
-      markTop -= m.bottom - m.top + (staffMusicSize() / 4 * 0.5)
+      markTop -= m.bottom - m.top + attachmentGap
       left = Math.max(left, (m.right - m.left - headWidth) / 2)
       after = Math.max(after, (m.right - m.left + headWidth) / 2)
     }
     if (item.event.postfixes.includes('arp')) left += (staffMusicSize() / 4 * 1.2)
   }
   if (graces.length) left += graceWidth + (staffMusicSize() / 4 * 0.5)
-  return { item, dur, dots, size, rest, direction, head, heads, symbols, left, after, signature: { symbols: [], width: 0 }, graces, graceWidth }
+  return { item, dur, dots, size, rest, direction, head, attachmentGap, heads, symbols, left, after, signature: { symbols: [], width: 0 }, graces, graceWidth }
 }
 function beamGroups(count: number, unit: number) {
   if (count > 3 && count % 3 === 0) return Array.from({ length: count / 3 }, () => 12 / unit)
   return Array.from({ length: Math.ceil(count * 4 / unit) }, () => 1)
 }
-function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>): PreparedMeasure {
+function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>, attachmentGap: number): PreparedMeasure {
   const signatures: Signature[] = [], beams: PreparedMeasure['beams'] = []
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
@@ -332,7 +334,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       if (item.onset > 0 && item.key !== key) appendSignature(inline, keySignature(item.key, key, bass))
       if (item.onset > 0 && nextMeter !== meter) appendSignature(inline, meterSignature(item.event.meterCount!, item.event.meterUnit!))
       key = item.key; meter = nextMeter
-      const notes = (item.children ?? [item]).map(child => prepareNote(child, bass, accidentals, key))
+      const notes = (item.children ?? [item]).map(child => prepareNote(child, bass, accidentals, key, false, false, attachmentGap))
       if (inline.width) { notes[0]!.signature = inline; notes[0]!.left += inline.width + (staffMusicSize() / 4 * 0.6) }
       return { item, notes }
     })
@@ -627,7 +629,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
     if (p.dur >= 8 && !note.beam) glyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size)
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
-    ? Math.min(0, note.stemEnd - (staffMusicSize() / 4 * 0.6) - (staveY + Math.min(staffMusicSize(), fixed.top) - (staffMusicSize() / 4 * 1))) : 0
+    ? Math.min(0, note.stemEnd - p.attachmentGap - (staveY + Math.min(staffMusicSize(), fixed.top) - p.attachmentGap)) : 0
   let articulationTop = fixed.top + fixed.glyph.top
   let articulationBottom = fixed.bottom + fixed.glyph.bottom
   for (const s of p.symbols) {
@@ -637,7 +639,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
       const below = note.direction === 1
       const name = s.glyph.replace(/Above$/, below ? 'Below' : 'Above') as StaffGlyph
       const metrics = staffGlyphMetrics(name, s.size ?? size)
-      let y = below ? articulationBottom + unit * .5 - metrics.top : articulationTop - unit * .5 - metrics.bottom
+      let y = below ? articulationBottom + p.attachmentGap - metrics.top : articulationTop - p.attachmentGap - metrics.bottom
       if (name.startsWith('articStaccato')) {
         const center = y + (metrics.top + metrics.bottom) / 2
         const rule = staffMusicSize() + Math.round((center - staffMusicSize()) / unit) * unit

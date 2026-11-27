@@ -1,3 +1,4 @@
+import { scoreSectionCoreGap } from '@m3n/numbered-notation/layout'
 import {
   incomingMeasureKeys, m3nChord, m3nPitch, parseKey, scoreEventIds, parseM3NGrace, parseM3NGroupPitches,
   type ScoreDocument, type ScoreEvent, type ScoreEventLyric, type ScoreMeasure,
@@ -18,7 +19,7 @@ export type StaffMeasure = {
   beatOffset?: number
   meterCount: number; meterUnit: number; tempo: number; showTempo: boolean; showMeter: boolean
   joinsPreviousRepeat?: boolean
-  force: boolean; section: boolean; fragment: boolean; lastFragment: boolean
+  force: boolean; section: boolean; coreGapBefore?: number; fragment: boolean; lastFragment: boolean
 }
 export type StaffDocument = {
   score: ScoreDocument; measures: StaffMeasure[]; hasBass: boolean
@@ -156,7 +157,9 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
         showTempo: (!measures.length && (input.hasExplicitTempo || Boolean(input.order))) || tempo !== previousTempo,
         showMeter: !measures.length || meter !== previousMeter,
         force: (partIndex > 0 && index === 0) || previousBreak || Boolean(source.breakBefore || first?.sectionLabel),
-        section: Boolean(first?.sectionLabel), fragment: false, lastFragment: true,
+        section: Boolean(first?.sectionLabel),
+        coreGapBefore: index > 0 && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? scoreSectionCoreGap('staff') : undefined,
+        fragment: false, lastFragment: true,
       })
       number += (source.multiRest ?? 1) - 1
       previousKey = source.events.at(-1)?.key ?? key
@@ -193,6 +196,7 @@ export function splitStaffMeasure(measure: StaffMeasure, maximumBeats: number): 
     key: measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
     previousKey: i === 0 ? measure.previousKey : measure.melody.find(e => e.onset >= start)?.key ?? measure.key,
     force: i === 0 && measure.force, section: i === 0 && measure.section,
+    coreGapBefore: i === 0 ? measure.coreGapBefore : undefined,
     joinsPreviousRepeat: i === 0 && measure.joinsPreviousRepeat,
     showTempo: i === 0 && measure.showTempo, showMeter: i === 0 && measure.showMeter,
     melody: measure.melody.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),
