@@ -1,4 +1,4 @@
-import { compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreCandidateSpacingTiers, compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -146,7 +146,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const trials = scoreLayoutConfig.staff.noteGapCandidates.map(spacing => {
+    const trials = scoreCandidateSpacingTiers(scoreLayoutConfig.staff.noteGapCandidates,Boolean(score.equalMeasures)).map(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       // Preserve the last occurrence of a tuplet parent across fragments, just
       // as the complete line scan does, without rescanning the score per row.

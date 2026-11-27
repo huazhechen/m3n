@@ -1,4 +1,5 @@
 import { completePageConstrainedTrial, type NativeGapTrial, type NativePageTrialCache } from './native-page-trial.js'
+import { scoreCandidateSpacingTiers } from './layout/width-spacing-tiers.js'
 import { compareScoreSpacingTrials } from './layout/spacing-trials.js'
 import { startsNativeSection, nativeRowIdentity, breakMeasures } from './native-line-graph.js'
 import { repaginateNativeLayout, positionNativeLayout } from './native-layout-pagination.js'
@@ -121,7 +122,7 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
   try {
   // Both tiers receive complete horizontal plans; page bounds can skip engraving.
   // Paper use wins before physical spacing cost; continuous and paged modes agree.
-  const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
+  const gaps = supplied.minimumNoteGap === undefined ? scoreCandidateSpacingTiers(nativeStyle.noteGapCandidates,Boolean(supplied.equalMeasures ?? document.equalMeasures)) : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => ({ minimumNoteGap,
     trial: prepareNativeScoreAtGap(document, { ...supplied, paged: true, coreGap: nativeCoreGap(document), minimumNoteGap }, timings, preparation, undefined, undefined, undefined, measurement) }))
   if (supplied.pageConstrainedBreaks !== true && !supplied.numericLayout && minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))

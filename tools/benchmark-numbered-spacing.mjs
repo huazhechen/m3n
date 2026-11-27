@@ -36,14 +36,17 @@ assert(Number.isInteger(experimentalWidthBin) && experimentalWidthBin>=0 && expe
 assert(Number.isInteger(experimentalInkBin) && experimentalInkBin >= 0 && experimentalInkBin <= 48, 'Invalid proxy bin')
 const experimentalRowReuse = process.argv.includes('--row-reuse')
 const experimentalGreedyCeiling = process.argv.includes('--fast-ceiling')
+assert(!process.argv.includes('--equal-tier') || experimentalRowReuse, '--equal-tier requires --row-reuse')
 assert(!process.argv.includes('--cross-tier') || experimentalRowReuse, '--cross-tier requires --row-reuse')
 assert(!auditLayout || !experimentalRowReuse, 'Surrogate candidates cannot be painted; audit exact widths without --row-reuse')
 assert(!experimentalInkBin || experimentalRowReuse, '--proxy-bin requires --row-reuse')
 assert(!experimentalWidthBin || experimentalRowReuse, '--proxy-width-bin requires --row-reuse')
 assert(!experimentalPageCostPasses || experimentalRowReuse, '--page-cost-passes requires --row-reuse')
 assert(!experimentalGreedyCeiling || experimentalRowReuse, '--fast-ceiling requires --row-reuse for final exact verification')
+const coldEachScore=process.argv.includes('--cold-each-score')
 const warmupIterations = Number(argument('warmup') ?? 0)
 assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
+assert(!coldEachScore || !warmupIterations,'Cold-per-score audit cannot warm up scores')
 const numericLayout = process.argv.includes('--numeric-layout')
 const pageConstrainedBreaks = process.argv.includes('--page-bound')
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
@@ -59,9 +62,11 @@ if (checkpoint) {
   assert.equal(checkpoint.experimentalWidthBin ?? 0, experimentalWidthBin, 'Cannot resume with different geometry width bins')
   assert.equal(checkpoint.experimentalPageCostPasses ?? 0, experimentalPageCostPasses, 'Cannot resume with a different page cost pass budget')
   assert.equal(Boolean(checkpoint.experimentalRowReuse), experimentalRowReuse, 'Cannot resume with different row reuse')
+  assert.equal(Boolean(checkpoint.experimentalEqualTier),process.argv.includes('--equal-tier'),'Cannot resume with a different equal-measure tier surrogate')
   assert.equal(Boolean(checkpoint.experimentalTierReuse), process.argv.includes('--cross-tier'), 'Cannot resume with different tier reuse')
   assert.equal(Boolean(checkpoint.experimentalGreedyCeiling), experimentalGreedyCeiling, 'Cannot resume with different ceiling solving')
   assert.equal(checkpoint.warmupIterations ?? 0, warmupIterations, 'Cannot resume with a different warmup count')
+  assert.equal(Boolean(checkpoint.coldEachScore),coldEachScore,'Cannot resume with a different browser reuse policy')
   assert.equal(Boolean(checkpoint.detailedTimings), auditLayout || process.argv.includes('--detailed-timings'), 'Cannot resume with different timing collection')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
@@ -72,20 +77,26 @@ report.detailedTimings = auditLayout || process.argv.includes('--detailed-timing
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalWidthBin) report.experimentalWidthBin = experimentalWidthBin
 report.experimentalPageCostPasses = experimentalPageCostPasses
+report.experimentalEqualTier=process.argv.includes('--equal-tier')
+if(coldEachScore)report.coldEachScore=true
+report.browserReuse=coldEachScore ? 'fresh-browser-per-score' : 'single-page-shared-fonts-and-metrics'
+report.fontPreparationMs=checkpoint?.fontPreparationMs ?? 0
 if (experimentalRowReuse) report.experimentalRowReuse = true
 if (process.argv.includes('--cross-tier')) report.experimentalTierReuse = true
 if (experimentalGreedyCeiling) report.experimentalGreedyCeiling = true
 if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
-const browser = await chromium.launch({ executablePath, headless: true,
+report.fontRoot = fontRoot
+const fonts = JSON.parse(readFileSync(join(fontRoot, 'manifest.json'), 'utf8')).fonts
+report.fontHashes = fonts.map(({ file, sha256 }) => ({ file, sha256 }))
+if(checkpoint)assert.deepEqual(checkpoint.fontHashes,report.fontHashes,'Cannot resume with different font inputs')
+let browser, page, latestFontPreparationMs
+const openBrowser=async()=>{
+  browser = await chromium.launch({ executablePath, headless: true,
   args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--expose-gc --max-old-space-size=256'] })
-try {
-  const page = await browser.newPage()
+  page = await browser.newPage()
   if (process.argv.includes('--trace-widths')) page.on('console', message => console.log(message.text()))
-  report.fontRoot = fontRoot
-  const fonts = JSON.parse(readFileSync(join(fontRoot, 'manifest.json'), 'utf8')).fonts
-  report.fontHashes = fonts.map(({ file, sha256 }) => ({ file, sha256 }))
   await page.route(`${origin}/**`, route => {
     const path = new URL(route.request().url()).pathname
     if (path === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><html style="font-synthesis:none"><body></body></html>' })
@@ -105,8 +116,8 @@ try {
   await page.addScriptTag({ url: `${origin}/bundle.js` })
   const fontStarted = performance.now()
   await page.evaluate(fonts => m3n.initialize(fonts), fonts.map(font => ({ ...font, url: origin + '/fonts/' + font.file })))
-  report.fontPreparationMs = performance.now() - fontStarted
-  report.browserReuse = 'single-page-shared-fonts-and-metrics'
+  latestFontPreparationMs = performance.now() - fontStarted
+  report.fontPreparationMs=(report.fontPreparationMs ?? 0)+latestFontPreparationMs
   await page.evaluate(enabled => { globalThis.__m3nTraceWidths = enabled }, process.argv.includes('--trace-widths'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalRowReuse = enabled }, process.argv.includes('--row-reuse'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))
@@ -114,12 +125,16 @@ try {
   await page.evaluate(size => { globalThis.__m3nExperimentalWidthBin = size }, experimentalWidthBin)
   await page.evaluate(passes => { globalThis.__m3nExperimentalPageCostPasses = passes }, experimentalPageCostPasses)
   await page.evaluate(enabled => { globalThis.__m3nExperimentalTierReuse = enabled }, process.argv.includes('--cross-tier'))
+  await page.evaluate(enabled=>{globalThis.__m3nExperimentalEqualTier=enabled},process.argv.includes('--equal-tier'))
   await page.evaluate(enabled => { globalThis.__m3nDetailedLayoutTimings = enabled }, process.argv.includes('--detailed-timings'))
+}
+try {
   for (const file of scores) {
     const source = readFileSync(join(sourceRoot, file), 'utf8')
     const sourceHash = createHash('sha256').update(source).digest('hex')
     const saved = report.entries.find(entry => entry.file === file)
     if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
+    if(!page || coldEachScore){await browser?.close();await openBrowser()}
     for (let iteration = 0; iteration < warmupIterations; iteration++) {
       await page.evaluate(async ({ source, prune, numericLayout, pageConstrainedBreaks }) => {
         await m3n.search(source, false, prune, pageConstrainedBreaks, numericLayout)
@@ -137,14 +152,14 @@ try {
     }
     const previous = baseline?.entries.find(entry => entry.file === file)
     if (baseline) assert(previous && previous.sourceHash === sourceHash, `Baseline/source mismatch: ${file}`)
-    const entry = { file, sourceHash, ...result, ...(previous ? { widthDelta: result.width - previous.width, pageDelta: result.pages - previous.pages } : {}) }
+    const entry = { file, sourceHash, ...result, ...(coldEachScore ? {fontPreparationMs:latestFontPreparationMs} : {}), ...(previous ? { widthDelta: result.width - previous.width, pageDelta: result.pages - previous.pages } : {}) }
     report.entries.push(entry)
     save()
     console.log(`${report.entries.length}/${scores.length} ${file}: ${result.width}px / ${result.pages}p${previous ? ` (${entry.widthDelta >= 0 ? '+' : ''}${entry.widthDelta}px, ${entry.pageDelta}p)` : ''}`)
     // Release per-score layout graphs while preserving font and metric caches.
     await page.evaluate(() => { if (typeof globalThis.gc === 'function') globalThis.gc() })
   }
-} finally { await browser.close() }
+} finally { await browser?.close() }
 report.batchMs = performance.now() - batchStarted
 report.searchMs = report.entries.reduce((sum, entry) => sum + entry.searchMs, 0)
 report.complete = true

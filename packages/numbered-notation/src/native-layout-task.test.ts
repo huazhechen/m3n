@@ -140,14 +140,15 @@ it('keeps measured preparation independent across gap floors and equal-measure s
 })
 
 
-it('compiled surrogate plans preserve unplaced inputs and leave exact final geometry available', () => {
-  const document = parseM3NDocument('{4/4}\nN: ' + '{lg}1 2 3 4{/} |{br} '.repeat(18))
+it.each([false,true])('compiled surrogate plans preserve unplaced inputs and exact final geometry, equal=%s', equal => {
+  const document = parseM3NDocument((equal ? '{equal-measures=true}' : '')+'{4/4}\nN: ' + '{lg}1 2 3 4{/} |{br} '.repeat(18))
   const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
   const options = {width:528,numericLayout:true,pageMargin:0,layoutTask,textMeasurementCache}
   vi.stubGlobal('__m3nExperimentalRowReuse',true)
   vi.stubGlobal('__m3nExperimentalInkBin',12)
   vi.stubGlobal('__m3nExperimentalWidthBin',12)
   vi.stubGlobal('__m3nExperimentalPageCostPasses',1)
+  vi.stubGlobal('__m3nExperimentalEqualTier',true)
   PreparedNumberedNotationScore.measure(document,options)
   const preparation = layoutTask.preparationFor(document,options,textMeasurementCache)
   const unplaced = structuredClone(preparation.measuredProjections)

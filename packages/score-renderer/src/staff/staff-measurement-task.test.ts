@@ -12,8 +12,8 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 const source = '{title=测量任务}{key=G}{4/4}\nN: 1# (2 3) 4 5 | ([6 7 1e:2]) 2e 3e 4e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\nL: 春夏秋冬 | 山川天地 |'
 describe('one staff measurement task', () => {
-  it('keeps exact final geometry independent of cross-tier surrogate visits and split spans',async()=>{
-    const score=analyzeM3N('{4/4}\nN: '+('((1 2 3 4)) ((5 6 7 1e)) ((2e 3e 4e 5e)) ((6e 7e 1ee 2ee)) | ').repeat(6)+'1^^ |||').score
+  it.each([false,true])('keeps exact final geometry independent of surrogate visits and split spans, equal=%s',async equal=>{
+    const score=analyzeM3N((equal ? '{equal-measures=true}' : '')+'{4/4}\nN: '+('((1 2 3 4)) ((5 6 7 1e)) ((2e 3e 4e 5e)) ((6e 7e 1ee 2ee)) | ').repeat(6)+'1^^ |||').score
     const task=await prepareStaffMeasurementTask(score)
     try {
       vi.stubGlobal('__m3nExperimentalRowReuse',true)
@@ -21,6 +21,7 @@ describe('one staff measurement task', () => {
       vi.stubGlobal('__m3nExperimentalInkBin',12)
       vi.stubGlobal('__m3nExperimentalWidthBin',12)
       vi.stubGlobal('__m3nExperimentalPageCostPasses',1)
+      vi.stubGlobal('__m3nExperimentalEqualTier',true)
       for(const width of [360,528,720,534]) {
         const candidate=await prepareStaffScore(score,{width},undefined,task)
         expect(candidate.measurementInfo().rows).toBeGreaterThan(0)
