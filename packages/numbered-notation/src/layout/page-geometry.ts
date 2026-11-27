@@ -1,3 +1,4 @@
+import { scoreWidthPolicyState } from './width-candidate-policy.js'
 import { cacheScoreInkSeparation, inheritScoreHorizontalProxy } from './ink-separation.js'
 import type { ScoreInk } from './geometry.js'
 import type { ScorePageBlock } from './geometry.js'
@@ -19,7 +20,7 @@ export function scorePageGeometry(block: ScorePageBlock, immutable = false): Sco
   const saved = immutable ? immutableGeometry.get(block) : undefined
   if (saved) return saved
   const axis = block.baseline ?? 0
-  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalWidthBin?:number}
+  const experiment=scoreWidthPolicyState()
   const share=immutable && experiment.__m3nExperimentalRowReuse && (experiment.__m3nExperimentalWidthBin ?? 0)>0 && Boolean(block.ink?.length)
   const boundary=block.boundaryInk ?? emptyInk,edges=block.edgeInk ?? emptyInk
   const key=share ? JSON.stringify([axis,Boolean(block.core),block.core?.top,block.core?.bottom,block.coreGapScale ?? 1,

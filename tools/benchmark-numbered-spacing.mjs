@@ -29,6 +29,7 @@ const scores = ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join
   .filter(file => !argument('score') || file.includes(argument('score')))
 assert(scores.length, 'No scores selected')
 const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bundle/bundle.js'))).digest('hex')
+const productionPolicy=process.argv.includes('--production-policy')
 const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
 const experimentalInkBin = Number(argument('proxy-bin') ?? 0)
@@ -48,6 +49,7 @@ assert(!experimentalInkBin || experimentalRowReuse, '--proxy-bin requires --row-
 assert(!experimentalWidthBin || experimentalRowReuse, '--proxy-width-bin requires --row-reuse')
 assert(!experimentalPageCostPasses || experimentalRowReuse, '--page-cost-passes requires --row-reuse')
 assert(!experimentalGreedyCeiling || experimentalRowReuse, '--fast-ceiling requires --row-reuse for final exact verification')
+assert(!productionPolicy || !auditLayout && !experimentalRowReuse && !experimentalInkBin && !experimentalWidthBin && !experimentalPageCostPasses && !experimentalGreedyCeiling && !process.argv.includes('--single-tier') && !process.argv.includes('--equal-tier') && !process.argv.includes('--endpoint-floor') && !process.argv.includes('--cross-tier'),'Production policy cannot be combined with separate experimental settings or SVG audit')
 const coldEachScore=process.argv.includes('--cold-each-score')
 const warmupIterations = Number(argument('warmup') ?? 0)
 assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
@@ -56,6 +58,7 @@ const numericLayout = process.argv.includes('--numeric-layout')
 const pageConstrainedBreaks = process.argv.includes('--page-bound')
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
 if (checkpoint) {
+  assert.equal(Boolean(checkpoint.productionPolicy),productionPolicy,'Cannot resume with a different production policy')
   assert.equal(checkpoint.notation ?? 'numbered', staffMode ? 'staff' : 'numbered', 'Cannot resume with a different notation')
   assert.equal(Boolean(checkpoint.numericLayout), numericLayout, 'Cannot resume with a different geometry engine')
   assert.equal(Boolean(checkpoint.pageConstrainedBreaks), pageConstrainedBreaks, 'Cannot resume with a different page-bound setting')
@@ -84,6 +87,7 @@ report.detailedTimings = auditLayout || process.argv.includes('--detailed-timing
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalWidthBin) report.experimentalWidthBin = experimentalWidthBin
 report.experimentalPageCostPasses = experimentalPageCostPasses
+report.productionPolicy=productionPolicy
 report.experimentalEndpointFloor=process.argv.includes('--endpoint-floor')
 report.experimentalSingleTier=process.argv.includes('--single-tier')
 report.experimentalEqualTier=process.argv.includes('--equal-tier')
@@ -127,6 +131,7 @@ const openBrowser=async()=>{
   await page.evaluate(fonts => m3n.initialize(fonts), fonts.map(font => ({ ...font, url: origin + '/fonts/' + font.file })))
   latestFontPreparationMs = performance.now() - fontStarted
   report.fontPreparationMs=(report.fontPreparationMs ?? 0)+latestFontPreparationMs
+  await page.evaluate(enabled=>{globalThis.__m3nProductionWidthPolicy=enabled},productionPolicy)
   await page.evaluate(enabled => { globalThis.__m3nTraceWidths = enabled }, process.argv.includes('--trace-widths'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalRowReuse = enabled }, process.argv.includes('--row-reuse'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))

@@ -1,6 +1,6 @@
 import { analyzeM3N } from '@m3n/notation'
 import { prepareNumberedNotationFonts, registerScoreFontBundle, NumberedLayoutTask, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
-import { selectBestWidth, numberedLayoutScore, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
+import { selectBestWidth, optimizedScoreWidthPolicy, numberedLayoutScore, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
 
 const textMeasurementCache = new NumberedTextMeasurementCache()
@@ -28,17 +28,17 @@ export async function search(source, auditLayout = false, prune = false, pageCon
     for (const [key, value] of Object.entries(partial ?? {}))
       if (typeof value === 'number') timings[key] = key.includes('Maximum') ? Math.max(timings[key] ?? 0, value) : (timings[key] ?? 0) + value
   }
-  const result = await selectBestWidth((width, best) => {
+  const result = await selectBestWidth((width, best, candidatePolicy) => {
     if (globalThis.__m3nTraceWidths) console.log('width-start ' + width)
     try {
-      const measured = measureNumberedWidth(score, width, { settings, detailedTimings,
+      const measured = measureNumberedWidth(score, width, { settings, detailedTimings, candidatePolicy,
         maximumPageCount: prune && !auditLayout ? best?.pageCount : undefined,
         minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined })
       accumulate(measured.candidate.timings)
       if (globalThis.__m3nTraceWidths) console.log('width-done ' + JSON.stringify({width,pages:measured.candidate.pageCount,rows:measured.candidate.rows,ms:measured.candidate.timings.totalMs}))
       return measured.candidate
     } catch (error) { accumulate(error.timings); throw error }
-  }, { prune: prune && !auditLayout })
+  }, { prune: prune && !auditLayout, candidatePolicy:globalThis.__m3nProductionWidthPolicy ? optimizedScoreWidthPolicy : undefined })
   let exactWinner
   if (globalThis.__m3nExperimentalRowReuse) {
     const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling

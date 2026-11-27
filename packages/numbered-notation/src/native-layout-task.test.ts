@@ -1,3 +1,4 @@
+import { optimizedScoreWidthPolicy,exactScoreWidthPolicy,withScoreWidthCandidatePolicy } from './layout/width-candidate-policy.js'
 import { readFileSync } from 'node:fs'
 import { afterEach, expect, it, vi } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -187,4 +188,19 @@ it('counts deferred compiled geometry separately from other trials preparing in 
     const independent=['projectionMs','horizontalMeasureMs','lineBreakMs','horizontalQualityMs','horizontalPlacementMs','decorationsLyricsMs','verticalPaginationMs']
     expect(independent.reduce((sum,name)=>sum+(timings[name] ?? 0),0)).toBeLessThanOrEqual(clock-start)
   } finally {now.mockRestore()}
+})
+
+it('keeps explicit estimate contexts out of retained tasks and final drawings',()=>{
+  const document=parseM3NDocument('{4/4}\nN: '+('((1 2 3 4)) | ').repeat(12)+'1^^ |||')
+  const layoutTask=new NativeLayoutTask()
+  const options={width:600,pageMargin:0,layoutTask}
+  for(const width of [528,600,720])withScoreWidthCandidatePolicy(optimizedScoreWidthPolicy,()=>{
+    expect(PreparedNumberedNotationScore.measure(document,{...options,width}).pageCount).toBeGreaterThan(0)
+  })
+  const exact=withScoreWidthCandidatePolicy(exactScoreWidthPolicy,()=>PreparedNumberedNotationScore.measure(document,options))
+  const fresh=PreparedNumberedNotationScore.measure(document,{width:600,pageMargin:0})
+  expect(exact.quality).toEqual(fresh.quality)
+  expect(exact.pageCount).toBe(fresh.pageCount)
+  expect(new PreparedNumberedNotationScore(document,options).renderPaged())
+    .toEqual(new PreparedNumberedNotationScore(document,{width:600,pageMargin:0}).renderPaged())
 })

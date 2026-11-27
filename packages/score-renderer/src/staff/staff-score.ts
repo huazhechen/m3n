@@ -1,4 +1,4 @@
-import { scoreCandidateSpacingTiers, compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreWidthPolicyState, scoreCandidateSpacingTiers, compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -164,7 +164,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (!system) {
           const line = graph.makeLines([end], false, start, false)[0]!
           if (target !== undefined) line.target = target
-          const proxyRows = (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse ? measurements.proxyRows : undefined
+          const proxyRows = (scoreWidthPolicyState()).__m3nExperimentalRowReuse ? measurements.proxyRows : undefined
           const proxyKey = proxyRows ? scoreWidthProxyKey(spacing,Boolean(settings.measureNumbers),line.measures.map(({measure}) => measurements.proxyIdentityFor(measure))) : undefined
           const savedProxy = proxyKey === undefined ? undefined : proxyRows?.get(proxyKey)
           if (savedProxy) {

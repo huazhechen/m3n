@@ -1,3 +1,4 @@
+import { scoreWidthPolicyState } from './width-candidate-policy.js'
 import { scoreLayoutConfig } from '../score-layout-config.js'
 import { planScoreLinesGlobally, type ScoreLineCandidate } from './line-breaking.js'
 import { greedyScoreLines, planScoreLinesWithinPages, scoreLinePlanCost, improveFeasibleScoreLines } from './page-line-breaking.js'
@@ -35,7 +36,7 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
   evaluate: (ends: number[]) => { pages: number; value?: T }, model: ScorePageCostModel,
   timings?: Record<string, number>): Measured<T> {
   if (optimum.pages <= greedy.pages) return optimum
-  if ((globalThis as {__m3nExperimentalGreedyCeiling?:boolean}).__m3nExperimentalGreedyCeiling) {
+  if ((scoreWidthPolicyState()).__m3nExperimentalGreedyCeiling) {
     const greedyCost=scoreLinePlanCost(graph,greedy.ends), optimumCost=scoreLinePlanCost(graph,optimum.ends)
     if ((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths) console.log('fast-ceiling '+JSON.stringify({greedyCost,optimumCost,rows:greedy.ends.length}))
     if (greedyCost<=Math.max(.6,1.5*optimumCost)+1e-12) return greedy
@@ -45,7 +46,7 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
   // Candidate-only budget: retain the measured feasible plan if refinement
   // would exceed it. Exact searches never interpret an unfinished proof as a
   // rejection; final verification disables row reuse and runs to completion.
-  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number;__m3nExperimentalSingleTier?:boolean}
+  const experiment=scoreWidthPolicyState()
   const budget=experiment.__m3nExperimentalPageCostPasses ?? 0
   const boundary=experiment.__m3nExperimentalSingleTier && model.candidateWidth===scoreLayoutConfig.pageWidth.unit*scoreLayoutConfig.pageWidth.maximumMultiple
   const limit=experiment.__m3nExperimentalRowReuse && budget>0

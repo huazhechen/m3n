@@ -1,3 +1,4 @@
+import { scoreWidthPolicyState } from './width-candidate-policy.js'
 import type { ScoreInk } from './geometry.js'
 import { cacheScoreHorizontalProxy } from './ink-separation.js'
 
@@ -7,7 +8,7 @@ const quantizedTransforms = new WeakMap<readonly ScoreInk[], Map<string, ScoreIn
 const emptyTransform:ScoreInk[]=[]
 
 function candidateRight(left:number,right:number):number {
-  const bin=(globalThis as {__m3nExperimentalWidthBin?:number}).__m3nExperimentalWidthBin ?? 0
+  const bin=(scoreWidthPolicyState()).__m3nExperimentalWidthBin ?? 0
   const width=right-left
   return bin>0 && Number.isFinite(width) && width>=bin ? left+Math.round(width/bin)*bin : right
 }
@@ -15,7 +16,7 @@ function candidateRight(left:number,right:number):number {
 /** Candidate-only templates may share vertical geometry across spacing tiers.
  * All musical identities and non-spacing context remain in the key. */
 export function scoreWidthProxyKey(tier: string | number, ...context: unknown[]): string {
-  const shared = (globalThis as {__m3nExperimentalTierReuse?:boolean}).__m3nExperimentalTierReuse
+  const shared = (scoreWidthPolicyState()).__m3nExperimentalTierReuse
   return JSON.stringify([shared ? null : tier, ...context])
 }
 
@@ -30,7 +31,7 @@ export function proxyScoreWidthBounds<T extends ScoreInk>(piece: T, left: number
 
 /** Conservative horizontal bins for candidate geometry only. */
 function candidateInk<T extends ScoreInk>(source: readonly T[]): readonly T[] {
-  const size = (globalThis as { __m3nExperimentalInkBin?: number }).__m3nExperimentalInkBin ?? 0
+  const size = (scoreWidthPolicyState()).__m3nExperimentalInkBin ?? 0
   if (!(size > 0)) return source
   const saved = binnedSources.get(source)
   if (saved?.size === size) return saved.ink as T[]
@@ -51,7 +52,7 @@ function candidateInk<T extends ScoreInk>(source: readonly T[]): readonly T[] {
 /** Experimental candidate surrogate. Never used as final drawing geometry. */
 export function proxyScoreWidthInk<T extends ScoreInk>(pieces: readonly T[], left: number, right: number, nextLeft: number, nextRight: number): T[] {
   pieces = candidateInk(pieces)
-  const quantized=((globalThis as {__m3nExperimentalWidthBin?:number}).__m3nExperimentalWidthBin ?? 0)>0
+  const quantized=((scoreWidthPolicyState()).__m3nExperimentalWidthBin ?? 0)>0
   if(quantized && !pieces.length)return emptyTransform as T[]
   const key=quantized ? `${left}:${right}:${nextLeft}:${candidateRight(nextLeft,nextRight)}` : undefined
   let variants=quantized ? quantizedTransforms.get(pieces) : undefined
@@ -73,7 +74,7 @@ export function proxyScoreWidthInk<T extends ScoreInk>(pieces: readonly T[], lef
 
 export function proxyScoreWidthPartition<T extends ScoreInk>(all: readonly T[], subset: readonly T[], left: number, right: number, nextLeft: number, nextRight: number) {
   nextRight=candidateRight(nextLeft,nextRight)
-  if (((globalThis as {__m3nExperimentalInkBin?:number}).__m3nExperimentalInkBin ?? 0) > 0) {
+  if (((scoreWidthPolicyState()).__m3nExperimentalInkBin ?? 0) > 0) {
     let peers = complements.get(all)
     let complement = peers?.get(subset)
     if (!complement) {

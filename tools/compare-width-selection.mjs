@@ -45,7 +45,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const [baselinePath, trialPath] = process.argv.slice(2)
   assert(baselinePath && trialPath, 'Usage: node tools/compare-width-selection.mjs EXACT.json TRIAL.json')
   const report = compareWidthSelection(JSON.parse(readFileSync(baselinePath, 'utf8')), JSON.parse(readFileSync(trialPath, 'utf8')))
-  const { entries, ...summary } = report
+  const { entries: _entries, ...summary } = report
   console.log(JSON.stringify(summary, null, 2))
   process.exitCode = report.qualityFailures.length || report.performanceFailures.length ? 1 : 0
 }

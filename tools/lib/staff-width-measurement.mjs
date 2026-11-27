@@ -1,3 +1,4 @@
+import { withScoreWidthCandidatePolicy, scoreWidthPolicyState } from '@m3n/numbered-notation/layout'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareStaffScore } from '@m3n/score-renderer/staff'
 import { a4SourcePageHeight } from '@m3n/score-renderer'
@@ -6,18 +7,19 @@ import { numberedLayoutScore, WidthSearchPruned } from '../scorebook-width.mjs'
 
 /** Staff-specific geometry adapter; width enumeration, safety filtering and
  * ranking belong to the same policy used for numbered notation. */
-export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false, task, onPrepared, minimumQuality, maximumPageCount = 1 } = {}) {
+export async function measureStaffWidth(score, width, settings = {}, signal, { auditLayout = false, task, onPrepared, minimumQuality, maximumPageCount = 1, candidatePolicy } = {}) {
   const started = performance.now(), timings = {}
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
-  // Candidate proxies are cheaper to paginate than to screen using a second
-  // complete lower-bound graph. Exact and audited measurements retain it.
-  if (!globalThis.__m3nExperimentalRowReuse && !auditLayout && minimumQuality !== undefined && !render.canBeatPageQuality(maximumPageCount, minimumQuality)) throw new WidthSearchPruned()
-  const info = auditLayout ? render.layoutInfo() : render.measurementInfo()
+  const {info,pageCount,qualityScore}=withScoreWidthCandidatePolicy(candidatePolicy,()=>{
+    // Font preparation above may yield; only numeric engraving holds a policy.
+    if (!scoreWidthPolicyState().__m3nExperimentalRowReuse && !auditLayout && minimumQuality !== undefined && !render.canBeatPageQuality(maximumPageCount, minimumQuality)) throw new WidthSearchPruned()
+    const info=auditLayout ? render.layoutInfo() : render.measurementInfo()
+    const pageCount=render.pageCount(true)
+    return {info,pageCount,qualityScore:numberedLayoutScore({width,...info.quality})}
+  })
   const { lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity } = info.quality
-  const pageCount = render.pageCount(true)
   timings.layoutMs = performance.now() - started
-  const qualityScore = numberedLayoutScore({ width, ...info.quality })
   if (!auditLayout) {
     timings.totalMs = performance.now() - started
     return { width, pageCount, rows: info.rows, outside: [], overlaps: [], ...info.quality, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }

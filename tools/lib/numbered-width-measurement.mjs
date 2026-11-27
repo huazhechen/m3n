@@ -1,3 +1,4 @@
+import { withScoreWidthCandidatePolicy } from '@m3n/numbered-notation/layout'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { numberedLayoutScore, WidthSearchPruned } from '../scorebook-width.mjs'
@@ -8,7 +9,10 @@ import { inspectScorePages } from './score-geometry.mjs'
  * audits mount SVG without changing the layout or its avoidance constraints.
  * Summary timings stay enabled; hot-path engine counters are opt-in, or on
  * by default for audits. They do not participate in layout decisions. */
-export function measureNumberedWidth(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, detailedTimings = auditLayout, minimumQuality, maximumPageCount } = {}) {
+export function measureNumberedWidth(documentScore,width,options={}) {
+  return withScoreWidthCandidatePolicy(options.candidatePolicy,()=>measureNumberedWidthScoped(documentScore,width,options))
+}
+function measureNumberedWidthScoped(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, detailedTimings = auditLayout, minimumQuality, maximumPageCount } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
   let prepared

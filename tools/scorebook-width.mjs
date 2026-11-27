@@ -1,3 +1,5 @@
+import { optimizedScoreWidthPolicy, exactScoreWidthPolicy } from '@m3n/numbered-notation/layout'
+export { optimizedScoreWidthPolicy }
 import { scoreHorizontalQuality, scoreNumberedFontCost } from '@m3n/numbered-notation/layout-quality'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
@@ -38,8 +40,8 @@ export function chooseBestWidth(candidates) {
   return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
 }
 
-/** Search the complete 6px grid, skipping only certified losers. */
-export async function probeWidthCandidates(measure, { verify, signal, prune = false } = {}) {
+/** Cover every 6px interval; explicit estimate policies also record lossy prunes. */
+export async function probeWidthCandidates(measure, { verify, signal, prune = false, candidatePolicy } = {}) {
   const candidates = []
   const skippedWidths = []
   const estimatedSkippedWidths = []
@@ -50,18 +52,26 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
   // Short scores are sensitive to the loose tier's different break patterns.
   // Recheck the minimum with both tiers if its tight trial already fits one
   // page; multi-page scores keep the cheap tier. This remains an empirical, explicitly opted-in surrogate.
-  const singleTier=globalThis.__m3nExperimentalSingleTier
-
+  const singleTier=candidatePolicy ? candidatePolicy.singleTier : globalThis.__m3nExperimentalSingleTier
+  let measurementPolicy=candidatePolicy
+  const setSingleTier=value=>{
+    if(candidatePolicy) {
+      if(value!==measurementPolicy.singleTier)measurementPolicy={...candidatePolicy,singleTier:value}
+    } else globalThis.__m3nExperimentalSingleTier=value
+  }
+  const measureCandidate=(width,best)=>measure(width,best,measurementPolicy)
+  const endpointFloor=candidatePolicy ? candidatePolicy.rowReuse && candidatePolicy.endpointFloor
+    : globalThis.__m3nExperimentalRowReuse && globalThis.__m3nExperimentalEndpointFloor
   const probe = async width => {
     signal?.throwIfAborted()
     requests++
     let result
     try {
-      result = { width, ...await measure(width, best) }
+      result = { width, ...await measureCandidate(width, best) }
       if(singleTier && width===widthMinimum && safe(result) && result.pageCount===1) {
-        globalThis.__m3nExperimentalSingleTier=false
+        setSingleTier(false)
         requests++;tierRechecks++
-        result={width,...await measure(width,best)}
+        result={width,...await measureCandidate(width,best)}
       }
       if (verify && safe(result)) {
         verifiedWidths++
@@ -74,8 +84,8 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     }
     signal?.throwIfAborted()
     candidates.push(result)
-    if(globalThis.__m3nExperimentalRowReuse && globalThis.__m3nExperimentalEndpointFloor && width===widthMaximum && safe(result))endpointPages=result.pageCount
-    if(singleTier && width===widthMinimum)globalThis.__m3nExperimentalSingleTier=safe(result) && result.pageCount>1
+    if(endpointFloor && width===widthMaximum && safe(result))endpointPages=result.pageCount
+    if(singleTier && width===widthMinimum)setSingleTier(safe(result) && result.pageCount>1)
     if (safe(result) && (!best || rank(result, best) < 0)) best = result
   }
   const consider = async width => {
@@ -88,8 +98,8 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     } else await probe(width)
   }
   // Find a strong incumbent at 48px intervals before filling the original
-  // 24px grid. Every omitted level still needs the same strict upper-bound
-  // proof; line breaks are not monotone, so a local winning interval alone
+  // 24px grid. Exact mode needs a strict upper-bound proof for omissions;
+  // estimate policies record their extra prunes separately. A local interval
   // cannot justify discarding other coarse levels.
   const coarseOrder = prune && !verify
     ? [...widthCandidates.filter((_, index) => index % 2 === 0), ...widthCandidates.filter((_, index) => index % 2 === 1)]
@@ -103,7 +113,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     if (!measured.has(width)) await consider(width)
   return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
     uniqueWidths: requests-tierRechecks, tierRechecks, hits: 0, verifiedWidths, skippedWidths, estimatedSkippedWidths } }
-  } finally { if(singleTier)globalThis.__m3nExperimentalSingleTier=singleTier }
+  } finally { if(!candidatePolicy && singleTier)globalThis.__m3nExperimentalSingleTier=singleTier }
 }
 
 /** Run the common discrete width search and reject a score with no safe candidate. */
@@ -114,7 +124,13 @@ export async function selectBestWidth(measure, options) {
     const errors = [...new Set(result.candidates.map(candidate => candidate.error).filter(Boolean))]
     throw new Error(`没有可用的排版候选。${errors.length ? ` ${errors.join('；')}` : ''}`)
   }
-  return { ...result, best }
+  if(!options?.candidatePolicy)return { ...result, best }
+  const verified=await verifyEstimatedWidthCandidates(result.candidates,width=>measure(width,null,exactScoreWidthPolicy),{
+    signal:options.signal,verifyWidestWhenMultipage:true,
+  })
+  return {...result,best:verified.best,verifiedCandidates:verified.verifiedCandidates,verificationFailures:verified.failures,
+    renderCache:{...result.renderCache,strategy:result.renderCache.strategy+'-estimated-v1',
+      finalExactMs:verified.ms,finalExactRequests:verified.requests}}
 }
 
 /** Exact-check estimates in rank order, continuing after page underestimates.

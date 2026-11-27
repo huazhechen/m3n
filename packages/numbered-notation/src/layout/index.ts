@@ -22,3 +22,5 @@ export { solveScoreSpacing, fitSpacingSprings } from './spacing.js'
 export { scoreReadingWindows, type ReadingPoint } from './reading-density.js'
 export { inheritElasticWidth, elasticLineBadness, solveElasticSprings, type SpacingSpring, type ElasticSpacing } from './elastic-spacing.js'
 export { balanceScorePageTail } from './page-tail.js'
+
+export { optimizedScoreWidthPolicy, exactScoreWidthPolicy, withScoreWidthCandidatePolicy, scoreWidthPolicyState, type ScoreWidthCandidatePolicy } from './width-candidate-policy.js'

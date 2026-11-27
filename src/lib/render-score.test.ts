@@ -85,8 +85,8 @@ describe('font and layout progress', () => {
   })
 })
 vi.mock('../../tools/lib/staff-width-measurement.mjs', () => ({
-  measureStaffWidth: async (_document: ScoreDocument, width: number, _settings: unknown, _signal: unknown, { task }: { task?: unknown } = {}) => {
-    staffTaskUses(task)
+  measureStaffWidth: async (_document: ScoreDocument, width: number, _settings: unknown, _signal: unknown, { task, candidatePolicy }: { task?: unknown; candidatePolicy?:unknown } = {}) => {
+    staffTaskUses(task,candidatePolicy)
     const info = staffLayoutInfo(width)
     const densities = info.lines.map((line: { minimum: number }) => line.minimum / info.availableWidth)
     const mean = densities.reduce((a: number, b: number) => a + b, 0) / densities.length
@@ -192,7 +192,8 @@ describe('staff automatic width range', () => {
     expect(selected).toBe(Math.max(528, Math.ceil(requiredWidth / 6) * 6))
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
-    expect(staffTaskUses).toHaveBeenCalledTimes(33)
+    expect(staffTaskUses.mock.calls.length).toBeGreaterThan(1)
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 528 && width <= 720)).toBe(true)
   })
@@ -203,8 +204,12 @@ describe('staff automatic width range', () => {
       totalCost: width === 660 ? 2.1 : width === 696 ? 3.1 : 5,
       lines: [{ minimum: width * 0.6, target: width }] }))
     expect(await chooseStaffScoreWidth({} as ScoreDocument, { paged: true })).toBe(660)
-    expect(new Set(staffPageCount.mock.calls.map(([, width]) => width))).toEqual(
-      new Set(Array.from({ length: 33 }, (_, index) => 528 + index * 6)))
+    const visited=staffPageCount.mock.calls.map(([,width])=>width)
+    expect(visited).toContain(660)
+    expect(visited).toContain(720)
+    expect(visited.at(-1)).toBe(660)
+    expect(visited.every(width=>width>=528 && width<=720 && (width-528)%6===0)).toBe(true)
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
   })
 
   it('creates a fresh measurement task for every selection', async () => {
@@ -213,13 +218,17 @@ describe('staff automatic width range', () => {
       lines: [{ minimum: width * 0.6, target: width }] }))
     const document = {} as ScoreDocument
     await chooseStaffScoreWidth(document, { paged: true })
+    const firstCount=staffTaskUses.mock.calls.length
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
     await chooseStaffScoreWidth(document, { paged: true })
     expect(prepareStaffTask).toHaveBeenCalledTimes(2)
     const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
     expect(first).not.toBe(second)
-    expect(staffTaskUses).toHaveBeenCalledTimes(2)
-    expect(staffTaskUses.mock.calls.slice(0, 1).every(([task]) => task === first)).toBe(true)
-    expect(staffTaskUses.mock.calls.slice(1).every(([task]) => task === second)).toBe(true)
+    expect(firstCount).toBeGreaterThan(1)
+    expect(staffTaskUses.mock.calls.length).toBeGreaterThan(firstCount)
+    expect(staffTaskUses.mock.calls.slice(0,firstCount).every(([task]) => task === first)).toBe(true)
+    expect(staffTaskUses.mock.calls.slice(firstCount).every(([task]) => task === second)).toBe(true)
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
   })
 
   it('uses the same font-size and line-balance score as numbered notation', async () => {

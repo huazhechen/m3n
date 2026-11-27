@@ -650,3 +650,35 @@ test('endpoint page-floor pruning is explicit, separately counted and disabled d
     }
   }
 })
+
+test('explicit candidate policies are local to each search and exact-check the returned winner',async()=>{
+  const {optimizedScoreWidthPolicy}=await import('./scorebook-width.mjs')
+  const before=globalThis.__m3nExperimentalRowReuse
+  const observed=[]
+  const result=await selectBestWidth(async(width,best,policy)=>{
+    await Promise.resolve()
+    assert.equal(globalThis.__m3nExperimentalRowReuse,before)
+    observed.push({width,policy})
+    return {width,pageCount:width===600 || width===720 ? 1 : 2,totalCost:width===600 ? .8 : 4,rows:8,outside:[],overlaps:[]}
+  },{prune:true,candidatePolicy:optimizedScoreWidthPolicy})
+  assert.equal(result.best.width,600)
+  assert.equal(observed.at(-1).width,600)
+  assert.deepEqual(observed.at(-1).policy,{})
+  assert(observed.slice(0,-1).every(item=>item.policy.rowReuse===true))
+  assert.equal(result.renderCache.finalExactRequests,1)
+  assert.equal(globalThis.__m3nExperimentalRowReuse,before)
+})
+
+test('explicit short-score policies restore both tiers without changing other searches',async()=>{
+  const {optimizedScoreWidthPolicy}=await import('./scorebook-width.mjs')
+  const visited=[]
+  await selectBestWidth(async(width,best,policy)=>{
+    visited.push({width,policy})
+    return {width,pageCount:1,totalCost:width/1000,rows:4,outside:[],overlaps:[]}
+  },{candidatePolicy:optimizedScoreWidthPolicy})
+  assert.equal(visited[0].policy.singleTier,true)
+  assert.equal(visited[1].width,528)
+  assert.equal(visited[1].policy.singleTier,false)
+  assert(visited.slice(1,-1).every(item=>item.policy.singleTier===false))
+  assert.deepEqual(visited.at(-1).policy,{})
+})

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, optimizedScoreWidthPolicy,exactScoreWidthPolicy,withScoreWidthCandidatePolicy } from '@m3n/numbered-notation/layout'
 import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { prepareStaffScore, prepareStaffMeasurementTask } from './staff-score.js'
 import { planStaffLines } from './line-layout.js'
@@ -136,4 +136,16 @@ it('preserves exact pagination when page-boundary ink contains only excluded sym
       expect(summarize(systems)).toEqual(summarize(legacy))
     }
   }
+})
+
+it('isolates explicit numeric estimate contexts from final staff geometry',async()=>{
+  const score=analyzeM3N(source).score,task=await prepareStaffMeasurementTask(score)
+  for(const width of [528,600,720]) {
+    const candidate=await prepareStaffScore(score,{width},undefined,task)
+    withScoreWidthCandidatePolicy(optimizedScoreWidthPolicy,()=>expect(candidate.measurementInfo().rows).toBeGreaterThan(0))
+  }
+  const final=await prepareStaffScore(score,{width:600},undefined,task)
+  const fresh=await prepareStaffScore(score,{width:600})
+  expect(withScoreWidthCandidatePolicy(exactScoreWidthPolicy,()=>final.layoutInfo())).toEqual(fresh.layoutInfo())
+  expect(final.continuousHeight()).toBe(fresh.continuousHeight())
 })

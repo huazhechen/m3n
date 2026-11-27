@@ -1,3 +1,4 @@
+import { scoreWidthPolicyState } from './layout/width-candidate-policy.js'
 import { completePageConstrainedTrial, type NativeGapTrial, type NativePageTrialCache } from './native-page-trial.js'
 import { scoreCandidateSpacingTiers } from './layout/width-spacing-tiers.js'
 import { compareScoreSpacingTrials } from './layout/spacing-trials.js'
@@ -135,7 +136,7 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
     const since=timings ? performance.now() : 0
     // Compiled surrogate rows are cheap enough to measure directly. Do not
     // spend more on a static feasibility proof than on the candidate itself.
-    const estimated = measurement && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+    const estimated = measurement && (scoreWidthPolicyState()).__m3nExperimentalRowReuse
     const impossible=!estimated && trials.every(({trial})=>trial.canFitPageCeiling?.(ceiling)===false)
     if(timings)timings.pageFeasibilityMs=(timings.pageFeasibilityMs ?? 0)+performance.now()-since
     if(impossible) {
@@ -660,7 +661,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     let bound = foundationBounds.get(key)
     if (!bound) {
       const measures=plannedFragments.slice(start,end)
-      bound = measurement && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+      bound = measurement && (scoreWidthPolicyState()).__m3nExperimentalRowReuse
         ? fixedCoreLowerBound(start,end)
         : nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:available-arcLeading(measures)},templates)
       foundationBounds.set(key,bound)
@@ -674,7 +675,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   // placement or snapshot restoration. Keep this path inside measurement;
   // the selected width is still verified with the experiment switched off.
   if (measurement && options.numericLayout && onlyRow===undefined && preparation?.proxyRows
-    && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse) {
+    && (scoreWidthPolicyState()).__m3nExperimentalRowReuse) {
     const proxyTemplates = preparation.proxyRows
     const compiled = systems.map(system => {
       const frame = placementFrame(system)
@@ -735,7 +736,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   stageStarted = timings ? performance.now() : 0
   for (const system of systems) for (const measure of system.measures) for (const column of measure.columns)
     for (const glyph of column.glyphs) systemOf.set(glyph, system.index)
-  if (measurement && rowCache && preparation?.proxyRows && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse) {
+  if (measurement && rowCache && preparation?.proxyRows && (scoreWidthPolicyState()).__m3nExperimentalRowReuse) {
     proxyPlacementRows = new Set(systems.map(system=>system.index))
     for (const relation of relations) {
       const first=systemOf.get(relation.first),last=systemOf.get(relation.last)
@@ -785,7 +786,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     rowCache!.blocks.set(key,block)
     if (timings) timings.proxyPlacementHits=(timings.proxyPlacementHits ?? 0)+1
   }
-  const proxyRows = measurement && preparation && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+  const proxyRows = measurement && preparation && (scoreWidthPolicyState()).__m3nExperimentalRowReuse
     ? preparation.proxyRows ??= new Map() : undefined
   // In the explicit experiment, relation heights belong to the row template;
   // width-dependent endpoint spans no longer force new glyph arrangements.
