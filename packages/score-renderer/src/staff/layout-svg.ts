@@ -7,7 +7,7 @@ import type { StaffNumericPath } from './staff-glyph-primitive.js'
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
 export type XmlRenderOptions = { resolvedMusicGlyphs?: boolean }
-export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; preparedMusicInk?: { boxes: readonly Ink[]; classes: readonly string[] }; numericInk?: readonly Ink[]; renderNodes?: (options?: XmlRenderOptions) => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
+export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; geometryChildren?: () => XmlNode[]; preparedMusicInk?: { boxes: readonly Ink[]; classes: readonly string[] }; numericInk?: readonly Ink[]; renderNodes?: (options?: XmlRenderOptions) => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
 export type Ink = { left: number; right: number; top: number; bottom: number }
 export const nodes = (node: XmlNode) => node.children.filter((child): child is XmlNode => typeof child !== 'string')
 export function hasClass(node: XmlNode, name: string): boolean {
@@ -345,7 +345,15 @@ export class SvgGeometry {
         }
         if (known) return true
       }
-      compiled.descendants ??= findAll(compiled.block, () => true).slice(1)
+      if (!compiled.descendants) {
+        const descendants: XmlNode[] = []
+        const visit = (node: XmlNode) => {
+          for (const child of node.geometryChildren?.() ?? node.children) if (typeof child !== 'string') {
+            descendants.push(child); visit(child)
+          }
+        }
+        visit(compiled.block); compiled.descendants = descendants
+      }
       if (!filter.classNames) return !compiled.descendants.some(filter)
       compiled.classes ??= new Set(compiled.descendants.flatMap(child => (child.attributes.class ?? '').split(/\s+/)))
       return !intersects(compiled.classes, filter.classNames)
@@ -477,7 +485,7 @@ export class SvgGeometry {
         ]
       }
     } else {
-      for (const child of node.children)
+      for (const child of node.geometryChildren?.() ?? node.children)
         if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result, secondary && !secondary.omit(child) ? secondary : undefined, borrow)
       return
     }

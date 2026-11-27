@@ -588,26 +588,36 @@ function positionNote(note: StaffNoteAnchor, x: number, y: number) {
   const outer = p.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
   note.stemEnd = outer - p.direction * Math.max(p.size * 0.875, p.size * 0.625 + Math.max(0, Math.log2(p.dur / 8)) * (p.size / 4 * 0.5))
 }
-function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): XmlNode[] {
-  const p = note.prepared, size = p.size, unit = size / 4, result: XmlNode[] = [], fixed = noteGeometry(p)
-  const numeric = numericOnly && !p.signature.width && !p.graces.length && !p.item.event.postfixes.includes('arp')
-  const ink: Ink[] = []
-  const glyph = (name: StaffGlyph, x: number, y: number, size: number, cls?: string) => {
-    if (numeric) appendStaffGlyphInk(ink, name, size, x, y)
+function supportsNumericNote(note: StaffNoteAnchor): boolean {
+  const p = note.prepared
+  return !p.signature.width && !p.graces.length && !p.item.event.postfixes.includes('arp')
+}
+/** One output sink for a complete numeric run; the same note geometry
+ * emits painted primitives when the winner is materialized. */
+class StaffNoteOutput {
+  readonly ink: Ink[] = []
+  readonly nodes: XmlNode[] = []
+  constructor(readonly numeric: boolean) {}
+  glyph(name: StaffGlyph, x: number, y: number, size: number, cls?: string) {
+    if (this.numeric) appendStaffGlyphInk(this.ink, name, size, x, y)
     else {
       const node = staffGlyph(name, x, y, size)
-      result.push(cls ? element('g', { class: cls }, [node]) : node)
+      this.nodes.push(cls ? element('g', { class: cls }, [node]) : node)
     }
   }
-  const line = (x1: number, y1: number, x2: number, y2: number, width: number, cls: string) => {
-    if (numeric) {
-      ink.push(staffLineInk(x1, y1, x2, y2, width / 2))
-    } else {
+  line(x1: number, y1: number, x2: number, y2: number, width: number, cls: string, note: StaffNoteAnchor) {
+    if (this.numeric) this.ink.push(staffLineInk(x1, y1, x2, y2, width / 2))
+    else {
       const node = staffLine(x1, y1, x2, y2, width, cls)
       if (note.beam) node.attributes['data-m3n-join'] = `${note.stemX},${note.stemEnd}`
-      result.push(node)
+      this.nodes.push(node)
     }
   }
+}
+function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false, output?: StaffNoteOutput): XmlNode[] {
+  const p = note.prepared, size = p.size, unit = size / 4, fixed = noteGeometry(p)
+  const numeric = output?.numeric ?? (numericOnly && supportsNumericNote(note))
+  const drawing = output ?? new StaffNoteOutput(numeric), result = drawing.nodes, ink = drawing.ink
   if (p.signature.width) result.push(element('g', { class: 'inline-signature' }, drawSignature(p.signature, note.x - p.left, staveY)))
   if (!p.rest) {
     for (const { y, xs } of fixed.ledgers) {
@@ -616,14 +626,14 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
         left = Math.min(left, note.x + x - unit * .3)
         right = Math.max(right, note.x + x + fixed.glyph.right + unit * .3)
       }
-      line(left, staveY + y, right, staveY + y, unit * .1, 'ledger-line')
+      drawing.line(left, staveY + y, right, staveY + y, unit * .1, 'ledger-line', note)
     }
   }
-  for (const head of p.heads) glyph(p.head, note.x + head.x, staveY + head.y + (p.rest && p.dur === 1 ? -(staffMusicSize() / 4) : 0), size, p.rest ? 'rest-symbol' : 'notehead')
+  for (const head of p.heads) drawing.glyph(p.head, note.x + head.x, staveY + head.y + (p.rest && p.dur === 1 ? -(staffMusicSize() / 4) : 0), size, p.rest ? 'rest-symbol' : 'notehead')
   if (!p.rest && p.dur > 1) {
     const root = p.direction === 1 ? Math.max(...note.ys) - unit * .1 : Math.min(...note.ys) + unit * .1
-    line(note.stemX, root, note.stemX, note.stemEnd, unit * .12, 'stem')
-    if (p.dur >= 8 && !note.beam) glyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size)
+    drawing.line(note.stemX, root, note.stemX, note.stemEnd, unit * .12, 'stem', note)
+    if (p.dur >= 8 && !note.beam) drawing.glyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size)
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
     ? Math.min(0, note.stemEnd - (staffMusicSize() / 4 * 0.6) - (staveY + Math.min(staffMusicSize(), fixed.top) - (staffMusicSize() / 4 * 1))) : 0
@@ -645,13 +655,14 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
         if (Math.abs(center - rule) < radius + unit * .15)
           y += rule + (below ? unit / 2 : -unit / 2) - center
       }
-      glyph(name, note.x + s.x, staveY + y, s.size ?? size)
+      drawing.glyph(name, note.x + s.x, staveY + y, s.size ?? size)
       articulationTop = Math.min(articulationTop, y + metrics.top)
       articulationBottom = Math.max(articulationBottom, y + metrics.bottom)
-    } else glyph(s.glyph, note.x + s.x, staveY + s.y +
+    } else drawing.glyph(s.glyph, note.x + s.x, staveY + s.y +
       (s.glyph.startsWith('accidental') || s.glyph === 'augmentationDot' ? 0 : markShift), s.size ?? size)
   }
   if (numeric) {
+    if (output) return result
     const snapshot = { ...note, ys: [...note.ys] }
     return [{ tagName: 'g', attributes: {}, children: [], numericInk: ink,
       renderNodes: () => drawNote(snapshot, staveY) }]
@@ -806,6 +817,63 @@ function staffRules(x: number, y: number, width: number): XmlNode {
   return { tagName: 'g', attributes: { class: 'staff-line' }, children: [], numericInk: ink,
     renderNodes: () => Array.from({ length: 5 }, (_, i) => staffLine(x, y + size + space * i, x + width, y + size + space * i, space * .1, 'staff-line')) }
 }
+function staffEventAttributes(item: StaffEvent): Record<string, string> {
+  const attrs: Record<string, string> = { id: item.id, class: item.event.kind }
+  if (/-rend\d+$/.test(item.id)) {
+    attrs['data-m3n-id'] = item.id.replace(/-rend\d+$/, '')
+    attrs['data-m3n-passes'] = /-rend(\d+)$/.exec(item.id)![1]!
+  }
+  return attrs
+}
+/** A numeric music run is an execution record, not a tree of note nodes.
+ * Semantic wrappers and painted primitives are created only for output or an
+ * explicit geometry filter that actually needs to inspect individual notes. */
+class StaffNumericMusicRun {
+  private readonly entries: StaffMeasureLayout['entries'][number] = []
+  private readonly firstNotes: number[] = []
+  private readonly coordinates: number[] = []
+  private readonly inkEnds: number[] = []
+  private readonly output = new StaffNoteOutput(true)
+  private readonly boxes = this.output.ink
+  constructor(private readonly y: number) {}
+  append(entry: StaffMeasureLayout['entries'][number][number]) {
+    this.entries.push(entry)
+    this.firstNotes.push(this.inkEnds.length)
+    for (const note of entry.notes) {
+      drawNote(note, this.y, true, this.output)
+      this.coordinates.push(note.x, note.headLeft, note.headRight, note.direction, note.stemX, note.stemEnd)
+      this.inkEnds.push(this.boxes.length)
+    }
+  }
+  private music(entry: StaffMeasureLayout['entries'][number][number], i: number, first: number): XmlNode[] {
+    const note = entry.notes[i]!, at = (first + i) * 6, p = this.coordinates
+    return drawNote({ ...note, x: p[at]!, headLeft: p[at + 1]!, headRight: p[at + 2]!,
+      direction: p[at + 3]!, stemX: p[at + 4]!, stemEnd: p[at + 5]!,
+      ys: note.prepared.heads.map(head => this.y + head.y) }, this.y)
+  }
+  private children(paint: boolean): XmlNode[] {
+    return this.entries.map((entry, index) => {
+      const event = element('g', staffEventAttributes(entry.item)), first = this.firstNotes[index]!
+      for (const [i] of entry.notes.entries()) {
+        const start = this.inkEnds[first + i - 1] ?? 0, end = this.inkEnds[first + i]!
+        const music = paint ? this.music(entry, i, first) : [{ tagName: 'g', attributes: {}, children: [], numericInk: this.boxes.slice(start, end) } satisfies XmlNode]
+        if (entry.item.children) {
+          const child = entry.item.children[i]!
+          event.children.push(element('g', { id: child.id, class: child.event.kind }, music))
+        } else event.children.push(...music)
+      }
+      return event
+    })
+  }
+  node(): XmlNode {
+    const node = element('g')
+    node.preparedMusicInk = { boxes: this.boxes,
+      classes: [...new Set(this.entries.flatMap(({ item }) => [item.event.kind, ...(item.children ?? []).map(child => child.event.kind)]))] }
+    node.renderNodes = () => this.children(true)
+    node.geometryChildren = () => this.children(false)
+    return node
+  }
+}
 export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false, numericOnly = false): XmlNode {
   const { prepared } = model
   const extra = Math.max(0, width - model.minimum)
@@ -843,13 +911,22 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     const leftBarX = x + (!model.joinedRepeat && model.measure.source.left?.startsWith('rpt') ? repeatBarOffset(prepared.signatures) : 0)
     staff.children.push(drawStaffBar(model.joinedRepeat ? 'rptboth' : model.measure.source.left, leftBarX, stave.y, true), drawStaffBar(suppressEndRepeat ? 'invis' : model.measure.source.right, x + width, stave.y),
       element('g', { class: 'staff-signature', id: `${model.measure.id}-signature-${lane}` }, drawSignature(prepared.signatures[lane]!, x, stave.y)))
+    let musicRun: StaffNumericMusicRun | undefined
+    const flushMusic = () => {
+      if (musicRun) { staff.children.push(musicRun.node()); musicRun = undefined }
+    }
     for (const entry of model.entries[lane]!) {
-      const attrs: Record<string, string> = { id: entry.item.id, class: entry.item.event.kind }
-      if (/-rend\d+$/.test(entry.item.id)) {
-        attrs['data-m3n-id'] = entry.item.id.replace(/-rend\d+$/, '')
-        attrs['data-m3n-passes'] = /-rend(\d+)$/.exec(entry.item.id)![1]!
+      if (numericOnly && entry.notes.every(supportsNumericNote)) {
+        musicRun ??= new StaffNumericMusicRun(stave.y)
+        musicRun.append(entry)
+        if (entry.item.children && entry.item.event.tuplet) {
+          flushMusic()
+          staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
+        }
+        continue
       }
-      const event = element('g', attrs)
+      flushMusic()
+      const event = element('g', staffEventAttributes(entry.item))
       let preparedInk: Ink[] | undefined = numericOnly ? [] : undefined
       for (const [i, note] of entry.notes.entries()) {
         const music = drawNote(note, stave.y, numericOnly)
@@ -865,6 +942,7 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
       staff.children.push(event)
       if (entry.item.children && entry.item.event.tuplet) staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
     }
+    flushMusic()
     for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly))
     measureNode.children.push(staff)
   }

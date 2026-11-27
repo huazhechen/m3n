@@ -3,12 +3,35 @@ import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
-import { xml, SvgGeometry, hasClass } from './layout-svg.js'
+import { xml, SvgGeometry, hasClass, findAll } from './layout-svg.js'
 import { createStaffPreparation, createStaffMeasure, drawStaffMeasure } from './staff-engine.js'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 const measure = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 describe('native candidate isolation', () => {
+  it('executes tuplet note geometry without child nodes and preserves deferred output after model reuse', () => {
+    const document = projectStaffDocument(analyzeM3N('{4/4}\nN: ([1d 2# 3e:2]) 4{tip} 5 6 |||').score)
+    const item = document.measures[0]!, model = createStaffMeasure(item, true, false, measure, .6)
+    const candidate = drawStaffMeasure(model, model.minimum + 37.3333, -17.12345, false, true)
+    const events = findAll(candidate, node => Boolean(node.preparedMusicInk))
+    expect(events.length).toBeGreaterThan(0)
+    expect(events.every(event => event.children.length === 0 && event.preparedMusicInk!.boxes.length > 0)).toBe(true)
+    const expected = drawStaffMeasure(createStaffMeasure(item, true, false, measure, .6), model.minimum + 37.3333, -17.12345)
+    const before = xml(expected), pieces = new SvgGeometry(candidate, measure).pieces(candidate)
+    drawStaffMeasure(model, model.minimum + 143.7777, 91.65432, false, true)
+    expect(xml(candidate)).toBe(before)
+    expect(xml(candidate)).toBe(before)
+    expect(new SvgGeometry(candidate, measure).pieces(candidate)).toEqual(pieces)
+    expect(new SvgGeometry(candidate, measure).pieces(candidate)).toEqual(new SvgGeometry(expected, measure).pieces(expected))
+    const childId = item.melody[0]!.children![1]!.id
+    const omit = (node: Parameters<typeof hasClass>[0]) => node.attributes.id === childId
+    const geometry = new SvgGeometry(candidate, measure, true)
+    const reference = new SvgGeometry(expected, measure).without(expected, omit)
+    expect(geometry.without(candidate, omit)).toEqual(reference)
+    geometry.compileStatic(candidate, node => hasClass(node, 'verse'), ['verse'])
+    expect(geometry.without(candidate, omit)).toEqual(reference)
+    expect(geometry.partitionWithoutClasses(candidate, ['note'])).toEqual(new SvgGeometry(expected, measure).partitionWithoutClasses(expected, ['note']))
+  })
   it.each([
     '{4/4}\nN: ((1d 2d 3d 4d)) 5{tip} 6. (7) |||',
     '{4/4}\nN: [135:h]{arp}{ac(6# 7)} 2{tip} 3{prall} 4 |||\nB: 1d 2d 3d 4d |||',

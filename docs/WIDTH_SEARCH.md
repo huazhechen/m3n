@@ -95,3 +95,5 @@
 五线谱适配器保留完整图元，将额外页边界通道缩减为谱号、小节号等独立图元；表示等价性与全量复测见[分页边界图元去重](WIDTH_BOUNDARY_EXTRA_PERFORMANCE.md)。
 
 简谱数值候选的横向准备与安全预检查读取共享的未放置度量投影，实际放置时才复制私有状态并重绑端点与分片；全量对照见[延后复制放置状态](WIDTH_DEFERRED_PROJECTION_PERFORMANCE.md)。五线谱适配器的普通文字局部边界复用与谱线直接生成精确边界，分别见[文字边界复用](WIDTH_LEAF_TEXT_PERFORMANCE.md)和[数值谱线边界](WIDTH_LINE_INK_PERFORMANCE.md)。这些均未改变共享搜索、评分或分页算法，全部曲目600ms目标仍未达到。
+
+候选音乐的数值执行记录及逐元素／完整SVG一致性验证，见[首段执行架构迁移](WIDTH_NUMERIC_RUN_PERFORMANCE.md)；整体后续方案见[600ms执行架构重构](WIDTH_COMPILED_GEOMETRY_PLAN.md)。
