@@ -1,0 +1,44 @@
+import { expect, it } from 'vitest'
+import { scorePageCollision, type ScoreCollisionInk } from './page-collision.js'
+import { scorePageGeometry } from './page-geometry.js'
+import type { ScoreInk } from './geometry.js'
+
+const separation = (a: readonly ScoreInk[], b: readonly ScoreInk[]) => {
+  let value = -Infinity
+  for (const first of a) for (const second of b)
+    if (first.left < second.right && first.right > second.left) value = Math.max(value, first.bottom - second.top)
+  return value
+}
+const exhaustive = (a: ScoreCollisionInk, b: ScoreCollisionInk) => ({
+  collision: separation(a.ink, b.ink),
+  edge: Math.max(
+    separation([...a.ink, ...(a.boundaryInk ?? [])], (b.edgeInk ?? []).map(p => ({...p,top:p.top-p.gap}))),
+    separation((a.edgeInk ?? []).map(p => ({...p,bottom:p.bottom+p.gap})), b.ink)),
+})
+
+it('matches exhaustive fixed-edge and point rules while reusing normalized ink against different neighbours', () => {
+  let seed=8432
+  const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32)
+  const pieces=(count:number)=>Array.from({length:count},(_,index)=>{
+    const left=Math.floor(random()*100),top=Math.floor(random()*80)-40
+    return {left,right:left+(index%11 ? random()*40 : index%2 ? 0 : -1),top,bottom:top+random()*30,gap:random()*15}
+  })
+  const shapes=Array.from({length:25},()=>{
+    const shape=scorePageGeometry({height:100,baseline:random()*20,ink:pieces(80),boundaryInk:pieces(5),edgeInk:pieces(5)})
+    shape.ink.sort((a,b)=>a.left-b.left)
+    return shape
+  })
+  for (const upper of shapes) for (const lower of shapes) {
+    const expected=exhaustive(upper,lower)
+    expect(scorePageCollision(upper,lower)).toEqual(expected)
+    expect(scorePageCollision(upper,lower)).toEqual(expected)
+  }
+})
+
+it('does not cache mutable callers or lose infinite header spans',()=>{
+  const upper={ink:[{left:-Infinity,right:Infinity,top:0,bottom:30}],edgeInk:[{left:0,right:20,top:0,bottom:30,gap:12}]}
+  const lower={ink:[{left:10,right:20,top:-10,bottom:10}],edgeInk:[{left:15,right:25,top:-10,bottom:10,gap:5}]}
+  expect(scorePageCollision(upper,lower)).toEqual(exhaustive(upper,lower))
+  lower.ink[0]!.top=-100;lower.edgeInk[0]!.gap=150
+  expect(scorePageCollision(upper,lower)).toEqual(exhaustive(upper,lower))
+})

@@ -1,3 +1,4 @@
+import { cacheScoreInkSeparation } from './ink-separation.js'
 import type { ScoreInk } from './geometry.js'
 import type { ScorePageBlock } from './geometry.js'
 
@@ -13,6 +14,7 @@ export function scorePageGeometry(block: ScorePageBlock): ScorePageGeometry {
   const axis = block.baseline ?? 0
   const shift = <T extends ScoreInk>(piece: T): T => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })
   const ink = (block.ink ?? []).map(shift), boundaryInk = (block.boundaryInk ?? []).map(shift), edgeInk = (block.edgeInk ?? []).map(shift)
+  for (const pieces of [ink, boundaryInk, edgeInk]) cacheScoreInkSeparation(pieces)
   let top = 0, bottom = 0
   for (const pieces of [ink, boundaryInk, edgeInk]) for (const piece of pieces) {
     top = Math.min(top, piece.top); bottom = Math.max(bottom, piece.bottom)
