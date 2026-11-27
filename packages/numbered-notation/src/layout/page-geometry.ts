@@ -9,6 +9,9 @@ export type ScorePageGeometry = {
 }
 
 const immutableGeometry = new WeakMap<ScorePageBlock, ScorePageGeometry>()
+type GeometryVariant = { boundary:readonly ScoreInk[]; edges:readonly ScoreInk[]; key:string; value:ScorePageGeometry }
+const sharedCandidateGeometry = new WeakMap<readonly ScoreInk[],GeometryVariant[]>()
+const emptyInk:readonly ScoreInk[]=[]
 
 /** Normalize once around the row baseline; identical page edges, cores and
  * primitive semantics are consumed by rendering and optimistic search. */
@@ -16,6 +19,15 @@ export function scorePageGeometry(block: ScorePageBlock, immutable = false): Sco
   const saved = immutable ? immutableGeometry.get(block) : undefined
   if (saved) return saved
   const axis = block.baseline ?? 0
+  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalWidthBin?:number}
+  const share=immutable && experiment.__m3nExperimentalRowReuse && (experiment.__m3nExperimentalWidthBin ?? 0)>0 && Boolean(block.ink?.length)
+  const boundary=block.boundaryInk ?? emptyInk,edges=block.edgeInk ?? emptyInk
+  const key=share ? JSON.stringify([axis,Boolean(block.core),block.core?.top,block.core?.bottom,block.coreGapScale ?? 1,
+    block.coreGapBefore,block.gapBefore ?? 0,Boolean(block.resolvedInk)].map(value=>typeof value==='number'
+      ? Object.is(value,-0) ? '-0' : Number.isFinite(value) ? value : String(value) : value)) : undefined
+  let variants=share ? sharedCandidateGeometry.get(block.ink!) : undefined
+  const shared=key===undefined ? undefined : variants?.find(item=>item.key===key && item.boundary===boundary && item.edges===edges)
+  if(shared){immutableGeometry.set(block,shared.value);return shared.value}
   // Immutable adapters already use baseline coordinates in the common case.
   // Keep their primitive identity (including shared boundary ink), while the
   // map below still gives the paginator private arrays for sorting.
@@ -35,5 +47,9 @@ export function scorePageGeometry(block: ScorePageBlock, immutable = false): Sco
     scale: block.coreGapScale ?? 1, gap: block.coreGapBefore, edgeGap: Math.max(0, ...edgeInk.map(piece => piece.gap)), before: block.gapBefore ?? 0,
     resolved: Boolean(block.resolvedInk), sorted: false }
   if (immutable) immutableGeometry.set(block, value)
+  if(key!==undefined) {
+    if(!variants){variants=[];sharedCandidateGeometry.set(block.ink!,variants)}
+    variants.push({boundary,edges,key,value})
+  }
   return value
 }

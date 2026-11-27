@@ -3,6 +3,14 @@ import { cacheScoreHorizontalProxy } from './ink-separation.js'
 
 const binnedSources = new WeakMap<readonly ScoreInk[], { size: number; ink: ScoreInk[] }>()
 const complements = new WeakMap<readonly ScoreInk[], WeakMap<readonly ScoreInk[], ScoreInk[]>>()
+const quantizedTransforms = new WeakMap<readonly ScoreInk[], Map<string, ScoreInk[]>>()
+const emptyTransform:ScoreInk[]=[]
+
+function candidateRight(left:number,right:number):number {
+  const bin=(globalThis as {__m3nExperimentalWidthBin?:number}).__m3nExperimentalWidthBin ?? 0
+  const width=right-left
+  return bin>0 && Number.isFinite(width) && width>=bin ? left+Math.round(width/bin)*bin : right
+}
 
 /** Candidate-only templates may share vertical geometry across spacing tiers.
  * All musical identities and non-spacing context remain in the key. */
@@ -14,6 +22,7 @@ export function scoreWidthProxyKey(tier: string | number, ...context: unknown[])
 /** An aggregate bound is already one rectangle. Binning it would allocate an
  * entire row of boxes and taking its first bin would truncate the bound. */
 export function proxyScoreWidthBounds<T extends ScoreInk>(piece: T, left: number, right: number, nextLeft: number, nextRight: number): T {
+  nextRight=candidateRight(nextLeft,nextRight)
   const scale = right > left ? (nextRight - nextLeft) / (right - left) : 1
   return { ...piece, left: nextLeft + (piece.left - left) * scale,
     right: nextLeft + (piece.right - left) * scale }
@@ -42,14 +51,28 @@ function candidateInk<T extends ScoreInk>(source: readonly T[]): readonly T[] {
 /** Experimental candidate surrogate. Never used as final drawing geometry. */
 export function proxyScoreWidthInk<T extends ScoreInk>(pieces: readonly T[], left: number, right: number, nextLeft: number, nextRight: number): T[] {
   pieces = candidateInk(pieces)
+  const quantized=((globalThis as {__m3nExperimentalWidthBin?:number}).__m3nExperimentalWidthBin ?? 0)>0
+  if(quantized && !pieces.length)return emptyTransform as T[]
+  const key=quantized ? `${left}:${right}:${nextLeft}:${candidateRight(nextLeft,nextRight)}` : undefined
+  let variants=quantized ? quantizedTransforms.get(pieces) : undefined
+  const cached=key===undefined ? undefined : variants?.get(key)
+  // Candidate pieces are immutable. Pagination takes private arrays before
+  // sorting, so neighbouring widths can share one quantized transform.
+  if(cached)return cached as T[]
+  nextRight=candidateRight(nextLeft,nextRight)
   const scale = right > left ? (nextRight - nextLeft) / (right - left) : 1
   const result = pieces.map(piece => ({ ...piece, left: nextLeft + (piece.left - left) * scale,
     right: nextLeft + (piece.right - left) * scale }))
   cacheScoreHorizontalProxy(result,pieces,left,nextLeft,scale)
+  if(key!==undefined) {
+    if(!variants){variants=new Map();quantizedTransforms.set(pieces,variants)}
+    variants.set(key,result)
+  }
   return result
 }
 
 export function proxyScoreWidthPartition<T extends ScoreInk>(all: readonly T[], subset: readonly T[], left: number, right: number, nextLeft: number, nextRight: number) {
+  nextRight=candidateRight(nextLeft,nextRight)
   if (((globalThis as {__m3nExperimentalInkBin?:number}).__m3nExperimentalInkBin ?? 0) > 0) {
     let peers = complements.get(all)
     let complement = peers?.get(subset)

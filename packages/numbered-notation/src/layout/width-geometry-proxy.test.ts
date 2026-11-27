@@ -13,6 +13,42 @@ const brute = (a:readonly ScoreInk[],b:readonly ScoreInk[]) => {
 }
 
 describe('experimental horizontal geometry proxies',()=>{
+  it('shares immutable quantized transforms only inside the same frame and bin',()=>{
+    const globals=globalThis as {__m3nExperimentalWidthBin?:number},before=globals.__m3nExperimentalWidthBin
+    try {
+      globals.__m3nExperimentalWidthBin=12
+      const source=Object.freeze([{left:0,right:100,top:-2,bottom:4,gap:3}])
+      const first=proxyScoreWidthInk(source,0,100,0,528)
+      expect(proxyScoreWidthInk(source,0,100,0,529)).toBe(first)
+      expect(proxyScoreWidthInk(source,0,100,0,534)).not.toBe(first)
+      expect(proxyScoreWidthInk(source,0,100,1,529)).not.toBe(first)
+      expect(first).toEqual([{left:0,right:528,top:-2,bottom:4,gap:3}])
+      const geometry=scorePageGeometry({height:8,ink:first},true)
+      geometry.ink.sort((a,b)=>a.left-b.left)
+      expect(first).toEqual([{left:0,right:528,top:-2,bottom:4,gap:3}])
+      const a=[{left:90,right:100,top:0,bottom:10}],b=[{left:99,right:110,top:1,bottom:2}]
+      const upper=proxyScoreWidthPartition(a,a,0,100,0,531).included
+      const lower=proxyScoreWidthPartition(b,b,0,200,0,1062).included
+      expect(sortedScoreInkSeparation(upper,lower)).toBe(brute(upper,lower))
+      globals.__m3nExperimentalWidthBin=0
+      expect(proxyScoreWidthInk(source,0,100,0,529)[0]!.right).toBe(529)
+    } finally {globals.__m3nExperimentalWidthBin=before}
+  })
+  it('shares pagination geometry only for identical immutable channels and vertical context',()=>{
+    const globals=globalThis as {__m3nExperimentalWidthBin?:number;__m3nExperimentalRowReuse?:boolean}
+    const before={width:globals.__m3nExperimentalWidthBin,reuse:globals.__m3nExperimentalRowReuse}
+    try {
+      globals.__m3nExperimentalWidthBin=12;globals.__m3nExperimentalRowReuse=true
+      const ink=[{left:0,right:528,top:-2,bottom:4}],boundary=[{left:0,right:2,top:-3,bottom:5}]
+      const first=scorePageGeometry({height:8,ink,boundaryInk:boundary,core:{top:0,bottom:3}},true)
+      expect(scorePageGeometry({height:8,ink,boundaryInk:boundary,core:{top:0,bottom:3}},true)).toBe(first)
+      for(const change of [{baseline:1},{core:{top:0,bottom:4}},{coreGapBefore:4},{coreGapScale:.8},{gapBefore:1},
+        {resolvedInk:true},{boundaryInk:[...boundary]},{edgeInk:[{left:0,right:1,top:0,bottom:2,gap:3}]}]) {
+        expect(scorePageGeometry({height:8,ink,boundaryInk:boundary,core:{top:0,bottom:3},...change},true)).not.toBe(first)
+      }
+      expect(scorePageGeometry({height:8,ink,boundaryInk:boundary,core:{top:0,bottom:3}})).not.toBe(first)
+    } finally {globals.__m3nExperimentalWidthBin=before.width;globals.__m3nExperimentalRowReuse=before.reuse}
+  })
   it('transforms complete aggregate bounds without splitting them into bins',()=>{
     const globals=globalThis as {__m3nExperimentalInkBin?:number}
     const before=globals.__m3nExperimentalInkBin

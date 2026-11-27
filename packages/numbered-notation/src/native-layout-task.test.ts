@@ -146,6 +146,7 @@ it('compiled surrogate plans preserve unplaced inputs and leave exact final geom
   const options = {width:528,numericLayout:true,pageMargin:0,layoutTask,textMeasurementCache}
   vi.stubGlobal('__m3nExperimentalRowReuse',true)
   vi.stubGlobal('__m3nExperimentalInkBin',12)
+  vi.stubGlobal('__m3nExperimentalWidthBin',12)
   PreparedNumberedNotationScore.measure(document,options)
   const preparation = layoutTask.preparationFor(document,options,textMeasurementCache)
   const unplaced = structuredClone(preparation.measuredProjections)
