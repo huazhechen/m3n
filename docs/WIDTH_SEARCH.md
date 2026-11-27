@@ -87,3 +87,5 @@
 切换宽度时释放简谱宽度相关缓存的内存及耗时对照，以及6px五线谱规则下的新基线，见[宽度缓存生命周期](WIDTH_CACHE_LIFETIME_PERFORMANCE.md)。
 
 五线谱候选阶段延迟生成符杠SVG节点、直接消费原路径精确边界的全量对照与复测，见[符杠数值几何复用](WIDTH_NUMERIC_BEAMS_PERFORMANCE.md)。
+
+简谱将横向度量并入未放置投影、避免复制后再次回填的全量对照，见[未放置度量投影复用](WIDTH_MEASURED_PROJECTION_PERFORMANCE.md)。

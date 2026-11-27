@@ -76,3 +76,17 @@ it('reuses width-independent row minima across widths without reusing placed geo
   expect(narrower.lineMinimumBuilds).toBeUndefined()
   expect(run(528, 16).lineMinimumBuilds).toBeGreaterThan(0)
 })
+
+it('keeps measured preparation independent across gap floors and equal-measure settings', () => {
+  const document = parseM3NDocument('{4/4}\nN: {inst}' + '1 2 3 4 | 5 6 7 1e | '.repeat(4) + '{/} 1^^ |||')
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  for (const [width, minimumNoteGap, minimumNoteGapFloor, equalMeasures] of [
+    [528, 8, 0, false], [720, 16, 4, true], [534, 8, 4, false], [624, 16, 0, false], [528, 8, 0, false],
+  ] as const) {
+    const options = { width, minimumNoteGap, minimumNoteGapFloor, equalMeasures, numericLayout: true, paged: true, pageMargin: 0 }
+    const actual = layoutNativeScore(document, { ...options, layoutTask, textMeasurementCache })
+    expect(renderNativePages(actual)).toEqual(renderNativePages(layoutNativeScore(document, options)))
+    actual.projection.glyphs[0]!.parenthesisLeft = -100000
+    actual.projection.measures[0]!.columns[0]!.minimumStart = -100000
+  }
+})

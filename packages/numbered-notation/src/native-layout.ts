@@ -55,12 +55,9 @@ function validate(options: NativeRenderOptions) {
 }
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
-type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | 'minimumEnd' | 'naturalStart' | 'naturalEnd'> & {
-  columns: Array<{ minimumStart?: number; minimumEnd?: number; naturalStart?: number; naturalEnd?: number }>
-}>
 type NativeLayoutPreparation = { canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
   feasibilityWitnesses?:Map<string,{ends?:number[]}>; horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
-  arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
+  arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; measuredProjections?: Map<string, NativeProjection>; rowMinimums?: Map<string, Map<string, number>>
 }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
@@ -206,6 +203,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const minimumNoteGapFloor = supplied.minimumNoteGapFloor ?? 0
   if (!Number.isFinite(minimumNoteGapFloor) || minimumNoteGapFloor < 0 || minimumNoteGapFloor > minimumNoteGap) throw new Error('最小间距下限必须非负且不大于最小基础间距。')
   const options = { ...supplied, width: Math.max(nativeStyle.minimumWidth, Math.round(supplied.width)), minimumNoteGap, minimumNoteGapFloor, equalMeasures: supplied.equalMeasures ?? document.equalMeasures }
+  const horizontalKey = `${minimumNoteGap}:${minimumNoteGapFloor}:${options.equalMeasures ?? false}`
+  const measuredProjection = preparation?.measuredProjections?.get(horizontalKey)
   let measurer = options.textMeasurer
   if(!measurer && preparation?.runtimeMeasurer?.timings===timings)measurer=preparation?.runtimeMeasurer?.value
   if (!measurer && !options.systemCjk) measurer = fontDesignMeasurer(options.textMeasurementCache, timings)
@@ -223,14 +222,14 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   let projection: NativeProjection
   let selectedGlyphs: Set<NativeGlyph> | undefined
   if (preparation?.projection) {
-    const source=preparation.projection
+    const source=measuredProjection ?? preparation.projection
     selectedGlyphs=onlyRow!==undefined && endsOverride?.at(-1)===source.measures.length
       ? new Set(source.measures.slice(endsOverride[onlyRow-1] ?? 0,endsOverride[onlyRow]).flatMap(m=>m.columns.flatMap(c=>c.glyphs))) : undefined
     projection = cloneNativeProjection(source,selectedGlyphs)
     // Parenthesis padding follows the current trial's note gap. Reuse text
     // metrics, but rebuild this mutable padding using the original arithmetic.
     let enclosure: { left: number; right: number } | undefined
-    for (const glyph of projection.glyphs) {
+    if (!measuredProjection) for (const glyph of projection.glyphs) {
       if (!glyph.instrumental) continue
       if (!enclosure) {
         const style = { fontSize: nativeStyle.music, fontFamily: SCORE_NUMBER_FONT }
@@ -255,7 +254,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   let relations: NativeRelation[]
   if (preparation?.relations) {
     relations = preparation.relations.map(relation => ({ ...relation, first: projection.glyphs[relation.first]!, last: projection.glyphs[relation.last]! }))
-    reserveInstrumentalEndpoints(relations, projection)
+    if (!measuredProjection) reserveInstrumentalEndpoints(relations, projection)
     if (timings) timings.relationPlanReuses = (timings.relationPlanReuses ?? 0) + 1
   } else {
     relations = relationsFor(document, projection)
@@ -278,7 +277,6 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   // These minima depend on immutable music, gap and equal-measure settings,
   // never on page width. Keep an unplaced measured projection for each gap;
   // row splitting and final placement still belong to this candidate alone.
-  const horizontalKey = `${minimumNoteGap}:${minimumNoteGapFloor}:${options.equalMeasures ?? false}`
   let templates:NativeHorizontalTemplates|undefined
   if(preparation) {
     preparation.horizontalTemplates ??= new Map()
@@ -286,31 +284,15 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if(!templates)preparation.horizontalTemplates.set(horizontalKey,templates=new Map())
   }
   cacheNativeHorizontal(options,templates)
-  const measuredProjection = preparation?.horizontal?.get(horizontalKey)
   if (measuredProjection) {
-    for (const [index, measure] of projection.measures.entries()) {
-      if(selectedGlyphs && measure===preparation?.projection?.measures[index])continue
-      const measured = measuredProjection[index]!
-      measure.minimum = measured.minimum
-      measure.naturalStart = measured.naturalStart; measure.naturalEnd = measured.naturalEnd
-      measure.minimumStart = measured.minimumStart; measure.minimumEnd = measured.minimumEnd
-      for (const [columnIndex, column] of measure.columns.entries()) {
-        column.naturalStart = measured.columns[columnIndex]!.naturalStart
-        column.naturalEnd = measured.columns[columnIndex]!.naturalEnd
-        column.minimumStart = measured.columns[columnIndex]!.minimumStart
-        column.minimumEnd = measured.columns[columnIndex]!.minimumEnd
-      }
-    }
     if (timings) timings.horizontalMeasureReuses = (timings.horizontalMeasureReuses ?? 0) + 1
   } else {
     measureNativeHorizontal(projection.measures, options)
     if (preparation) {
-      preparation.horizontal ??= new Map()
-      preparation.horizontal.set(horizontalKey, projection.measures.map(measure => ({
-        minimum: measure.minimum, minimumStart: measure.minimumStart, minimumEnd: measure.minimumEnd,
-        naturalStart: measure.naturalStart, naturalEnd: measure.naturalEnd,
-        columns: measure.columns.map(column => ({ minimumStart: column.minimumStart, minimumEnd: column.minimumEnd, naturalStart: column.naturalStart, naturalEnd: column.naturalEnd })),
-      })))
+      preparation.measuredProjections ??= new Map()
+      // Snapshot before any row is split or placed. Subsequent candidates copy
+      // these measured minima with their private placement state in one pass.
+      preparation.measuredProjections.set(horizontalKey, cloneNativeProjection(projection))
     }
   }
   record('horizontalMeasureMs')
