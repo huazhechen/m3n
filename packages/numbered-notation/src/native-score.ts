@@ -1,7 +1,7 @@
 import { nativeLayoutQuality } from './native-quality.js'
 import { nativeSvgNumber } from './native-svg-number.js'
 import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } from '@m3n/notation'
-import { layoutNativeScore, nativeContinuousPagination, reflowNativeContinuousLayout, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
+import { layoutNativeScore, measureNativeLayout, nativeContinuousPagination, reflowNativeContinuousLayout, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { fitScoreCoreGap } from './layout/pagination.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
@@ -32,14 +32,32 @@ export type { NativeRenderOptions as NumberedNotationRenderOptions } from './nat
 
 /** Per-export measured rows, reused for metadata and final SVG generation. */
 export class PreparedNumberedNotationScore {
-  private readonly layout
+  private placedLayout?: ReturnType<typeof layoutNativeScore>
+  private readonly measurement?: ReturnType<typeof measureNativeLayout>
+  private readonly document: ScoreDocument
+  private readonly options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>
+  private get layout() {
+    return this.placedLayout ??= layoutNativeScore(this.document, { numericLayout: true, ...this.options, paged: true })
+  }
+  /** Width selection may retain this handle without retaining mutable arena
+   * glyphs. Rendering materializes one independently owned layout on demand. */
+  static measure(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?: number) {
+    return new PreparedNumberedNotationScore(document, options, timings, minimumQuality, maximumPageCount, true)
+  }
   readonly pageCount: number
   readonly systemCount: number
   readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
-  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?:number) {
-    this.layout = layoutNativeScore(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
+  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?:number, measurementOnly = false) {
+    this.document = document; this.options = { ...options }
+    if (measurementOnly && options.numericLayout !== false) {
+      const result = this.measurement = measureNativeLayout(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
+      this.pageCount = result.pageCount; this.systemCount = result.systemCount; this.quality = result.quality; this.width = result.width
+      this.minimumCoreGap = nativeCoreGap(document)
+      return
+    }
+    this.placedLayout = layoutNativeScore(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
     this.pageCount = this.layout.pages.length
     this.systemCount = this.layout.systems.length
     this.quality = nativeLayoutQuality(this.layout)
@@ -57,7 +75,10 @@ export class PreparedNumberedNotationScore {
         inkHeight: block.height, lyricGapScale: block.coreGapScale ?? 1 })) }
   }
   continuousHeight(coreGap = this.minimumCoreGap) {
-    return Math.ceil(nativeSvgNumber(nativeContinuousPagination(this.layout, coreGap).heights[0] ?? 0))
+    const heights = this.measurement
+      ? this.measurement.pagination({ pageHeight: Infinity, margin: this.measurement.margin, gap: coreGap, headerGap: this.minimumCoreGap * .8 }).heights
+      : nativeContinuousPagination(this.layout, coreGap).heights
+    return Math.ceil(nativeSvgNumber(heights[0] ?? 0))
   }
   renderPaged(coreGap?: number) {
     if (!this.layout.options.paged || this.layout.options.coreGap !== coreGap) repaginateNativeLayout(this.layout, true, coreGap)

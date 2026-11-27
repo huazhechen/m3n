@@ -338,3 +338,29 @@ export function cloneNativeProjection(source: NativeProjection, selected?: Reado
         glyphs:column.glyphs.map(glyph=>glyphs.get(glyph)!)} satisfies Record<keyof NativeColumn,unknown>))
     } satisfies Record<keyof NativeMeasure,unknown>))}
 }
+
+/** Private measurement arena. Consumers must detach their scalar/ink results
+ * before the next reset; public renderable layouts never borrow this state. */
+export class NativePlacementWorkspace {
+  readonly projection: NativeProjection
+  constructor(private readonly source: NativeProjection) { this.projection = cloneNativeProjection(source) }
+  reset(): NativeProjection {
+    const { source, projection } = this
+    for (let index = 0; index < source.glyphs.length; index++) {
+      const measured = source.glyphs[index]!, glyph = projection.glyphs[index]!
+      glyph.x = measured.x; glyph.y = measured.y; glyph.top = measured.top; glyph.bottom = measured.bottom
+      glyph.markLayout = measured.markLayout?.map(mark => ({ ...mark }))
+      glyph.annotationLayout = measured.annotationLayout
+      glyph.lyricBaselines = measured.lyricBaselines; glyph.lyricHyphenEnds = measured.lyricHyphenEnds
+      for (let at = 0; at < measured.controls.length; at++) glyph.controls[at]!.x = measured.controls[at]!.x
+    }
+    for (let index = 0; index < source.measures.length; index++) {
+      const measured = source.measures[index]!, measure = projection.measures[index]!
+      measure.start = measured.start; measure.end = measured.end
+      measure.barX = measured.barX; measure.openingBarX = measured.openingBarX
+      for (let at = 0; at < measured.columns.length; at++) measure.columns[at]!.x = measured.columns[at]!.x
+      if (measured.navigation) for (let at = 0; at < measured.navigation.length; at++) measure.navigation![at]!.x = measured.navigation[at]!.x
+    }
+    return projection
+  }
+}

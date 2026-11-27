@@ -1,6 +1,6 @@
 # 600ms目标：候选排版执行架构重构方案
 
-状态：实施中，整体目标尚未完成。普通五线谱音乐的数值执行记录及首轮全量证据见[迁移实测](WIDTH_NUMERIC_RUN_PERFORMANCE.md)。其余步骤仍为待实施方案。2026-11-27，独立工作树 `perf/single-worker-600`。延迟投影复制已提交为 `4330103a`。
+状态：实施中，整体目标尚未完成。普通五线谱音乐的数值执行记录及首轮全量证据见[迁移实测](WIDTH_NUMERIC_RUN_PERFORMANCE.md)。简谱测量工作区的中间结果见[测量与绘图分离](WIDTH_MEASUREMENT_ARENA_PERFORMANCE.md)。按行执行及其余步骤仍待完成。2026-11-27，独立工作树 `perf/single-worker-600`。延迟投影复制已提交为 `4330103a`。
 
 ## 为什么转向结构重构
 

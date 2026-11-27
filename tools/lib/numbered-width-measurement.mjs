@@ -10,7 +10,14 @@ export function measureNumberedWidth(documentScore, width, { settings = {}, host
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
   let prepared
-  try { prepared = new PreparedNumberedNotationScore(documentScore, { ...settings, width, pageMargin: settings.pageMargin ?? 0 }, timings, auditLayout || settings.numericLayout === false && maximumPageCount > 1 ? undefined : minimumQuality, auditLayout ? undefined : maximumPageCount) }
+  try {
+    const options = { ...settings, width, pageMargin: settings.pageMargin ?? 0 }
+    const qualityBound = auditLayout || settings.numericLayout === false && maximumPageCount > 1 ? undefined : minimumQuality
+    const pageBound = auditLayout ? undefined : maximumPageCount
+    prepared = auditLayout
+      ? new PreparedNumberedNotationScore(documentScore, options, timings, qualityBound, pageBound)
+      : PreparedNumberedNotationScore.measure(documentScore, options, timings, qualityBound, pageBound)
+  }
   catch (error) {
     if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') {
       timings.layoutMs = performance.now() - started

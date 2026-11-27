@@ -4,8 +4,30 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore, NativeLayoutTask } from './native-layout.js'
 import { NumberedTextMeasurementCache, DefaultTextMeasurer } from './native-measure.js'
 import { renderNativePages } from './native-svg.js'
+import { PreparedNumberedNotationScore } from './native-score.js'
 
 afterEach(() => vi.unstubAllGlobals())
+
+it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('measurement arenas preserve retained candidates and final drawings: %s', file => {
+  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  const retained: Array<{ measured: PreparedNumberedNotationScore; reference: PreparedNumberedNotationScore }> = []
+  for (const width of [528, 720, 594, 528]) {
+    const options = { width, numericLayout: true, pageMargin: 0 }
+    const measured = PreparedNumberedNotationScore.measure(document, { ...options, layoutTask, textMeasurementCache })
+    const reference = new PreparedNumberedNotationScore(document, options)
+    expect(measured.quality).toEqual(reference.quality)
+    expect(measured.pageCount).toBe(reference.pageCount)
+    expect(measured.systemCount).toBe(reference.systemCount)
+    expect(measured.continuousHeight()).toBe(reference.continuousHeight())
+    retained.push({ measured, reference })
+  }
+  for (const { measured, reference } of retained) {
+    expect(measured.continuousHeight()).toBe(reference.continuousHeight())
+    expect(measured.renderPaged()).toEqual(reference.renderPaged())
+    expect(measured.renderContinuous()).toEqual(reference.renderContinuous())
+  }
+}, 60000)
 
 it('detaches borrowed glyphs, controls and split columns without changing preparation or earlier layouts', () => {
   const document = parseM3NDocument('{4/4}\nN: {inst}{lg}' + '1 2 3 4 | {key=G}5 6 7 1e | '.repeat(8) + '{/}{/} 1^^ |||')
