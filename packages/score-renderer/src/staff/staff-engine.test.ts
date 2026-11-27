@@ -448,3 +448,28 @@ it.each([.8, 1.6])('opens the long side of staff syncopation at spacing %s', asy
     expect(gaps[1]! / gaps[0]!).toBeCloseTo(2 ** .25, 8)
   }
 })
+
+it('scales painted noteheads, stems, beams and staff rules together from seven to eight pixel spaces', () => {
+  const original = scoreLayoutConfig.staff.music
+  const measure = () => {
+    const layout = model('{4/4}\nN: (1 1) (1 1) 1 1 |')
+    const node = drawStaffMeasure(layout, layout.minimum, 0)
+    const geometry = new SvgGeometry(node, measureText)
+    return ['notehead', 'stem', 'beam', 'staff-line'].map(cls => {
+      const part = findAll(node, n => n.attributes.class === cls)[0]!
+      expect(part).toBeDefined()
+      const ink = geometry.ink(part)
+      return { width: ink.right - ink.left, height: ink.bottom - ink.top }
+    })
+  }
+  try {
+    scoreLayoutConfig.staff.music = 28
+    const before = measure()
+    scoreLayoutConfig.staff.music = 32
+    const after = measure()
+    before.forEach((box, i) => {
+      expect(after[i]!.width).toBeCloseTo(box.width * 8 / 7, 2)
+      expect(after[i]!.height).toBeCloseTo(box.height * 8 / 7, 2)
+    })
+  } finally { scoreLayoutConfig.staff.music = original }
+})

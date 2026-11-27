@@ -1,3 +1,5 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { staffMusicSize } from './staff-music-font.js'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
@@ -43,8 +45,7 @@ describe('staff layout contract', () => {
         .filter(piece => overlapsX(tempo, piece, 3))
       const gap = (Math.min(...music.map(piece => piece.top)) - tempo.bottom) * STAFF_SCALE
       gaps.push(gap)
-      expect(gap).toBeGreaterThanOrEqual(5.9)
-      expect(gap).toBeLessThanOrEqual(6.1)
+      expect(gap).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
     }
     expect(gaps[0]).toBeCloseTo(gaps[1]!)
   })
@@ -77,7 +78,7 @@ describe('staff layout contract', () => {
     const geometry = new SvgGeometry(node, textMeasurer())
     const heads = findAll(node, n => hasClass(n, 'notehead')).map(n => geometry.ink(n))
     const closingBar = geometry.ink(findAll(node, n => hasClass(n, 'staff-bar'))[1]!)
-    const left = heads[0]!.left - 0.5
+    const left = heads[0]!.left - staffMusicSize() / 4 * .05
     const right = closingBar.left - heads.at(-1)!.right
     expect(left).toBeCloseTo(right, 3)
     expect(left).toBeGreaterThanOrEqual(9.9)
@@ -284,7 +285,7 @@ describe('staff layout contract', () => {
     for (const rule of rules) {
       expect(rule.tagName).toBe('path')
       const ink = geometry.ink(rule)
-      expect(ink.bottom - ink.top).toBeCloseTo(1)
+      expect(ink.bottom - ink.top).toBeCloseTo(staffMusicSize() / 4 * .1)
       expect(ink.right - ink.left).toBeGreaterThan(model.minimum - 1)
     }
     const signatures = findAll(drawing, n => n.attributes.class === 'inline-signature')
@@ -523,7 +524,7 @@ it('fits a volta around high central music using its strokes instead of its empt
   arrangeStaffSystem(node, geometry, 320, new Set())
   const strokes = geometry.pieces(ending)
   const horizontal = strokes.find(piece => piece.right - piece.left > 100)!
-  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(1.96)
+  expect((geometry.ink(highNote).top - horizontal.bottom) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.staff.music * .07)
   expect(Math.max(...strokes.map(piece => piece.bottom))).toBeGreaterThan(geometry.ink(highNote).top)
 })
 
@@ -541,7 +542,7 @@ it('pulls triplet brackets toward local music on both sides of the staff', () =>
     const gaps = geometry.pieces(label).flatMap(piece => music
       .filter(other => overlapsX(piece, other, 1.5 / STAFF_SCALE))
       .map(other => (below ? piece.top - other.bottom : other.top - piece.bottom) * STAFF_SCALE))
-    expect(Math.min(...gaps)).toBeCloseTo(2.8)
+    expect(Math.min(...gaps)).toBeCloseTo(scoreLayoutConfig.staff.music * .1)
   }
 })
 

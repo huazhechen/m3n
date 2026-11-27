@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { describe, expect, it } from 'vitest'
 import { staffTempoBeat } from './staff-tempo.js'
 import { SvgGeometry, xml, type MeasureText } from './layout-svg.js'
@@ -14,7 +15,7 @@ describe('staff metronome notes', () => {
       expect(svg).not.toMatch(/<(?:path|circle)\b/)
       expect(ink.left).toBeCloseTo(17)
       expect(ink.bottom).toBeCloseTo(31)
-      expect(beat.textX - ink.right).toBeCloseTo(16 * .7 * .35)
+      expect(beat.textX - ink.right).toBeCloseTo(16 * .7 * .35 * scoreLayoutConfig.staff.musicSizeRatio)
     }
   })
 
@@ -23,9 +24,25 @@ describe('staff metronome notes', () => {
     const large = staffTempoBeat(4, 0, 0, 0, 32, measure)
     const a = new SvgGeometry(small.node, measure).ink(small.node)
     const b = new SvgGeometry(large.node, measure).ink(large.node)
-    expect(a.bottom - a.top).toBeCloseTo(14)
-    expect(b.bottom - b.top).toBeCloseTo(28)
+    expect(a.bottom - a.top).toBeCloseTo(14 * scoreLayoutConfig.staff.musicSizeRatio)
+    expect(b.bottom - b.top).toBeCloseTo(28 * scoreLayoutConfig.staff.musicSizeRatio)
     expect(b.right).toBeCloseTo(a.right * 2)
     expect(large.textX).toBeCloseTo(small.textX * 2)
   })
+})
+
+it('scales the metronome note and dots with staff spaces while retaining the numeric baseline', () => {
+  const original = scoreLayoutConfig.staff.music
+  try {
+    scoreLayoutConfig.staff.music = 28
+    const small = staffTempoBeat(8, 2, 0, 31, 16, measure)
+    const a = new SvgGeometry(small.node, measure).ink(small.node)
+    scoreLayoutConfig.staff.music = 32
+    const large = staffTempoBeat(8, 2, 0, 31, 16, measure)
+    const b = new SvgGeometry(large.node, measure).ink(large.node)
+    expect(b.right - b.left).toBeCloseTo((a.right - a.left) * 8 / 7)
+    expect(b.bottom - b.top).toBeCloseTo((a.bottom - a.top) * 8 / 7)
+    expect(b.bottom).toBeCloseTo(a.bottom)
+    expect(large.textX).toBeCloseTo(small.textX * 8 / 7)
+  } finally { scoreLayoutConfig.staff.music = original }
 })

@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import fontkit from '@pdf-lib/fontkit'
@@ -35,4 +36,21 @@ describe('distributed native staff font', () => {
     expect(glyph.children).toEqual([])
     expect(xml(glyph)).toContain('font-family="Bravura"')
   })
+})
+
+it('scales every native music glyph from seven to eight staff-space pixels', () => {
+  const original = scoreLayoutConfig.staff.music
+  try {
+    for (const name of Object.keys(glyphs) as StaffGlyph[]) {
+      scoreLayoutConfig.staff.music = 28
+      const before = staffGlyph(name, 0, 0).numericInk!
+      scoreLayoutConfig.staff.music = 32
+      const after = staffGlyph(name, 0, 0).numericInk!
+      expect(after).toHaveLength(before.length)
+      before.forEach((box, i) => {
+        for (const key of ['left', 'right', 'top', 'bottom'] as const)
+          expect(after[i]![key]).toBeCloseTo(box[key] * 8 / 7, 10)
+      })
+    }
+  } finally { scoreLayoutConfig.staff.music = original }
 })

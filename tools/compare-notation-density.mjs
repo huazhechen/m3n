@@ -6,7 +6,7 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
 // Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
-// Staff ceilings reflect duration-based natural spacing (see ELASTIC_SPACING.md);
+// Staff ceilings reflect 32px music em / 8px staff spaces (see STAFF_NOTATION.md);
 // lyric/music sizes, ink audits and the numbered optimal-width gate stay fixed.
 const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')
@@ -15,13 +15,13 @@ if (coreGap !== undefined && (!Number.isFinite(coreGap) || coreGap < 0)) throw n
 const densityLimits = {
   // v37 comfort scoring selects the loose tier: 12 rows / 698px. Keep the
   // existing height, font and ink gates while accepting this intended plan.
-  butter_fly_01: { staffHeight: 750, staffRows: 10, numberedHeight: 700, numberedRows: 12, heightRatio: 1.2 },
-  badinerie_bwv1067_01: { staffHeight: 720, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.28 },
-  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.37 },
-  mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.41 },
-  guo_huo_01: { staffHeight: 1000, staffRows: 10, numberedHeight: 760, numberedRows: 9, heightRatio: 1.34 },
-  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 1 } },
-  ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.47 },
+  butter_fly_01: { staffHeight: 860, staffRows: 12, numberedHeight: 700, numberedRows: 12, heightRatio: 1.24 },
+  badinerie_bwv1067_01: { staffHeight: 800, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.61 },
+  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.44 },
+  mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.43 },
+  guo_huo_01: { staffHeight: 1130, staffRows: 11, numberedHeight: 760, numberedRows: 9, heightRatio: 1.57 },
+  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 2 } },
+  ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.49 },
   ni_shi_wo_xin_ai_de_gu_niang_01: { staffHeight: 1300, staffRows: 10, numberedHeight: 1060, numberedRows: 9, heightRatio: 1.26 },
 }
 if (regression && (['scores', 'widths', 'staff-sizes', 'core-gap'].some(name => argument(name))
@@ -134,7 +134,7 @@ if (process.argv.includes('--bundle-only')) {
           if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
           if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
           // A density improvement must retain the calibrated musical and lyric sizes.
-          for (const [key, expected] of Object.entries({ staffFrameMm: 8.1375, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
+          for (const [key, expected] of Object.entries({ staffFrameMm: 9.3, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
             if (Math.abs(result.readability[key] - expected * 640 / width) > .001) failures.push(key)
           }
           if (failures.length) {
