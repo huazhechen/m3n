@@ -72,10 +72,15 @@ it('reserves both viewport edges and ignores controls and open dialogs', () => {
   swipe()
   expect(navigate).not.toHaveBeenCalled()
 })
-it('gives zoomed scores and horizontally overflowing content priority', () => {
+it('allows swiping in both directions after zooming when the score fits horizontally', () => {
   paper.dataset.zoomed = 'true'
+  Object.defineProperties(paper, { scrollWidth: { value: 390 }, clientWidth: { value: 390 } })
   swipe()
-  delete paper.dataset.zoomed
+  swipe(100, 250, paper.firstElementChild!)
+  expect(navigate.mock.calls).toEqual([['next'], ['previous']])
+})
+it.each([false, true])('gives horizontally overflowing content priority (zoomed: %s)', zoomed => {
+  paper.dataset.zoomed = String(zoomed)
   Object.defineProperties(paper, { scrollWidth: { value: 800 }, clientWidth: { value: 390 } })
   swipe(250, 100, paper.firstElementChild!)
   expect(navigate).not.toHaveBeenCalled()
