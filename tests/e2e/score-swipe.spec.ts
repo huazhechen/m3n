@@ -67,3 +67,45 @@ test('single-finger swipes navigate while pinch, scroll and controls keep their 
   await expect.poll(() => paper.evaluate(element => element.scrollLeft)).not.toBe(before)
   await context.close()
 })
+
+for (const immersive of [false, true]) {
+  test(`viewport whitespace outside the score navigates in both directions (immersive: ${immersive})`, async ({ browser, browserName, baseURL }) => {
+    test.skip(browserName !== 'chromium', 'Uses Chromium touch input')
+    const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 1000 }, isMobile: true, hasTouch: true })
+    const page = await context.newPage()
+    try {
+      await page.goto('/scores/huan_le_song_01')
+      await waitForEditor(page)
+      if (immersive) await page.getByRole('button', { name: '沉浸浏览', exact: true }).tap()
+      const session = await context.newCDPSession(page)
+      const swipeBlank = async (from: number, to: number) => {
+        // Select actual viewport whitespace outside main, not a gap inside the score.
+        await expect.poll(() => page.evaluate(() => {
+          const main = document.querySelector('main')?.getBoundingClientRect()
+          const controls = document.querySelector('.floating-controls')?.getBoundingClientRect()
+          return main && controls ? controls.top - main.bottom : 0
+        })).toBeGreaterThan(30)
+        const y = await page.evaluate(() => {
+          const main = document.querySelector('main')!
+          const bottom = main.getBoundingClientRect().bottom
+          const top = document.querySelector('.floating-controls')!.getBoundingClientRect().top
+          const y = (bottom + top) / 2
+          if (main.contains(document.elementFromPoint(250, y))) throw new Error('Gesture must start outside the reader container')
+          return y
+        })
+        await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: from, y, id: 1 }] })
+        for (let i = 1; i <= 6; i++) {
+          await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from + (to - from) * i / 6, y, id: 1 }] })
+        }
+        await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+      }
+      const original = page.url()
+      await swipeBlank(300, 90)
+      await expect(page).toHaveURL(new RegExp(`${nextScorePath('huan_le_song_01')}$`))
+      await waitForEditor(page)
+      await swipeBlank(90, 300)
+      await expect(page).toHaveURL(original)
+      await waitForEditor(page)
+    } finally { await context.close() }
+  })
+}

@@ -1,5 +1,6 @@
-/** Touch navigation for the reader; native scrolling and score zoom take priority. */
+/** Viewport-wide touch navigation for the reader; native scrolling and score zoom take priority. */
 export function attachScoreSwipe(root: HTMLElement, navigate: (direction: 'previous' | 'next') => void) {
+  const doc = root.ownerDocument
   let gesture: { id: number; x: number; y: number; started: number; horizontal: boolean } | undefined
   let suppressClickUntil = 0
   const cancel = () => { gesture = undefined }
@@ -9,10 +10,13 @@ export function attachScoreSwipe(root: HTMLElement, navigate: (direction: 'previ
     suppressClickUntil = 0
     const touch = event.touches[0]
     const target = event.target instanceof Element ? event.target : null
-    if (!target || touch.clientX < 28 || touch.clientX > window.innerWidth - 28
+    // Blank viewport space can target body, html or the app wrapper.
+    // Other portals stay outside the reader's gesture region.
+    if (!root.isConnected || !target || !(root.contains(target) || target.contains(root))
+      || touch.clientX < 28 || touch.clientX > window.innerWidth - 28
       || (window.visualViewport?.scale ?? 1) > 1
-      || document.querySelector('dialog[open], :popover-open')
-      || target.closest('a, button, input, select, textarea, [role="slider"], [contenteditable], dialog, [popover]')) return
+      || doc.querySelector('dialog[open], :popover-open')
+      || target.closest('a, button, input, select, textarea, [role="slider"], [contenteditable], dialog, [popover], .audio-controls')) return
     for (let node: Element | null = target; node && root.contains(node); node = node.parentElement) {
       if (node.scrollWidth > node.clientWidth + 1) return
       if (node === root) break
@@ -52,16 +56,16 @@ export function attachScoreSwipe(root: HTMLElement, navigate: (direction: 'previ
     event.preventDefault()
     event.stopImmediatePropagation()
   }
-  root.addEventListener('touchstart', start, { passive: true, capture: true })
-  root.addEventListener('touchmove', move, { passive: false, capture: true })
-  root.addEventListener('touchend', end, { passive: false, capture: true })
-  root.addEventListener('touchcancel', cancel, true)
-  root.addEventListener('click', click, true)
+  doc.addEventListener('touchstart', start, { passive: true, capture: true })
+  doc.addEventListener('touchmove', move, { passive: false, capture: true })
+  doc.addEventListener('touchend', end, { passive: false, capture: true })
+  doc.addEventListener('touchcancel', cancel, true)
+  doc.addEventListener('click', click, true)
   return () => {
-    root.removeEventListener('touchstart', start, true)
-    root.removeEventListener('touchmove', move, true)
-    root.removeEventListener('touchend', end, true)
-    root.removeEventListener('touchcancel', cancel, true)
-    root.removeEventListener('click', click, true)
+    doc.removeEventListener('touchstart', start, true)
+    doc.removeEventListener('touchmove', move, true)
+    doc.removeEventListener('touchend', end, true)
+    doc.removeEventListener('touchcancel', cancel, true)
+    doc.removeEventListener('click', click, true)
   }
 }
