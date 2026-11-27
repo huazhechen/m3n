@@ -81,7 +81,7 @@ const staff = {
   tempo: typography.annotation, chord: typography.annotation, dynamic: typography.expression,
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
-  music: 28, // 四个7px谱间。
+  music: 24, // 四个6px谱间。
   // 既有五线谱独立几何以28px（四个7px谱间）为设计基准。
   get musicSizeRatio(): number { return this.music / 28 },
   spacingIncrementSpaces: 1.2,

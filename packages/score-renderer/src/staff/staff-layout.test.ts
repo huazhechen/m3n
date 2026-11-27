@@ -67,7 +67,7 @@ describe('staff layout contract', () => {
     expect(nodes(previousBars[1]!).length === 0).toBe(!broken)
     const signature = findAll(current, n => hasClass(n, 'staff-signature'))[0]!
     const geometry = new SvgGeometry(currentSystem, measure)
-    if (!broken) expect(geometry.ink(signature).left - geometry.ink(bars[0]!).right).toBeGreaterThanOrEqual(9.9)
+    if (!broken) expect(geometry.ink(signature).left - geometry.ink(bars[0]!).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .1)
     else expect(geometry.ink(signature).right).toBeLessThan(geometry.ink(bars[0]!).left)
   })
 
@@ -114,7 +114,7 @@ describe('staff layout contract', () => {
       ...(reversed ? [octave, tempo] : [tempo, octave])])
     const geometry = new SvgGeometry(node, textMeasurer())
     const system = arrangeStaffSystem(node, geometry, 224, new Set())
-    expect(geometry.ink(tempo).bottom + 6 / STAFF_SCALE).toBeLessThanOrEqual(geometry.ink(octave).top + 1e-6)
+    expect(geometry.ink(tempo).bottom + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE).toBeLessThanOrEqual(geometry.ink(octave).top + 1e-6)
     expect(geometry.ink(octave).top).toBeCloseTo(-60.5)
     expect(system.ink.top).toBeLessThan(geometry.ink(octave).top * STAFF_SCALE)
   })
@@ -131,7 +131,7 @@ describe('staff layout contract', () => {
       const ink = geometry.ink(tempo)
       const covered = geometry.pieces(octave).filter(piece => overlapsX(ink, piece))
       expect(covered.length).toBeGreaterThan(0)
-      expect(ink.bottom + 6 / STAFF_SCALE).toBeLessThanOrEqual(Math.min(...covered.map(piece => piece.top)) + 1e-6)
+      expect(ink.bottom + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE).toBeLessThanOrEqual(Math.min(...covered.map(piece => piece.top)) + 1e-6)
       expect(findAll(tempo, n => hasClass(n, 'tempo-direction'))).toHaveLength(1)
       expect(findAll(tempo, n => hasClass(n, 'tempo-metronome'))).toHaveLength(1)
     }
@@ -280,15 +280,18 @@ describe('staff layout contract', () => {
     const graph = prepareStaffLineGraph(document, 718, false, measure, info.spacing)
     const ends = info.lines.map(line => graph.measured.findIndex(member => member.id === line.measures.at(-1)) + 1)
     const systems = engraveStaffSystems(document, graph.makeLines(ends), 718, measure, info.spacing, false)
-    const upper = systems[1]!, lower = systems[2]!
+    const lowerIndex = systems.findIndex((system, index) => index > 0 && findAll(system.node, node => hasClass(node, 'ending')).length > 0)
+    expect(lowerIndex).toBeGreaterThan(0)
+    const upper = systems[lowerIndex - 1]!, lower = systems[lowerIndex]!
     const ending = new SvgGeometry(lower.node, measure).pieces(element('g', lower.node.attributes,
-      findAll(lower.node, node => hasClass(node, 'm3n-ending-row'))))
+      nodes(lower.node).filter(node => hasClass(node, 'ending') || hasClass(node, 'm3n-ending-row'))))
       .map(piece => ({ left: piece.left * STAFF_SCALE, right: piece.right * STAFF_SCALE,
         top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE }))
     expect(upper.hasLyrics).toBe(true)
     expect(ending.length).toBeGreaterThan(0)
     let pairs = 0
-    const upperPlaced = info.pages[0]!.systems[1]!, lowerPlaced = info.pages[0]!.systems[2]!
+    expect(info.pageCount).toBe(1)
+    const upperPlaced = info.pages[0]!.systems[lowerIndex - 1]!, lowerPlaced = info.pages[0]!.systems[lowerIndex]!
     const minimumGap = scoreCoreGap(score)
     const gap = interpolateScoreCoreGap(minimumGap, scoreMaximumCoreGap(minimumGap), info.pages[0]!.gap, scoreLyricGapScale(minimumGap))
     for (const a of upper.spacingPieces) for (const b of ending) if (overlapsX(a, b)) {

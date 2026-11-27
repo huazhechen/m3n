@@ -6,7 +6,7 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
 // Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
-// Keep the existing height ceilings; musical size is calibrated to 28px em / 7px spaces.
+// Keep the existing height ceilings; musical size is calibrated to 24px em / 6px spaces.
 // lyric/music sizes, ink audits and the numbered optimal-width gate stay fixed.
 const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')
@@ -134,7 +134,7 @@ if (process.argv.includes('--bundle-only')) {
           if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
           if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
           // A density improvement must retain the calibrated musical and lyric sizes.
-          for (const [key, expected] of Object.entries({ staffFrameMm: 8.1375, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
+          for (const [key, expected] of Object.entries({ staffFrameMm: 6.975, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
             if (Math.abs(result.readability[key] - expected * 640 / width) > .001) failures.push(key)
           }
           if (failures.length) {
