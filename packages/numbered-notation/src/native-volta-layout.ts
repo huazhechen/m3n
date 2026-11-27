@@ -1,5 +1,5 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'

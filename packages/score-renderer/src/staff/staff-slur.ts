@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { element, type Ink } from './layout-svg.js'
 import { staffMusicSize } from './staff-music-font.js'
 

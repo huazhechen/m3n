@@ -1,10 +1,10 @@
 /** One legal row. Density is its hard minimum width / available width. */
-export type NativeLineCandidate = { end: number; density: number; penalty?: number }
+export type ScoreLineCandidate = { end: number; density: number; penalty?: number }
 type Plan = { end: number; count: number; sum: number; square: number; penalty: number; previous?: Plan }
 const epsilon = 1e-12
 type WeightedRow = { end: number; density: number; stretch: number; penalty: number; sourcePenalty?: number }
-const weightedRows = new WeakMap<NativeLineCandidate, WeightedRow>()
-function weightedRow(row: NativeLineCandidate): WeightedRow {
+const weightedRows = new WeakMap<ScoreLineCandidate, WeightedRow>()
+function weightedRow(row: ScoreLineCandidate): WeightedRow {
   let saved = weightedRows.get(row)
   if (!saved || saved.end !== row.end || saved.density !== row.density || saved.sourcePenalty !== row.penalty) {
     saved = { end: row.end, density: row.density, stretch: Math.max(0, 1 - row.density),
@@ -62,9 +62,9 @@ function hull(points: Plan[]): Plan[] {
  * Forced breaks are encoded by missing crossing edges, not separate solves.
  * Overflow penalties apply only to unavoidable indivisible oversized events.
  * No per-row charge or adjacent-row approximation. */
-export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings?: Record<string, number>): number[]
-export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings: Record<string, number> | undefined, maximumCost: number): number[] | undefined
-export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings?: Record<string, number>, maximumCost = Infinity): number[] | undefined {
+export function planScoreLinesGlobally(candidates: readonly (readonly ScoreLineCandidate[])[], timings?: Record<string, number>): number[]
+export function planScoreLinesGlobally(candidates: readonly (readonly ScoreLineCandidate[])[], timings: Record<string, number> | undefined, maximumCost: number): number[] | undefined
+export function planScoreLinesGlobally(candidates: readonly (readonly ScoreLineCandidate[])[], timings?: Record<string, number>, maximumCost = Infinity): number[] | undefined {
   const count = candidates.length
   if (!count) return []
   let root: Plan = { end: 0, count: 0, sum: 0, square: 0, penalty: 0 }
@@ -135,12 +135,12 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
 
 /** Shared sufficient-statistic hull; resource-constrained solvers additionally
  * retain earlier, lower-height vertices when later vertices replace the hull. */
-export type NativeLineStatisticPlan = Plan
-export function nativeLineStateHull<T extends NativeLineStatisticPlan>(points: T[]): T[] { return hull(points) as T[] }
+export type ScoreLineStatisticPlan = Plan
+export function scoreLineStateHull<T extends ScoreLineStatisticPlan>(points: T[]): T[] { return hull(points) as T[] }
 
 /** Insert one point into an x-sorted lower hull without re-sorting its old
  * vertices. Resource frontiers query the hull after every insertion. */
-export function insertNativeLineStateHull<T extends NativeLineStatisticPlan>(vertices:T[],point:T):boolean {
+export function insertScoreLineStateHull<T extends ScoreLineStatisticPlan>(vertices:T[],point:T):boolean {
   let low=0,high=vertices.length
   while(low<high){const middle=(low+high)>>>1;if(vertices[middle]!.sum<point.sum)low=middle+1;else high=middle}
   let index=low

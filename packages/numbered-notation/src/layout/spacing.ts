@@ -29,7 +29,7 @@ type MinimumPlan={positions:number[];cumulative:number[];minimumWidth:number;str
   | {groups:SpacingColumn[];members:{group:number;offset:number}[]}
 const minimumPlans=new WeakMap<readonly SpacingColumn[],Map<string,MinimumPlan>>()
 /** Explicitly opt an immutable task-owned constraint chain into reuse. */
-export function cacheNativeMinimumSpacing(columns:readonly SpacingColumn[]){if(!minimumPlans.has(columns))minimumPlans.set(columns,new Map())}
+export function cacheScoreMinimumSpacing(columns:readonly SpacingColumn[]){if(!minimumPlans.has(columns))minimumPlans.set(columns,new Map())}
 
 /** Fit a chain around its natural spacing. Hard-solution distances are
  * conservative collision limits, including sparse voices and lyric spans.
@@ -92,7 +92,7 @@ export function fitSpacingSprings(columns: readonly SpacingColumn[], positions: 
  * This is deliberately independent of source syntax, SVG and music objects.
  * fillEdges gives free bar-adjacent boundaries weight 1 in positive justification.
  */
-export function solveNativeSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean; minimumOnly?: boolean } = {}): SpacingSolution {
+export function solveScoreSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false, fillEdges: { left?: boolean; right?: boolean; natural?: boolean; minimumOnly?: boolean } = {}): SpacingSolution {
   if (!columns.length) return { positions: [], minimumWidth: 0, stretchWeight: 0 }
   if (width !== Infinity && (!Number.isFinite(width) || width <= 0)) throw new Error('音符排版宽度必须为正数。')
   const plans=fillEdges.minimumOnly && !fillEdges.natural && justify && width!==Infinity ? minimumPlans.get(columns) : undefined
@@ -100,7 +100,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
   const prepared=plans?.get(planKey)
   if(prepared) {
     if('groups' in prepared) {
-      const solved=solveNativeSpacing(prepared.groups,width,justify,fillEdges)
+      const solved=solveScoreSpacing(prepared.groups,width,justify,fillEdges)
       return {...solved,positions:prepared.members.map(member=>solved.positions[member.group]!+member.offset)}
     }
     const free=Math.max(0,width-prepared.occupied),unit=prepared.stretchWeight>0 ? free/prepared.stretchWeight : 0
@@ -189,8 +189,8 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
       }) })
       start = end + 1
     }
-    if(plans){cacheNativeMinimumSpacing(groups);plans.set(planKey,{groups,members})}
-    const solved = solveNativeSpacing(groups, width, justify, fillEdges)
+    if(plans){cacheScoreMinimumSpacing(groups);plans.set(planKey,{groups,members})}
+    const solved = solveScoreSpacing(groups, width, justify, fillEdges)
     return { ...solved, positions: members.map(member => solved.positions[member.group]! + member.offset) }
   }
   const positions: number[] = [], ends = lanes.map(() => 0)
@@ -238,7 +238,7 @@ export function solveNativeSpacing(columns: readonly SpacingColumn[], width = In
 }
 
 /** Numbered notation deliberately bypasses natural/soft spring requirements. */
-export function solveNativeMinimumSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false,
+export function solveScoreMinimumSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false,
   fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
-  return solveNativeSpacing(columns, width, justify, { ...fillEdges, minimumOnly: true })
+  return solveScoreSpacing(columns, width, justify, { ...fillEdges, minimumOnly: true })
 }

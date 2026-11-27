@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { sortedNativeInkSeparation } from './native-ink-separation.js'
-import type { NativeInk } from './native-ink.js'
+import { sortedScoreInkSeparation } from './ink-separation.js'
+import type { NativeInk } from '../native-ink.js'
 
 const exhaustive = (upper: NativeInk[], lower: NativeInk[]) => {
   let distance = -Infinity
   for (const a of upper) for (const b of lower) if (Math.min(a.right, b.right) > Math.max(a.left, b.left)) distance = Math.max(distance, a.bottom - b.top)
   return distance
 }
-const compare = (upper: NativeInk[], lower: NativeInk[]) => expect(sortedNativeInkSeparation(
+const compare = (upper: NativeInk[], lower: NativeInk[]) => expect(sortedScoreInkSeparation(
   [...upper].sort((a, b) => a.left - b.left), [...lower].sort((a, b) => a.left - b.left),
 )).toBe(exhaustive(upper, lower))
 

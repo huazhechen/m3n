@@ -2,18 +2,18 @@ import { isNativeMeasureNumber } from './native-system-labels.js'
 import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
 import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
 import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
 import { nativeSystemCore } from './native-core.js'
-import { scoreLyricGapScale } from './score-layout-policy.js'
+import { scoreLyricGapScale } from './layout/policy.js'
 import { nativeSvgPieces } from './native-ink.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
-import type { NativePageBlock } from './native-pagination.js'
+import type { ScorePageBlock } from './layout/pagination.js'
 
 /** Consume the same placed primitives as drawing. No independently measured
  * final heights: row-wide lyric baselines and dynamic relations are resolved. */
-export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, margin: number, gap: number): NativePageBlock {
+export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, margin: number, gap: number): ScorePageBlock {
   const height = placeNativeLanes(system), pieces = nativeLanePieces(system, measurer)
   const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
   const primitives = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ left:piece.left,right:piece.right,
@@ -34,7 +34,7 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
  * shallowest sounding-body top; omit all other lanes/attachments. Their
  * real geometry can only require more space. This bound cannot reject a plan
  * made feasible by horizontal interleaving. */
-export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: TextMeasurer, gap: number, horizontal?: { width: number; minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }, templates?: NativeHorizontalTemplates): NativePageBlock {
+export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: TextMeasurer, gap: number, horizontal?: { width: number; minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }, templates?: NativeHorizontalTemplates): ScorePageBlock {
   const cloned = cloneNativeProjection({measures,glyphs:measures.flatMap(m=>m.columns.flatMap(c=>c.glyphs)),diagnostics:[],hasBass:false}).measures
   const glyphs = cloned.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
   const ids = [...new Set(glyphs.map(glyph => glyph.lane))].sort((a,b) => a === 'melody' ? -1 : b === 'melody' ? 1 : a === 'bass' ? 1 : b === 'bass' ? -1 : a.localeCompare(b))

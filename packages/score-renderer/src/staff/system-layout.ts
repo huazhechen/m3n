@@ -1,5 +1,6 @@
 import { paginateStaffRows } from './staff-row-pagination.js'
-import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, scorePageCollision, scorePageDistance, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation'
+import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { lyricSpacing, SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry, InkRangeIndex,

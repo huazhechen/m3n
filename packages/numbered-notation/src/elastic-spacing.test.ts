@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { solveElasticSprings, spacingStrainBadness } from './elastic-spacing.js'
+import { solveElasticSprings, spacingStrainBadness } from './layout/elastic-spacing.js'
 
 describe('line strain against available compression travel', () => {
   it('rejects a line below the minimum and prices the fraction of available travel', () => {

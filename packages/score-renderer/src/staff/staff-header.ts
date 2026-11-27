@@ -1,4 +1,5 @@
-import { SCORE_TEXT_FONT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, SCORE_TITLE_FONT, SCORE_TITLE_WEIGHT } from '@m3n/numbered-notation'
 import {
   numberedHeadingLines,
   numberedHeaderContent,

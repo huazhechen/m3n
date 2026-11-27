@@ -1,4 +1,4 @@
-import { planScoreLinesGlobally, lastLineWidth, scoreLayoutConfig, type ScoreLineCandidate } from '@m3n/numbered-notation'
+import { planScoreLinesGlobally, type ScoreLineCandidate, lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'

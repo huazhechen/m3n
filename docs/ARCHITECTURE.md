@@ -14,6 +14,8 @@ web app -> @m3n/score-renderer -> @m3n/notation
        \-> React / routing / application services
 ```
 
+五线谱位于 `score-renderer` 中，通过 `numbered-notation/layout` 调用共享求解层；该入口不加载简谱渲染器。
+
 `@m3n/notation` 不得依赖 React、DOM、具体页面或 `@m3n/score-renderer`。转换函数应保持确定性：相同输入总是产生相同输出与诊断。
 同一编辑操作的派生计算应复用已解析的领域文档，避免各模块重新扫描相同源码。
 
@@ -38,7 +40,27 @@ web app -> @m3n/score-renderer -> @m3n/notation
 - `src`：React Web 应用、路由、曲库装载及分享服务；通过包名消费子包，不跨入其内部目录。
 - `worker`：部署边缘入口，不依赖 Web UI。
 
-包依赖为 `score-renderer -> notation`、`numbered-notation -> notation / txml`。根应用可以组合这些包，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
+包依赖为 `score-renderer -> notation / numbered-notation`、`numbered-notation -> notation / txml`。根应用可以组合这些包，但子包不得反向导入根应用。每个包在自身 `package.json` 中声明运行依赖，并提供独立的 `build`、`test`、`typecheck` 命令；根脚本显式按依赖顺序执行。
+
+## 排版层次与依赖
+
+两种谱式共用的精确求解核心位于 `packages/numbered-notation/src/layout/`，以 `@m3n/numbered-notation/layout` 为公共入口。它仍随现有包发布，避免引入额外包和构建依赖；包根入口保留已有导出兼容调用方。共享层的命名统一为 `Score*`，不再以 `Native*` 暗示简谱所有权。
+
+依赖方向为：渲染入口 → 谱式适配器 → 共享布局 → 共用策略配置。`npm run check:boundaries` 检查共享布局只能引用本层模块及统一的 `score-layout-config.ts` 配置，禁止反向依赖简谱模型、字体加载或 SVG 测量。`ScoreInk`、`ScoreLineCandidate`、`ScorePageBlock` 和 `ScorePageCostModel` 定义适配器与求解器之间的边界。
+
+| 层次 | 职责 | 主要模块 |
+| --- | --- | --- |
+| 宽度搜索 | 粗搜、细搜、候选复用及宽度排名 | `tools/scorebook-width.mjs` |
+| 共享水平布局 | 弹性约束链、阅读间隔、末行宽度和评分 | `layout/spacing.ts`、`elastic-spacing.ts`、`quality.ts` |
+| 共享布局 | 全局断行、分页代价、下界、精确复核及完整回退 | `layout/line-breaking.ts`、`page-cost-breaking.ts`、`refined-page-breaking.ts` |
+| 共享纵向几何 | 数值墨迹契约、逐元素碰撞、分页和行距拟合 | `layout/geometry.ts`、`page-collision.ts`、`pagination.ts` |
+| 间距档位排名 | 按页数、实际间距代价、较松档位排序 | `layout/spacing-trials.ts` |
+| 简谱适配器 | 音乐约束、候选图、关系拓扑、实际行几何和坐标写入 | `native-line-graph.ts`、`native-relation-plan.ts`、`native-page-trial.ts`、`native-layout.ts`、`native-layout-pagination.ts` |
+| 五线谱适配器 | 时间列与音乐间距、实际行几何和末行上下文 | `staff/line-layout.ts`、`staff/staff-page-model.ts`、`staff/staff-row-pagination.ts` |
+
+简谱布局数据契约独立于调度，放在 `native-layout-model.ts`；几何与绘制模块仅导入这些类型。`native-layout.ts` 负责准备任务、串联候选布局与精确分页求解。末行缩短、跨行关系及歌词基线的具体几何留在谱式适配器中；它们不拥有另一套分页搜索。共享非核心碰撞系数位于 `scoreLayoutConfig.page`，不再从简谱样式读取。
+
+共享求解保留精确几何、完整候选、浮点统计累加顺序及无数量上限的前缀分区回退。审计发现的过度疏松评分与延音线方向问题在共用评分和五线谱几何适配器中修复。共享求解器测试保留穷举与随机对照；适配器回归和双谱式真实字体审计验证最终谱面。本次重构的验证、基线隔离对照、缺陷修复与最终审计结果见[重构验收记录](LAYOUT_REFACTOR_REVIEW.md)。
 
 ## 内部职责
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { lastLineWidth } from './last-line-width.js'
+import { lastLineWidth } from './layout/last-line-width.js'
 
 describe('section-ending justification', () => {
   it('keeps trials up to 50% open, including the boundary', () => {

@@ -1,5 +1,5 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeSvgPieces, type NativeInk } from './native-ink.js'
 import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'

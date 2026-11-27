@@ -1,7 +1,7 @@
 import { SCORE_TEXT_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
 import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
 import { NativeSymbols, n } from './native-symbols.js'

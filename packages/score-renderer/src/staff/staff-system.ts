@@ -1,6 +1,7 @@
 import { staffTempoBeat } from './staff-tempo.js'
 import { staffSlur } from './staff-slur.js'
-import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffPreparation, createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
 import { staffMusicSize, staffGlyph, staffNavigationGlyph } from './staff-music-font.js'
@@ -220,7 +221,13 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         // Connect staves without repainting the bar inside each staff.
         const y1 = model.staves[0]!.y + staffMusicSize(), y2 = model.staves.at(-1)!.y + staffMusicSize() * 2
         const connectorTop = y1 + staffMusicSize(), connectorBottom = y2 - staffMusicSize()
-        if (connectorBottom > connectorTop && member.measure.source.right !== 'invis' && !suppressEndRepeat) measureNode.children.push(element('g', { class: 'staff-bar' }, [element('path', { d: `M${x + target} ${connectorTop} V${connectorBottom}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
+        if (connectorBottom > connectorTop && member.measure.source.right !== 'invis' && !suppressEndRepeat) measureNode.children.push(element('g', { class: 'staff-bar' }, [element('path', {
+          d: `M${x + target} ${connectorTop} V${connectorBottom}`, stroke: '#000',
+          'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none',
+          // A tie may cross this continuation just as it crosses the bar
+          // inside either staff. Preserve that same explicit join contract.
+          'data-m3n-join': `bar-${x + target},${connectorTop}`,
+        })]))
         if ((member.measure.source.repeatCount ?? 2) > 2) measureNode.children.push(text(`×${member.measure.source.repeatCount}`, x + target - engine.navigationBarInset, engine.navigationY, style.repeatCount, 'repeatMark'))
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target

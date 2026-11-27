@@ -19,6 +19,7 @@ export { auditNativeInkCollisions } from '${root}/tools/lib/native-ink-collision
 `)
 await build({ configFile: false, logLevel: 'error', resolve: { alias: {
   '@m3n/notation': resolve(root, 'packages/notation/src/index.ts'),
+  '@m3n/numbered-notation/layout': resolve(root, 'packages/numbered-notation/src/layout/index.ts'),
   '@m3n/numbered-notation': resolve(root, 'packages/numbered-notation/src/index.ts'),
 } }, build: { outDir: resolve(out, 'bundle'), lib: { entry, name: 'density', formats: ['iife'], fileName: () => 'bundle.js' } } })
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--no-sandbox'] })

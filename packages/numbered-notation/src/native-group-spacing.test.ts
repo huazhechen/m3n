@@ -1,4 +1,4 @@
-import { scoreRhythmicGapWeight } from './score-layout-policy.js'
+import { scoreRhythmicGapWeight } from './layout/policy.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
 import { measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'

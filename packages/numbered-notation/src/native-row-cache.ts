@@ -1,6 +1,6 @@
 import { copyNativeDecoration } from './native-system-labels.js'
 import type { NativeGlyph } from './native-model.js'
-import type { NativeSystem, NativeRelation } from './native-layout.js'
+import type { NativeSystem, NativeRelation } from './native-layout-model.js'
 import type { NativeRelationLayout } from './native-relations.js'
 
 const relationKey = (relation: NativeRelation) => `${relation.kind}:${relation.first.id}:${relation.last.id}:${relation.label ?? ''}`

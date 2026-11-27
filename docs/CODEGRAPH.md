@@ -23,6 +23,7 @@ flowchart LR
   app --> renderer
   app --> numbered
   numbered --> notation
+  renderer --> numbered
   renderer --> notation
   scores --> app
   docs --> app
@@ -30,7 +31,7 @@ flowchart LR
   worker --> assets
 ```
 
-允许的包依赖方向为 `src -> score-renderer -> notation` 和 `src -> numbered-notation -> notation / txml`。`worker` 是独立部署入口，不依赖 React 或这些业务包。
+允许的包依赖方向为 `src -> score-renderer -> notation / numbered-notation` 和 `src -> numbered-notation -> notation / txml`。`worker` 是独立部署入口，不依赖 React 或这些业务包。
 
 ## Web 应用
 
@@ -116,9 +117,15 @@ flowchart LR
 ```mermaid
 flowchart LR
   document["ScoreDocument"] --> adapter["numbered-notation projection"]
-  adapter --> native["native layout / paint"]
+  document --> staff["staff adapter / exact geometry"]
+  adapter --> shared["numbered-notation/layout<br/>spacing / line breaking / page solving / scoring"]
+  staff --> shared
+  shared --> native["numbered placement / paint"]
+  shared --> staffPaint["staff placement / paint"]
   native --> numberedSvg["interactive numbered SVG"]
+  staffPaint --> staffSvg["interactive staff SVG"]
   numberedSvg --> renderService["lib/render-score"]
+  staffSvg --> renderService
   renderService --> screen
   renderService --> exporter
   document --> performance["compileScorePerformance / PlaybackScore"]
@@ -129,11 +136,11 @@ flowchart LR
   player --> cursor["playback cursor events"]
   cursor --> screen
   exporter --> png["PNG"]
-  exporter --> raster["browser rasterization / system fonts"]
-  exporter --> pdf["native SVG / browser vector PDF printing"]
+  png --> raster["browser rasterization / shared font outlines"]
+  exporter --> pdf["native SVG / embedded-font vector PDF"]
 ```
 
-简谱由项目内自研引擎渲染，渲染和演奏共用 `scoreEventIds`；播放使用项目内演奏编译器，直接消费领域文档。简谱预览与导出共用适配器和内嵌数字字体，文字使用设备系统字体，不请求字体文件；PNG 栅格化连续谱面，PDF 自动分页并通过浏览器原生SVG打印保留矢量。
+简谱与五线谱的适配器提供音乐间距、下界和精确行几何，共同调用 `numbered-notation/layout` 中的断行、分页约束求解、评分与碰撞算法；共享层不依赖具体谱式和 SVG。模块职责见[架构文档](ARCHITECTURE.md#排版层次与依赖)。渲染和演奏共用 `scoreEventIds`，播放直接消费领域文档。网页、PNG 与 PDF 共用 Barlow、Bravura 和思源黑体字形；PNG 栅格化谱面，PDF 使用实际 SVG 几何与字体子集生成矢量页面。
 
 `lib/render-score` 统一屏幕、预览和最终导出的排版与后处理。阅读容器宽度和打印版宽分别管理。播放资源只随音乐文档更新释放，宽度切换保留播放状态。
 
@@ -169,6 +176,7 @@ sequenceDiagram
 | 边界 | 公共入口 | 主要消费者 |
 | --- | --- | --- |
 | Notation | `packages/notation/src/index.ts` | Web 应用、score-renderer、工具脚本与测试 |
+| Shared layout | `@m3n/numbered-notation/layout` | 简谱、五线谱适配器 |
 | Score renderer | `packages/score-renderer/src/index.ts` | `ScoreRenderer`、`ScoreExportDialog` |
 | Web app | `src/main.tsx`、`src/App.tsx` | 浏览器路由与页面 |
 | Worker | `worker/index.ts` | Cloudflare Workers runtime |

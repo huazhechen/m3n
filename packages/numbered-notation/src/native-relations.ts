@@ -10,7 +10,7 @@ import { prepareNativeArc, nativeArcInkLift, nativeRibbonClearance, nativeRibbon
 import { nativeTupletGeometry, nativeTupletPeers } from './native-tuplet.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSvgInk, nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'
-import type { NativeRelation, NativeSystem } from './native-layout.js'
+import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 
 export type NativeRelationLayout = { svg: string; ink: NativeInk; pieces?: NativeInk[]; arc?: NativeArc }

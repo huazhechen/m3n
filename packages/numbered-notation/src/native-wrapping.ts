@@ -1,5 +1,5 @@
 import type { NativeMeasure } from './native-model.js'
-import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
+import { planScoreLinesGlobally, type ScoreLineCandidate } from './layout/line-breaking.js'
 
 /** Split a dense bar into balanced musical groups, preserving every tuplet. */
 export function splitNativeMeasure(measure: NativeMeasure, width: number): NativeMeasure[] {
@@ -18,7 +18,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number): Nativ
     const columns = measure.columns.slice(start, stop)
     return { columns, left: Math.min(...columns.map(column => column.minimumStart!)), right: Math.max(...columns.map(column => column.minimumEnd!)) }
   })
-  const candidates: NativeLineCandidate[][] = Array.from({ length: groups.length }, () => [])
+  const candidates: ScoreLineCandidate[][] = Array.from({ length: groups.length }, () => [])
   for (let start = 0; start < groups.length; start++) {
     let right = -Infinity
     const beat = groups[start]!.columns[0]!.time - measure.columns[0]!.time
@@ -32,7 +32,7 @@ export function splitNativeMeasure(measure: NativeMeasure, width: number): Nativ
   }
   const fragments: typeof measure.columns[] = []
   let start = 0
-  for (const stop of planNativeLines(candidates)) {
+  for (const stop of planScoreLinesGlobally(candidates)) {
     fragments.push(groups.slice(start, stop).flatMap(group => group.columns)); start = stop
   }
   if (fragments.length < 2) return [measure]

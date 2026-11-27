@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from './score-layout-config.js'
+import { scoreLayoutConfig } from '../score-layout-config.js'
 
 /** Source leading is measured in the shared notation unit, never a font's
  * implementation em (SMuFL em and digit em describe different things). */

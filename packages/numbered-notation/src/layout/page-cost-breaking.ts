@@ -1,22 +1,22 @@
-import { nativeLineStateHull, insertNativeLineStateHull, type NativeLineStatisticPlan, type NativeLineCandidate } from './native-line-breaking.js'
-import type { NativePageBlock } from './native-pagination.js'
-import { nativePageCollision, nativePageDistance } from './native-page-collision.js'
-import { nativePageGeometry, type NativePageGeometry } from './native-page-geometry.js'
+import { scoreLineStateHull, insertScoreLineStateHull, type ScoreLineStatisticPlan, type ScoreLineCandidate } from './line-breaking.js'
+import type { ScorePageBlock } from './geometry.js'
+import { scorePageCollision, scorePageDistance } from './page-collision.js'
+import { scorePageGeometry, type ScorePageGeometry } from './page-geometry.js'
 
-type Box=NativePageGeometry
-type State=NativeLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
+type Box=ScorePageGeometry
+type State=ScoreLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
 type HeightBounds={boxes:Box[];remaining:Map<number,number>[];pricedHeight:Map<number,number[]>[]}
-export function createNativePageCostCache(){return {heightBounds:new WeakMap<object,HeightBounds>(),boxes:new WeakMap<NativePageBlock,Box>(),distances:new WeakMap<Box,WeakMap<Box,number>>(),policy:''}}
-export type NativePageCostOptions={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
-const box=nativePageGeometry
-const planPaths=new WeakMap<NativeLineStatisticPlan,number[]>()
-const ends=(state:NativeLineStatisticPlan)=>{
+export function createScorePageCostCache(){return {heightBounds:new WeakMap<object,HeightBounds>(),boxes:new WeakMap<ScorePageBlock,Box>(),distances:new WeakMap<Box,WeakMap<Box,number>>(),policy:''}}
+export type ScorePageCostOptions={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createScorePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
+const box=scorePageGeometry
+const planPaths=new WeakMap<ScoreLineStatisticPlan,number[]>()
+const ends=(state:ScoreLineStatisticPlan)=>{
  const saved=planPaths.get(state);if(saved)return saved
- const result:number[]=[];for(let p:NativeLineStatisticPlan|undefined=state;p?.count;p=p.previous)result.push(p.end)
+ const result:number[]=[];for(let p:ScoreLineStatisticPlan|undefined=state;p?.count;p=p.previous)result.push(p.end)
  result.reverse();planPaths.set(state,result);return result
 }
-const objective=(state:NativeLineStatisticPlan)=>2*state.square-state.sum*state.sum/state.count+state.penalty
-const earlier=(a:NativeLineStatisticPlan,b:NativeLineStatisticPlan)=>{const x=ends(a),y=ends(b);for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return x[i]!>y[i]!;return false}
+const objective=(state:ScoreLineStatisticPlan)=>2*state.square-state.sum*state.sum/state.count+state.penalty
+const earlier=(a:ScoreLineStatisticPlan,b:ScoreLineStatisticPlan)=>{const x=ends(a),y=ends(b);for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return x[i]!>y[i]!;return false}
 const comparePositions=(a:State,b:State)=>a.page-b.page || a.baseline-b.baseline
 
 /** Minimum horizontal cost in an optimistic Markov pagination model. The
@@ -25,9 +25,9 @@ const comparePositions=(a:State,b:State)=>a.page-b.page || a.baseline-b.baseline
  * At equal last row/count, lower page position dominates for every suffix.
  * A point above the statistic hull of lower-position states cannot minimize
  * the concave final objective. No height quantization or frontier size cap. */
-export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineCandidate[])[],
- blockFor:(start:number,end:number,previousStart?:number,reference?:number)=>NativePageBlock,headers:readonly NativePageBlock[],options:NativePageCostOptions,timings?:Record<string,number>):number[]|undefined {
- const reusable=options.cache ?? createNativePageCostCache()
+export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCandidate[])[],
+ blockFor:(start:number,end:number,previousStart?:number,reference?:number)=>ScorePageBlock,headers:readonly ScorePageBlock[],options:ScorePageCostOptions,timings?:Record<string,number>):number[]|undefined {
+ const reusable=options.cache ?? createScorePageCostCache()
  const policy=`${options.gap}:${options.headerGap}`
  if(reusable.policy!==policy){reusable.policy=policy;reusable.distances=new WeakMap();reusable.heightBounds=new WeakMap()}
  const distances=reusable.distances
@@ -39,18 +39,18 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
   const separation=prior.music && item.music ? local : options.headerGap
   const core=prior.coreBottom-item.coreTop+separation
   let collision=-Infinity,edge=-Infinity
-  if(prior.resolved && item.resolved && (prior.edgeInk.length || item.edgeInk.length || nativePageDistance({collision:prior.bottom-item.top,edge:-Infinity},local,-Infinity)>core)) {
+  if(prior.resolved && item.resolved && (prior.edgeInk.length || item.edgeInk.length || scorePageDistance({collision:prior.bottom-item.top,edge:-Infinity},local,-Infinity)>core)) {
    if(!prior.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sorted=true}
    if(!item.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sorted=true}
-   const pair=nativePageCollision(prior,item);collision=pair.collision;edge=pair.edge
+   const pair=scorePageCollision(prior,item);collision=pair.collision;edge=pair.edge
   }
-  const value=nativePageDistance({collision,edge},local,core)+item.before
+  const value=scorePageDistance({collision,edge},local,core)+item.before
   if(!peers){peers=new WeakMap();distances.set(prior,peers)}
   peers.set(item,value)
   return value
  }
  const cache=reusable.boxes,ids=new Map<Box,number>()
- const getBox=(block:NativePageBlock)=>{let item=cache.get(block);if(!item){item=box(block);cache.set(block,item)}if(!ids.has(item))ids.set(item,ids.size);return item}
+ const getBox=(block:ScorePageBlock)=>{let item=cache.get(block);if(!item){item=box(block);cache.set(block,item)}if(!ids.has(item))ids.set(item,ids.size);return item}
  // Prefix restrictions leave unreachable graph nodes in place. Their rows
  // cannot occur in any completion and need neither geometry nor height bounds.
  const reachable=new Uint8Array(graph.length+1);reachable[0]=1
@@ -170,8 +170,8 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
     for(let begin=0;begin<points.length;){
      let end=begin+1
      while(end<points.length && points[end]!.page===points[begin]!.page && points[end]!.baseline===points[begin]!.baseline)end++
-     const batch=end===begin+1 ? [points[begin]!] : nativeLineStateHull(points.slice(begin,end))
-     for(const point of batch)if(insertNativeLineStateHull(hull,point))frontier.push(point)
+     const batch=end===begin+1 ? [points[begin]!] : scoreLineStateHull(points.slice(begin,end))
+     for(const point of batch)if(insertScoreLineStateHull(hull,point))frontier.push(point)
      begin=end
     }
     if(frontier.length){(states[row.end] ??= []).push(frontier);retained+=frontier.length;largest=Math.max(largest,frontier.length)}
@@ -192,13 +192,13 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  return best ? ends(best) : undefined
 }
 
-type SuffixGroup={count:number;minimumHalfOrdinate:number;minimumSquarePenalty:number;minimumVariance:number;minimumMean:number;maximumMean:number;points:NativeLineStatisticPlan[]}
+type SuffixGroup={count:number;minimumHalfOrdinate:number;minimumSquarePenalty:number;minimumVariance:number;minimumMean:number;maximumMean:number;points:ScoreLineStatisticPlan[]}
 const horizontalSuffixCache=new WeakMap<object,{maximumCost:number;groups:SuffixGroup[][]}>()
 const suffixTokenEnd={}
 const suffixTokenRows=new WeakMap<object,WeakMap<object,object>>()
 const suffixTokens=new WeakMap<object,object[]>()
-const suffixStatistics=new WeakMap<object,{maximumCost:number;states:Map<number,NativeLineStatisticPlan[]>}>()
-function graphSuffixTokens(graph:readonly (readonly NativeLineCandidate[])[]) {
+const suffixStatistics=new WeakMap<object,{maximumCost:number;states:Map<number,ScoreLineStatisticPlan[]>}>()
+function graphSuffixTokens(graph:readonly (readonly ScoreLineCandidate[])[]) {
  const saved=suffixTokens.get(graph);if(saved)return saved
  const tokens:Array<object>=Array(graph.length+1);tokens[graph.length]=suffixTokenEnd
  for(let at=graph.length-1;at>=0;at--) {
@@ -212,16 +212,16 @@ function graphSuffixTokens(graph:readonly (readonly NativeLineCandidate[])[]) {
  suffixTokens.set(graph,tokens)
  return tokens
 }
-function horizontalSuffixPlans(graph:readonly (readonly NativeLineCandidate[])[],maximumCost:number) {
+function horizontalSuffixPlans(graph:readonly (readonly ScoreLineCandidate[])[],maximumCost:number) {
  const cached=horizontalSuffixCache.get(graph)
  if(cached && cached.maximumCost>=maximumCost)return cached.groups
- const suffix=Array.from({length:graph.length+1},()=>new Map<number,NativeLineStatisticPlan[]>())
+ const suffix=Array.from({length:graph.length+1},()=>new Map<number,ScoreLineStatisticPlan[]>())
  const tokens=graphSuffixTokens(graph)
  suffix[graph.length]!.set(0,[{end:graph.length,count:0,sum:0,square:0,penalty:0}])
  for(let start=graph.length-1;start>=0;start--) {
   const saved=suffixStatistics.get(tokens[start]!)
   if(saved && saved.maximumCost>=maximumCost){suffix[start]=saved.states;continue}
-  const groups=new Map<number,NativeLineStatisticPlan[]>()
+  const groups=new Map<number,ScoreLineStatisticPlan[]>()
   for(const row of graph[start]!)for(const points of suffix[row.end]!.values())for(const point of points) {
    const r=Math.max(0,1-row.density),count=point.count+1
    const candidate={end:graph.length,count,sum:point.sum+r,square:point.square+r*r,
@@ -229,7 +229,7 @@ function horizontalSuffixPlans(graph:readonly (readonly NativeLineCandidate[])[]
    if(candidate.square+candidate.penalty>maximumCost+1e-12)continue
    const list=groups.get(count) ?? [];list.push(candidate);groups.set(count,list)
   }
-  for(const [count,points] of groups)suffix[start]!.set(count,nativeLineStateHull(points))
+  for(const [count,points] of groups)suffix[start]!.set(count,scoreLineStateHull(points))
   suffixStatistics.set(tokens[start]!,{maximumCost,states:suffix[start]!})
  }
  const result=suffix.map(groups=>[...groups].sort((a,b)=>a[0]-b[0]).map(([count,points])=>({count,points,

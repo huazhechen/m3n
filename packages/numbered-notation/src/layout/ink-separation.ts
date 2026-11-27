@@ -1,12 +1,12 @@
-import type { NativeInk } from './native-ink.js'
+import type { ScoreInk } from './geometry.js'
 
 /** Maximum vertical separation of horizontally intersecting ink. Both inputs
  * are sorted by left edge. Sweep starts, discarding expired heap leaders;
  * only the highest upper bottom / lowest lower top can constrain placement. */
-export function sortedNativeInkSeparation(upper: readonly NativeInk[], lower: readonly NativeInk[]): number {
-  const high: NativeInk[] = [], low: NativeInk[] = []
-  const priority = (ink: NativeInk, highest: boolean) => highest ? ink.bottom : -ink.top
-  const push = (heap: NativeInk[], ink: NativeInk, highest: boolean) => {
+export function sortedScoreInkSeparation(upper: readonly ScoreInk[], lower: readonly ScoreInk[]): number {
+  const high: ScoreInk[] = [], low: ScoreInk[] = []
+  const priority = (ink: ScoreInk, highest: boolean) => highest ? ink.bottom : -ink.top
+  const push = (heap: ScoreInk[], ink: ScoreInk, highest: boolean) => {
     let index = heap.length
     heap.push(ink)
     while (index > 0) {
@@ -16,7 +16,7 @@ export function sortedNativeInkSeparation(upper: readonly NativeInk[], lower: re
     }
     heap[index] = ink
   }
-  const discardExpired = (heap: NativeInk[], x: number, highest: boolean) => {
+  const discardExpired = (heap: ScoreInk[], x: number, highest: boolean) => {
     while (heap.length && heap[0]!.right <= x) {
       const last = heap.pop()!
       if (!heap.length) break

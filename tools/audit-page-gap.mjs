@@ -12,7 +12,7 @@ export { parseM3NDocument, A4_CONTENT_ASPECT_RATIO } from '${root}/packages/nota
 export { prepareNumberedNotationFonts } from '${root}/packages/numbered-notation/src/index.ts';
 export { layoutNativeScore } from '${root}/packages/numbered-notation/src/native-layout.ts';
 export { nativeCoreGap } from '${root}/packages/numbered-notation/src/native-style.ts';
-export { paginateNativeBlocks } from '${root}/packages/numbered-notation/src/native-pagination.ts';
+export { paginateScoreBlocks } from '${root}/packages/numbered-notation/src/layout/pagination.ts';
 `)
 await build({ configFile: false, logLevel: 'error', resolve: { alias: {
   '@m3n/notation': resolve(root, 'packages/notation/src/index.ts'),
@@ -31,7 +31,7 @@ try {
       const layout = gapAudit.layoutNativeScore(doc, { width, paged: true, pageMargin: 0 })
       const settings = { pageHeight: Math.floor(width * gapAudit.A4_CONTENT_ASPECT_RATIO), margin: 0, maxGap: gapAudit.nativeCoreGap(doc) * 1.1, headerGap: gapAudit.nativeCoreGap(doc) * .8, elastic: true }
       const trial = gap => {
-        const pagination = gapAudit.paginateNativeBlocks(layout.verticalBlocks, { ...settings, gap, maxGap: Math.max(settings.maxGap, gap) })
+        const pagination = gapAudit.paginateScoreBlocks(layout.verticalBlocks, { ...settings, gap, maxGap: Math.max(settings.maxGap, gap) })
         return { pages: pagination.heights.length, coreGaps: pagination.coreGaps,
           rowsPerPage: pagination.heights.map((_, index) => pagination.positions.slice(layout.headerBlocks.length).filter(p => p.page === index).length) }
       }

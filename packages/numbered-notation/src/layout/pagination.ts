@@ -1,22 +1,21 @@
-import { nativePageGeometry } from './native-page-geometry.js'
+import { scorePageGeometry } from './page-geometry.js'
 import { balanceScorePageTail } from './page-tail.js'
-import { interpolateScoreCoreGap } from './score-layout-policy.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
-import { nativePageCollision, nativePageDistance, type NativeCollision } from './native-page-collision.js'
-import type { NativeInk } from './native-ink.js'
-export type NativePageBlock = { edgeInk?: readonly (NativeInk & { gap: number })[]; resolvedInk?: boolean; height: number; coreGapBefore?: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
-export type NativeBlockPosition = { page: number; top: number }
+import { interpolateScoreCoreGap, scoreCoreGap } from './policy.js'
+import { scoreLayoutConfig } from '../score-layout-config.js'
+import { scorePageCollision, scorePageDistance, type ScoreCollision } from './page-collision.js'
+import type { ScoreInk, ScorePageBlock, ScoreBlockPosition } from './geometry.js'
+export type { ScorePageBlock, ScoreBlockPosition } from './geometry.js'
 type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
-type NormalizedBlock={block:NativePageBlock;axis:number;ink:NativeInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:NativeInk[];edgeInk:(NativeInk & {gap:number})[];sortState:{sorted:boolean}}
-const normalizedBlocks=new WeakMap<NativePageBlock,NormalizedBlock>()
-const immutableCollisions=new WeakMap<NativePageBlock,WeakMap<NativePageBlock,NativeCollision>>()
+type NormalizedBlock={block:ScorePageBlock;axis:number;ink:ScoreInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:ScoreInk[];edgeInk:(ScoreInk & {gap:number})[];sortState:{sorted:boolean}}
+const normalizedBlocks=new WeakMap<ScorePageBlock,NormalizedBlock>()
+const immutableCollisions=new WeakMap<ScorePageBlock,WeakMap<ScorePageBlock,ScoreCollision>>()
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
-export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
+export function paginateScoreBlocks(blocks: readonly ScorePageBlock[], options: {
   pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; headerGap?: number
-}): { positions: NativeBlockPosition[]; heights: number[]; coreGaps?: number[] } {
+}): { positions: ScoreBlockPosition[]; heights: number[]; coreGaps?: number[] } {
   const { pageHeight, margin, gap } = options
-  if (options.elastic) return prepareNativePagination(blocks)(options)
+  if (options.elastic) return prepareScorePagination(blocks)(options)
   const capacity = pageHeight - margin * 2
   const groups: { first: number; end: number }[] = []
   let first = 0, occupied = 0
@@ -30,7 +29,7 @@ export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options
     } else occupied += separation + block.height
   }
   if (first < blocks.length) groups.push({ first, end: blocks.length })
-  const positions: NativeBlockPosition[] = [], heights: number[] = []
+  const positions: ScoreBlockPosition[] = [], heights: number[] = []
   groups.forEach((group, page) => {
     let top = margin
     for (let index = group.first; index < group.end; index++) {
@@ -43,7 +42,7 @@ export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options
 }
 
 /** Largest shared core parameter that fits; collisions may make height flat. */
-export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = nativeCoreGap(), maximum = minimum * 1.1): number {
+export function fitScoreCoreGap(heightAt: (gap: number) => number, capacity: number, minimum = scoreCoreGap(), maximum = minimum * 1.1): number {
   if (heightAt(minimum) > capacity + 1e-6) throw new Error('最小核心行距下的谱面超出页面。')
   if (heightAt(maximum) <= capacity) return maximum
   let low = minimum, high = maximum
@@ -57,12 +56,12 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
 
 /** One immutable horizontal layout: reuse normalized ink and pair constraints
  * across its spacing fit, paged output and continuous/shared-page probes. */
-export function prepareNativePagination(blocks: readonly NativePageBlock[], policy: { immutableBlocks?:boolean } = {}) {
+export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy: { immutableBlocks?:boolean } = {}) {
   const normalized = blocks.map((block, index) => {
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
     if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,sortState:saved.sortState,index}
     const axis = block.baseline ?? 0
-    const geometry = nativePageGeometry(block)
+    const geometry = scorePageGeometry(block)
     const { ink, boundaryInk, edgeInk, top, bottom: lower } = geometry
     const core = { top: geometry.coreTop, bottom: geometry.coreBottom }
     const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, sortState:{sorted:false} }
@@ -74,7 +73,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
     lower:item.lower,core:item.core,boundaryInk:item.boundaryInk,edgeInk:item.edgeInk,sortState:item.sortState,index:item.index,baseline})
   // Cache actual ink overlap constraints while trying different core values.
   // Each pair is measured once; fitting then evaluates scalar maxima only.
-  const collisions = new Map<number, Map<number, NativeCollision>>()
+  const collisions = new Map<number, Map<number, ScoreCollision>>()
   const collisionDistance = (prior: Placed, item: typeof normalized[number]) => {
     const shared = policy.immutableBlocks ? immutableCollisions.get(prior.block) : undefined
     const known = shared?.get(item.block)
@@ -85,16 +84,16 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
     if (cached !== undefined) return cached
     if(!prior.sortState.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sortState.sorted=true}
     if(!item.sortState.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sortState.sorted=true}
-    const distance = nativePageCollision(prior, item)
+    const distance = scorePageCollision(prior, item)
     row.set(item.index, distance)
     if (policy.immutableBlocks) {
-      const pairs = shared ?? new WeakMap<NativePageBlock, NativeCollision>()
+      const pairs = shared ?? new WeakMap<ScorePageBlock, ScoreCollision>()
       pairs.set(item.block, distance)
       if (!shared) immutableCollisions.set(prior.block, pairs)
     }
     return distance
   }
-  return ({ pageHeight, margin, gap, maxGap = gap, headerGap = nativeCoreGap() * .8 }: ElasticOptions) => {
+  return ({ pageHeight, margin, gap, maxGap = gap, headerGap = scoreCoreGap() * .8 }: ElasticOptions) => {
     for (const item of normalized)
       if (item.lower - item.top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
@@ -111,9 +110,9 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
           const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
           // A collision cannot exceed the two complete ink envelopes. Distant
           // rows already clear this upper bound; avoid sweeping their pieces.
-          if(!prior.edgeInk.length && !item.edgeInk.length && prior.baseline+prior.lower-item.top+localGap*nativeStyle.collisionGapRatio<=baseline)continue
+          if(!prior.edgeInk.length && !item.edgeInk.length && prior.baseline+prior.lower-item.top+localGap*scoreLayoutConfig.page.collisionGapRatio<=baseline)continue
           const pair = collisionDistance(prior, item)
-          baseline = Math.max(baseline, prior.baseline + nativePageDistance(pair, localGap, -Infinity))
+          baseline = Math.max(baseline, prior.baseline + scorePageDistance(pair, localGap, -Infinity))
         }
         baseline += item.block.gapBefore ?? 0
       }
@@ -143,7 +142,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
       return true
     }, (first, end) => blocks.slice(first, end).filter(block => block.core).length,
     index => Boolean(blocks[index - 1]?.core))
-    const positions: NativeBlockPosition[] = [], heights: number[] = [], coreGaps: number[] = []
+    const positions: ScoreBlockPosition[] = [], heights: number[] = [], coreGaps: number[] = []
     for (const [page, group] of balanced.entries()) {
       const arrange = (coreGap: number, publish = false) => {
         const current: Placed[] = []
@@ -155,7 +154,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
         }
         return bottom + margin
       }
-      const coreGap = Number.isFinite(pageHeight) && maxGap > gap ? fitNativeCoreGap(arrange, pageHeight, gap, maxGap) : gap
+      const coreGap = Number.isFinite(pageHeight) && maxGap > gap ? fitScoreCoreGap(arrange, pageHeight, gap, maxGap) : gap
       const height = arrange(coreGap, true)
       coreGaps.push(coreGap); heights.push(Number.isFinite(pageHeight) ? pageHeight : height)
     }

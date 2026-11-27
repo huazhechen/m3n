@@ -1,4 +1,4 @@
-import { scoreCoreGap } from './score-layout-policy.js'
+import { scoreCoreGap } from './layout/policy.js'
 import type { ScoreDocument } from '@m3n/notation'
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { scoreLayoutConfig } from './score-layout-config.js'

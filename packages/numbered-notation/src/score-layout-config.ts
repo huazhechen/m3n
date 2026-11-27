@@ -27,6 +27,8 @@ const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRat
 const typography = { title: 32, subtitle: 16, credit: 14, text: 16, annotation: 14,
   navigation: 16, fine: 16.8, measureNumber: 10, fingering: 12, expression: 13, voltaLabel: 14.4, repeatCount: 13 }
 
+const page = { collisionGapRatio: 0.5 } as const
+
 const numbered = {
   ...typography,
   // 独立文字字号（px）；音符附属字形在实现中按 music 的 em 比例计算。
@@ -57,7 +59,8 @@ const numbered = {
   measureNumberPadding: 2,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
   groupSpacingRatio: 0.5,
-  collisionGapRatio: 0.5,
+  // Compatibility alias; the shared page policy owns this value.
+  collisionGapRatio: page.collisionGapRatio,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
   defaultPageMargin: 32, minimumWidth: 320, minimumContentWidth: 40,
   headerWrapInset: 2,
@@ -131,4 +134,4 @@ const pageWidth = {
   manualMaximumMultiple: 40,
 } as const
 
-export const scoreLayoutConfig = { fonts, numbered, lyrics, staff, imageExport, rendering, scorebook, pageWidth }
+export const scoreLayoutConfig = { page, fonts, numbered, lyrics, staff, imageExport, rendering, scorebook, pageWidth }

@@ -1,13 +1,13 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { describe,expect,it } from 'vitest';
-import { nativeLanePieces } from './native-lanes.js';
-import { layoutNativeScore, repaginateNativeLayout } from './native-layout.js';
-import { nativeSystemCore } from './native-core.js';
-import { paginateNativeBlocks, prepareNativePagination } from './native-pagination.js';
+import { nativeLanePieces } from '../native-lanes.js';
+import { layoutNativeScore, repaginateNativeLayout } from '../native-layout.js';
+import { nativeSystemCore } from '../native-core.js';
+import { paginateScoreBlocks, prepareScorePagination } from './pagination.js';
 const options = { pageHeight: 400, margin: 20, gap: 10 };
 describe('native measured-block pagination', () => {
     it('keeps the header and all pages at natural gaps, leaving unused space below', () => {
-        const result = paginateNativeBlocks([{ height: 60 }, { height: 100 }, { height: 100 }, { height: 200 }], options);
+        const result = paginateScoreBlocks([{ height: 60 }, { height: 100 }, { height: 100 }, { height: 200 }], options);
         expect(result.heights).toEqual([400, 400]);
         expect(result.positions.map(position => position.page)).toEqual([0, 0, 0, 1]);
         expect(result.positions[1]!.top).toBe(90);
@@ -15,16 +15,16 @@ describe('native measured-block pagination', () => {
         expect(result.positions[3]!.top).toBe(20);
     });
     it('retains fixed gaps when a later block moves to another page', () => {
-        const result = paginateNativeBlocks([{ height: 100 }, { height: 100 }, { height: 200 }], options);
+        const result = paginateScoreBlocks([{ height: 100 }, { height: 100 }, { height: 200 }], options);
         expect(result.positions.map(position => position.top)).toEqual([20, 130, 20]);
     });
     it('omits a section gap at the start of a page', () => {
-        const result = paginateNativeBlocks([{ height: 280 }, { height: 100, gapBefore: 30 }], options);
+        const result = paginateScoreBlocks([{ height: 280 }, { height: 100, gapBefore: 30 }], options);
         expect(result.positions[1]).toEqual({ page: 1, top: 20 });
     });
     it('uses natural height in continuous mode and rejects an unplaceable block', () => {
-        expect(paginateNativeBlocks([{ height: 60 }, { height: 100 }], { ...options, pageHeight: Infinity }).heights).toEqual([210]);
-        expect(() => paginateNativeBlocks([{ height: 361 }], options)).toThrow('单个谱行');
+        expect(paginateScoreBlocks([{ height: 60 }, { height: 100 }], { ...options, pageHeight: Infinity }).heights).toEqual([210]);
+        expect(() => paginateScoreBlocks([{ height: 361 }], options)).toThrow('单个谱行');
     });
 });
 it('fits paged core gaps while keeping continuous core gaps at 1.2em', () => {
@@ -60,9 +60,9 @@ it('fits paged core gaps while keeping continuous core gaps at 1.2em', () => {
 });
 it('uses 24px core clearance and 12px ornament clearance without combining remote extremes', () => {
     const block = (left: number, top: number, bottom: number) => ({ height: bottom - top, baseline: 0, core: { top: -2, bottom: 2 }, ink: [{ left, right: left + 10, top, bottom }] });
-    const overlapping = paginateNativeBlocks([block(0, -8, 20), block(0, -18, 4)], { ...options, elastic: true, gap: 24 });
+    const overlapping = paginateScoreBlocks([block(0, -8, 20), block(0, -18, 4)], { ...options, elastic: true, gap: 24 });
     expect(overlapping.positions[1]!.top - overlapping.positions[0]!.top).toBe(50);
-    const remote = paginateNativeBlocks([block(0, -20, 40), block(100, -40, 2)], { ...options, elastic: true, gap: 24 });
+    const remote = paginateScoreBlocks([block(0, -20, 40), block(100, -40, 2)], { ...options, elastic: true, gap: 24 });
     expect(remote.positions[1]!.top - remote.positions[0]!.top).toBe(28);
 });
 it('reserves the entire core even without horizontal overlap and resets at page starts', () => {
@@ -70,9 +70,9 @@ it('reserves the entire core even without horizontal overlap and resets at page 
         { height: 35, baseline: 2, core: { top: 0, bottom: 35 }, ink: [{ left: 0, right: 10, top: 0, bottom: 35 }] },
         { height: 4, baseline: 2, core: { top: 0, bottom: 4 }, ink: [{ left: 100, right: 110, top: 0, bottom: 4 }] },
     ];
-    const continuous = paginateNativeBlocks(blocks, { pageHeight: Infinity, margin: 10, gap: 24, elastic: true });
+    const continuous = paginateScoreBlocks(blocks, { pageHeight: Infinity, margin: 10, gap: 24, elastic: true });
     expect(continuous.positions[1]!.top - continuous.positions[0]!.top).toBe(59);
-    const paged = paginateNativeBlocks(blocks, { pageHeight: 70, margin: 10, gap: 24, elastic: true });
+    const paged = paginateScoreBlocks(blocks, { pageHeight: 70, margin: 10, gap: 24, elastic: true });
     expect(paged.positions).toEqual([{ page: 0, top: 10 }, { page: 1, top: 10 }]);
 });
 
@@ -103,14 +103,14 @@ it.each([0.6, 0.8, 1.2])('keeps a tighter explicit leading of %sem for lyric row
 it('fits lyric gaps between 0.8em and the unchanged maximum while preserving collision clearance', () => {
     const block = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapScale: 2 / 3,
         ink: [{ left: 0, right: 10, top: 0, bottom: 20 }] };
-    const result = paginateNativeBlocks([block, block, block], { pageHeight: 110, margin: 0, gap: 28.8, maxGap: 31.68, elastic: true });
+    const result = paginateScoreBlocks([block, block, block], { pageHeight: 110, margin: 0, gap: 28.8, maxGap: 31.68, elastic: true });
     expect(result.positions.map(position => position.page)).toEqual([0, 0, 0]);
     expect(result.positions[1]!.top - result.positions[0]!.top - 20).toBeCloseTo(25);
     expect(result.positions[2]!.top + 20).toBeCloseTo(110);
     const ornament = { ...block, core: { top: 0, bottom: 0 }, ink: [{ left: 0, right: 10, top: 0, bottom: 40 }] };
-    const collision = paginateNativeBlocks([ornament, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
+    const collision = paginateScoreBlocks([ornament, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
     expect(collision.positions[1]!.top - collision.positions[0]!.top).toBeCloseTo(49.6);
-    const ordinary = paginateNativeBlocks([{ ...ornament, coreGapScale: 1 }, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
+    const ordinary = paginateScoreBlocks([{ ...ornament, coreGapScale: 1 }, block], { pageHeight: Infinity, margin: 0, gap: 28.8, elastic: true });
     expect(ordinary.positions[1]!.top - ordinary.positions[0]!.top).toBeCloseTo(54.4);
 });
 
@@ -121,14 +121,14 @@ it('reuses immutable ink constraints without retaining page membership or fitted
         ink: [{ left: 0, right: 40, top: 0, bottom: 48 }, { left: 45, right: 60, top: 12, bottom: 55 }],
         boundaryInk: [{ left: 80, right: 90, top: -4, bottom: 5 }],
     }))
-    const paginate = prepareNativePagination(blocks)
+    const paginate = prepareScorePagination(blocks)
     for (const pageHeight of [Infinity, 300, 900, 300, Infinity]) for (const gap of [16, 24]) {
         const options = { pageHeight, margin: 12, gap, maxGap: gap * 1.1, elastic: true }
-        expect(paginate(options)).toEqual(paginateNativeBlocks(blocks, options))
-        expect(prepareNativePagination(blocks,{immutableBlocks:true})(options)).toEqual(paginate(options))
+        expect(paginate(options)).toEqual(paginateScoreBlocks(blocks, options))
+        expect(prepareScorePagination(blocks,{immutableBlocks:true})(options)).toEqual(paginate(options))
         // The same cached blocks can have different local indices in a new plan.
-        expect(prepareNativePagination(blocks.slice(2),{immutableBlocks:true})(options))
-          .toEqual(prepareNativePagination(blocks.slice(2))(options))
+        expect(prepareScorePagination(blocks.slice(2),{immutableBlocks:true})(options))
+          .toEqual(prepareScorePagination(blocks.slice(2))(options))
     }
     expect(() => paginate({ pageHeight: 40, margin: 12, gap: 16 })).toThrow('单个谱行')
 })
@@ -136,7 +136,7 @@ it('reuses immutable ink constraints without retaining page membership or fitted
 it('keeps inline-section core clearance at 1.5em through lyric tightening and page fitting', () => {
     const block = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapScale: 2 / 3,
         ink: [{ left: 0, right: 20, top: 0, bottom: 20 }] };
-    const paginate = prepareNativePagination([block, { ...block, coreGapBefore: 36 }]);
+    const paginate = prepareScorePagination([block, { ...block, coreGapBefore: 36 }]);
     for (const pageHeight of [Infinity, 400]) {
         const result = paginate({ pageHeight, margin: 0, gap: 28.8, maxGap: 31.68 });
         expect(result.positions[1]!.top - result.positions[0]!.top - 20).toBeCloseTo(36);
@@ -149,7 +149,7 @@ it('uses half the section core clearance for protruding decoration collisions', 
         ink: [{ left: 0, right: 20, top: 0, bottom: 50 }] };
     const lower = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapBefore: 36,
         ink: [{ left: 0, right: 20, top: 0, bottom: 20 }] };
-    const result = prepareNativePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 28.8 });
+    const result = prepareScorePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 28.8 });
     expect(result.positions[1]!.top - result.positions[0]!.top - 50).toBeCloseTo(18);
 });
 
@@ -174,7 +174,7 @@ it('matches exhaustive primitive collisions even when a remote row reaches past 
                         baseline = Math.max(baseline, baselines[before]! + above.bottom - below.top + 24 * .5);
             baselines.push(baseline);
         }
-        const actual = prepareNativePagination(blocks, { })({ pageHeight: Infinity, margin: 10, gap: 24 });
+        const actual = prepareScorePagination(blocks, { })({ pageHeight: Infinity, margin: 10, gap: 24 });
         expect(actual.positions.map(position => position.top)).toEqual(baselines);
     }
 });
@@ -189,8 +189,8 @@ it('shares exact fixed attachment clearance with remote-row checks and baseline 
         ink: [{ left: 30, right: 50, top: 0, bottom: 10 }] };
     const lower = { height: 10, core: { top: 0, bottom: 10 },
         ink: [{ left: 100, right: 120, top: 0, bottom: 10 }] };
-    const result = prepareNativePagination([upper, middle, lower])({ pageHeight: Infinity, margin: 0, gap: 20 });
+    const result = prepareScorePagination([upper, middle, lower])({ pageHeight: Infinity, margin: 0, gap: 20 });
     expect(result.positions.map(position => position.top)).toEqual([-10, 30, 107]);
     // The fixed 7px clearance is independent of the 0.5 * core-gap rule.
-    expect(prepareNativePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 40 }).positions[1]!.top).toBe(107);
+    expect(prepareScorePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 40 }).positions[1]!.top).toBe(107);
 });

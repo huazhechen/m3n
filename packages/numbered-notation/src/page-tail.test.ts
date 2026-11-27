@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
-import { balanceScorePageTail } from './page-tail.js'
-import { paginateNativeBlocks } from './native-pagination.js'
+import { balanceScorePageTail } from './layout/page-tail.js'
+import { paginateScoreBlocks } from './layout/pagination.js'
 
 it('moves the fewest systems to avoid an orphan without adding pages', () => {
   const groups = [{ first: 0, end: 5 }, { first: 5, end: 6 }]
@@ -18,7 +18,7 @@ it('does not create a new orphan on the preceding page or detach a header', () =
 })
 it('rechecks real elastic ink constraints when moving a final system', () => {
   const blocks = Array.from({ length: 6 }, () => ({ height: 10, core: { top: 0, bottom: 10 }, ink: [{ left: 0, right: 10, top: 0, bottom: 10 }] }))
-  const result = paginateNativeBlocks(blocks, { pageHeight: 50, margin: 0, gap: 0, elastic: true })
+  const result = paginateScoreBlocks(blocks, { pageHeight: 50, margin: 0, gap: 0, elastic: true })
   expect(result.positions.map(position => position.page)).toEqual([0, 0, 0, 0, 1, 1])
   expect(result.positions.every(position => position.top + 10 <= 50)).toBe(true)
 })

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { staffSlur } from './staff-slur.js'
 import { staffMusicSize } from './staff-music-font.js'
 import { arrangeStaffSystem } from './system-layout.js'

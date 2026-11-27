@@ -1,10 +1,10 @@
-import type { NativePageBlock } from './native-pagination.js'
+import type { ScorePageBlock } from './layout/pagination.js'
 import type { NativeInk } from './native-ink.js'
 
 /** Common vertical envelope of finitely many possible row geometries. Every
  * contour is inside every variant's contour; inter-row separation and page
  * edges therefore remain optimistic, including shortened section endings. */
-export function intersectNativeRowBounds(blocks: readonly NativePageBlock[]): NativePageBlock {
+export function intersectNativeRowBounds(blocks: readonly ScorePageBlock[]): ScorePageBlock {
   const variants=blocks.map(block=>{
     const axis=block.baseline ?? 0
     const ink=(block.ink ?? []).map(p=>({...p,top:p.top-axis,bottom:p.bottom-axis}))

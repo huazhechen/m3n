@@ -1,4 +1,4 @@
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import type { NativeGlyph } from './native-model.js'
 import { nativeSvgPieces, unionNativeInk, type NativeInk } from './native-ink.js'

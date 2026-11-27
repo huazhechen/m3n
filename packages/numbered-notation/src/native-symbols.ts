@@ -1,4 +1,4 @@
-import { scoreNavigationGlyphHeight, scoreAttachmentHeight } from './score-layout-policy.js'
+import { scoreNavigationGlyphHeight, scoreAttachmentHeight } from './layout/policy.js'
 import { SCORE_NUMBER_FONT, SCORE_MUSIC_FONT, SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { bravuraSvg, nativeDotSvg } from './bravura.js'

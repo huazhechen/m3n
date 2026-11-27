@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation/layout'
 import { staffNavigationGlyph } from './staff-music-font.js'
 import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'

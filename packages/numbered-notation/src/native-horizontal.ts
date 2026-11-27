@@ -1,9 +1,9 @@
-import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './score-layout-policy.js'
+import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './layout/policy.js'
 import { nativeStyle } from './native-style.js'
-import { lastLineWidth } from './last-line-width.js'
+import { lastLineWidth } from './layout/last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
-import { cacheNativeMinimumSpacing, solveNativeMinimumSpacing, type SpacingCell } from './native-spacing.js'
+import { cacheScoreMinimumSpacing, solveScoreMinimumSpacing, type SpacingCell } from './layout/spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
@@ -36,7 +36,7 @@ type ItemBinding = { measure: number; navigationMeasure?: number; column?: Colum
 type HorizontalTemplate = { measures: NativeMeasure[]; items: HorizontalItem[]; bindings?: ItemBinding[] }
 export type NativeHorizontalTemplates = Map<string, HorizontalTemplate>
 const horizontalTemplates=new WeakMap<HorizontalOptions,NativeHorizontalTemplates>()
-const horizontalSolutions=new WeakMap<HorizontalItem[],Map<string,ReturnType<typeof solveNativeMinimumSpacing>>>()
+const horizontalSolutions=new WeakMap<HorizontalItem[],Map<string,ReturnType<typeof solveScoreMinimumSpacing>>>()
 const equalPositions=new WeakMap<HorizontalItem[],Map<number,number[]>>()
 const equalSlices=new WeakMap<HorizontalItem[],HorizontalItem[][]>()
 /** Opt-in for one immutable projection/trial. Placing x/y does not change the
@@ -45,12 +45,12 @@ export function cacheNativeHorizontal(options:HorizontalOptions,templates?:Nativ
   horizontalContexts.set(options,new WeakMap())
   if(templates)horizontalTemplates.set(options,templates)
 }
-const solveNativeSpacing:typeof solveNativeMinimumSpacing=(columns,width,justify,edges)=>{
+const solveScoreSpacing:typeof solveScoreMinimumSpacing=(columns,width,justify,edges)=>{
   const cache=horizontalSolutions.get(columns as HorizontalItem[])
-  if(!cache)return solveNativeMinimumSpacing(columns,width,justify,edges)
+  if(!cache)return solveScoreMinimumSpacing(columns,width,justify,edges)
   const key=`${width}:${justify}:${JSON.stringify(edges)}`
   let solution=cache.get(key)
-  if(!solution){solution=solveNativeMinimumSpacing(columns,width,justify,edges);cache.set(key,solution)}
+  if(!solution){solution=solveScoreMinimumSpacing(columns,width,justify,edges);cache.set(key,solution)}
   return solution
 }
 
@@ -262,7 +262,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       : next.column ? Math.max(...next.column.glyphs.map(glyph => glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)) : next.left
     item.fixedAfter = item.right + nativeStyle.inlineSectionGap + left
   }
-  if(cache){cache.set(measures,items);horizontalSolutions.set(items,new Map());equalPositions.set(items,new Map());equalSlices.set(items,[]);cacheNativeMinimumSpacing(items)}
+  if(cache){cache.set(measures,items);horizontalSolutions.set(items,new Map());equalPositions.set(items,new Map());equalSlices.set(items,[]);cacheScoreMinimumSpacing(items)}
   if(templateKey!==undefined)templates!.set(templateKey,{measures,items})
   return items
 }
@@ -282,7 +282,7 @@ export function measureNativeHorizontal(measures: NativeMeasure[], options: Hori
 
 function measureHorizontalGroup(measures: NativeMeasure[], options: HorizontalOptions) {
   const items = itemsFor(measures, options)
-  const result = solveNativeSpacing(items)
+  const result = solveScoreSpacing(items)
   const natural = result
   type Selection = { item: HorizontalItem; index: number }
   const byMeasure = new Map<NativeMeasure, Selection[]>()
@@ -339,7 +339,7 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
   const cache = equalPositions.get(items), saved = cache?.get(width)
   if (saved) return saved
   const ranges = equalMeasureRanges(items)
-  if (ranges.length < 2) return solveNativeSpacing(items,width,true).positions
+  if (ranges.length < 2) return solveScoreSpacing(items,width,true).positions
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
   const rightOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.right))
   const tail = ranges.at(-1)!.bar
@@ -349,7 +349,7 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
     const previous = ranges[index-1]?.bar
     const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous))
     const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar))
-    const solved = solveNativeSpacing(equalMeasureSlice(items, index, range),Math.max(1,right-left),true,
+    const solved = solveScoreSpacing(equalMeasureSlice(items, index, range),Math.max(1,right-left),true,
       { left: previous !== undefined && items[previous]!.fixedAfter === undefined,
         right: range.bar !== undefined && items[range.end - 1]?.fixedAfter === undefined })
     solved.positions.forEach((position,offset) => { positions[range.start+offset] = left+position })
@@ -365,7 +365,7 @@ function equalMeasureSlice(items: HorizontalItem[], index: number, range: {start
   let slice = slices[index]
   if (!slice) {
     slice = items.slice(range.start,range.end); slices[index] = slice
-    horizontalSolutions.set(slice,new Map());cacheNativeMinimumSpacing(slice)
+    horizontalSolutions.set(slice,new Map());cacheScoreMinimumSpacing(slice)
   }
   return slice
 }
@@ -379,7 +379,7 @@ export type NativeHorizontalSpacing = {
  * or subtract either tier's reserved minimum; short endings are scored full. */
 export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: HorizontalOptions, width: number): number | undefined {
   const items = itemsFor(measures, options, measures, true)
-  const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
+  const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveScoreSpacing(items, width, true).positions
   const analysis = rhythmicGapIntervals(items)
   let clearance = 0
   for (const gap of analysis.intervals)
@@ -419,7 +419,7 @@ function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
 /** Measure the exact chain used for placement, including rigid groups, voice
  * placeholders, lyrics and visible boundary ink. Shared by row planning and placement. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
-  const items = itemsFor(measures, options, measures, true), solved = solveNativeSpacing(items)
+  const items = itemsFor(measures, options, measures, true), solved = solveScoreSpacing(items)
   if (!options.equalMeasures) return solved
   const ranges = equalMeasureRanges(items)
   if (!ranges.length) return solved
@@ -430,7 +430,7 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
     const previous = ranges[index - 1]?.bar
     const outside = (previous === undefined ? 0 : rightOf(previous))
       + (range.bar === undefined ? 0 : leftOf(range.bar))
-    const cell = solveNativeSpacing(equalMeasureSlice(items, index, range))
+    const cell = solveScoreSpacing(equalMeasureSlice(items, index, range))
     return outside + cell.minimumWidth
   })
   return { minimumWidth: Math.max(...cellWidths) * ranges.length + tailRight,
@@ -458,7 +458,7 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
 /** Justify a complete system, then publish event and measure positions. */
 export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number, surrounding = measures): NativeGlyph[] {
   const items = itemsFor(measures, options, surrounding)
-  const positions = options.equalMeasures ? equalMeasurePositions(items,width) : solveNativeSpacing(items,width,true).positions
+  const positions = options.equalMeasures ? equalMeasurePositions(items,width) : solveScoreSpacing(items,width,true).positions
   for (const measure of measures) { measure.start = Infinity; measure.end = -Infinity }
   const glyphs: NativeGlyph[] = []
   items.forEach((item, index) => {

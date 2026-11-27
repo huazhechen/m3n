@@ -25,6 +25,12 @@ export function createSvgInkMeasurer(referenceSvg) {
           y: Number(piece.getAttribute('y')) - metrics.actualBoundingBoxAscent,
           width: metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight,
           height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent }
+      } else if (piece.tagName === 'line' && ['x1', 'y1', 'x2', 'y2'].every(key => Number.isFinite(Number(piece.getAttribute(key))))) {
+        // getBBox stores float32 x/width independently; adding them can move
+        // a precisely inset round cap outside the canvas. Preserve the SVG's
+        // numeric endpoints instead of weakening the clipping tolerance.
+        const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map(key => Number(piece.getAttribute(key)))
+        box = { x: Math.min(x1, x2), y: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) }
       } else box = piece.getBBox()
       const stroke = style.stroke !== 'none' ? parseFloat(style.strokeWidth) / 2 : 0
       if (box.width === 0 && !stroke || box.height === 0 && !stroke) return []

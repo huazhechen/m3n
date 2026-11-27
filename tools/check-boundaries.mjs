@@ -22,8 +22,19 @@ async function scan(folder, owner) {
       if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(node.arguments[0])) specifier = node.arguments[0].text
       if (specifier) {
         const fail = reason => errors.push(`${path.relative(root, file)}: ${specifier}: ${reason}`)
+        if (file.startsWith(`${root}/packages/numbered-notation/src/layout/`) && !file.endsWith('.test.ts') && !specifier.startsWith('.'))
+          fail('共享布局不得通过外部包反向依赖谱式或平台实现')
         if (specifier.startsWith('.')) {
           const target = path.resolve(path.dirname(file), specifier)
+          // Pure layout may consume shared policy, never notation geometry,
+          // font loading, SVG rendering, or a barrel that re-exports them.
+          const layoutRoot = path.join(root, 'packages/numbered-notation/src/layout')
+          if (file.startsWith(`${layoutRoot}/`) && !file.endsWith('.test.ts')) {
+            const policy = ['score-layout-config.js']
+              .map(name => path.join(root, 'packages/numbered-notation/src', name))
+            if (!target.startsWith(`${layoutRoot}/`) && !policy.includes(target))
+              fail('共享布局只能依赖布局契约与共用策略，不得依赖具体谱式或渲染器')
+          }
           if (owner && !target.startsWith(`${owner}/`)) fail('包内相对导入不得越过本包边界')
           if (file.startsWith(`${root}/worker/`) && target.startsWith(`${root}/src/`)) fail('部署 Worker 不得依赖 Web UI')
           if (!owner && target.startsWith(`${root}/packages/`)) fail('应用必须通过包的公共入口导入')

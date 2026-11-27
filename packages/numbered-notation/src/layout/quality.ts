@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from './score-layout-config.js'
+import { scoreLayoutConfig } from '../score-layout-config.js'
 
 /** Dimensionless horizontal quality shared by both notation engines. */
 export function scoreLineQuality(densities: readonly number[], lastLineSlack: number) {
@@ -42,7 +42,7 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
 
 /** Shared physical spacing objective; 16px is common to both minimum tiers. */
 export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16) {
-  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingCost: 0 }
+  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
   const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
   const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
   const deviations = gaps.map(gap => (gap - meanRhythmicGap) ** 2 / denominator)
@@ -50,5 +50,10 @@ export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16)
   const spacingWorstUnevenCost = Math.max(...deviations)
   const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
   const spacingCrampedCost = gaps.reduce((sum, gap) => sum + (referenceGap / Math.max(Number.EPSILON, gap)) ** 2, 0) / gaps.length
-  return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingCost: spacingUnevenCost + spacingCrampedCost }
+  // Crowding alone rewards unbounded whitespace and therefore extra rows.
+  // The common readable reference caps that reward; the same factor four
+  // used by the existing horizontal quality policy penalizes excess spread.
+  const spacingExpandedCost = 4 * gaps.reduce((sum, gap) => sum + Math.max(0, (gap / referenceGap) ** 2 - 1), 0) / gaps.length
+  return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
+    spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
 }

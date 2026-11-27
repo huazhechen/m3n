@@ -16,6 +16,20 @@ function systems(source: string) {
   return engraveStaffSystems(document, planStaffLines(document, 640, false, measure, .25), 640, measure, .25, false)
 }
 
+it('retains bar crossing identities on grand-staff connectors for ties', () => {
+  const [system] = systems('{4/4}\nN: 1^^~ | 1^^ |||\nB: [1d 3d 5d:h]^^~ | [1d 3d 5d:h]^^ |||')
+  const bars = findAll(system!.node, node => hasClass(node, 'staff-bar'))
+    .flatMap(bar => findAll(bar, node => node.tagName === 'path'))
+  expect(bars.length).toBeGreaterThan(0)
+  const ties = findAll(system!.node, node => hasClass(node, 'tie'))
+  expect(ties).toHaveLength(2)
+  for (const bar of bars) {
+    const join = bar.attributes['data-m3n-join']
+    expect(join).toBeTruthy()
+    for (const tie of ties) expect(tie.attributes['data-m3n-join']!.split(' ')).toContain(join)
+  }
+})
+
 it.each(['cresc', 'decres'])('spreads a single sustained %s over the duration instead of the head', kind => {
   const [system] = systems(`{4/4}\nN: {${kind}}1^^{/} |||`)
   const geometry = new SvgGeometry(system!.node, textMeasurer())
@@ -82,6 +96,7 @@ it.each([1, -1])('keeps short ties visible in both stem directions (%s)', direct
   const values = d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
   expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2)
   expect(markup).toContain('fill="#000"')
+  expect((values[3]! - values[1]!) * direction).toBeGreaterThan(0)
 })
 
 
@@ -138,7 +153,7 @@ it.each([1, -1])('bends ties around a crossed signature without detaching endpoi
   for (const x of [obstacle.left, center, obstacle.right]) {
     const t = (x - after[0]!) / (after[6]! - after[0]!), u = 1 - t
     const inner = u ** 3 * after[1]! + 3 * u * u * t * after[11]! + 3 * u * t * t * after[9]! + t ** 3 * after[7]!
-    if (direction === 1) expect(inner).toBeLessThanOrEqual(obstacle.top - 3.99)
-    else expect(inner).toBeGreaterThanOrEqual(obstacle.bottom + 3.99)
+    if (direction === 1) expect(inner).toBeGreaterThanOrEqual(obstacle.bottom + 3.99)
+    else expect(inner).toBeLessThanOrEqual(obstacle.top - 3.99)
   }
 })

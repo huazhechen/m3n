@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { PreparedNumberedNotationScore, scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { prepareStaffScore, prepareStaffMeasurementTask } from './staff-score.js'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 

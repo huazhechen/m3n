@@ -1,17 +1,17 @@
-import type { NativeInk } from './native-ink.js'
-import type { NativePageBlock } from './native-pagination.js'
+import type { ScoreInk } from './geometry.js'
+import type { ScorePageBlock } from './geometry.js'
 
-export type NativePageGeometry = {
+export type ScorePageGeometry = {
   top: number; bottom: number; coreTop: number; coreBottom: number; music: boolean
   scale: number; gap?: number; before: number; resolved: boolean; sorted: boolean
-  ink: NativeInk[]; boundaryInk: NativeInk[]; edgeInk: (NativeInk & { gap: number })[]
+  ink: ScoreInk[]; boundaryInk: ScoreInk[]; edgeInk: (ScoreInk & { gap: number })[]
 }
 
 /** Normalize once around the row baseline; identical page edges, cores and
  * primitive semantics are consumed by rendering and optimistic search. */
-export function nativePageGeometry(block: NativePageBlock): NativePageGeometry {
+export function scorePageGeometry(block: ScorePageBlock): ScorePageGeometry {
   const axis = block.baseline ?? 0
-  const shift = <T extends NativeInk>(piece: T): T => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })
+  const shift = <T extends ScoreInk>(piece: T): T => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })
   const ink = (block.ink ?? []).map(shift), boundaryInk = (block.boundaryInk ?? []).map(shift), edgeInk = (block.edgeInk ?? []).map(shift)
   let top = 0, bottom = 0
   for (const pieces of [ink, boundaryInk, edgeInk]) for (const piece of pieces) {

@@ -1,5 +1,5 @@
-import { scoreLineQuality, scoreNumberedCost, scoreNumberedSpacing } from './layout-quality.js'
-import type { NativeLayout } from './native-layout.js'
+import { scoreLineQuality, scoreNumberedCost, scoreNumberedSpacing } from './layout/quality.js'
+import type { NativeLayout } from './native-layout-model.js'
 
 export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
   const width = layout.options.width

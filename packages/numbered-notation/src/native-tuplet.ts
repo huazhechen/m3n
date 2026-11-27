@@ -1,6 +1,6 @@
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeStyle } from './native-style.js'
-import type { NativeRelation, NativeSystem } from './native-layout.js'
+import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { placedNativeControlInk } from './native-controls.js'
 

@@ -6,7 +6,8 @@ import type { TextMeasurer } from './native-measure.js'
 import { transformNativeInk, type NativeMatrix } from './native-transform.js'
 
 /** Painted bounds, in baseline coordinates. Font size is never an ink height. */
-export type NativeInk = { left: number; right: number; top: number; bottom: number }
+import type { ScoreInk as NativeInk } from './layout/geometry.js'
+export type { ScoreInk as NativeInk } from './layout/geometry.js'
 export function unionNativeInk(boxes: NativeInk[]): NativeInk {
   let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity
   for(const box of boxes){left=Math.min(left,box.left);right=Math.max(right,box.right);top=Math.min(top,box.top);bottom=Math.max(bottom,box.bottom)}

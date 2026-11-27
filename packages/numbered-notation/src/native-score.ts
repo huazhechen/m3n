@@ -3,7 +3,7 @@ import { nativeSvgNumber } from './native-svg-number.js'
 import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } from '@m3n/notation'
 import { layoutNativeScore, nativeContinuousPagination, reflowNativeContinuousLayout, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
-import { fitNativeCoreGap } from './native-pagination.js'
+import { fitScoreCoreGap } from './layout/pagination.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import type { NativeDiagnostic } from './native-model.js'
 
@@ -76,7 +76,7 @@ export function renderSharedPreparedNumberedNotationScores(scores: readonly Prep
   if (scores.some(score => score.width !== width)) throw new Error('合页曲目必须使用相同版宽。')
   const minimum = Math.max(...scores.map(score => score.minimumCoreGap))
   const heightAt = (gap: number) => scores.reduce((sum, score) => sum + score.continuousHeight(gap), scoreGap * (scores.length - 1))
-  const coreGap = fitNativeCoreGap(heightAt, Math.floor(width * A4_CONTENT_ASPECT_RATIO), minimum, minimum * 1.1)
+  const coreGap = fitScoreCoreGap(heightAt, Math.floor(width * A4_CONTENT_ASPECT_RATIO), minimum, minimum * 1.1)
   // Give every score, including the last, an equal share of the spare height.
   const trailingGap = Math.max(0, Math.floor(width * A4_CONTENT_ASPECT_RATIO) - heightAt(coreGap)) / scores.length
   const fittedScoreGap = scoreGap + trailingGap
@@ -92,7 +92,7 @@ export function renderSharedNumberedNotationScores(documents: readonly ScoreDocu
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
   const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeSvgNumber(nativeContinuousPagination(layout, gap).heights[0] ?? 0)), scoreGap * (layouts.length - 1))
-  const coreGap = fitNativeCoreGap(heightAt, capacity, minimum, minimum * 1.1)
+  const coreGap = fitScoreCoreGap(heightAt, capacity, minimum, minimum * 1.1)
   for (const layout of layouts) reflowNativeContinuousLayout(layout, coreGap)
   const trailingGap = Math.max(0, capacity - heightAt(coreGap)) / layouts.length
   const fittedScoreGap = scoreGap + trailingGap

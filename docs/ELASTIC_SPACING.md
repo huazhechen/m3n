@@ -28,12 +28,13 @@ mean = average(gaps)
 deviations = gaps.map(g => ((g - mean) / mean) ** 2)
 spacingUnevenCost = average(deviations) + max(deviations)
 spacingCrampedCost = average(gaps.map(g => (16 / g) ** 2))
-spacingCost = spacingUnevenCost + spacingCrampedCost
+spacingExpandedCost = 4 * average(gaps.map(g => max(0, (g / 16) ** 2 - 1)))
+spacingCost = spacingUnevenCost + spacingCrampedCost + spacingExpandedCost
 fontSizeCost = 4 * max(0, (版宽 - 528) / 240) ** 2
 totalCost = spacingCost + fontSizeCost + overflowCost
 ```
 
-16px是两档共用的舒展评价尺度，不是各档的最小间距。同宽度先按页数、再按 `spacingCost + overflowCost`，完全同分取松档。跨宽度先按页数、再按 `totalCost`，再同分取较窄宽度。不可拆超宽对象保留 `100 * max(0, M/W-1)²` 溢出惩罚。无可伸展音乐间隔的行不参与间距统计。`layoutCost`及旧拉伸统计只作断行诊断，不参与最终排名。连续与分页选择一致，末行按铺满评分，实际渲染仍可缩短。
+16px是两档共用的舒展评价尺度，不是各档的最小间距。超出该尺度的均方扩展量使用共用横向质量策略的系数4惩罚，防止只惩罚拥挤时持续奖励增加谱行与留白；该项非负，保持字体代价上界剪枝安全。同宽度先按页数、再按 `spacingCost + overflowCost`，完全同分取松档。跨宽度先按页数、再按 `totalCost`，再同分取较窄宽度。不可拆超宽对象保留 `100 * max(0, M/W-1)²` 溢出惩罚。无可伸展音乐间隔的行不参与间距统计。`layoutCost`及旧拉伸统计只作断行诊断，不参与最终排名。连续与分页选择一致，末行按铺满评分，实际渲染仍可缩短。
 
 ## 全曲最优的求解
 

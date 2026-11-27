@@ -1,4 +1,4 @@
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 const ns = 'http://www.w3.org/2000/svg'
 
 /** Flatten text to the same measured character positions for screen and PDF. */

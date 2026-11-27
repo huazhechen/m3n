@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, scoreNavigationGlyphHeight } from '@m3n/numbered-notation/layout'
 import glyphs from './staff-glyphs.json' with { type: 'json' }
 import { element, type Ink, type XmlNode, type XmlRenderOptions } from './layout-svg.js'
 

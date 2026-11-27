@@ -7,7 +7,7 @@ import { NativeMusicPainter, nativeBeamLayout } from './native-music.js'
 import { nativeAnnotationSvg } from './native-annotations.js'
 import { attrs, n } from './native-symbols.js'
 import { numberFontCss } from './number-font-css.js'
-import { type NativeLayout, type NativeLane, type NativeSystem } from './native-layout.js'
+import { type NativeLayout, type NativeLane, type NativeSystem } from './native-layout-model.js'
 import type { NativeGlyph, NativeMeasure } from './native-model.js'
 
 class SvgPainter extends NativeMusicPainter {

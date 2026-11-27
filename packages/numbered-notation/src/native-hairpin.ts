@@ -1,5 +1,5 @@
 import { nativeStyle } from './native-style.js'
-import type { NativeRelation, NativeSystem } from './native-layout.js'
+import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import type { NativeGlyph } from './native-model.js'
 
 export type NativeHairpinSegment = { system: NativeSystem; left: number; right: number; startHalf: number; endHalf: number; stroke: number }

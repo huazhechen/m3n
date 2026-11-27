@@ -1,4 +1,5 @@
-import { scoreLayoutConfig, SCORE_TEXT_FONT, scoreFontFamily } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, scoreFontFamily } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 import { staffCharacterInk } from './staff-music-font.js'

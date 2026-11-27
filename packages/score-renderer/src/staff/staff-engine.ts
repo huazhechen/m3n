@@ -1,4 +1,5 @@
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -453,7 +454,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
   const tieMinimum = staffMusicSize() / 4
   const reserve = (a: PreparedNote, b: PreparedNote) => {
     const minimum = Math.max(...a.heads.slice(0, b.heads.length).map((_, i) =>
-      staffTiePorts(a, i).start - staffTiePorts(b, i, -a.direction).end + tieMinimum))
+      staffTiePorts(a, i).start - staffTiePorts(b, i, a.direction).end + tieMinimum))
     if (Number.isFinite(minimum)) ties.push({ start: columnFor(a), end: columnFor(b), minimum })
   }
   let tieLeading = 0, tieTrailing = 0
@@ -860,7 +861,9 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
 /** Ports sit just outside the head vertically. Single heads may use their
  * upper/lower shoulder; only symbols crossing that height extend the port.
  * This descriptor is shared by spacing reservations and final drawing. */
-function staffTiePorts(note: PreparedNote, index: number, direction = -note.direction) {
+// Stem direction uses upward-positive notation; screen y increases downward.
+// The opposite side of the stem therefore has the same numeric sign.
+function staffTiePorts(note: PreparedNote, index: number, direction = note.direction) {
   const head = note.heads[index]!, glyph = staffGlyphMetrics(note.head, note.size), space = staffMusicSize() / 4
   const inset = note.heads.length === 1 ? (glyph.right - glyph.left) * .2 : -space * .1
   const y = head.y + (direction < 0 ? glyph.top - space * .2 : glyph.bottom + space * .2)
@@ -885,7 +888,7 @@ function staffTiePorts(note: PreparedNote, index: number, direction = -note.dire
 /** Open ties use system boundaries; one ribbon is drawn for each chord member. */
 export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNoteAnchor | undefined, left: number, right: number, obstacles: readonly Ink[] = []): XmlNode[] {
   const note = first ?? last!
-  const direction = -note.direction, count = Math.min(first?.ys.length ?? Infinity, last?.ys.length ?? Infinity)
+  const direction = note.direction, count = Math.min(first?.ys.length ?? Infinity, last?.ys.length ?? Infinity)
   const curves: XmlNode[] = []
   for (let i = 0; i < count; i++) {
     const x1 = first ? first.x + staffTiePorts(first.prepared, i, direction).start : left

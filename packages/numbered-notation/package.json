@@ -16,12 +16,16 @@
       "import": "./dist/score-layout-config.js"
     },
     "./layout-quality": {
-      "types": "./dist/layout-quality.d.ts",
-      "import": "./dist/layout-quality.js"
+      "types": "./dist/layout/quality.d.ts",
+      "import": "./dist/layout/quality.js"
     },
     "./fonts": {
       "types": "./dist/fonts.d.ts",
       "import": "./dist/fonts.js"
+    },
+    "./layout": {
+      "types": "./dist/layout/index.d.ts",
+      "import": "./dist/layout/index.js"
     }
   },
   "scripts": {

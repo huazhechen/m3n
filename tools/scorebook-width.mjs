@@ -6,7 +6,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v35`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v36`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 export function numberedLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)

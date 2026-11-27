@@ -1,6 +1,6 @@
 import { nativeSvgNumber as n } from './native-svg-number.js'
 import { nativeStyle } from './native-style.js'
-import type { NativeRelation, NativeSystem } from './native-layout.js'
+import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import { prepareNativeArc, nativeArcInkLift } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 import { placedNativeControlInk } from './native-controls.js'

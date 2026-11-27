@@ -1,4 +1,4 @@
-import { scoreNavigationGlyphHeight } from './score-layout-policy.js'
+import { scoreNavigationGlyphHeight } from './layout/policy.js'
 import { SCORE_NUMBER_FONT, SCORE_TEXT_FONT } from './font-family.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeMeterGeometry } from './native-meter.js'

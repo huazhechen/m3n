@@ -1,5 +1,4 @@
-import { scoreLayoutConfig, scoreLyricGapScale, scoreEnvelopeBlock, mergeScoreHeightEnvelopes,
-  type ScoreHeightEnvelope, type ScorePageBlock, type ScorePageCostModel } from '@m3n/numbered-notation'
+import { scoreEnvelopeBlock, mergeScoreHeightEnvelopes, type ScoreHeightEnvelope, type ScorePageBlock, type ScorePageCostModel, scoreLayoutConfig, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import type { prepareStaffLineGraph, StaffLine } from './line-layout.js'
 import { staffMusicCentre, staffHeaderBlock, staffRowBlock } from './staff-row-pagination.js'
 import type { StaffSystem } from './system-layout.js'

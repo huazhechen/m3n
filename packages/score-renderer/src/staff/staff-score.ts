@@ -1,4 +1,5 @@
-import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
+import { compareScoreSpacingTrials, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { prepareStaffLineGraph, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -199,8 +200,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         rowStart = end; return system
       })
       return { spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines), pages: plan.pages }
-    }).sort((a, b) => a.quality.spacingCost + a.quality.overflowCost - b.quality.spacingCost - b.quality.overflowCost || b.spacing - a.spacing)
-    const trial = trials.reduce((best, candidate) => candidate.pages < best.pages ? candidate : best)
+    })
+    const trial = trials.reduce((best, candidate) => compareScoreSpacingTrials(
+      { pages: candidate.pages, cost: candidate.quality.spacingCost + candidate.quality.overflowCost, spacing: candidate.spacing },
+      { pages: best.pages, cost: best.quality.spacingCost + best.quality.overflowCost, spacing: best.spacing }) < 0 ? candidate : best)
     // Candidate rows are already measured and cached at their actual width.
     // Reuse the chosen row nodes for output as well as numeric pagination.
     const systems = trial.proxies

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest'
 import { A4_CONTENT_WIDTH_MM } from '@m3n/notation'
 import { nativeBarMetrics } from './native-horizontal.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
-import { scoreCoreGap, scoreMaximumCoreGap, scoreRhythmicGapWeight } from './score-layout-policy.js'
+import { scoreCoreGap, scoreMaximumCoreGap, scoreRhythmicGapWeight } from './layout/policy.js'
 
 it('calibrates staff height against the numbered bar frame without shrinking print readability', () => {
   const frame = nativeBarMetrics('single').size

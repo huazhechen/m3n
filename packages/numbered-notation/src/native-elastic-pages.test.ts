@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { paginateNativeBlocks } from './native-pagination.js'
+import { paginateScoreBlocks } from './layout/pagination.js'
 import { layoutNativeScore } from './native-layout.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { NativeNumberedNotationScore, renderSharedNumberedNotationScores } from './native-score.js'
 
 const row = (left = 0, top = 0, bottom = 10) => ({ height: bottom - top, core: { top: 0, bottom: 10 }, ink: [{ left, right: left + 10, top, bottom }] })
-const fit = (blocks: ReturnType<typeof row>[], height: number) => paginateNativeBlocks(blocks, { pageHeight: height, margin: 0, gap: 16, maxGap: 32, elastic: true })
+const fit = (blocks: ReturnType<typeof row>[], height: number) => paginateScoreBlocks(blocks, { pageHeight: height, margin: 0, gap: 16, maxGap: 32, elastic: true })
 
 describe('elastic page core parameter', () => {
   it('breaks at 16px, then fits each page independently, including the last page', () => {
@@ -17,9 +17,9 @@ describe('elastic page core parameter', () => {
   })
   it('reserves overlay label page bounds without adding inter-row collision spacing', () => {
     const overlay = { ...row(), boundaryInk: [{ left: 0, right: 10, top: -15, bottom: -5 }] }
-    const first = paginateNativeBlocks([overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
+    const first = paginateScoreBlocks([overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
     expect(first.positions[0]!.top).toBe(15)
-    const following = paginateNativeBlocks([row(), overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
+    const following = paginateScoreBlocks([row(), overlay], { pageHeight: 60, margin: 0, gap: 16, elastic: true })
     expect(following.positions.map(position => position.top)).toEqual([0, 26])
   })
 
@@ -27,8 +27,8 @@ describe('elastic page core parameter', () => {
     const music = row(0, musicTop)
     const label = { ...music, boundaryInk: [{ left: 0, right: 10, top: -15, bottom: -5 }] }
     const options = { pageHeight: 40, margin: 0, gap: 16, elastic: true }
-    const ordinary = paginateNativeBlocks([row(), row(), music], options)
-    const numbered = paginateNativeBlocks([row(), row(), label], options)
+    const ordinary = paginateScoreBlocks([row(), row(), music], options)
+    const numbered = paginateScoreBlocks([row(), row(), label], options)
     expect(ordinary.positions.map(position => position.page)).toEqual([0, 0, 1])
     expect(numbered.positions.map(position => position.page)).toEqual([0, 0, 1])
     expect(ordinary.positions[2]!.top).toBe(0 - musicTop)
@@ -40,7 +40,7 @@ describe('elastic page core parameter', () => {
   it('scales collision clearance with half the core parameter instead of adding the full increase', () => {
     const blocks = [row(0, 0, 38), row(0, -12, 10), row(100)]
     const fitted = fit(blocks, 110)
-    const minimum = paginateNativeBlocks(blocks, { pageHeight: 110, margin: 0, gap: 16, elastic: true })
+    const minimum = paginateScoreBlocks(blocks, { pageHeight: 110, margin: 0, gap: 16, elastic: true })
     expect(fitted.coreGaps![0]).toBeCloseTo(80 / 3, 5)
     expect(fitted.positions[1]!.top - fitted.positions[0]!.top).toBeCloseTo(190 / 3, 5)
     expect(minimum.positions[1]!.top).toBe(58)

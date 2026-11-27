@@ -1,4 +1,5 @@
-import { prepareNumberedNotationFonts, type ScoreHeightEnvelope } from '@m3n/numbered-notation'
+import { type ScoreHeightEnvelope } from '@m3n/numbered-notation/layout'
+import { prepareNumberedNotationFonts } from '@m3n/numbered-notation'
 import type { ScoreDocument } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import type { StaffMeasure } from './staff-document.js'

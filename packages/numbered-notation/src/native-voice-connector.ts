@@ -1,7 +1,7 @@
 import { bravuraGlyph } from './bravura.js'
 import { nativeStyle } from './native-style.js'
 import { attrs, line, n } from './native-symbols.js'
-import type { NativeSystem } from './native-layout.js'
+import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { NativeMusicPainter } from './native-music.js'
 import { nativeSvgInk, unionNativeInk } from './native-ink.js'

@@ -1,8 +1,8 @@
-import type {NativeLineCandidate} from './native-line-breaking.js'
+import type {ScoreLineCandidate} from './line-breaking.js'
 
 /** Exact range of preceding full-row mean gaps, including forced prefixes.
  * Keep extrema at each row count, then take extrema of sum/count. */
-export function nativeEndingReferences(graph:readonly (readonly NativeLineCandidate[])[],
+export function scoreEndingReferences(graph:readonly (readonly ScoreLineCandidate[])[],
  section:(at:number)=>number,gapFor:(start:number,end:number)=>number|undefined):{minimum:number;maximum:number}[] {
  const states=Array.from({length:graph.length+1},()=>new Map<number,{low:number;high:number}>())
  const result:{minimum:number;maximum:number}[]=[]

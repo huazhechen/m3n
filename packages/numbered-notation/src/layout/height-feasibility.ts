@@ -1,12 +1,12 @@
-import { nativePageCollision, nativePageDistance } from './native-page-collision.js'
-import { nativePageGeometry, type NativePageGeometry } from './native-page-geometry.js'
-import type { NativePageBlock } from './native-pagination.js'
-import type { NativeLineCandidate } from './native-line-breaking.js'
+import { scorePageCollision, scorePageDistance } from './page-collision.js'
+import { scorePageGeometry, type ScorePageGeometry } from './page-geometry.js'
+import type { ScorePageBlock } from './geometry.js'
+import type { ScoreLineCandidate } from './line-breaking.js'
 
 /** Optimistic pagination of a fixed plan. Keep core clearance and page edges,
  * omit every painted-ink collision. Every actual page is feasible in this
  * model; taking the longest fitting prefix therefore cannot use more pages. */
-export function nativeCorePageLowerBound(blocks:readonly NativePageBlock[],options:{pageHeight:number;margin:number;gap:number;headerGap:number}):number {
+export function scoreCorePageLowerBound(blocks:readonly ScorePageBlock[],options:{pageHeight:number;margin:number;gap:number;headerGap:number}):number {
   const {pageHeight,margin,gap,headerGap}=options
   let page=1,baseline=0,previous:{bottom:number;music:boolean;scale:number}|undefined
   for(const block of blocks) {
@@ -22,10 +22,10 @@ export function nativeCorePageLowerBound(blocks:readonly NativePageBlock[],optio
   return blocks.length ? page : 0
 }
 
-type Box = NativePageGeometry
+type Box = ScorePageGeometry
 type State = { box: Box; page: number; baseline: number; previous?: State; end?: number }
-const box = (block: NativePageBlock): Box => {
-  const geometry = nativePageGeometry(block)
+const box = (block: ScorePageBlock): Box => {
+  const geometry = scorePageGeometry(block)
   geometry.ink.sort((a,b)=>a.left-b.left); geometry.sorted = true
   return geometry
 }
@@ -36,8 +36,8 @@ const box = (block: NativePageBlock): Box => {
  * Only adjacent resolved primitives constrain this bound; remote-row ink is
  * checked by the shared exact paginator before accepting a witness.
  * Tail redistribution and gap fitting never change the number of pages. */
-export function nativePageFeasibility(candidates: readonly (readonly NativeLineCandidate[])[],
-  blockFor: (start: number, end: number) => NativePageBlock, headers: readonly NativePageBlock[],
+export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCandidate[])[],
+  blockFor: (start: number, end: number) => ScorePageBlock, headers: readonly ScorePageBlock[],
   options: { pageHeight: number; margin: number; gap: number; headerGap: number; onWitness?: (ends: number[]) => void }) {
   const { pageHeight, margin, gap, headerGap } = options
   const boxes = candidates.map((rows, start) => new Map(rows.map(row => [row.end, box(blockFor(start, row.end))])))
@@ -48,9 +48,9 @@ export function nativePageFeasibility(candidates: readonly (readonly NativeLineC
       const localGap = item.gap ?? gap * previous.box.scale
       const separation = previous.box.music && item.music ? localGap : headerGap
       const pair = previous.box.resolved && item.resolved
-        ? nativePageCollision(previous.box, item) : {collision:-Infinity,edge:-Infinity}
+        ? scorePageCollision(previous.box, item) : {collision:-Infinity,edge:-Infinity}
       baseline = Math.max(baseline, previous.baseline + previous.box.coreBottom - item.coreTop + separation,
-        previous.baseline + nativePageDistance(pair, localGap, -Infinity)) + item.before
+        previous.baseline + scorePageDistance(pair, localGap, -Infinity)) + item.before
       if (baseline + item.bottom > pageHeight - margin + 1e-6) {
         page++; baseline = margin - item.top
       }
@@ -72,7 +72,7 @@ export function nativePageFeasibility(candidates: readonly (readonly NativeLineC
     for(let state=winner;state?.end!==undefined;state=state.previous)ends.push(state.end)
     options.onWitness(ends.reverse())
   }
-  return (restricted: readonly (readonly NativeLineCandidate[])[], ceiling: number): boolean => {
+  return (restricted: readonly (readonly ScoreLineCandidate[])[], ceiling: number): boolean => {
     if (!restricted.length) return false
     // Lawler branches share long fixed prefixes. Their exact pagination is
     // deterministic and independent of the cost/page ceiling being queried.

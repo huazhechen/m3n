@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { scoreReadingWindows } from './reading-density.js'
+import { scoreReadingWindows } from './layout/reading-density.js'
 
 it('detects a tight beat even when the complete measure has ample space', () => {
   const reading = scoreReadingWindows([

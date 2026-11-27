@@ -1,11 +1,11 @@
-import { planNativeLines, type NativeLineCandidate } from './native-line-breaking.js'
+import { planScoreLinesGlobally, type ScoreLineCandidate } from './line-breaking.js'
 
-type Graph = readonly (readonly NativeLineCandidate[])[]
+type Graph = readonly (readonly ScoreLineCandidate[])[]
 type Measured<T> = { ends: number[]; pages: number; value: T }
 type Problem = { prefix: number[]; excluded: number[]; ends: number[]; cost: number }
 const epsilon = 1e-12
 
-export function greedyNativeLines(graph: Graph): number[] {
+export function greedyScoreLines(graph: Graph): number[] {
   const ends: number[] = []
   for (let start = 0; start < graph.length;) {
     const end = Math.max(...graph[start]!.map(row => row.end))
@@ -15,7 +15,7 @@ export function greedyNativeLines(graph: Graph): number[] {
   return ends
 }
 
-export function nativeLinePlanCost(graph: Graph, ends: readonly number[]): number {
+export function scoreLinePlanCost(graph: Graph, ends: readonly number[]): number {
   let start = 0, sum = 0, square = 0, penalty = 0
   for (const end of ends) {
     const row = graph[start]!.find(row => row.end === end)!
@@ -40,14 +40,14 @@ function compare(a: Problem, b: Problem): number {
  * page predicate directly to its hull pruning would incorrectly discard
  * feasible paths. No row-count proxy, beam cap or quantized page height.
  * Worst-case work is exponential; instrumentation exposes that cost. */
-export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>, optimum: Measured<T>,
+export function planScoreLinesWithinPages<T>(graph: Graph, greedy: Measured<T>, optimum: Measured<T>,
   evaluate: (ends: number[]) => { pages: number; value?: T }, timings?: Record<string, number>, canFit?: (restricted: Graph, ceiling: number) => boolean, getFeasible?: () => Measured<T> | undefined, solveRestricted?: (graph: Graph, maximumCost: number, unconstrained?: number[]) => number[] | undefined): Measured<T> {
   if (optimum.pages <= greedy.pages) return optimum
-  let incumbent = greedy, incumbentCost = nativeLinePlanCost(graph, greedy.ends)
+  let incumbent = greedy, incumbentCost = scoreLinePlanCost(graph, greedy.ends)
   const improve = () => {
     const candidate = getFeasible?.()
     if (!candidate || candidate.pages > greedy.pages) return
-    const cost = nativeLinePlanCost(graph,candidate.ends)
+    const cost = scoreLinePlanCost(graph,candidate.ends)
     if (compare({prefix:[],excluded:[],ends:candidate.ends,cost}, {prefix:[],excluded:[],ends:incumbent.ends,cost:incumbentCost})<0) {
       incumbent=candidate;incumbentCost=cost
     }
@@ -98,7 +98,7 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
       const started = timings ? performance.now() : 0
       // Shared by numbered and staff notation: page constraints cannot beat
       // the unconstrained horizontal optimum. Apply its cap before height work.
-      const unconstrained = planNativeLines(restricted, undefined, incumbentCost)
+      const unconstrained = planScoreLinesGlobally(restricted, undefined, incumbentCost)
       if (!unconstrained) {
         if (timings) timings.pageBoundHorizontalPrunes = (timings.pageBoundHorizontalPrunes ?? 0) + 1
         continue
@@ -113,12 +113,12 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
         timings.pageBoundDpSolves = (timings.pageBoundDpSolves ?? 0) + 1
         timings.pageBoundDpMs = (timings.pageBoundDpMs ?? 0) + performance.now() - started
       }
-      const cost = nativeLinePlanCost(graph, ends)
+      const cost = scoreLinePlanCost(graph, ends)
       if (cost <= incumbentCost + epsilon) push({ prefix, excluded, ends, cost })
     }
   }
   improve()
-  split({ prefix: [], excluded: [], ends: optimum.ends, cost: nativeLinePlanCost(graph, optimum.ends) })
+  split({ prefix: [], excluded: [], ends: optimum.ends, cost: scoreLinePlanCost(graph, optimum.ends) })
   while (queue.length) {
     improve()
     const problem = pop()
@@ -142,9 +142,9 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
 /** A feasible incumbent only: adjacent-row balancing never replaces the
  * global solver or changes its objective/page ceiling. Strict improvements
  * make this finite without a move cap. */
-export function improveFeasibleNativeLines<T>(graph: Graph, initial: Measured<T>,
+export function improveFeasibleScoreLines<T>(graph: Graph, initial: Measured<T>,
   evaluate: (ends:number[])=>{pages:number;value?:T}, timings?:Record<string,number>): Measured<T> {
-  let current=initial, cost=nativeLinePlanCost(graph,current.ends)
+  let current=initial, cost=scoreLinePlanCost(graph,current.ends)
   const pages=new Map<string,number>([[current.ends.join(':'),current.pages]])
   for (;;) {
     const neighbours: {ends:number[];cost:number}[]=[]
@@ -153,7 +153,7 @@ export function improveFeasibleNativeLines<T>(graph: Graph, initial: Measured<T>
       for(const row of graph[start]!) {
         if(row.end===current.ends[index] || row.end>=end || !graph[row.end]!.some(next=>next.end===end)) continue
         const ends=[...current.ends];ends[index]=row.end
-        const value=nativeLinePlanCost(graph,ends)
+        const value=scoreLinePlanCost(graph,ends)
         if(value<cost-epsilon) neighbours.push({ends,cost:value})
       }
     }
@@ -164,7 +164,7 @@ export function improveFeasibleNativeLines<T>(graph: Graph, initial: Measured<T>
       for(const first of graph[start]!)for(const second of graph[first.end] ?? []) {
         if(second.end>=end || !graph[second.end]!.some(next=>next.end===end))continue
         const ends=[...current.ends];ends[index]=first.end;ends[index+1]=second.end
-        const value=nativeLinePlanCost(graph,ends)
+        const value=scoreLinePlanCost(graph,ends)
         if(value<cost-epsilon)neighbours.push({ends,cost:value})
       }
     }

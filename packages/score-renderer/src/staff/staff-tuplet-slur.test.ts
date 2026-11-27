@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { scoreLayoutConfig } from '@m3n/numbered-notation'
+import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffPreparation } from './staff-engine.js'
 import { createStaffMeasureMinimum, planStaffLines } from './line-layout.js'

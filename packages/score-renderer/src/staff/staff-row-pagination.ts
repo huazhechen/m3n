@@ -1,4 +1,4 @@
-import { prepareScorePagination, scoreLayoutConfig, scoreLyricGapScale, type ScorePageBlock } from '@m3n/numbered-notation'
+import { prepareScorePagination, type ScorePageBlock, scoreLayoutConfig, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import type { StaffSystem, StaffPage } from './system-layout.js'
 
 export const staffMusicCentre = scoreLayoutConfig.staff.music * 1.5

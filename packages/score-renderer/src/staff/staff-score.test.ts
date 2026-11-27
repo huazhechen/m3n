@@ -5,7 +5,7 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 // jsdom has no SVG character-position API; compare engraving before browser
 // text resolution here. Full PDF parity covers real browser text placement.
 vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
-import { scorePhysicalSpacing } from '@m3n/numbered-notation'
+import { scorePhysicalSpacing } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'

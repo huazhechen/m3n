@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { type ScoreHeightEnvelope } from '@m3n/numbered-notation'
+import { type ScoreHeightEnvelope } from '@m3n/numbered-notation/layout'
 import { projectStaffDocument } from './staff-document.js'
 import { prepareStaffLineGraph } from './line-layout.js'
 import { staffPageCostModel } from './staff-page-model.js'

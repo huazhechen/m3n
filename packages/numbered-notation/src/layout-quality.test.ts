@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { scoreHorizontalQuality, scoreLineQuality } from './layout-quality.js'
+import { scoreHorizontalQuality, scoreLineQuality } from './layout/quality.js'
 
 it('distinguishes uniformly loose lines from equally uniform readable lines', () => {
   const loose = scoreLineQuality([.4, .4, .4], 0)
@@ -15,7 +15,7 @@ it('does not confuse a deliberate short ending with excessive rhythmic stretchin
 })
 
 it('keeps stretch in the break diagnostics without defining the final spacing cost', async () => {
-  const { scoreNumberedCost } = await import('./layout-quality.js')
+  const { scoreNumberedCost } = await import('./layout/quality.js')
   const cost = scoreNumberedCost(528, [.5, .75])
   expect(cost.lineStretchCost).toBeCloseTo(.3125)
   expect(cost.lineUniformityCost).toBeCloseTo(.03125)
@@ -25,7 +25,7 @@ it('keeps stretch in the break diagnostics without defining the final spacing co
 })
 
 it('balances common physical spaciousness against relative unevenness', async () => {
-  const { scoreNumberedSpacing: cost } = await import('./layout-quality.js')
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
   expect(cost([12, 12]).spacingCost).toBeCloseTo(1.7777777778)
   expect(cost([16, 16]).spacingCost).toBe(1)
   expect(cost([12, 20]).spacingUnevenCost).toBe(.125)
@@ -37,7 +37,7 @@ it('balances common physical spaciousness against relative unevenness', async ()
 })
 
 it('calibrates font loss at the readable and small-font ends of the search range', async () => {
-  const { scoreNumberedFontCost: cost } = await import('./layout-quality.js')
+  const { scoreNumberedFontCost: cost } = await import('./layout/quality.js')
   expect(cost(528)).toBe(0)
   expect(cost(552)).toBeCloseTo(.04)
   expect(cost(744)).toBeCloseTo(3.24)
@@ -47,7 +47,7 @@ it('calibrates font loss at the readable and small-font ends of the search range
 })
 
 it('keeps an exceptional row visible instead of averaging its unevenness away', async () => {
-  const { scoreNumberedSpacing: cost } = await import('./layout-quality.js')
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
   const few = cost([16, 16, 16, 32])
   expect(few.spacingMeanUnevenCost).toBeCloseTo(.12)
   expect(few.spacingWorstUnevenCost).toBeCloseTo(.36)
@@ -55,4 +55,14 @@ it('keeps an exceptional row visible instead of averaging its unevenness away', 
   const many = cost([...Array<number>(19).fill(16), 32])
   expect(many.spacingWorstUnevenCost).toBeGreaterThan(.8)
   expect(many.spacingUnevenCost).toBeGreaterThan(many.spacingMeanUnevenCost * 10)
+})
+
+it('penalizes excessive spacing rather than rewarding additional sparse rows', async () => {
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
+  expect(cost([16, 16]).spacingExpandedCost).toBe(0)
+  expect(cost([12, 12]).spacingExpandedCost).toBe(0)
+  expect(cost([32, 32]).spacingExpandedCost).toBe(12)
+  expect(cost([32, 32]).spacingCost).toBeGreaterThan(cost([16, 16]).spacingCost)
+  expect(cost([20, 20]).spacingCost).toBeGreaterThan(cost([12, 12]).spacingCost)
+  expect(cost([10, 10], 10).spacingCost).toBe(cost([16, 16], 16).spacingCost)
 })

@@ -1,7 +1,7 @@
 import { SCORE_TEXT_FONT, SCORE_TEXT_WEIGHT } from './font-family.js'
 import { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from './lyric-spacing.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
-import type { NativeLane, NativeSystem } from './native-layout.js'
+import type { NativeLane, NativeSystem } from './native-layout-model.js'
 import type { NativeGlyph } from './native-model.js'
 import type { TextMeasurer, TextMetrics } from './native-measure.js'
 import { NativeSymbols, attrs, line } from './native-symbols.js'

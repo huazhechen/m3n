@@ -3,7 +3,7 @@ import { deriveScoreInteraction, measurePlaybackPasses, parseM3NDocument, scoreE
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout.js'
+import type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout-model.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 const options = {paged:false,width:800}

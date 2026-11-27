@@ -47,3 +47,11 @@ test('includes stroked lines, ignores unpainted spaces, and measures rotated gro
   })
   for(const[key,expected]of Object.entries({x:99,y:99,width:2,height:22}))assert.ok(Math.abs(r[key]-expected)<1e-6)
 })
+test('preserves exact fractional line endpoints at the canvas edge',async()=>{
+  const box=await page.evaluate(()=>{
+    const svg=document.querySelector('svg')
+    svg.innerHTML='<line x1="88.077481" y1="0" x2="639.34" y2="0" stroke="black" stroke-width="1.32" stroke-linecap="round"/>'
+    return createSvgInkMeasurer()(svg.querySelector('line'))
+  })
+  assert.ok(Math.abs(box.x+box.width-640)<1e-9)
+})
