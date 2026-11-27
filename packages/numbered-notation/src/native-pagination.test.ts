@@ -171,10 +171,26 @@ it('matches exhaustive primitive collisions even when a remote row reaches past 
             for (let before = 0; before < index; before++)
                 for (const above of blocks[before]!.ink) for (const below of block.ink)
                     if (above.left < below.right && above.right > below.left)
-                        baseline = Math.max(baseline, baselines[before]! + above.bottom - below.top + 24 * .3);
+                        baseline = Math.max(baseline, baselines[before]! + above.bottom - below.top + 24 * .5);
             baselines.push(baseline);
         }
-        const actual = prepareNativePagination(blocks, { nonCoreGapRatio: .3 })({ pageHeight: Infinity, margin: 10, gap: 24 });
+        const actual = prepareNativePagination(blocks, { })({ pageHeight: Infinity, margin: 10, gap: 24 });
         expect(actual.positions.map(position => position.top)).toEqual(baselines);
     }
+});
+
+
+it('shares exact fixed attachment clearance with remote-row checks and baseline normalization', () => {
+    const upper = { height: 100, baseline: 10, core: { top: 10, bottom: 20 },
+        ink: [{ left: 0, right: 20, top: 10, bottom: 20 }],
+        boundaryInk: [{ left: 100, right: 120, top: 10, bottom: 110 }],
+        edgeInk: [{ left: 100, right: 120, top: 10, bottom: 110, gap: 7 }] };
+    const middle = { height: 10, core: { top: 0, bottom: 10 },
+        ink: [{ left: 30, right: 50, top: 0, bottom: 10 }] };
+    const lower = { height: 10, core: { top: 0, bottom: 10 },
+        ink: [{ left: 100, right: 120, top: 0, bottom: 10 }] };
+    const result = prepareNativePagination([upper, middle, lower])({ pageHeight: Infinity, margin: 0, gap: 20 });
+    expect(result.positions.map(position => position.top)).toEqual([-10, 30, 107]);
+    // The fixed 7px clearance is independent of the 0.5 * core-gap rule.
+    expect(prepareNativePagination([upper, lower])({ pageHeight: Infinity, margin: 0, gap: 40 }).positions[1]!.top).toBe(107);
 });

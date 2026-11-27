@@ -4,7 +4,7 @@ import { greedyNativeLines, nativeLinePlanCost, planNativeLinesWithinPages } fro
 import { planNativeLinesWithRefinedPages } from './native-refined-page-breaking.js'
 import { prepareNativePagination, type NativePageBlock } from './native-pagination.js'
 
-it.each([false, true])('matches exact prefix search while learning only visited row geometry, wholeRows=%s', wholeRows => {
+it('matches exact prefix search while learning only visited row geometry', () => {
   let seed = 1097, violations = 0
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
   for (let trial = 0; trial < 120; trial++) {
@@ -17,7 +17,7 @@ it.each([false, true])('matches exact prefix search while learning only visited 
         ink: [{ left: start % 2 * 2, right: start % 2 * 2 + 1, top: 0, bottom }], resolvedInk: true } satisfies NativePageBlock]
     })))
     const lower: NativePageBlock = { height: 10, core: { top: 0, bottom: 10 }, ink: [{ left: 0, right: 1, top: 0, bottom: 10 }], resolvedInk: false }
-    const options = { pageHeight: 115, margin: 0, gap: 15, headerGap: 0, ratio: .3, wholeRows }
+    const options = { pageHeight: 115, margin: 0, gap: 15, headerGap: 0,}
     const learned = new Map<string, NativePageBlock>()
     const evaluate = (ends: number[]) => {
       let start = 0
@@ -25,7 +25,7 @@ it.each([false, true])('matches exact prefix search while learning only visited 
         const block = exact[start]!.get(end)!
         learned.set(`${start}:${end}`, block); start = end; return block
       })
-      return { ends, pages: prepareNativePagination(blocks, { wholeRows, nonCoreGapRatio: .3 })(options).heights.length, value: ends }
+      return { ends, pages: prepareNativePagination(blocks, {})(options).heights.length, value: ends }
     }
     const greedy = evaluate(greedyNativeLines(graph)), optimum = evaluate(planNativeLines(graph))
     if (optimum.pages > greedy.pages) violations++

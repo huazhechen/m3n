@@ -14,17 +14,13 @@ function readScore(source) {
   return analysis.score
 }
 
-export async function search(source, { auditLayout = false, prune = !auditLayout, localRefine = !auditLayout, inspectHeights = false } = {}) {
+export async function search(source, { auditLayout = false, prune = !auditLayout, localRefine = !auditLayout } = {}) {
   const started = performance.now()
   const score = readScore(source)
   const task = await prepareStaffMeasurementTask(score)
   const result = await probeWidthCandidates((width, best) => measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount }), { prune: prune && !auditLayout, localRefine: localRefine && !auditLayout })
   const searchMs = performance.now() - started
-  const best = chooseBestWidth(result.candidates)
-  const inspected = inspectHeights && best ? await prepareStaffScore(score, { width: best.width }, undefined, task) : undefined
-  const heightEnvelopeDiagnostics = inspected?.layoutInfo().heightEnvelopeDiagnostics
-  const avoidanceComparison = inspected?.avoidanceComparison()
-  return { ...result, searchMs, heightEnvelopeDiagnostics, avoidanceComparison }
+  return { ...result, searchMs }
 }
 
 export async function measure(source, width, verify = false, settings = {}) {
@@ -43,9 +39,9 @@ export async function preview(source,width,settings = {}) {
 export { initialize } from './numbered-spacing-layout.mjs'
 export async function searchSpacing(source, auditLayout = false, prune = false, localRefine = false) {
   const started = performance.now()
-  const result = await search(source, { auditLayout, prune, localRefine, inspectHeights: true })
+  const result = await search(source, { auditLayout, prune, localRefine })
   const best = chooseBestWidth(result.candidates)
   if (!best) throw new Error('没有可用的五线谱排版候选。' + JSON.stringify(result.candidates))
-  return { ...best, pages: best.pageCount, searchMs: result.searchMs, heightEnvelopeDiagnostics: result.heightEnvelopeDiagnostics, avoidanceComparison: result.avoidanceComparison,
+  return { ...best, pages: best.pageCount, searchMs: result.searchMs,
     totalMs: performance.now() - started, candidates: result.candidates, renderCache: result.renderCache }
 }

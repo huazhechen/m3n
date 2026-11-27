@@ -18,12 +18,11 @@ it('publishes continuous coordinates when one numeric row exceeds a paged canvas
   expect(result.projection.glyphs[0]!.y).toBeGreaterThan(800)
 })
 
-it.each(['row', 'measure', 'element'] as const)('shares resolved lyric geometry with %s pagination and creates no height probes', avoidance => {
+it('shares resolved lyric geometry with precise pagination', () => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/xing_xing_dian_deng_01.m3n', import.meta.url), 'utf8'))
   const timings: Record<string, number> = {}
-  const layout = layoutNativeScore(document, { numericLayout: true, avoidance, width: 558, minimumNoteGap: 8, paged: true, pageMargin: 0 }, timings)
+  const layout = layoutNativeScore(document, { numericLayout: true, width: 558, minimumNoteGap: 8, paged: true, pageMargin: 0 }, timings)
   expect(timings.measureHeightBuilds ?? 0).toBe(0)
-  expect(timings.measureAvoidancePageCorrections ?? 0).toBe(0)
   for (const row of layout.systems) {
     const lane = row.lanes[0]!
     const glyphs = row.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))

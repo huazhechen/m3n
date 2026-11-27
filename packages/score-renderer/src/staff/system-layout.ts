@@ -1,6 +1,5 @@
 import { paginateStaffRows } from './staff-row-pagination.js'
-import type { ScoreHeightEnvelope } from '@m3n/numbered-notation'
-import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap, balanceScorePageTail } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, scorePageCollision, scorePageDistance, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
   SvgGeometry, InkRangeIndex,
@@ -18,7 +17,7 @@ import {
 } from './layout-svg.js'
 import { STAFF_SCALE } from './line-layout.js'
 
-export type StaffSystem = { materializeInk?: () => void; envelope?: ScoreHeightEnvelope; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
+export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean }
 const style = scoreLayoutConfig.staff
 const decorations = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
@@ -441,124 +440,17 @@ export function arrangeStaffSystem(
   } else materialize()
   return result
 }
-const distances = new WeakMap<StaffSystem, WeakMap<StaffSystem, { collision: number; edgeCollision: number }>>()
-const orderedInk = new WeakMap<StaffSystem, Ink[]>()
-function sortedSpacing(system: StaffSystem): Ink[] {
-  let sorted = orderedInk.get(system)
-  if (!sorted) { sorted = system.spacingPieces.slice().sort((a, b) => a.left - b.left); orderedInk.set(system, sorted) }
-  return sorted
-}
-function systemInkDistance(previous: StaffSystem, next: StaffSystem, gap: number): number {
-  previous.materializeInk?.(); next.materializeInk?.()
-  let following = distances.get(previous)
-  if (!following) {
-    following = new WeakMap()
-    distances.set(previous, following)
-  }
-  let distance = following.get(next)
-  if (distance === undefined) {
-    const upper = sortedSpacing(previous), lower = sortedSpacing(next)
-    let collision = sortedInkSeparation(upper, lower)
-    // The sweep skips degenerate intervals. Check only those remaining
-    // pairs with the staff solver's original strict point-overlap semantics.
-    for (const a of upper) if (a.right <= a.left)
-      for (const b of lower) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
-    for (const b of lower) if (b.right <= b.left)
-      for (const a of upper) if (overlapsX(a, b)) collision = Math.max(collision, a.bottom - b.top)
-    let edgeCollision = -Infinity
-    for (const a of previous.pieces) for (const b of next.edgePieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + b.gap)
-    for (const a of previous.edgePieces) for (const b of next.spacingPieces) if (overlapsX(a, b)) edgeCollision = Math.max(edgeCollision, a.bottom - b.top + a.gap)
-    distance = { collision, edgeCollision }
-    following.set(next, distance)
-  }
-  return Math.max(distance.collision + gap / 2, distance.edgeCollision)
-}
+/** Public adjacent-row distance uses the same collision rule as pagination. */
 export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: number, minimum = gap, maximum = gap): number {
+  previous.materializeInk?.(); next.materializeInk?.()
   const coreGap = interpolateScoreCoreGap(minimum, maximum, gap, previous.hasLyrics ? scoreLyricGapScale(minimum) : 1)
-  return Math.max(previous.core.bottom + coreGap - next.core.top, systemInkDistance(previous, next, coreGap)) + (next.section ? style.sectionGap : 0)
+  const shape = (system: StaffSystem) => ({ ink: system.spacingPieces.slice().sort((a,b)=>a.left-b.left),
+    boundaryInk: system.pieces, edgeInk: system.edgePieces })
+  const pair = scorePageCollision(shape(previous), shape(next))
+  return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top) + (next.section ? style.sectionGap : 0)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
-function positions(systems: StaffSystem[], start: number, gap: number, minimum = gap, maximum = gap) {
-  if (!systems.length) return []
-  const ys = [start - systems[0]!.ink.top]
-  for (let i = 1; i < systems.length; i++) {
-    let y = ys[i - 1]! + systemDistance(systems[i - 1]!, systems[i]!, gap, minimum, maximum)
-    for (let prior = 0; prior < i - 1; prior++) {
-      const localGap = interpolateScoreCoreGap(minimum, maximum, gap, systems[prior]!.hasLyrics ? scoreLyricGapScale(minimum) : 1)
-      y = Math.max(y, ys[prior]! + systemInkDistance(systems[prior]!, systems[i]!, localGap))
-    }
-    ys.push(y)
-  }
-  return ys
-}
-export function paginateStaff(
-  systems: StaffSystem[],
-  height: number,
-  headerHeight: number,
-  minimum: number,
-  paged: boolean,
-  maximum = scoreMaximumCoreGap(minimum),
-): StaffPage[] {
-  if (systems.length && systems.every(system => system.envelope)) return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum)
-  if (!paged) {
-    const ys = positions(systems, headerHeight, minimum)
-    return [
-      { systems, ys, height: Math.max(headerHeight, ...systems.map((s, i) => s.ink.bottom + ys[i]!)), gap: minimum },
-    ]
-  }
-  // Leave room for browser-measured glyph ink that can exceed the canvas
-  // advance metrics used during the initial engraving pass by about 2px.
-  const pageInset = style.pageInset
-  const pages: StaffPage[] = []
-  for (const system of systems) {
-    let page = pages.at(-1)
-    if (!page) {
-      page = { systems: [], ys: [], height, gap: minimum }
-      pages.push(page)
-    }
-    const start = pages.length === 1 ? headerHeight : pageInset
-    const members = [...page.systems, system],
-      ys = positions(members, start, minimum)
-    if (system.ink.bottom + ys.at(-1)! > height - pageInset + 1e-6) {
-      if (!page.systems.length) throw new Error('单个五线谱谱行无法放入A4页面。')
-      const y = pageInset - system.ink.top
-      if (system.ink.bottom + y > height - pageInset) throw new Error('单个五线谱谱行无法放入A4页面。')
-      pages.push({ systems: [system], ys: [y], height, gap: minimum })
-    } else {
-      page.systems = members
-      page.ys = ys
-    }
-  }
-  let first = 0
-  const groups = pages.map(page => {
-    const group = { first, end: first + page.systems.length }
-    first = group.end
-    return group
-  })
-  const balanced = balanceScorePageTail(groups, (first, end) => {
-    const members = systems.slice(first, end)
-    const ys = positions(members, first === 0 ? headerHeight : pageInset, minimum)
-    return members.every((system, index) => system.ink.bottom + ys[index]! <= height - pageInset + 1e-6)
-  }, (first, end) => end - first)
-  balanced.forEach((group, index) => { pages[index]!.systems = systems.slice(group.first, group.end) })
-  // Balancing can move systems between pages; refresh their minimum-gap
-  // positions before deferring the final stretch fit to SVG output.
-  if (maximum <= minimum) {
-    for (const [index, page] of pages.entries())
-      page.ys = positions(page.systems, index === 0 ? headerHeight : pageInset, minimum, minimum, maximum)
-    return pages
-  }
-  for (const [index, page] of pages.entries()) {
-    let lo = minimum,
-      hi = Math.max(minimum, maximum)
-    for (let i = 0; i < 20; i++) {
-      const mid = (lo + hi) / 2,
-        ys = positions(page.systems, index === 0 ? headerHeight : pageInset, mid, minimum, maximum)
-      if (page.systems.every((system, i) => system.ink.bottom + ys[i]! <= height - pageInset)) lo = mid
-      else hi = mid
-    }
-    page.gap = lo
-    page.ys = positions(page.systems, index === 0 ? headerHeight : pageInset, lo, minimum, maximum)
-  }
-  return pages
+export function paginateStaff(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
+  paged: boolean, maximum = scoreMaximumCoreGap(minimum)): StaffPage[] {
+  return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum)
 }

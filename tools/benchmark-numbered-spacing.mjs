@@ -31,18 +31,11 @@ const localRefine = process.argv.includes('--local-refine')
 const warmupIterations = Number(argument('warmup') ?? 0)
 assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
 const numericLayout = process.argv.includes('--numeric-layout')
-const avoidance = argument('avoidance') ?? 'element'
-assert(['row', 'measure', 'element'].includes(avoidance), 'Invalid avoidance mode')
-const measureAvoidance = process.argv.includes('--measure-avoidance')
-const rowEnvelope = staffMode || measureAvoidance || process.argv.includes('--row-envelope')
-const pageConstrainedBreaks = process.argv.includes('--page-bound') || rowEnvelope
+const pageConstrainedBreaks = process.argv.includes('--page-bound')
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
 if (checkpoint) {
   assert.equal(checkpoint.notation ?? 'numbered', staffMode ? 'staff' : 'numbered', 'Cannot resume with a different notation')
   assert.equal(Boolean(checkpoint.numericLayout), numericLayout, 'Cannot resume with a different geometry engine')
-  assert.equal(checkpoint.avoidance ?? 'element', avoidance, 'Cannot resume with a different avoidance granularity')
-  assert.equal(Boolean(checkpoint.measureAvoidance), measureAvoidance, 'Cannot resume with a different avoidance mode')
-  assert.equal(Boolean(checkpoint.rowEnvelope), rowEnvelope, 'Cannot resume with a different row-envelope setting')
   assert.equal(Boolean(checkpoint.pageConstrainedBreaks), pageConstrainedBreaks, 'Cannot resume with a different page-bound setting')
   assert.equal(checkpoint.sourceRoot, sourceRoot, 'Cannot resume against a different source root')
   assert.equal(checkpoint.rendererHash, rendererHash, 'Cannot resume after changing the renderer')
@@ -53,7 +46,7 @@ if (checkpoint) {
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
-const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, localRefine, numericLayout, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
 if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
@@ -88,15 +81,15 @@ try {
     const saved = report.entries.find(entry => entry.file === file)
     if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
     for (let iteration = 0; iteration < warmupIterations; iteration++) {
-      await page.evaluate(async ({ source, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks }) => {
-        await m3n.search(source, false, prune, localRefine, pageConstrainedBreaks, rowEnvelope, measureAvoidance, numericLayout, avoidance)
+      await page.evaluate(async ({ source, prune, localRefine, numericLayout, pageConstrainedBreaks }) => {
+        await m3n.search(source, false, prune, localRefine, pageConstrainedBreaks, numericLayout)
         if (typeof globalThis.gc === 'function') globalThis.gc()
-      }, { source, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks })
+      }, { source, prune, localRefine, numericLayout, pageConstrainedBreaks })
     }
     const profiling=Boolean(argument('cpu-profile')) && (!argument('profile-score') || file.includes(argument('profile-score')))
     const profiler=profiling ? await page.context().newCDPSession(page) : undefined
     if(profiler){await profiler.send('Profiler.enable');await profiler.send('Profiler.start')}
-    const result = await page.evaluate(({ source, audit, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks }) => m3n.search(source, audit, prune, localRefine, pageConstrainedBreaks, rowEnvelope, measureAvoidance, numericLayout, avoidance), { source, audit: auditLayout, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks })
+    const result = await page.evaluate(({ source, audit, prune, localRefine, numericLayout, pageConstrainedBreaks }) => m3n.search(source, audit, prune, localRefine, pageConstrainedBreaks, numericLayout), { source, audit: auditLayout, prune, localRefine, numericLayout, pageConstrainedBreaks })
     if(profiler) {
       const {profile}=await profiler.send('Profiler.stop')
       writeFileSync(resolve(argument('cpu-profile')),JSON.stringify(profile))

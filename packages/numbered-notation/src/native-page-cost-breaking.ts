@@ -1,21 +1,14 @@
 import { nativeLineStateHull, insertNativeLineStateHull, type NativeLineStatisticPlan, type NativeLineCandidate } from './native-line-breaking.js'
 import type { NativePageBlock } from './native-pagination.js'
-import { sortedNativeInkSeparation } from './native-ink-separation.js'
-import type { NativeInk } from './native-ink.js'
+import { nativePageCollision, nativePageDistance } from './native-page-collision.js'
+import { nativePageGeometry, type NativePageGeometry } from './native-page-geometry.js'
 
-type Box={top:number;bottom:number;coreTop:number;coreBottom:number;music:boolean;scale:number;gap?:number;before:number;ink:NativeInk[];resolved:boolean;sorted:boolean}
+type Box=NativePageGeometry
 type State=NativeLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
 type HeightBounds={boxes:Box[];remaining:Map<number,number>[];pricedHeight:Map<number,number[]>[]}
 export function createNativePageCostCache(){return {heightBounds:new WeakMap<object,HeightBounds>(),boxes:new WeakMap<NativePageBlock,Box>(),distances:new WeakMap<Box,WeakMap<Box,number>>(),policy:''}}
-export type NativePageCostOptions={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ratio:number;wholeRows:boolean;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
-const box=(block:NativePageBlock):Box=>{
- const axis=block.baseline ?? 0
- const ink=(block.ink ?? []).map(piece=>({left:piece.left,right:piece.right,top:piece.top-axis,bottom:piece.bottom-axis}))
- const edges=[...ink,...(block.boundaryInk ?? []).map(piece=>({left:piece.left,right:piece.right,top:piece.top-axis,bottom:piece.bottom-axis}))]
- const top=Math.min(0,...edges.map(piece=>piece.top)),bottom=Math.max(0,...edges.map(piece=>piece.bottom))
- return {top,bottom,coreTop:block.core ? block.core.top-axis : top,coreBottom:block.core ? block.core.bottom-axis : bottom,
-  music:Boolean(block.core),scale:block.coreGapScale ?? 1,gap:block.coreGapBefore,before:block.gapBefore ?? 0,ink,resolved:Boolean(block.resolvedInk),sorted:false}
-}
+export type NativePageCostOptions={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
+const box=nativePageGeometry
 const planPaths=new WeakMap<NativeLineStatisticPlan,number[]>()
 const ends=(state:NativeLineStatisticPlan)=>{
  const saved=planPaths.get(state);if(saved)return saved
@@ -35,7 +28,7 @@ const comparePositions=(a:State,b:State)=>a.page-b.page || a.baseline-b.baseline
 export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineCandidate[])[],
  blockFor:(start:number,end:number,previousStart?:number,reference?:number)=>NativePageBlock,headers:readonly NativePageBlock[],options:NativePageCostOptions,timings?:Record<string,number>):number[]|undefined {
  const reusable=options.cache ?? createNativePageCostCache()
- const policy=`${options.gap}:${options.headerGap}:${options.ratio}:${options.wholeRows}`
+ const policy=`${options.gap}:${options.headerGap}`
  if(reusable.policy!==policy){reusable.policy=policy;reusable.distances=new WeakMap();reusable.heightBounds=new WeakMap()}
  const distances=reusable.distances
  const distance=(prior:Box,item:Box)=>{
@@ -45,16 +38,13 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
   const local=item.gap ?? options.gap*prior.scale
   const separation=prior.music && item.music ? local : options.headerGap
   const core=prior.coreBottom-item.coreTop+separation
-  let collision=-Infinity
-  if(prior.resolved && item.resolved && prior.bottom-item.top+local*options.ratio>core) {
-   if(options.wholeRows)collision=prior.bottom-item.top
-   else {
-    if(!prior.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sorted=true}
-    if(!item.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sorted=true}
-    collision=sortedNativeInkSeparation(prior.ink,item.ink)
-   }
+  let collision=-Infinity,edge=-Infinity
+  if(prior.resolved && item.resolved && (prior.edgeInk.length || item.edgeInk.length || nativePageDistance({collision:prior.bottom-item.top,edge:-Infinity},local,-Infinity)>core)) {
+   if(!prior.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sorted=true}
+   if(!item.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sorted=true}
+   const pair=nativePageCollision(prior,item);collision=pair.collision;edge=pair.edge
   }
-  const value=Math.max(core,collision+local*options.ratio)+item.before
+  const value=nativePageDistance({collision,edge},local,core)+item.before
   if(!peers){peers=new WeakMap();distances.set(prior,peers)}
   peers.set(item,value)
   return value

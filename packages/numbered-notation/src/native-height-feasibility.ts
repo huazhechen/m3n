@@ -1,5 +1,5 @@
-import { sortedNativeInkSeparation } from './native-ink-separation.js'
-import type { NativeInk } from './native-ink.js'
+import { nativePageCollision, nativePageDistance } from './native-page-collision.js'
+import { nativePageGeometry, type NativePageGeometry } from './native-page-geometry.js'
 import type { NativePageBlock } from './native-pagination.js'
 import type { NativeLineCandidate } from './native-line-breaking.js'
 
@@ -22,26 +22,24 @@ export function nativeCorePageLowerBound(blocks:readonly NativePageBlock[],optio
   return blocks.length ? page : 0
 }
 
-type Box = { ink: NativeInk[]; resolved: boolean; top: number; bottom: number; coreTop: number; coreBottom: number; music: boolean; scale: number; gap?: number; before: number }
+type Box = NativePageGeometry
 type State = { box: Box; page: number; baseline: number; previous?: State; end?: number }
 const box = (block: NativePageBlock): Box => {
-  const axis = block.baseline ?? 0
-  const ink = [...(block.ink ?? []), ...(block.boundaryInk ?? [])]
-  const top = Math.min(0, ...ink.map(item => item.top - axis))
-  const bottom = Math.max(0, ...ink.map(item => item.bottom - axis))
-  return { ink: (block.ink ?? []).map(item=>({...item,top:item.top-axis,bottom:item.bottom-axis})).sort((a,b)=>a.left-b.left), resolved: Boolean(block.resolvedInk), top, bottom, coreTop: block.core ? block.core.top - axis : top,
-    coreBottom: block.core ? block.core.bottom - axis : bottom, music: Boolean(block.core),
-    scale: block.coreGapScale ?? 1, gap: block.coreGapBefore, before: block.gapBefore ?? 0 }
+  const geometry = nativePageGeometry(block)
+  geometry.ink.sort((a,b)=>a.left-b.left); geometry.sorted = true
+  return geometry
 }
 
-/** Exact feasibility for whole-row, minimum-gap pagination. For each last row,
+/** Optimistic feasibility for adjacent-element minimum-gap pagination. For each last row,
  * retain the smallest page index, then the lowest baseline. That state can
  * accommodate every suffix accommodated by another state for the same row.
+ * Only adjacent resolved primitives constrain this bound; remote-row ink is
+ * checked by the shared exact paginator before accepting a witness.
  * Tail redistribution and gap fitting never change the number of pages. */
-export function nativeWholeRowFeasibility(candidates: readonly (readonly NativeLineCandidate[])[],
+export function nativePageFeasibility(candidates: readonly (readonly NativeLineCandidate[])[],
   blockFor: (start: number, end: number) => NativePageBlock, headers: readonly NativePageBlock[],
-  options: { pageHeight: number; margin: number; gap: number; headerGap: number; ratio: number; primitivePairs?: boolean; wholeRows?: boolean; onWitness?: (ends: number[]) => void }) {
-  const { pageHeight, margin, gap, headerGap, ratio } = options
+  options: { pageHeight: number; margin: number; gap: number; headerGap: number; onWitness?: (ends: number[]) => void }) {
+  const { pageHeight, margin, gap, headerGap } = options
   const boxes = candidates.map((rows, start) => new Map(rows.map(row => [row.end, box(blockFor(start, row.end))])))
   const advance = (item: Box, previous?: State, best?: State, ceiling=Infinity): State | undefined => {
     if (item.bottom - item.top > pageHeight - 2 * margin + 1e-6) return
@@ -49,13 +47,10 @@ export function nativeWholeRowFeasibility(candidates: readonly (readonly NativeL
     if (previous) {
       const localGap = item.gap ?? gap * previous.box.scale
       const separation = previous.box.music && item.music ? localGap : headerGap
-      const collision = options.primitivePairs
-        ? previous.box.resolved && item.resolved
-          ? options.wholeRows ? previous.box.bottom-item.top : sortedNativeInkSeparation(previous.box.ink,item.ink)
-          : -Infinity
-        : previous.box.bottom-item.top
+      const pair = previous.box.resolved && item.resolved
+        ? nativePageCollision(previous.box, item) : {collision:-Infinity,edge:-Infinity}
       baseline = Math.max(baseline, previous.baseline + previous.box.coreBottom - item.coreTop + separation,
-        previous.baseline + collision + ratio * localGap) + item.before
+        previous.baseline + nativePageDistance(pair, localGap, -Infinity)) + item.before
       if (baseline + item.bottom > pageHeight - margin + 1e-6) {
         page++; baseline = margin - item.top
       }

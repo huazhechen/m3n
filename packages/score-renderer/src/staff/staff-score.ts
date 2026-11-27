@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, measureScoreGreedyPageCeiling, planScoreLinesWithRefinedPages, scorePageFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { prepareStaffLineGraph, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -9,7 +9,6 @@ import { needsStaffExpansion } from './display-score.js'
 import { resolveStaffText } from './svg-text.js'
 import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
-import { compareStaffAvoidance } from './staff-avoidance-comparison.js'
 import { staffGlyphMetrics } from './staff-music-font.js'
 import { staffMusicCentre, staffHeaderBlock } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
@@ -62,8 +61,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const layouts = new Map<number, Layout>()
   const cache = new Map<boolean, { coreGap?: number; markup: string[] }>()
   const lowerEnvelopes = measurements.lowerEnvelopes
-  // Staff pagination uses whole-row envelopes. Fixed noteheads and the
-  // unexpanded staves therefore provide safe vertical bounds at every width.
+  // Fixed noteheads and unexpanded staves provide page-edge/core lower
+  // bounds only; unresolved horizontal ink never becomes a collision obstacle.
   const lowerEnvelopeFor = (item: (typeof projected.measures)[number]) => {
     let saved = lowerEnvelopes.get(item)
     if (saved) return saved
@@ -114,18 +113,18 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const envelopes = graph.measured.map(({ measure }) => lowerEnvelopeFor(measure))
-      const feasible = scoreWholeRowFeasibility(graph.candidates, (start, end) => {
+      const feasible = scorePageFeasibility(graph.candidates, (start, end) => {
         const members = envelopes.slice(start, end)
         const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
         const envelope = { coreAbove, coreBelow,
           extraAbove: Math.max(...members.map(e => e.coreAbove + e.extraAbove)) - coreAbove,
           extraBelow: Math.max(...members.map(e => e.coreBelow + e.extraBelow)) - coreBelow,
           hasLyrics: members.some(e => e.hasLyrics) }
-        return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: true,
+        return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: false,
           coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
           ...(start ? {} : { coreGapBefore: 0 }) }
       }, [staffHeaderBlock(header.height)], { pageHeight: a4SourcePageHeight(candidateWidth) - 2 * margin,
-        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3, primitivePairs: true, wholeRows: true })
+        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, })
       if (feasible(graph.candidates, ceiling)) return true
     }
     return false
@@ -163,8 +162,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
               const index = eventMeasures.get(id)
               return index === undefined ? undefined : index < start ? -1 : index >= end ? 1 : 0
             }, true)[0]!
-          system.envelope = scoreHeightEnvelope({ height: system.ink.bottom, core: system.core, ink: [system.ink] },
-            staffMusicCentre, Boolean(system.hasLyrics))
           rowCache.set(key, system)
         }
         return system
@@ -339,14 +336,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         pageCount: result.paginationError ? 0 : settings.coreGap === undefined ? result.pages.length : outputPages(result, true, candidateWidth).length,
       }
     },
-    /** Compare scalar row/measure avoidance without changing production layout. */
-    avoidanceComparison(candidateWidth = width) {
-      const result = layout(candidateWidth)
-      publishGutter(result)
-      const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
-      return compareStaffAvoidance(result.systems, a4SourcePageHeight(candidateWidth) - 2 * margin,
-        result.header.height, minimumGap, measure, gutter)
-    },
     /** Detached metadata for geometry audits and width selection. */
     layoutInfo(candidateWidth = width) {
       const result = layout(candidateWidth)
@@ -354,15 +343,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       return {
         displayedEvents: new Set(projected.measures.flatMap(measure => [measure.melody, measure.bass]
           .flatMap(lane => lane.flatMap(event => event.children ?? [event])).map(event => event.id))).size,
-        heightEnvelopeDiagnostics: result.systems.flatMap((system, index) => {
-          const envelope = system.envelope!
-          const above = Math.max(0, staffMusicCentre - envelope.coreAbove - envelope.extraAbove - system.ink.top)
-          const below = Math.max(0, system.ink.bottom - staffMusicCentre - envelope.coreBelow - envelope.extraBelow)
-          const coreAbove = Math.max(0, staffMusicCentre - envelope.coreAbove - system.core.top)
-          const coreBelow = Math.max(0, system.core.bottom - staffMusicCentre - envelope.coreBelow)
-          return above > 1e-6 || below > 1e-6 || coreAbove > 1e-6 || coreBelow > 1e-6
-            ? [{ row: index + 1, above, below, coreAbove, coreBelow, measures: result.lines[index]!.measures.map(m => m.id) }] : []
-        }),
         hasBass: projected.hasBass,
         spacing: result.spacing,
         quality: { ...result.quality },

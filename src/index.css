@@ -855,6 +855,10 @@ textarea::selection {
   content: "正在排版乐谱";
 }
 
+.score-paper[data-render-phase="layout"]:empty {
+  min-height: 12rem;
+}
+
 .score-paper svg {
   display: block;
   width: 100%;

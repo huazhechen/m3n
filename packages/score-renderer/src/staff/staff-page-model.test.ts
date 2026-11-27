@@ -22,7 +22,9 @@ it.each([false, true])('matches exact ending targets for every small-score parti
     for (let index = 0; index < lines.length; index++) {
       const line = lines[index]!, end = path[index]!
       const envelope = { ...envelopes[0]!, extraAbove: line.target / 100, extraBelow: line.target / 200 }
-      cache.set(`${start}:${end}:${line.target}`, { envelope, section: false } as StaffSystem)
+      const ink = { left: 0, right: line.target, top: -10 - envelope.extraAbove, bottom: 10 + envelope.extraBelow }
+      cache.set(`${start}:${end}:${line.target}`, { section: false, ink, pieces: [ink], spacingPieces: [ink],
+        edgePieces: [], core: { ...ink, top: -10, bottom: 10 } } as StaffSystem)
       start = end
     }
   }

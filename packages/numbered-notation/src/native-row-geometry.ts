@@ -7,41 +7,19 @@ import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
 import { nativeSystemCore } from './native-core.js'
 import { scoreLyricGapScale } from './score-layout-policy.js'
-import { nativeSvgPieces, type NativeInk } from './native-ink.js'
+import { nativeSvgPieces } from './native-ink.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import type { NativePageBlock } from './native-pagination.js'
 
-export type NativeAvoidance = 'row' | 'measure' | 'element'
-
 /** Consume the same placed primitives as drawing. No independently measured
  * final heights: row-wide lyric baselines and dynamic relations are resolved. */
-export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, margin: number, gap: number,
-  avoidance: NativeAvoidance): NativePageBlock {
+export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, margin: number, gap: number): NativePageBlock {
   const height = placeNativeLanes(system), pieces = nativeLanePieces(system, measurer)
   const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
   const primitives = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ left:piece.left,right:piece.right,
     top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
   primitives.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
-  let ink: NativeInk[] = primitives
-  if (avoidance === 'measure') {
-    const assigned = system.measures.map(() => [] as NativeInk[])
-    for (const piece of primitives) {
-      let indices = system.measures.flatMap((measure, index) => piece.right > measure.start && piece.left < measure.end ? [index] : [])
-      if (!indices.length) {
-        let nearest = 0, distance = Infinity
-        system.measures.forEach((measure, index) => {
-          const current = Math.max(measure.start - piece.right, piece.left - measure.end, 0)
-          if (current < distance) { distance = current; nearest = index }
-        })
-        indices = [nearest]
-      }
-      for (const index of indices) assigned[index]!.push(piece)
-    }
-    ink = assigned.filter(items => items.length).map(items => ({
-      left: Math.min(...items.map(piece => piece.left)), right: Math.max(...items.map(piece => piece.right)),
-      top: Math.min(...items.map(piece => piece.top)), bottom: Math.max(...items.map(piece => piece.bottom)),
-    }))
-  }
+  const ink = primitives
   const boundaryInk = (system.decorationLayout ?? []).filter(item => !item.hidden && isNativeMeasureNumber(item))
     .flatMap(item => {
       const y = system.lanes.find(lane => lane.id === item.lane)!.y

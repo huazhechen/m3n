@@ -27,7 +27,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
     let block = lowerBlocks.get(key)
     if (!block) {
       const envelope = mergeScoreHeightEnvelopes(envelopes.slice(start, end))
-      block = { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: true,
+      block = { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: false,
         coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(gap) : 1,
         ...(start ? {} : { coreGapBefore: 0 }),
         gapBefore: start && graph.measured[start]!.measure.section ? scoreLayoutConfig.staff.sectionGap : 0 }
@@ -46,7 +46,7 @@ export function staffPageCostModel(graph: ReturnType<typeof prepareStaffLineGrap
   }
   return {
     headers: [staffHeaderBlock(headerHeight)],
-    options: { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap: 0, ratio: .3, wholeRows: true },
+    options: { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap, headerGap: 0, },
     revision: () => rowCache.size,
     reference: () => ({ emptyMean: -Infinity, required: () => !equal, section: at => section[at]!,
       gap: (start, end) => fullLine(start, end).unitRhythmicGap, terminal }),

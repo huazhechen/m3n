@@ -1,11 +1,12 @@
 {
-  "revision": "9f17a64ef15971613304fb6e375aa65d2e6c0b4e",
-  "strategy": "minimum-gap-numeric-elements-page-ceiling-local-v34",
+  "revision": "3529d29952423d45f406006115ebd7ca80b2a156",
+  "strategy": "minimum-gap-precise-elements-05-page-ceiling-local-v35",
+  "rendererHash": "fc4b893ba39e8bd85f430a1a46b31c91e471bc6ca302b27ea4b9b89e5ccbcc83",
   "entries": [
     {
       "file": "scores/ai_de_li_zan_01.m3n",
       "sourceHash": "ed52d30f12eaa9f37f0ad707f86945b4896d204fe9c5c6c2e26fe9dc03fc26de",
-      "width": 588,
+      "width": 600,
       "pages": 1,
       "rows": 14
     },
@@ -19,14 +20,14 @@
     {
       "file": "scores/ai_ru_chao_shui_01.m3n",
       "sourceHash": "228df4e4ac82cf0c8ee9f4876bbe271c9adc24b4cf2926845d236f421e809bd8",
-      "width": 648,
+      "width": 672,
       "pages": 1,
       "rows": 12
     },
     {
       "file": "scores/an_xiang_01.m3n",
       "sourceHash": "193f6ba95a43c74fc36a95f4e83dc159106e9613314ade74bdcaab01d12044f2",
-      "width": 666,
+      "width": 672,
       "pages": 1,
       "rows": 13
     },
@@ -68,7 +69,7 @@
     {
       "file": "scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n",
       "sourceHash": "f38e2d03c2d080fa910d8ab55ded259658f0344047dbe90984ce197b097276c8",
-      "width": 708,
+      "width": 744,
       "pages": 2,
       "rows": 37
     },
@@ -82,14 +83,14 @@
     {
       "file": "scores/bei_jia_er_hu_pan_01.m3n",
       "sourceHash": "9eb7dfcbf1e964d3ccfdb13dcf063ec807015f55468df4b518811cb1d779dafe",
-      "width": 666,
+      "width": 600,
       "pages": 1,
-      "rows": 11
+      "rows": 9
     },
     {
       "file": "scores/besame_mucho_01.m3n",
       "sourceHash": "826f714cfe6d6705e9f3caa35f2024a748e37edd59e5384787b11b399a7a41df",
-      "width": 642,
+      "width": 654,
       "pages": 1,
       "rows": 16
     },
@@ -116,7 +117,7 @@
     },
     {
       "file": "scores/castle_in_the_sky_01.m3n",
-      "sourceHash": "e4fe6f41b4273c108ac539a91cf46613dad91f8ef08dcf62d8cc74644b051d0d",
+      "sourceHash": "c00e3f65ee74de9eb9a33c2f147de2b240b3d1e2128628ef40bdb0bff986b873",
       "width": 546,
       "pages": 1,
       "rows": 12
@@ -124,9 +125,9 @@
     {
       "file": "scores/cha_er_da_shi_01.m3n",
       "sourceHash": "e8a5edb2224a8c496af2f2b9f71533185f2d9f4a971426421582121e31a8de19",
-      "width": 642,
+      "width": 606,
       "pages": 2,
-      "rows": 31
+      "rows": 26
     },
     {
       "file": "scores/chong_er_fei_01.m3n",
@@ -138,14 +139,14 @@
     {
       "file": "scores/dan_huang_guan_bo_er_ka_01.m3n",
       "sourceHash": "6248ad0436897c0947c099761e9a9b528e16dd8e3562a6617f88d5974b12b7c2",
-      "width": 606,
+      "width": 648,
       "pages": 1,
       "rows": 12
     },
     {
       "file": "scores/dang_nian_qing_01.m3n",
       "sourceHash": "ec91c50c0920332de3883f4d1c4092ab0153cd77a84b8eda142e0a32ec9d043c",
-      "width": 570,
+      "width": 576,
       "pages": 1,
       "rows": 10
     },
@@ -236,7 +237,7 @@
     {
       "file": "scores/hou_lai_01.m3n",
       "sourceHash": "285986dc9be4ca87121a9394fdaf9b8f43d573d990299be77253b0af1f6528e8",
-      "width": 696,
+      "width": 702,
       "pages": 1,
       "rows": 13
     },
@@ -271,21 +272,21 @@
     {
       "file": "scores/lao_nan_hai_01.m3n",
       "sourceHash": "f657668e87910de663f527f58ee29fc951eb115b066a8daa733ad6ddd03a5b5b",
-      "width": 648,
+      "width": 654,
       "pages": 1,
       "rows": 10
     },
     {
       "file": "scores/li_hua_you_kai_fang_01.m3n",
       "sourceHash": "d1eb956a84d688a0d1447b6125e890a03ebe33a3f002749aa6d288bdd04293fe",
-      "width": 570,
+      "width": 582,
       "pages": 1,
       "rows": 8
     },
     {
       "file": "scores/liang_liang_01.m3n",
       "sourceHash": "c93ba1e43fe6f18163a772ff69d4ef0a8ee02035c7a866fcc5f08756d5138fa7",
-      "width": 654,
+      "width": 666,
       "pages": 1,
       "rows": 10
     },
@@ -320,9 +321,9 @@
     {
       "file": "scores/man_man_xi_huan_ni_01.m3n",
       "sourceHash": "dd1883093d259037f544ee966da6fd5bc94de019f509cb0027354d21b6f70295",
-      "width": 588,
+      "width": 648,
       "pages": 1,
-      "rows": 10
+      "rows": 11
     },
     {
       "file": "scores/mei_li_de_shen_hua_01.m3n",
@@ -341,7 +342,7 @@
     {
       "file": "scores/ming_tian_hui_geng_hao_01.m3n",
       "sourceHash": "f236b15fbe9d762f83f320d8d93a867b4b217d1fed3f418e238c44419d85c35a",
-      "width": 600,
+      "width": 606,
       "pages": 1,
       "rows": 9
     },
@@ -369,16 +370,16 @@
     {
       "file": "scores/mozart_k545_01.m3n",
       "sourceHash": "d35d7c2d8f0dd54542312f22cb70915a3845e09333b16187be874b2fb699b946",
-      "width": 648,
+      "width": 600,
       "pages": 2,
-      "rows": 29
+      "rows": 25
     },
     {
       "file": "scores/na_xie_nian_01.m3n",
       "sourceHash": "df9fbdb297a42b6217978748e525d726de6d2918aa56458086c8fa62317970ae",
-      "width": 720,
+      "width": 678,
       "pages": 1,
-      "rows": 14
+      "rows": 12
     },
     {
       "file": "scores/ni_shi_wo_xin_ai_de_gu_niang_01.m3n",
@@ -439,7 +440,7 @@
     {
       "file": "scores/ren_shi_jian_01.m3n",
       "sourceHash": "3a99cb213c35459b94dbc6dacf263d978e4c23ba904feab32afbfd21557a0881",
-      "width": 606,
+      "width": 612,
       "pages": 1,
       "rows": 10
     },
@@ -488,7 +489,7 @@
     {
       "file": "scores/second_waltz_01.m3n",
       "sourceHash": "656add15db75f29e2d559ace8ad9e7736ef55ccd192ab9f43aed2ee7676d2568",
-      "width": 606,
+      "width": 624,
       "pages": 1,
       "rows": 16
     },
@@ -530,7 +531,7 @@
     {
       "file": "scores/ta_shuo_01.m3n",
       "sourceHash": "fe75c93c94ba9e9424aa135ebeadf7336cd6eeace399399e4fa9e3d2f9d71eef",
-      "width": 648,
+      "width": 660,
       "pages": 1,
       "rows": 12
     },
@@ -586,14 +587,14 @@
     {
       "file": "scores/tu_ran_hao_xiang_ni_01.m3n",
       "sourceHash": "077b8cc7da9627b05793c472d31daeec6eb68fec9d08c113d3aebb7769cb524e",
-      "width": 666,
+      "width": 672,
       "pages": 1,
       "rows": 12
     },
     {
       "file": "scores/turkish_march_01.m3n",
       "sourceHash": "7e855d47ab12e8599d1726054d6681a1db3ecad81e622ba36be5e3554f9d7a3f",
-      "width": 678,
+      "width": 684,
       "pages": 1,
       "rows": 14
     },
@@ -621,7 +622,7 @@
     {
       "file": "scores/wo_de_zu_guo_01.m3n",
       "sourceHash": "5dc36c94a61c1fd85a0f32eaea27da8244fe8836b8b2c3d2ba5e3742ef3d2e94",
-      "width": 588,
+      "width": 594,
       "pages": 1,
       "rows": 7
     },
@@ -712,9 +713,9 @@
     {
       "file": "scores/xing_xing_dian_deng_01.m3n",
       "sourceHash": "c805a5a524b3ca07b97f4a803b0338d065b96f308274e2684ffbe3503c337786",
-      "width": 756,
-      "pages": 1,
-      "rows": 14
+      "width": 558,
+      "pages": 2,
+      "rows": 20
     },
     {
       "file": "scores/yan_hua_yi_leng_01.m3n",
@@ -726,9 +727,9 @@
     {
       "file": "scores/yang_cong_01.m3n",
       "sourceHash": "c3a4cce8163a92e4a56235db0cfe26d715e6a91ef380b7789069051d90a5bbc2",
-      "width": 672,
+      "width": 636,
       "pages": 1,
-      "rows": 11
+      "rows": 10
     },
     {
       "file": "scores/yi_qian_ge_shang_xin_de_li_you_01.m3n",
@@ -810,7 +811,7 @@
     {
       "file": "works/snail-mushroom-waves.m3n",
       "sourceHash": "eb788b366042f8cac75aa168b10b92dffdb30ab358107ac344d38ef3c4dfb682",
-      "width": 612,
+      "width": 618,
       "pages": 1,
       "rows": 15
     },

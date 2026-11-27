@@ -1,14 +1,15 @@
+import { nativePageGeometry } from './native-page-geometry.js'
 import { balanceScorePageTail } from './page-tail.js'
 import { interpolateScoreCoreGap } from './score-layout-policy.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
-import { sortedNativeInkSeparation } from './native-ink-separation.js'
+import { nativePageCollision, nativePageDistance, type NativeCollision } from './native-page-collision.js'
 import type { NativeInk } from './native-ink.js'
-export type NativePageBlock = { resolvedInk?: boolean; height: number; coreGapBefore?: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
+export type NativePageBlock = { edgeInk?: readonly (NativeInk & { gap: number })[]; resolvedInk?: boolean; height: number; coreGapBefore?: number; gapBefore?: number; baseline?: number; core?: { top: number; bottom: number }; coreGapScale?: number; ink?: readonly NativeInk[]; boundaryInk?: readonly NativeInk[] }
 export type NativeBlockPosition = { page: number; top: number }
 type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
-type NormalizedBlock={block:NativePageBlock;axis:number;ink:NativeInk[];top:number;lower:number;core:{top:number;bottom:number};sortState:{sorted:boolean}}
+type NormalizedBlock={block:NativePageBlock;axis:number;ink:NativeInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:NativeInk[];edgeInk:(NativeInk & {gap:number})[];sortState:{sorted:boolean}}
 const normalizedBlocks=new WeakMap<NativePageBlock,NormalizedBlock>()
-const immutableCollisions=new WeakMap<NativePageBlock,WeakMap<NativePageBlock,number>>()
+const immutableCollisions=new WeakMap<NativePageBlock,WeakMap<NativePageBlock,NativeCollision>>()
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
@@ -56,29 +57,25 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
 
 /** One immutable horizontal layout: reuse normalized ink and pair constraints
  * across its spacing fit, paged output and continuous/shared-page probes. */
-export function prepareNativePagination(blocks: readonly NativePageBlock[], policy: { wholeRows?: boolean; nonCoreGapRatio?: number; immutableBlocks?:boolean } = {}) {
+export function prepareNativePagination(blocks: readonly NativePageBlock[], policy: { immutableBlocks?:boolean } = {}) {
   const normalized = blocks.map((block, index) => {
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
-    if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,sortState:saved.sortState,index}
+    if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,sortState:saved.sortState,index}
     const axis = block.baseline ?? 0
-    const ink = (block.ink ?? []).map(piece => ({ left:piece.left,right:piece.right,top: piece.top - axis, bottom: piece.bottom - axis }))
-    // Overlay labels affect page edges without becoming inter-row obstacles.
-    let top=0,lower=0
-    for(const piece of ink){top=Math.min(top,piece.top);lower=Math.max(lower,piece.bottom)}
-    for(const piece of block.boundaryInk ?? []){top=Math.min(top,piece.top-axis);lower=Math.max(lower,piece.bottom-axis)}
-    const core = block.core ? { top: block.core.top - axis, bottom: block.core.bottom - axis } : { top, bottom: lower }
-    const value={ block, axis, ink, top, lower, core, sortState:{sorted:false} }
+    const geometry = nativePageGeometry(block)
+    const { ink, boundaryInk, edgeInk, top, bottom: lower } = geometry
+    const core = { top: geometry.coreTop, bottom: geometry.coreBottom }
+    const value={ block, axis, ink, top, lower, core, boundaryInk, edgeInk, sortState:{sorted:false} }
     if(policy.immutableBlocks)normalizedBlocks.set(block,value)
-    return {block,axis,ink,top,lower,core,sortState:value.sortState,index}
+    return {block,axis,ink,top,lower,core,boundaryInk,edgeInk,sortState:value.sortState,index}
   })
   type Placed = typeof normalized[number] & { baseline: number }
   const atBaseline=(item:typeof normalized[number],baseline:number):Placed=>({block:item.block,axis:item.axis,ink:item.ink,top:item.top,
-    lower:item.lower,core:item.core,sortState:item.sortState,index:item.index,baseline})
+    lower:item.lower,core:item.core,boundaryInk:item.boundaryInk,edgeInk:item.edgeInk,sortState:item.sortState,index:item.index,baseline})
   // Cache actual ink overlap constraints while trying different core values.
   // Each pair is measured once; fitting then evaluates scalar maxima only.
-  const collisions = new Map<number, Map<number, number>>()
+  const collisions = new Map<number, Map<number, NativeCollision>>()
   const collisionDistance = (prior: Placed, item: typeof normalized[number]) => {
-    if (policy.wholeRows) return prior.lower - item.top
     const shared = policy.immutableBlocks ? immutableCollisions.get(prior.block) : undefined
     const known = shared?.get(item.block)
     if (known !== undefined) return known
@@ -88,10 +85,10 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
     if (cached !== undefined) return cached
     if(!prior.sortState.sorted){prior.ink.sort((a,b)=>a.left-b.left);prior.sortState.sorted=true}
     if(!item.sortState.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sortState.sorted=true}
-    const distance = sortedNativeInkSeparation(prior.ink, item.ink)
+    const distance = nativePageCollision(prior, item)
     row.set(item.index, distance)
     if (policy.immutableBlocks) {
-      const pairs = shared ?? new WeakMap<NativePageBlock, number>()
+      const pairs = shared ?? new WeakMap<NativePageBlock, NativeCollision>()
       pairs.set(item.block, distance)
       if (!shared) immutableCollisions.set(prior.block, pairs)
     }
@@ -110,12 +107,13 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
         const musicGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
         const separation = item.block.core && previous.block.core ? musicGap : headerGap
         baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
-        for (const prior of policy.wholeRows ? [previous] : placed) {
+        for (const prior of placed) {
           const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
           // A collision cannot exceed the two complete ink envelopes. Distant
           // rows already clear this upper bound; avoid sweeping their pieces.
-          if(prior.baseline+prior.lower-item.top+localGap*(policy.nonCoreGapRatio ?? nativeStyle.collisionGapRatio)<=baseline)continue
-          baseline = Math.max(baseline, prior.baseline + collisionDistance(prior, item) + localGap * (policy.nonCoreGapRatio ?? nativeStyle.collisionGapRatio))
+          if(!prior.edgeInk.length && !item.edgeInk.length && prior.baseline+prior.lower-item.top+localGap*nativeStyle.collisionGapRatio<=baseline)continue
+          const pair = collisionDistance(prior, item)
+          baseline = Math.max(baseline, prior.baseline + nativePageDistance(pair, localGap, -Infinity))
         }
         baseline += item.block.gapBefore ?? 0
       }

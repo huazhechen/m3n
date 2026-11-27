@@ -459,20 +459,6 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)
 }
 
-/** Pure counterpart of placement for cached-height pagination candidates. */
-export function nativeMeasureHorizontalRanges(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number) {
-  const items = itemsFor(measures, options)
-  const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
-  const ranges = new Map<NativeMeasure, { left: number; right: number }>()
-  items.forEach((item, index) => {
-    const left = x + positions[index]! - item.left, right = x + positions[index]! + item.right
-    const range = ranges.get(item.measure)
-    if (range) { range.left = Math.min(range.left, left); range.right = Math.max(range.right, right) }
-    else ranges.set(item.measure, { left, right })
-  })
-  return measures.map(measure => ranges.get(measure) ?? { left: x, right: x })
-}
-
 /** Justify a complete system, then publish event and measure positions. */
 export function placeNativeHorizontal(measures: NativeMeasure[], options: HorizontalOptions, x: number, width: number, surrounding = measures): NativeGlyph[] {
   const items = itemsFor(measures, options, surrounding)

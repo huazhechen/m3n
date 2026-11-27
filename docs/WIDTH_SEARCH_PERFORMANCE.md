@@ -31,7 +31,7 @@
 复现：先执行 `python3 tools/run-low-memory.py npm run build:packages`，再串行运行：
 
 ```sh
-python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --numeric-layout --avoidance=element --prune --local-refine --output=.tmp/perf-numbered/current.json
+python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --numeric-layout --prune --local-refine --output=.tmp/perf-numbered/current.json
 python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staff --prune --local-refine --output=.tmp/perf-staff/current.json
 ```
 
@@ -70,3 +70,23 @@ python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staf
 试验中，五线谱在原搜索前单独追加资源DP令《基本功》升至1118ms，因此撤回该串联流程；最终两种谱式直接共享求解控制流程。额外的已知轮廓远距离碰撞预检查在117首简谱上零命中，已删除。只缓存编译图元联合边界的试验没有明显收益，也未保留。
 
 `--score=ban_yin_jie --warmup=2` 可在一个浏览器内对单曲预热后诊断，并在报告中标明 `warmupIterations`；此模式只用于快速定位，不作为全量600ms验收。最终全量命令仍不加 `--warmup`。
+
+
+## 精准避让统一与0.5净空恢复
+
+本轮按新的排版要求恢复非核心净空为核心间距的0.5倍，删除整行／小节矩形避让、独立小节最终高度探测、旧模式开关与对照工具。五线谱原生产路径仍使用整行避让，现改用实际图元；两种谱式共用 `native-page-geometry.ts` 的坐标归一化、`native-page-collision.ts` 的碰撞／固定附件净空、同一精准分页器及分页代价求解器。谱号和房子线的固定净空作为适配器提供的几何数据保留。未知行的高度包络仅是安全搜索下界，不作为横向碰撞矩形。
+
+五线谱谱头保持整行的开头留白约束；输出左侧谱号留白平移后，行块缓存识别几何数组变化，防止缓存旧坐标。已有跨行距的缓存／全新排版SVG一致性测试通过。简谱的排版中提示改为无内容时居中显示，重排时保留已有谱面；排版阶段不再弹出资源对话框。
+
+这次属于明确授权的排版规则变更，不能以旧0.3／五线谱整行避让结果作为不变性门禁。与 `989d9b30` 的117首生产局部细搜＋剪枝报告相比：
+
+| 谱式 | 之前累计选宽 | 本轮累计选宽 | 优宽／页数／行数变化 | 页数变化 | 超过600ms |
+| --- | ---: | ---: | ---: | --- | ---: |
+| 简谱 | 25.109秒 | 26.110秒 | 26首 | 《星星点灯》1→2页，其余不变 | 6/117 |
+| 五线谱 | 21.605秒 | 37.365秒 | 34首 | 全部不变 | 16/117 |
+
+报告为 `.tmp/precise-numbered/current.json`、`.tmp/precise-staff/current.json`，对比明细为对应的 `precise-*-comparison.json`。两批串行、各启动一次浏览器，未预热、未开profiler，聚合RSS峰值1400MiB。精准避让迁移增加了五线谱的开销，600ms目标仍未完成；后续性能优化应保持本轮新规则下的赢家、共同候选分页和评分。
+
+五线谱完整407项通过；简谱完整1170项通过，3项既有失败仍为括号端点、局部弧线高度、密集小节分片，后续相关227项通过。没有放宽这三项既有断言。
+
+合并主线《伴随着你》升八度提交后，仅补测该曲：简谱546px／1页／12行，五线谱558px／1页／9行；回归基线同步保留最新谱源摘要。上表全量耗时仍为升八度提交前的完整批次。
