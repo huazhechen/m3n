@@ -24,3 +24,13 @@
 中间仅启用扫描早退出的五线谱为37.999秒；加入单区间路径后为37.290秒，简谱24.375秒。这些中间测量不属于最终组合实现。最终原始报告保存在 `.tmp/collision-split/`、`.tmp/collision-split-repeat/`，基线为 `.tmp/preparation-repeat/numbered.json` 和 `.tmp/boundary-extra-repeat/staff.json`。
 
 复现先执行 `python3 tools/run-low-memory.py npm run build:packages`，再分别运行 `tools/benchmark-numbered-spacing.mjs --numeric-layout --prune` 和 `--staff --prune`，均通过同一内存守卫串行执行。
+
+## 未保留的局部复制映射实验
+
+另尝试在简谱局部行细化时，仅为真正复制的音符记录旧对象到新对象的映射；其余音符继续按原有语义借用。全量累计24.439秒、基本功1374.1ms、聚合RSS峰值1343MiB，892组赢家／候选与本次复测一致。但基本功投影阶段114.9ms，未优于修改前109.6／112.4ms，总耗时也未脱离此前24.352～24.813秒的波动范围。没有足够证据支持稳定收益，已撤回代码并重建原实现，报告仅保留在 `.tmp/partial-remap/numbered.json`。
+
+## 三连音临时数组实验及新采样
+
+将三连音碰撞中的 `flatMap/filter/map` 改为按相同顺序直接收集相交区间，并流式计算初始上下净空。五线谱两批累计36.880／37.380秒，基本功1692.2／1704.5ms，超600ms仍18首，聚合RSS峰值1445／1373MiB；各1733组赢家／候选与本次复测一致。两批累计均值37.130秒，与原实现37.111秒接近，未证明全量收益，已撤回并重建原实现。报告位于 `.tmp/tuplet-loops/staff.json` 及 `.tmp/tuplet-loops-repeat/staff.json`。
+
+提交 `10cb22b4` 后重新采样基本功五线谱，完整搜索保留33个宽度：精确行雕版包含约1302ms，行内整理745ms，几何 `collect` 366ms，逐小节绘制363ms，三连音放置137ms，GC280ms。统计按每个采样栈去重，包含时间互相嵌套，不能相加，也不是无profiler验收时间。主要问题仍是重复构造和遍历精确行几何；只调整数组写法未获得稳定收益。原始采样为 `.tmp/collision-basic-staff.cpuprofile`，附带报告为 `.tmp/collision-profile/staff.json`。静态音乐块和谱号分别编译此前也没有全量收益，见[既有实验](WIDTH_COLLISION_ENVELOPE_PERFORMANCE.md)，此次未重新实施。
