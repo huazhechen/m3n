@@ -30,6 +30,8 @@ const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
 const experimentalInkBin = Number(argument('proxy-bin') ?? 0)
 const experimentalWidthBin = Number(argument('proxy-width-bin') ?? 0)
+const experimentalPageCostPasses=Number(argument('page-cost-passes') ?? 0)
+assert(Number.isInteger(experimentalPageCostPasses) && experimentalPageCostPasses>=0 && experimentalPageCostPasses<=16,'Invalid page cost pass budget')
 assert(Number.isInteger(experimentalWidthBin) && experimentalWidthBin>=0 && experimentalWidthBin<=48 && experimentalWidthBin%6===0, 'Invalid proxy width bin')
 assert(Number.isInteger(experimentalInkBin) && experimentalInkBin >= 0 && experimentalInkBin <= 48, 'Invalid proxy bin')
 const experimentalRowReuse = process.argv.includes('--row-reuse')
@@ -38,6 +40,7 @@ assert(!process.argv.includes('--cross-tier') || experimentalRowReuse, '--cross-
 assert(!auditLayout || !experimentalRowReuse, 'Surrogate candidates cannot be painted; audit exact widths without --row-reuse')
 assert(!experimentalInkBin || experimentalRowReuse, '--proxy-bin requires --row-reuse')
 assert(!experimentalWidthBin || experimentalRowReuse, '--proxy-width-bin requires --row-reuse')
+assert(!experimentalPageCostPasses || experimentalRowReuse, '--page-cost-passes requires --row-reuse')
 assert(!experimentalGreedyCeiling || experimentalRowReuse, '--fast-ceiling requires --row-reuse for final exact verification')
 const warmupIterations = Number(argument('warmup') ?? 0)
 assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
@@ -54,6 +57,7 @@ if (checkpoint) {
   assert.equal(checkpoint.prune, prune, 'Cannot resume with a different pruning setting')
   assert.equal(checkpoint.experimentalInkBin ?? 0, experimentalInkBin, 'Cannot resume with different ink bins')
   assert.equal(checkpoint.experimentalWidthBin ?? 0, experimentalWidthBin, 'Cannot resume with different geometry width bins')
+  assert.equal(checkpoint.experimentalPageCostPasses ?? 0, experimentalPageCostPasses, 'Cannot resume with a different page cost pass budget')
   assert.equal(Boolean(checkpoint.experimentalRowReuse), experimentalRowReuse, 'Cannot resume with different row reuse')
   assert.equal(Boolean(checkpoint.experimentalTierReuse), process.argv.includes('--cross-tier'), 'Cannot resume with different tier reuse')
   assert.equal(Boolean(checkpoint.experimentalGreedyCeiling), experimentalGreedyCeiling, 'Cannot resume with different ceiling solving')
@@ -67,6 +71,7 @@ report.bundleFlags = bundleFlags
 report.detailedTimings = auditLayout || process.argv.includes('--detailed-timings')
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalWidthBin) report.experimentalWidthBin = experimentalWidthBin
+report.experimentalPageCostPasses = experimentalPageCostPasses
 if (experimentalRowReuse) report.experimentalRowReuse = true
 if (process.argv.includes('--cross-tier')) report.experimentalTierReuse = true
 if (experimentalGreedyCeiling) report.experimentalGreedyCeiling = true
@@ -107,6 +112,7 @@ try {
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))
   await page.evaluate(size => { globalThis.__m3nExperimentalInkBin = size }, experimentalInkBin)
   await page.evaluate(size => { globalThis.__m3nExperimentalWidthBin = size }, experimentalWidthBin)
+  await page.evaluate(passes => { globalThis.__m3nExperimentalPageCostPasses = passes }, experimentalPageCostPasses)
   await page.evaluate(enabled => { globalThis.__m3nExperimentalTierReuse = enabled }, process.argv.includes('--cross-tier'))
   await page.evaluate(enabled => { globalThis.__m3nDetailedLayoutTimings = enabled }, process.argv.includes('--detailed-timings'))
   for (const file of scores) {

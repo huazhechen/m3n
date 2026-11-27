@@ -38,6 +38,16 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
     if ((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths) console.log('fast-ceiling '+JSON.stringify({greedyCost,optimumCost,rows:greedy.ends.length}))
     if (greedyCost<=Math.max(.6,1.5*optimumCost)+1e-12) return greedy
   }
+  // Preserve full refinement when a single page is already feasible: its
+  // horizontal optimum is especially sensitive near width/page transitions.
+  // Candidate-only budget: retain the measured feasible plan if refinement
+  // would exceed it. Exact searches never interpret an unfinished proof as a
+  // rejection; final verification disables row reuse and runs to completion.
+  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number}
+  const limit=experiment.__m3nExperimentalRowReuse && greedy.pages>1 ? experiment.__m3nExperimentalPageCostPasses ?? 0 : 0
+  let passes=0
+  const exhausted=Symbol('candidate refinement budget exhausted')
+  try {
   const pageCache = createScorePageCostCache(), rowsToResolve = new Set<string>()
   const certifiedCosts = new WeakMap<object, number>(), unconstrainedCosts = new WeakMap<object, number>()
   const solveRestricted = (restricted: Graph, maximumCost: number, knownUnconstrained?: number[]) => {
@@ -62,6 +72,10 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
     let maximum = Math.min(maximumCost, Math.max(unconstrainedCost, certified === undefined ? 0 : certified + .05))
     let result: number[] | undefined, step = .05
     for (;;) {
+      if(limit>0 && passes++>=limit) {
+        if(timings)timings.numericPageCostMs=(timings.numericPageCostMs ?? 0)+performance.now()-started
+        throw exhausted
+      }
       result = planScoreLinesWithPageCost(restricted, model.blockFor, model.headers, {
         ...model.options, ceiling: greedy.pages, maximumCost: maximum,
         reference: model.reference?.(), cache: pageCache, rowsToResolve }, timings)
@@ -93,4 +107,9 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
   const feasible = improveFeasibleScoreLines(graph, greedy, evaluate, timings)
   if (timings) timings.numericBalanceMs = (timings.numericBalanceMs ?? 0) + performance.now() - started
   return planScoreLinesWithinPages(graph, greedy, optimum, evaluate, timings, undefined, () => feasible, solveRestricted)
+  } catch(error) {
+    if(error!==exhausted)throw error
+    if(timings)timings.candidatePageCostBudgetExits=(timings.candidatePageCostBudgetExits ?? 0)+1
+    return greedy
+  }
 }

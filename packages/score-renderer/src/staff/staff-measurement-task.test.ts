@@ -20,6 +20,7 @@ describe('one staff measurement task', () => {
       vi.stubGlobal('__m3nExperimentalTierReuse',true)
       vi.stubGlobal('__m3nExperimentalInkBin',12)
       vi.stubGlobal('__m3nExperimentalWidthBin',12)
+      vi.stubGlobal('__m3nExperimentalPageCostPasses',1)
       for(const width of [360,528,720,534]) {
         const candidate=await prepareStaffScore(score,{width},undefined,task)
         expect(candidate.measurementInfo().rows).toBeGreaterThan(0)
