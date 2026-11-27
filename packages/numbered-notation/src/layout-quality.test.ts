@@ -20,7 +20,7 @@ it('keeps stretch in the break diagnostics without defining the final spacing co
   expect(cost.lineStretchCost).toBeCloseTo(.3125)
   expect(cost.lineUniformityCost).toBeCloseTo(.03125)
   expect(cost.layoutCost).toBeCloseTo(.34375)
-  expect(scoreNumberedCost(768, [.5, .75]).fontSizeCost).toBe(4)
+  expect(scoreNumberedCost(720, [.5, .75]).fontSizeCost).toBe(4)
   expect(scoreNumberedCost(528, [.5, .75, .5, .75]).layoutCost).toBeCloseTo(cost.layoutCost * 2)
 })
 
@@ -51,11 +51,11 @@ it('scores individual gaps before averaging and includes comfortable gaps in the
 it('calibrates font loss at the readable and small-font ends of the search range', async () => {
   const { scoreNumberedFontCost: cost } = await import('./layout/quality.js')
   expect(cost(528)).toBe(0)
-  expect(cost(552)).toBeCloseTo(.04)
-  expect(cost(744)).toBeCloseTo(3.24)
-  expect(cost(768)).toBe(4)
+  expect(cost(552)).toBeCloseTo(.0625)
+  expect(cost(696)).toBeCloseTo(3.0625)
+  expect(cost(720)).toBe(4)
   expect(cost(552) - cost(528)).toBeLessThan(.3 ** 2)
-  expect(cost(768) - cost(744)).toBeCloseTo(.76)
+  expect(cost(720) - cost(696)).toBeCloseTo(.9375)
 })
 
 it('keeps an exceptional row visible instead of averaging its unevenness away', async () => {

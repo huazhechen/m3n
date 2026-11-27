@@ -144,7 +144,7 @@ describe('numbered automatic width margins', () => {
     const selected = await chooseNumberedScoreWidth({} as ScoreDocument, { paged: true })
 
     expect(selected).toBe(528)
-    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 528 && options.width <= 768)).toBe(true)
+    expect(numberedQuality.mock.calls.every(([, options]) => options.width >= 528 && options.width <= 720)).toBe(true)
   })
 
   it('prefers balanced three-row spacing over a short, uneven last row', async () => {
@@ -181,7 +181,7 @@ describe('numbered automatic width margins', () => {
 
 describe('staff automatic width range', () => {
   afterEach(() => { prepareStaffTask.mockClear(); staffTaskUses.mockClear() })
-  it.each([510, 590, 640])('refines the eleven levels at 6px steps when the required width is %s', async requiredWidth => {
+  it.each([510, 590, 640])('refines the nine levels at 6px steps when the required width is %s', async requiredWidth => {
     staffPageCount.mockReset()
     staffPageCount.mockImplementation((_paged, width) => width >= requiredWidth ? 2 : 3)
     staffLayoutInfo.mockImplementation(width => ({ pageCount: width >= requiredWidth ? 2 : 3, availableWidth: width,
@@ -192,9 +192,9 @@ describe('staff automatic width range', () => {
     expect(selected).toBe(Math.max(528, Math.ceil(requiredWidth / 6) * 6))
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
-    expect(staffTaskUses).toHaveBeenCalledTimes(requiredWidth <= 528 ? 14 : 17)
+    expect(staffTaskUses).toHaveBeenCalledTimes(requiredWidth <= 528 ? 12 : 15)
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
-    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 528 && width <= 768)).toBe(true)
+    expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 528 && width <= 720)).toBe(true)
   })
 
   it('creates a fresh measurement task for every selection', async () => {

@@ -137,7 +137,7 @@ describe('online scorebook with per-run layout reuse', () => {
   it('measures missing shared neighbors independently from each solo winner', async () => {
     layouts()
     mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1,
-      lineDensityVariation: width === 768 || width === 606 ? 0 : width === 600 ? 1 : 3, lastLineSlack: 0 }))
+      lineDensityVariation: width === 720 || width === 606 ? 0 : width === 600 ? 1 : 3, lastLineSlack: 0 }))
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.shared).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ title: 'first', width: 606 }), expect.objectContaining({ title: 'second', width: 606 }),
@@ -146,8 +146,8 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(new Set(requests).size).toBe(requests.length)
     mocks.plan.entries[0].sharePage = false
     await buildOnlineScorebook(new AbortController().signal, () => {})
-    expect(mocks.solo).toHaveBeenCalledWith('first', 768)
-    expect(mocks.solo).toHaveBeenCalledWith('second', 768)
+    expect(mocks.solo).toHaveBeenCalledWith('first', 720)
+    expect(mocks.solo).toHaveBeenCalledWith('second', 720)
   })
 
   it('starts from fresh sources and layouts on every export', async () => {

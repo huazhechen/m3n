@@ -125,14 +125,14 @@ const scorebook = {
   columnStep: 377, contentsRowsTop: 120, contentsBottomInset: 40, pageNumberOffset: 337,
 } as const
 
-// 自动版宽为24px的22–32倍（528–768px）；合页在26倍（624px）准入，搜索22–26倍。
+// 自动版宽为24px的22–30倍（528–720px）；合页在26倍（624px）准入，搜索22–26倍。
 const pageWidth = {
   unit: numbered.music,
   minimumMultiple: 22,
-  maximumMultiple: 32,
+  maximumMultiple: 30,
   sharedMaximumMultiple: 26,
   defaultMultiple: 30,
-  // 页面手动滑条范围，独立于自动搜索的十一档。
+  // 页面手动滑条范围，独立于自动搜索的九档。
   manualMinimumMultiple: 10,
   manualMaximumMultiple: 50,
 } as const
