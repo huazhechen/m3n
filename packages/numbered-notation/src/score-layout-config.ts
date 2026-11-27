@@ -130,8 +130,8 @@ const pageWidth = {
   sharedMaximumMultiple: 26,
   defaultMultiple: 30,
   // 页面手动滑条范围，独立于自动搜索的十一档。
-  manualMinimumMultiple: 20,
-  manualMaximumMultiple: 40,
+  manualMinimumMultiple: 10,
+  manualMaximumMultiple: 50,
 } as const
 
 export const scoreLayoutConfig = { page, fonts, numbered, lyrics, staff, imageExport, rendering, scorebook, pageWidth }

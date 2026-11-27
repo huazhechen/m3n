@@ -78,15 +78,15 @@ it('steps from an off-grid width in both directions and disables buttons at the 
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.click())
   act(() => host.querySelector<HTMLButtonElement>('[aria-label="增大乐谱宽度"]')!.click())
   expect(onChange.mock.calls).toEqual([[606], [612]])
-  render(480)
+  render(240)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="减小乐谱宽度"]')!.disabled).toBe(true)
-  render(960)
+  render(1200)
   expect(host.querySelector<HTMLButtonElement>('[aria-label="增大乐谱宽度"]')!.disabled).toBe(true)
 })
 
-it('exposes the manual 20–40 multiple range independently from the search levels', () => {
+it('exposes the manual 10–50 multiple range independently from the search levels', () => {
   const { slider } = render(720)
-  expect([slider.min, slider.max, slider.step, slider.value]).toEqual(['20', '40', '0.25', '30'])
+  expect([slider.min, slider.max, slider.step, slider.value]).toEqual(['10', '50', '0.25', '30'])
   expect(slider.getAttribute('aria-valuetext')).toBe('720px')
   expect(host.querySelector('output')!.textContent).toBe('720px')
 })
