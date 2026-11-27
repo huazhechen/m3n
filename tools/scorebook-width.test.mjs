@@ -595,3 +595,30 @@ test('a valid endpoint does not hide an underestimated winner during verificatio
   assert.deepEqual(visited,[720,534,540])
   assert.equal(result.best.width,540)
 })
+
+test('single-tier experiment classifies with both tiers and restores its scope on completion and cancellation',async()=>{
+  const previous=globalThis.__m3nExperimentalSingleTier
+  try {
+    for(const pages of [1,2]) {
+      globalThis.__m3nExperimentalSingleTier=true
+      const visited=[]
+      const result=await probeWidthCandidates(width=>{
+        visited.push([width,globalThis.__m3nExperimentalSingleTier])
+        return {width,pageCount:pages,totalCost:1,rows:4,outside:[],overlaps:[]}
+      })
+      assert.equal(result.candidates.length,33)
+      assert.deepEqual(visited[0],[528,false])
+      assert(visited.slice(1).every(([,single])=>single===(pages>1)))
+      assert.equal(globalThis.__m3nExperimentalSingleTier,true)
+    }
+    const controller=new AbortController()
+    await assert.rejects(probeWidthCandidates(()=>{
+      controller.abort(new Error('cancelled tier experiment'))
+      return {pageCount:2,totalCost:0,rows:4,outside:[],overlaps:[]}
+    },{signal:controller.signal}),/cancelled tier experiment/)
+    assert.equal(globalThis.__m3nExperimentalSingleTier,true)
+  } finally {
+    if(previous===undefined)delete globalThis.__m3nExperimentalSingleTier
+    else globalThis.__m3nExperimentalSingleTier=previous
+  }
+})

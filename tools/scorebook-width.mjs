@@ -45,6 +45,11 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
   let requests = 0
   let best = null
   let verifiedWidths = 0
+  // Short scores are sensitive to the loose tier's different break patterns.
+  // Classify with both tiers at the minimum width before reducing long-score
+  // candidate work. This remains an empirical, explicitly opted-in surrogate.
+  const singleTier=globalThis.__m3nExperimentalSingleTier
+  if(singleTier)globalThis.__m3nExperimentalSingleTier=false
   const probe = async width => {
     signal?.throwIfAborted()
     requests++
@@ -62,6 +67,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     }
     signal?.throwIfAborted()
     candidates.push(result)
+    if(singleTier && width===widthMinimum)globalThis.__m3nExperimentalSingleTier=safe(result) && result.pageCount>1
     if (safe(result) && (!best || rank(result, best) < 0)) best = result
   }
   const consider = async width => {
@@ -77,6 +83,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
   const coarseOrder = prune && !verify
     ? [...widthCandidates.filter((_, index) => index % 2 === 0), ...widthCandidates.filter((_, index) => index % 2 === 1)]
     : widthCandidates
+  try {
   for (const width of coarseOrder) await consider(width)
   // A break can improve abruptly in any interval, including when every coarse
   // candidate failed. Always cover the entire grid for both notations.
@@ -85,6 +92,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     if (!measured.has(width)) await consider(width)
   return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
     uniqueWidths: requests, hits: 0, verifiedWidths, skippedWidths } }
+  } finally { if(singleTier)globalThis.__m3nExperimentalSingleTier=singleTier }
 }
 
 /** Run the common discrete width search and reject a score with no safe candidate. */

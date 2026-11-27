@@ -149,6 +149,7 @@ it.each([false,true])('compiled surrogate plans preserve unplaced inputs and exa
   vi.stubGlobal('__m3nExperimentalWidthBin',12)
   vi.stubGlobal('__m3nExperimentalPageCostPasses',1)
   vi.stubGlobal('__m3nExperimentalEqualTier',true)
+      vi.stubGlobal('__m3nExperimentalSingleTier',true)
   PreparedNumberedNotationScore.measure(document,options)
   const preparation = layoutTask.preparationFor(document,options,textMeasurementCache)
   const unplaced = structuredClone(preparation.measuredProjections)
