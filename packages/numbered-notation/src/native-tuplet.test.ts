@@ -3,6 +3,9 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
+import { nativeRibbonRange } from './native-curve.js'
+import { nativeSvgPieces } from './native-ink.js'
+import { nativeCoreGap } from './native-style.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const measurer = new DefaultTextMeasurer()
@@ -89,7 +92,12 @@ describe('native tuplet brackets', () => {
     const bracket = system.relations.find(r => r.kind === 'tuplet')!
     const slur = system.relations.find(r => r.kind === 'slur')!
     expect(system.relations.indexOf(bracket)).toBeLessThan(system.relations.indexOf(slur))
-    expect(system.relationLayout!.get(slur)!.ink.bottom).toBeLessThan(system.relationLayout!.get(bracket)!.ink.top)
+    const arc = system.relationLayout!.get(slur)!.arc!
+    const placed = system.relationLayout!.get(bracket)!
+    for (const piece of placed.pieces ?? nativeSvgPieces(placed.svg,measurer)) {
+      const edge = nativeRibbonRange(arc,piece.left,piece.right)
+      if (edge) expect(piece.top - edge.bottom).toBeGreaterThanOrEqual(nativeCoreGap() * .12 - .005)
+    }
   })
 
   it.each([['[1 2 3:2] 4 5', '3'], ['[1 2 3 4 5:3] 6', '5:3'], ['[1 2 3 4 5:4]', '5']])('preserves enough ratio information for %s', (music, label) => {

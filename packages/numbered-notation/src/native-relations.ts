@@ -166,10 +166,14 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (compare(peer.last, relation.first) <= 0 || compare(peer.first, relation.last) >= 0) continue
           lift = Math.max(lift, nativeRibbonClearance(arc, placed.arc, (system.coreGap ?? nativeCoreGap()) * .12, nativeStyle.music * 1e-6))
         } else {
-          const piece = placed.ink
-          if (piece.right <= arc.left || piece.left >= arc.right) continue
-          const edge = nativeRibbonRange(arc, piece.left, piece.right)
-          if (edge) lift = Math.max(lift, edge.bottom - piece.top + (system.coreGap ?? nativeCoreGap()) * .12)
+          // A rhythm numeral is higher than its bracket arms. Keep each
+          // primitive's own footprint instead of spreading the numeral's
+          // top across the entire tuplet (and unnecessarily lifting the bow).
+          for (const piece of placed.pieces ?? nativeSvgPieces(placed.svg, measurer)) {
+            if (piece.right <= arc.left || piece.left >= arc.right) continue
+            const edge = nativeRibbonRange(arc, piece.left, piece.right)
+            if (edge) lift = Math.max(lift, edge.bottom - piece.top + (system.coreGap ?? nativeCoreGap()) * .12)
+          }
         }
       }
       // nativeArcGeometry already clears the music to a fixed point. With
