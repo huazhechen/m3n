@@ -17,6 +17,8 @@ export function staffDuration(beats: number) {
 }
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
+  ties?: ReadonlyArray<{ start: number; end: number; minimum: number }>
+  tieLeading?: number; tieTrailing?: number
   columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
 /** Hard rhythmic minima followed only by nonnegative stretching. */
@@ -98,8 +100,11 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, readi
       // parallel constraint, never an additional rhythmic width.
       const inkGap = staffMusicSize() / 4 * .2
       return { cells: [
-        { lane: 'music', left: column.left,
-          right: column.after + (index + 1 < metrics.columns.length ? Math.max(inkGap, gap * after) : 0), before: 0, after: 0 },
+        { lane: 'music', left: index === 0 ? Math.max(column.left, metrics.tieLeading ?? 0) : column.left,
+          right: Math.max(column.after, index + 1 === metrics.columns.length ? metrics.tieTrailing ?? 0 : 0) + (index + 1 < metrics.columns.length ? Math.max(inkGap, gap * after) : 0), before: 0, after: 0 },
+        ...(metrics.ties ?? []).flatMap((tie, i) => index === tie.start || index === tie.end
+          ? [{ lane: `tie-${i}`, sparse: true, left: 0, right: index === tie.start ? tie.minimum : 0,
+            before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }] : []),
         ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
       ] }
     }))
@@ -193,7 +198,15 @@ export type PreparedNote = {
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
 export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
-export function createStaffPreparation(_document?: StaffDocument) {
+export function createStaffPreparation(document?: StaffDocument) {
+  const incomingTies = new Set<string>()
+  for (const lane of ['melody', 'bass'] as const) {
+    let previous: StaffEvent | undefined
+    for (const measure of document?.measures ?? []) for (const entry of measure[lane]) {
+      if (previous?.event.tie) incomingTies.add(entry.children?.[0]?.id ?? entry.id)
+      previous = entry
+    }
+  }
   const measures = new WeakMap<StaffMeasure, Map<string, PreparedMeasure>>()
   return {
     lyricAttributes: new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts: new Map<string, StaffLyricText>(),
@@ -202,7 +215,7 @@ export function createStaffPreparation(_document?: StaffDocument) {
       if (!variants) { variants = new Map(); measures.set(measure, variants) }
       const key = `${first}:${hasBass}`
       let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText); variants.set(key, prepared) }
+      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies); variants.set(key, prepared) }
       return prepared
     },
   }
@@ -281,7 +294,7 @@ function beamGroups(count: number, unit: number) {
   if (count > 3 && count % 3 === 0) return Array.from({ length: count / 3 }, () => 12 / unit)
   return Array.from({ length: Math.ceil(count * 4 / unit) }, () => 1)
 }
-function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText): PreparedMeasure {
+function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>): PreparedMeasure {
   const signatures: Signature[] = [], beams: PreparedMeasure['beams'] = []
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
@@ -432,6 +445,32 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     column.rhythmAfter = Math.max(0, column.naturalAdvance - column.rhythmLeft)
     return column
   })
+  // Tie readability is a sparse hard constraint on the same shared column
+  // solver as music and lyrics; it never changes rhythm/stretch weights.
+  const ties: Array<{ start: number; end: number; minimum: number }> = []
+  const noteColumns = new Map(timed.map(value => [value.note, onsets.findIndex(onset => Math.abs(onset - value.onset) < 1e-7)]))
+  const columnFor = (note: PreparedNote) => noteColumns.get(note)!
+  const tieMinimum = staffMusicSize() / 4
+  const reserve = (a: PreparedNote, b: PreparedNote) => {
+    const minimum = Math.max(...a.heads.slice(0, b.heads.length).map((_, i) =>
+      staffTiePorts(a, i).start - staffTiePorts(b, i, -a.direction).end + tieMinimum))
+    if (Number.isFinite(minimum)) ties.push({ start: columnFor(a), end: columnFor(b), minimum })
+  }
+  let tieLeading = 0, tieTrailing = 0
+  for (const lane of entries) {
+    let previous: PreparedEntry | undefined
+    for (const entry of lane) {
+      if (previous?.item.event.tie) reserve(previous.notes.at(-1)!, entry.notes[0]!)
+      for (const slot of entry.item.event.tupletTies ?? [])
+        if (entry.notes[slot] && entry.notes[slot + 1]) reserve(entry.notes[slot]!, entry.notes[slot + 1]!)
+      previous = entry
+    }
+    const firstNote = lane[0]?.notes[0], lastEntry = lane.at(-1), lastNote = lastEntry?.notes.at(-1)
+    if (first && firstNote && incomingTies.has(firstNote.item.id))
+      tieLeading = Math.max(tieLeading, ...firstNote.heads.map((_, i) => tieMinimum - staffTiePorts(firstNote, i).end))
+    if (lastNote && lastEntry!.item.event.tie)
+      tieTrailing = Math.max(tieTrailing, ...lastNote.heads.map((_, i) => staffTiePorts(lastNote, i).start + tieMinimum))
+  }
   const startGap = staffMusicSize() / 4
   const joined = Boolean(measure.joinsPreviousRepeat && !first)
   const start = measure.source.left?.startsWith('rpt') && !joined
@@ -445,7 +484,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
   const headWidth = staffGlyphMetrics('noteheadBlack').right - staffGlyphMetrics('noteheadBlack').left
   const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
   const weights = columns.map(column => Math.max(0, (column.naturalAdvance - headWidth) / increment))
-  return { entries, signatures, beams, metrics: { start, endInset, multiRestWidth, columns }, onsets, weights }
+  return { entries, signatures, beams, metrics: { start, endInset, multiRestWidth, columns, ties, tieLeading, tieTrailing }, onsets, weights }
 }
 export type StaffNoteAnchor = {
   prepared: PreparedNote; x: number; ys: number[]; headLeft: number; headRight: number; direction: number
@@ -818,14 +857,41 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
   }
   return measureNode
 }
+/** Ports sit just outside the head vertically. Single heads may use their
+ * upper/lower shoulder; only symbols crossing that height extend the port.
+ * This descriptor is shared by spacing reservations and final drawing. */
+function staffTiePorts(note: PreparedNote, index: number, direction = -note.direction) {
+  const head = note.heads[index]!, glyph = staffGlyphMetrics(note.head, note.size), space = staffMusicSize() / 4
+  const inset = note.heads.length === 1 ? (glyph.right - glyph.left) * .2 : -space * .1
+  const y = head.y + (direction < 0 ? glyph.top - space * .2 : glyph.bottom + space * .2)
+  let start = head.x + glyph.right - inset, end = head.x + glyph.left + inset
+  // A shoulder on the stem side is not free even when the head itself clears
+  // the port vertically. Keep that endpoint outside the stem's x footprint.
+  if (note.dur > 1 && direction === -note.direction) {
+    if (note.direction === 1) start = Math.max(start, head.x + glyph.right + space * .1)
+    else end = Math.min(end, head.x + glyph.left - space * .1)
+  }
+  for (const symbol of note.symbols) {
+    const ink = staffGlyphMetrics(symbol.glyph, symbol.size ?? note.size)
+    if (symbol.y + ink.bottom < y - space * .12 || symbol.y + ink.top > y + space * .12) continue
+    start = Math.max(start, symbol.x + ink.right + space * .1)
+    end = Math.min(end, symbol.x + ink.left - space * .1)
+  }
+  if (note.graces.length || note.signature.width)
+    end = Math.min(end, -note.left + note.signature.width + note.graceWidth - space * .1)
+  return { start, end, y }
+}
+
 /** Open ties use system boundaries; one ribbon is drawn for each chord member. */
 export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNoteAnchor | undefined, left: number, right: number, obstacles: readonly Ink[] = []): XmlNode[] {
   const note = first ?? last!
   const direction = -note.direction, count = Math.min(first?.ys.length ?? Infinity, last?.ys.length ?? Infinity)
   const curves: XmlNode[] = []
   for (let i = 0; i < count; i++) {
-    const x1 = first ? Math.max(first.headRight, first.x + first.prepared.after) + (staffMusicSize() / 4 * 0.1) : left, x2 = last ? Math.min(last.headLeft, last.x - last.prepared.left + last.prepared.signature.width + last.prepared.graceWidth) - (staffMusicSize() / 4 * 0.1) : right
-    const y1 = (first?.ys[i] ?? last!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6), y2 = (last?.ys[i] ?? first!.ys[i]!) + direction * (staffMusicSize() / 4 * 0.6)
+    const x1 = first ? first.x + staffTiePorts(first.prepared, i, direction).start : left
+    const x2 = last ? last.x + staffTiePorts(last.prepared, i, direction).end : right
+    const portY = (anchor: StaffNoteAnchor) => anchor.ys[i]! + staffTiePorts(anchor.prepared, i, direction).y - anchor.prepared.heads[i]!.y
+    const y1 = portY(first ?? last!), y2 = portY(last ?? first!)
     const space = staffMusicSize() / 4, thickness = space * .23
     let rise = Math.min(space * 1.6, Math.max(space * .6, (x2 - x1) / 6))
     // Keep the note attachments fixed while bending around a crossed
@@ -841,6 +907,13 @@ export function drawStaffTie(first: StaffNoteAnchor | undefined, last: StaffNote
         : obstacle.bottom + space * .4 - Math.min(ya, yb)
       rise = Math.max(rise, needed / factor + thickness)
     }
+    // Keep the bow's apex clear of staff rules. A short tie with the old
+    // .6-space control rise peaks almost exactly on the next staff line.
+    const staffTop = note.ys[i]! - note.prepared.heads[i]!.y + staffMusicSize()
+    const middle = (y1 + y2) / 2, apex = middle + direction * rise * .75
+    const rule = Math.round((apex - staffTop) / space), ruleY = staffTop + rule * space
+    if (rule >= 0 && rule <= 4 && Math.abs(apex - ruleY) < space * .25)
+      rise = Math.max(rise, (ruleY + direction * space * .25 - middle) / (direction * .75))
     const height = direction * rise, dx = (x2 - x1) / 3
     const path = element('path', { fill: '#000', stroke: 'none' })
     setNumericPath(path, staffCommandPath([{ kind: 0, values: [x1, y1] },

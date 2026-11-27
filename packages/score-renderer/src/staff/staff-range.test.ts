@@ -3,6 +3,7 @@ import { expect, it, vi } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE } from './staff-engine.js'
+import { staffMusicSize } from './staff-music-font.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { planStaffLines } from './line-layout.js'
 import { findAll, hasClass, SvgGeometry, textMeasurer, xml } from './layout-svg.js'
@@ -83,6 +84,43 @@ it.each([1, -1])('keeps short ties visible in both stem directions (%s)', direct
   expect(markup).toContain('fill="#000"')
 })
 
+
+function tieCoordinates(node: Parameters<typeof xml>[0]) {
+  return /d="([^"]+)"/.exec(xml(node))![1]!.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
+}
+
+it.each([.6, 1.2])('reserves readable ties at minimum width in spacing tier %s', spacing => {
+  // Both stem directions, chords and internal tuplet ties use the same hard
+  // horizontal constraint, including at the tightest legal measure width.
+  for (const notes of ['((1~ 1))', '((1e~ 1e))', '(([13:h]~ [13:h]))', '([3~ 3 3:2])']) {
+    const document = projectStaffDocument(analyzeM3N(`{2/4}\nN: ${notes} |||`).score)
+    const model = createStaffMeasure(document.measures[0]!, false, false, textMeasurer(), spacing)
+    drawStaffMeasure(model, model.minimum, 0)
+    const [first, last] = model.entries[0]!.flatMap(entry => entry.notes)
+    const paths = drawStaffTie(first, last, 0, model.minimum)
+    expect(paths.length).toBeGreaterThan(0)
+    for (const path of paths) {
+      const values = tieCoordinates(path)
+      expect(values[6]! - values[0]!).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .001)
+      expect(Math.abs(values[1]! - first!.ys[paths.indexOf(path)]!)).toBeGreaterThanOrEqual(staffMusicSize() / 4 * .7 - .001)
+      expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2)
+    }
+  }
+})
+
+it('reserves visible open ties on both sides of a forced system break', () => {
+  const result = systems('{2/4}\nN: ((1 1~)) | {br}((1 1)) |||')
+  expect(result).toHaveLength(2)
+  for (const system of result) {
+    const paths = findAll(system.node, node => hasClass(node, 'tie'))
+      .flatMap(node => findAll(node, child => child.tagName === 'path'))
+    expect(paths.length).toBeGreaterThan(0)
+    for (const path of paths) {
+      const values = tieCoordinates(path)
+      expect(values[6]! - values[0]!).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .001)
+    }
+  }
+})
 
 it.each([1, -1])('bends ties around a crossed signature without detaching endpoints (%s)', direction => {
   const document = projectStaffDocument(analyzeM3N('{2/4}\nN: 1~ 1 |||').score)

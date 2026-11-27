@@ -2,7 +2,7 @@ import { staffTempoBeat } from './staff-tempo.js'
 import { staffSlur } from './staff-slur.js'
 import { SCORE_TEXT_FONT, scoreLayoutConfig, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
-import { createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
+import { createStaffPreparation, createStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
 import { staffMusicSize, staffGlyph, staffNavigationGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
@@ -67,7 +67,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation?: StaffPreparation, selectedLine?: number, endpointLine?: (id: string) => number | undefined, deferPieces = false) {
+  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, deferPieces = false) {
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
