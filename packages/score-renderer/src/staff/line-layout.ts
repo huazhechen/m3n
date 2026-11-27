@@ -5,9 +5,9 @@ import type { MeasureText } from './layout-svg.js'
 
 export { STAFF_SCALE }
 export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
-export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number; unitRhythmicGap?: number }
+export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number; unitRhythmicGap?: number; rhythmicGaps?: readonly number[] }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; rhythmic?: (measure: StaffMeasure, first: boolean, spacing: number, extra: number) => { gap: number; weight: number }; weight?: (measure: StaffMeasure) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; rhythmic?: (measure: StaffMeasure, first: boolean, spacing: number, extra: number) => { gap: number; weight: number; gaps: readonly number[] }; weight?: (measure: StaffMeasure) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -127,7 +127,7 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
   // A row's full-width metrics depend on its members, not on the other
   // breaks in the candidate plan. Ending shortening still uses each plan's
   // own preceding rows and never mutates these cached full-width metrics.
-  const rowMetrics = new Map<number, { members: MeasuredStaffMeasure[]; minimumWidth: number; weight: number; rhythmicReady: boolean; gap?: number }>()
+  const rowMetrics = new Map<number, { members: MeasuredStaffMeasure[]; minimumWidth: number; weight: number; rhythmicReady: boolean; gap?: number; gaps?: readonly number[] }>()
   const makeLines = (ends: number[], shorten = true, begin = 0, rhythmic = true) => {
     const lines: StaffLine[] = []
     let start = begin
@@ -146,16 +146,20 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
       if (rhythmic && minimum.rhythmic) {
         if (!metrics.rhythmicReady) {
           let gap = 0, weights = 0
+          const gaps: number[] = []
           members.forEach((member, index) => {
             const cell = equal ? (line.target - members[0]!.head) / members.length - member.body
               : (line.target - minimumWidth) * member.weight / weight
             const result = minimum.rhythmic!(member.measure, index === 0, spacing, Math.max(0, cell))
             gap += result.gap; weights += result.weight
+            gaps.push(...result.gaps)
           })
           if (weights > 0) metrics.gap = gap / weights
+          metrics.gaps = gaps
           metrics.rhythmicReady = true
         }
         if (metrics.gap !== undefined) line.unitRhythmicGap = metrics.gap
+        line.rhythmicGaps = metrics.gaps
       }
       lines.push(line); start = end
     }

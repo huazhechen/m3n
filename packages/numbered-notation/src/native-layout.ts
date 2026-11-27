@@ -31,7 +31,7 @@ import { prepareScorePagination, type ScorePageBlock } from './layout/pagination
 import { nativeHeaderGeometry, type NativeHeaderPreparation } from './native-header.js'
 import { type ScoreLineCandidate } from './layout/line-breaking.js'
 export { wrapNativeText } from './native-header.js'
-import { cacheNativeHorizontal, type NativeHorizontalTemplates, measureNativeHorizontal, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
+import { cacheNativeHorizontal, type NativeHorizontalTemplates, measureNativeHorizontal, nativeHorizontalSpacing, nativeRhythmicSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
 import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
@@ -58,7 +58,7 @@ type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | '
 }>
 type NativeLayoutPreparation = { canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
   horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
-  arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,number|undefined>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
+  arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
 }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
@@ -342,11 +342,16 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if(preparation && key!==undefined) {
       preparation.unitGaps ??= new Map()
       if(preparation.unitGaps.has(key))return preparation.unitGaps.get(key)
-      const gap=nativeUnitRhythmicGap(measures,options,width);preparation.unitGaps.set(key,gap);return gap
+      const gap=nativeRhythmicSpacing(measures,options,width);preparation.unitGaps.set(key,gap);return gap
     }
-    return nativeUnitRhythmicGap(measures,options,width)
+    return nativeRhythmicSpacing(measures,options,width)
   }
-  const systems: NativeSystem[] = lines.map(({ measures, density }, index) => ({ horizontalDensity: density, unitRhythmicGap: onlyRow===undefined ? rhythmicGapFor(measures) : undefined, coreGap: nativeCoreGap(document), index, numericGeometry: options.numericLayout, measures, lanes: [], top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }))
+  const systems: NativeSystem[] = lines.map(({ measures, density }, index) => {
+    const spacing = onlyRow === undefined ? rhythmicGapFor(measures) : undefined
+    return { horizontalDensity: density, unitRhythmicGap: spacing?.gap, rhythmicGaps: spacing?.gaps,
+      coreGap: nativeCoreGap(document), index, numericGeometry: options.numericLayout, measures, lanes: [],
+      top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }
+  })
   record('horizontalQualityMs')
   // Named sections are labels within a projected part; expanded performances
   // can also introduce part boundaries. Neither a phrase nor {br} ends a section.
@@ -430,7 +435,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const rowGaps=new Map<number,number|undefined>()
   const gapFor=(start:number,end:number)=>{
     const key=start*(plannedFragments.length+1)+end
-    if(!rowGaps.has(key)) {const members=plannedFragments.slice(start,end);rowGaps.set(key,rhythmicGapFor(members))}
+    if(!rowGaps.has(key)) {const members=plannedFragments.slice(start,end);rowGaps.set(key,rhythmicGapFor(members)?.gap)}
     return rowGaps.get(key)
   }
   let references:ReturnType<typeof scoreEndingReferences>|undefined

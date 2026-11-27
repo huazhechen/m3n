@@ -40,8 +40,10 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
   return { lineStretchCost, lineUniformityCost, overflowCost, layoutCost, fontSizeCost }
 }
 
-/** Shared physical spacing objective; 16px is common to both minimum tiers. */
-export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16) {
+/** Each normalized interval gets one vote, including comfortable zero-cost
+ * intervals. Uniformity remains diagnostic, not a reward for reducing font size.
+ * The comfort band runs from the tier midpoint to 1.5 times the loose tier. */
+export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16, tightGap = referenceGap / 2) {
   if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
   const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
   const denominator = Math.max(Number.EPSILON, meanRhythmicGap) ** 2
@@ -49,11 +51,9 @@ export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16)
   const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / gaps.length
   const spacingWorstUnevenCost = Math.max(...deviations)
   const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
-  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + (referenceGap / Math.max(Number.EPSILON, gap)) ** 2, 0) / gaps.length
-  // Crowding alone rewards unbounded whitespace and therefore extra rows.
-  // The common readable reference caps that reward; the same factor four
-  // used by the existing horizontal quality policy penalizes excess spread.
-  const spacingExpandedCost = 4 * gaps.reduce((sum, gap) => sum + Math.max(0, (gap / referenceGap) ** 2 - 1), 0) / gaps.length
+  const lower = (tightGap + referenceGap) / 2, upper = referenceGap * 1.5
+  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + Math.max(0, lower / Math.max(Number.EPSILON, gap) - 1) ** 2, 0) / gaps.length
+  const spacingExpandedCost = gaps.reduce((sum, gap) => sum + Math.max(0, gap / upper - 1) ** 2, 0) / gaps.length
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
-    spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
+    spacingCost: spacingCrampedCost + spacingExpandedCost }
 }

@@ -1,7 +1,8 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
-import { cacheNativeHorizontal, measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, nativeUnitRhythmicGap, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js';
+import { cacheNativeHorizontal, measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeRhythmicSpacing, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js';
+import { nativeLayoutQuality } from './native-quality.js'
 import { layoutNativeScore } from './native-layout.js';
 import type { TextMeasurer } from './native-measure.js';
 import { cloneNativeProjection, projectNativeScore } from './native-model.js';
@@ -162,7 +163,21 @@ it('measures physical full-width clearance independently of the tier baseline an
   const gap = nativeUnitRhythmicGap(a.measures, tight.options, 500)!
   expect(gap).toBeCloseTo(nativeUnitRhythmicGap(b.measures, loose.options, 500)!, 8)
   expect(nativeUnitRhythmicGap(a.measures, tight.options, 600)!).toBeGreaterThan(gap)
+  const samples = nativeRhythmicSpacing(a.measures, tight.options, 500).gaps
+  expect(samples.length).toBeGreaterThan(1)
+  expect(samples).toEqual(nativeRhythmicSpacing(b.measures, loose.options, 500).gaps.map(value => expect.closeTo(value, 8)))
   expect(tight.projection.glyphs.map(g => g.x)).toEqual(snapshot)
+})
+
+it('pools all interval costs across rows instead of averaging row means or row costs', () => {
+  const result = layout('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||', 600)
+  expect(result.systems).toHaveLength(2)
+  result.systems[0]!.rhythmicGaps = [6]
+  result.systems[1]!.rhythmicGaps = [12, 16, 24]
+  for (const system of result.systems) system.unitRhythmicGap = 18
+  const quality = nativeLayoutQuality(result)
+  expect(quality.spacingCrampedCost).toBeCloseTo(.25)
+  expect(quality.spacingExpandedCost).toBe(0)
 })
 
 it.each([false,true])('rebinds cached control and note targets across widths, equal=%s',equalMeasures=>{

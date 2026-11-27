@@ -24,16 +24,24 @@ it('keeps stretch in the break diagnostics without defining the final spacing co
   expect(scoreNumberedCost(528, [.5, .75, .5, .75]).layoutCost).toBeCloseTo(cost.layoutCost * 2)
 })
 
-it('balances common physical spaciousness against relative unevenness', async () => {
+it('has zero spacing cost throughout the comfort band, independently of uniformity', async () => {
   const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
-  expect(cost([12, 12]).spacingCost).toBeCloseTo(1.7777777778)
-  expect(cost([16, 16]).spacingCost).toBe(1)
-  expect(cost([12, 20]).spacingUnevenCost).toBe(.125)
-  expect(cost([12, 20]).spacingCost).toBeGreaterThan(cost([15, 15]).spacingCost)
-  expect(cost([8, 24]).spacingCrampedCost).toBeGreaterThan(2)
-  expect(cost([8, 24]).spacingCost).toBeGreaterThan(cost([15, 15]).spacingCost)
-  expect(cost([16, 16, 16, 16]).spacingCost).toBe(cost([16, 16]).spacingCost)
+  for (const gaps of [[12], [24], [12, 16, 24], [12, 12, 24, 24]])
+    expect(cost(gaps).spacingCost).toBe(0)
+  expect(cost([12, 24]).spacingUnevenCost).toBeGreaterThan(0)
   expect(cost([]).spacingCost).toBe(0)
+})
+
+it('scores individual gaps before averaging and includes comfortable gaps in the denominator', async () => {
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
+  // Their mean is comfortable, but neither interval is.
+  expect(cost([8, 40]).meanRhythmicGap).toBe(24)
+  expect(cost([8, 40]).spacingCrampedCost).toBeCloseTo(.25 / 2)
+  expect(cost([8, 40]).spacingExpandedCost).toBeCloseTo((40 / 24 - 1) ** 2 / 2)
+  expect(cost([6, 12, 16, 24]).spacingCrampedCost).toBeCloseTo(1 / 4)
+  expect(cost([12, 16, 24, 48]).spacingExpandedCost).toBeCloseTo(1 / 4)
+  expect(cost([6, 48, 12, 24]).spacingCost).toBeCloseTo(.5)
+  expect(cost([6, 48, 12, 24, 6, 48, 12, 24]).spacingCost).toBeCloseTo(.5)
 })
 
 it('calibrates font loss at the readable and small-font ends of the search range', async () => {
@@ -57,12 +65,12 @@ it('keeps an exceptional row visible instead of averaging its unevenness away', 
   expect(many.spacingUnevenCost).toBeGreaterThan(many.spacingMeanUnevenCost * 10)
 })
 
-it('penalizes excessive spacing rather than rewarding additional sparse rows', async () => {
+it('uses the same comfort rules at each notation scale and both endpoints', async () => {
   const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
-  expect(cost([16, 16]).spacingExpandedCost).toBe(0)
-  expect(cost([12, 12]).spacingExpandedCost).toBe(0)
-  expect(cost([32, 32]).spacingExpandedCost).toBe(12)
-  expect(cost([32, 32]).spacingCost).toBeGreaterThan(cost([16, 16]).spacingCost)
-  expect(cost([20, 20]).spacingCost).toBeGreaterThan(cost([12, 12]).spacingCost)
-  expect(cost([10, 10], 10).spacingCost).toBe(cost([16, 16], 16).spacingCost)
+  expect(cost([12, 24]).spacingCost).toBe(0)
+  expect(cost([11.99]).spacingCrampedCost).toBeGreaterThan(0)
+  expect(cost([24.01]).spacingExpandedCost).toBeGreaterThan(0)
+  expect(cost([6.3, 8.4, 12.6], 8.4).spacingCost).toBeCloseTo(0)
+  expect(cost([6, 48]).spacingCost).toBeCloseTo(cost([3.15, 25.2], 8.4).spacingCost)
+  expect(cost([10, 20], 16, 4).spacingCost).toBe(0)
 })

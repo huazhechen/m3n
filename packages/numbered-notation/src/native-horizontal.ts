@@ -378,16 +378,23 @@ export type NativeHorizontalSpacing = {
 /** Full-width, music-only clearance per rhythmic unit. Does not mutate placement
  * or subtract either tier's reserved minimum; short endings are scored full. */
 export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: HorizontalOptions, width: number): number | undefined {
+  return nativeRhythmicSpacing(measures, options, width).gap
+}
+
+export function nativeRhythmicSpacing(measures: NativeMeasure[], options: HorizontalOptions, width: number): { gap?: number; gaps: readonly number[] } {
   const items = itemsFor(measures, options, measures, true)
   const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveScoreSpacing(items, width, true).positions
   const analysis = rhythmicGapIntervals(items)
   let clearance = 0
-  for (const gap of analysis.intervals)
-    clearance += Math.max(0, positions[gap.end]! - gap.left - positions[gap.start]! - gap.right)
-  return analysis.weight > 0 ? clearance / analysis.weight : undefined
+  const gaps = analysis.intervals.map(interval => {
+    const value = Math.max(0, positions[interval.end]! - interval.left - positions[interval.start]! - interval.right)
+    clearance += value
+    return value / interval.weight
+  })
+  return { gap: analysis.weight > 0 ? clearance / analysis.weight : undefined, gaps }
 }
 
-type RhythmicGapIntervals={weight:number;intervals:{start:number;end:number;left:number;right:number}[]}
+type RhythmicGapIntervals={weight:number;intervals:{start:number;end:number;left:number;right:number;weight:number}[]}
 const rhythmicIntervals=new WeakMap<HorizontalItem[],RhythmicGapIntervals>()
 function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
   const cached=rhythmicIntervals.get(items)
@@ -405,7 +412,7 @@ function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
     if (before && items[before.index]!.fixedAfter === undefined) {
       const units = (before.weight + (cell.beforeStretch ?? 1)) / 2
       if (units > 0) {
-        intervals.push({start:before.index,end:index,left,right:before.right})
+        intervals.push({start:before.index,end:index,left,right:before.right,weight:units})
         weight += units
       }
     }

@@ -63,21 +63,28 @@ export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number,
   const head = staffGlyphMetrics('noteheadBlack'), headWidth = head.right - head.left
   const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
   let gap = 0, weight = 0
+  const gaps: number[] = []
   for (let i = 0; i + 1 < positions.length; i++) {
     const durationWeight = Math.max(0, (prepared.metrics.columns[i]!.naturalAdvance - headWidth) / increment)
     if (!durationWeight) continue
-    gap += Math.max(0, positions[i + 1]! - positions[i]! - prepared.metrics.columns[i]!.after - prepared.metrics.columns[i + 1]!.left)
+    const clearance = Math.max(0, positions[i + 1]! - positions[i]! - prepared.metrics.columns[i]!.after - prepared.metrics.columns[i + 1]!.left)
+    gap += clearance
     weight += durationWeight
+    gaps.push(clearance * STAFF_SCALE / durationWeight)
   }
   // The two boundary springs together hold the duration of the final event.
   const finalWeight = prepared.weights.at(-1) ?? 0
   if (finalWeight > 0 && positions.length) {
     const minimum = staffMinimumAtSpacing(prepared.metrics, spacing)
     const end = minimum + Math.max(0, extra) - prepared.metrics.endInset
-    gap += Math.max(0, positions[0]!) + Math.max(0, end - prepared.metrics.start - positions.at(-1)! - headWidth)
+    const leading = Math.max(0, positions[0]!), trailing = Math.max(0, end - prepared.metrics.start - positions.at(-1)! - headWidth)
+    gap += leading + trailing
     weight += finalWeight
+    // Each boundary is its own half-duration interval. Pooling their
+    // clearances first would let a loose edge conceal a cramped edge.
+    gaps.push(leading * STAFF_SCALE / (finalWeight / 2), trailing * STAFF_SCALE / (finalWeight / 2))
   }
-  return { gap: gap * STAFF_SCALE, weight }
+  return { gap: gap * STAFF_SCALE, weight, gaps }
 }
 export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, _reading = false): number {
   const right = staffColumnSpacing(metrics, spacing).minimumWidth

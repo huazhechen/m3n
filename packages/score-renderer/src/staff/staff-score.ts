@@ -43,13 +43,14 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const expanded = needsStaffExpansion(score)
   const tempoScale = settings.tempoScale ?? 1
   const measure = measurements.measure
-  const referenceGap = scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.spacingIncrementSpaces
+  const [tightTier, looseTier] = scoreLayoutConfig.staff.noteGapCandidates
+  const staffSpace = scoreLayoutConfig.staff.music / 4
   const availableAt = (candidateWidth: number) => candidateWidth - 2 * margin
     - (projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter)
     - scoreLayoutConfig.staff.rightGutter - scoreLayoutConfig.staff.contentEdgeInset
   const qualityFor = (candidateWidth: number, lines: StaffLine[]) => {
     const densities = lines.map(line => line.minimum * STAFF_SCALE / availableAt(candidateWidth))
-    const spacing = scorePhysicalSpacing(lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]), referenceGap)
+    const spacing = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), staffSpace * looseTier!, staffSpace * tightTier!)
     const costs = scoreLayoutCosts(candidateWidth, densities)
     return { ...scoreLineQuality(densities, lines.length ? Math.max(0, 1 - lines.at(-1)!.target * STAFF_SCALE / availableAt(candidateWidth)) : 0),
       ...costs, ...spacing, totalCost: costs.fontSizeCost + costs.overflowCost + spacing.spacingCost }
@@ -363,6 +364,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           minimum: line.minimum * STAFF_SCALE,
           target: line.target * STAFF_SCALE,
           unitRhythmicGap: line.unitRhythmicGap,
+          rhythmicGaps: [...(line.rhythmicGaps ?? [])],
           localReadingPenalty: line.localReadingPenalty ?? 0,
           measures: line.measures.map((m) => m.id),
         })),
