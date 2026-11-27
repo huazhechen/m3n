@@ -3,7 +3,7 @@ import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } fro
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
-import { staffCommandPath, staffLinePath, type StaffNumericPath } from './staff-glyph-primitive.js'
+import { staffCommandPath, staffLinePath, staffLineInk, type StaffNumericPath } from './staff-glyph-primitive.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, appendStaffGlyphInk, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
 
 const style = scoreLayoutConfig.staff
@@ -601,8 +601,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
   }
   const line = (x1: number, y1: number, x2: number, y2: number, width: number, cls: string) => {
     if (numeric) {
-      const path = staffLinePath(x1, y1, x2, y2), half = width / 2
-      for (const box of path.boxes) ink.push({ left: box.left - half, right: box.right + half, top: box.top - half, bottom: box.bottom + half })
+      ink.push(staffLineInk(x1, y1, x2, y2, width / 2))
     } else {
       const node = staffLine(x1, y1, x2, y2, width, cls)
       if (note.beam) node.attributes['data-m3n-join'] = `${note.stemX},${note.stemEnd}`
@@ -802,8 +801,7 @@ function staffRules(x: number, y: number, width: number): XmlNode {
   const size = staffMusicSize(), space = size / 4, half = space * .1 / 2
   const ink: Ink[] = []
   for (let i = 0; i < 5; i++) {
-    const path = staffLinePath(x, y + size + space * i, x + width, y + size + space * i)
-    for (const box of path.boxes) ink.push({ left: box.left - half, right: box.right + half, top: box.top - half, bottom: box.bottom + half })
+    ink.push(staffLineInk(x, y + size + space * i, x + width, y + size + space * i, half))
   }
   return { tagName: 'g', attributes: { class: 'staff-line' }, children: [], numericInk: ink,
     renderNodes: () => Array.from({ length: 5 }, (_, i) => staffLine(x, y + size + space * i, x + width, y + size + space * i, space * .1, 'staff-line')) }

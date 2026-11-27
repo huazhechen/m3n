@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { element, nodes, readXml, setNumericPath, SvgGeometry, xml } from './layout-svg.js'
-import { staffCommandPath, staffLinePath } from './staff-glyph-primitive.js'
+import { staffCommandPath, staffLinePath, staffLineInk } from './staff-glyph-primitive.js'
 const measure = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 describe('numeric music primitives', () => {
+  it('collects bounds directly with identical absolute rounding and stroke expansion', () => {
+    let seed = 9347
+    const random = () => ((seed = Math.imul(seed, 1664525) + 1013904223 | 0) >>> 0) / 2 ** 32
+    for (let i = 0; i < 600; i++) {
+      const points = Array.from({ length: 4 }, () => i < 200 ? (Math.floor(random() * 100) - 50 + .5) / 1000 : random() * 2000 - 1000)
+      const [x1, y1, x2, y2] = points as [number, number, number, number], half = random()
+      const box = staffLinePath(x1, y1, x2, y2).boxes[0]!
+      expect(staffLineInk(x1, y1, x2, y2, half)).toEqual({ left: box.left - half, right: box.right + half,
+        top: box.top - half, bottom: box.bottom + half })
+    }
+  })
   it('matches general line paths exactly before and after placement', () => {
     for (const [x1, y1, x2, y2] of [[0, 0, 123.456789, 0], [-1.0005, 2.9995, 1.234567, -0.00001], [5, 20, 5, -30]]) {
       const specialized = staffLinePath(x1!, y1!, x2!, y2!)

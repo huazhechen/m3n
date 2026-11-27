@@ -12,6 +12,13 @@ const rounded = (value: number, precision: number) => Math.round(value * precisi
 export function staffLinePath(x1: number, y1: number, x2: number, y2: number): StaffNumericPath {
   return new LinePath(x1, y1, x2, y2)
 }
+/** Bounds-only consumers need neither a serializable path nor its end point.
+ * Round absolute coordinates exactly as LinePath does, before adding stroke. */
+export function staffLineInk(x1: number, y1: number, x2: number, y2: number, half: number): Ink {
+  const a = rounded(x1, 1000), b = rounded(y1, 1000), c = rounded(x2, 1000), d = rounded(y2, 1000)
+  return { left: Math.min(a, c) - half, right: Math.max(a, c) + half,
+    top: Math.min(b, d) - half, bottom: Math.max(b, d) + half }
+}
 class LinePath implements StaffNumericPath {
   readonly boxes: readonly Ink[]
   readonly end: { x: number; y: number }
