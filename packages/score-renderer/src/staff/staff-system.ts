@@ -68,7 +68,7 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, deferPieces = false) {
+  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly) {
   const scale = STAFF_SCALE, rawWidth = width / scale
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
@@ -138,7 +138,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
           next?.source.left?.startsWith('rpt'))
-        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, deferPieces)
+        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, numericOnly)
         models.push(model)
         node.children.push(measureNode)
         const melodyEntries = model.entries[0] ?? []

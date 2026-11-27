@@ -81,3 +81,5 @@
 共享分页对不可变图元、固定附件和精确极值轮廓的复用及两种谱式全量性能，见[碰撞数据复用](WIDTH_COLLISION_PERFORMANCE.md)。
 
 固定附件也可使用完整包络安全跳过远行扫描，证明及后续全量实测见[固定附件碰撞上界](WIDTH_COLLISION_ENVELOPE_PERFORMANCE.md)。
+
+当前7px五线谱规则下的不可变图元复用、分页图元直接收集及两种谱式全量对照，见[墨迹复用性能](WIDTH_INK_REUSE_PERFORMANCE.md)。

@@ -4,10 +4,32 @@ import { analyzeM3N } from '@m3n/notation'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { prepareStaffScore, prepareStaffMeasurementTask } from './staff-score.js'
+import { planStaffLines } from './line-layout.js'
+import { engraveStaffSystems } from './staff-system.js'
+import { xml } from './layout-svg.js'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 const source = '{title=测量任务}{key=G}{4/4}\nN: 1# (2 3) 4 5 | ([6 7 1e:2]) 2e 3e 4e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\nL: 春夏秋冬 | 山川天地 |'
 describe('one staff measurement task', () => {
+  it('preserves exact numeric row geometry and SVG when collecting pagination ink eagerly', async () => {
+    for (const music of [source, '{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||',
+      '{4/4}\nN: {cresc}1 2 3 4{/} | ([5 6 7:2]) 1e 2e 3e |||']) {
+      const score = analyzeM3N(music).score, task = await prepareStaffMeasurementTask(score)
+      const spacing = scoreLayoutConfig.staff.noteGapCandidates[0]!
+      const lines = planStaffLines(task.document, 600, false, task.measure, spacing, task.minimum)
+      const draw = (defer: boolean) => engraveStaffSystems(task.document, lines, 600, task.measure, spacing,
+        false, 1, task.preparation, undefined, undefined, true, defer)
+      const deferred = draw(true), eager = draw(false)
+      expect(eager).toHaveLength(deferred.length)
+      deferred.forEach((row, index) => {
+        row.materializeInk?.()
+        const next = eager[index]!
+        expect({ core: next.core, ink: next.ink, pieces: next.pieces, spacing: next.spacingPieces, edges: next.edgePieces })
+          .toEqual({ core: row.core, ink: row.ink, pieces: row.pieces, spacing: row.spacingPieces, edges: row.edgePieces })
+        expect(xml(next.node)).toBe(xml(row.node))
+      })
+    }
+  })
   it('preserves layouts when visiting widths and spacings in different orders', async () => {
     const score = analyzeM3N(source).score, task = await prepareStaffMeasurementTask(score)
     const original = JSON.stringify(score)

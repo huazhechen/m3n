@@ -42,7 +42,9 @@ function boundaryPieces(shape: ScoreCollisionInk): ScoreInk[] {
   let variants = reusable ? boundaryCache.get(shape.ink) : undefined
   const saved = variants?.get(boundary)
   if (saved) return saved
-  const pieces = [...shape.ink, ...boundary].sort((a,b)=>a.left-b.left)
+  // Boundary ink may include the ordinary ink by identity. Repeated copies
+  // cannot strengthen a maximum-separation constraint.
+  const pieces = [...new Set([...shape.ink, ...boundary])].sort((a,b)=>a.left-b.left)
   if (reusable) {
     if (!variants) { variants = new WeakMap(); boundaryCache.set(shape.ink, variants) }
     variants.set(boundary, pieces); cacheScoreInkSeparation(pieces)

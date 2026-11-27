@@ -60,3 +60,21 @@ it('shares opted-in immutable geometry without exposing it through mutable queri
   expect(scorePageGeometry(block).coreTop).toBe(-9)
   expect(scorePageGeometry(block).edgeInk[0]!.top).toBe(-14)
 })
+
+it('borrows immutable baseline primitives but keeps sortable arrays private', () => {
+  const first = { left: 20, right: 30, top: -4, bottom: 12 }
+  const second = { left: 0, right: 10, top: -2, bottom: 8 }
+  const block = { height: 20, ink: [first, second], boundaryInk: [first, second] }
+  const cached = scorePageGeometry(block, true)
+  expect(cached.ink[0]).toBe(first)
+  expect(cached.boundaryInk[0]).toBe(first)
+  cached.ink.sort((a, b) => a.left - b.left)
+  expect(block.ink).toEqual([first, second])
+  const fresh = scorePageGeometry(block)
+  expect(fresh.ink[0]).not.toBe(first)
+  fresh.ink[0]!.top = -1000
+  expect(first.top).toBe(-4)
+  const lower = scorePageGeometry({ height: 20, ink: [second], edgeInk: [{ ...first, gap: 8 }] }, true)
+  lower.ink.sort((a, b) => a.left - b.left)
+  expect(scorePageCollision(cached, lower)).toEqual(exhaustive(cached, lower))
+})

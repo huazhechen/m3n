@@ -162,11 +162,14 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (!system) {
           const line = graph.makeLines([end], false, start, false)[0]!
           if (target !== undefined) line.target = target
+          // Every row requested here is immediately consumed by exact
+          // pagination. Keep numeric drawing, but collect its pieces now:
+          // deferred collection would first traverse the same ink for bounds.
           system = engraveStaffSystems(projected, [line], musicWidth, measure, spacing,
             Boolean(settings.measureNumbers), tempoScale, measurements.preparation, 0, id => {
               const index = eventMeasures.get(id)
               return index === undefined ? undefined : index < start ? -1 : index >= end ? 1 : 0
-            }, true)[0]!
+            }, true, false)[0]!
           rowCache.set(key, system)
         }
         return system

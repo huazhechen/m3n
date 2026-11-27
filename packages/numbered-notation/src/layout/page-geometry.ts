@@ -16,7 +16,11 @@ export function scorePageGeometry(block: ScorePageBlock, immutable = false): Sco
   const saved = immutable ? immutableGeometry.get(block) : undefined
   if (saved) return saved
   const axis = block.baseline ?? 0
-  const shift = <T extends ScoreInk>(piece: T): T => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })
+  // Immutable adapters already use baseline coordinates in the common case.
+  // Keep their primitive identity (including shared boundary ink), while the
+  // map below still gives the paginator private arrays for sorting.
+  const borrow = immutable && axis === 0 && !Object.is(axis, -0)
+  const shift = <T extends ScoreInk>(piece: T): T => borrow ? piece : ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis })
   const ink = (block.ink ?? []).map(shift), boundaryInk = (block.boundaryInk ?? []).map(shift), edgeInk = (block.edgeInk ?? []).map(shift)
   for (const pieces of [ink, boundaryInk, edgeInk]) cacheScoreInkSeparation(pieces)
   let top = 0, bottom = 0
