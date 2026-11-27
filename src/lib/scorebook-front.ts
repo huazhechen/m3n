@@ -26,20 +26,38 @@ export function scorebookFrontPages(plan: Plan, entries: Entry[]) {
     else svg.append(node)
     return node
   }
-  type Row = { section: Plan['sections'][number] } | { entry: Entry }
-  const rows: Row[] = plan.sections.flatMap(section => [{ section }, ...entries.filter(entry => entry.section === section.id).map(entry => ({ entry }))])
+  const headingRows = 1.5, sectionGapRows = .75
+  const sections = plan.sections.map(section => {
+    const songs = entries.filter(entry => entry.section === section.id)
+    const split = Math.ceil(songs.length / 2)
+    return { ...section, columns: [songs.slice(0, split), songs.slice(split)], rows: headingRows + split }
+  })
   const pageCount = Math.max(1, plan.contents.pages ?? 1), frontCount = 1 + pageCount
-  const columns: Row[][] = []
-  let offset = 0
-  for (let index = 0; index < pageCount * 2; index++) {
-    let count = Math.ceil((rows.length - offset) / (pageCount * 2 - index))
-    // A chapter heading always travels with its first song.
-    if (count > 0 && 'section' in rows[offset + count - 1]!) count++
-    columns.push(rows.slice(offset, offset + count)); offset += count
+  // Partition consecutive whole chapters to minimize the tallest contents page.
+  const usedPages = Math.min(pageCount, sections.length)
+  const costs = Array.from({ length: usedPages + 1 }, () => Array<number>(sections.length + 1).fill(Infinity))
+  const breaks = costs.map(row => row.map(() => 0))
+  costs[0]![0] = 0
+  for (let count = 1; count <= usedPages; count++) {
+    for (let end = count; end <= sections.length; end++) {
+      let height = 0
+      for (let start = end - 1; start >= count - 1; start--) {
+        height += sections[start]!.rows + (start < end - 1 ? sectionGapRows : 0)
+        const cost = Math.max(costs[count - 1]![start]!, height)
+        if (cost < costs[count]![end]!) { costs[count]![end] = cost; breaks[count]![end] = start }
+      }
+    }
   }
-  const maxRows = Math.max(...columns.map(column => column.length), 2)
+  const chapters = Array.from({ length: pageCount }, () => [] as typeof sections)
+  let end = sections.length
+  for (let count = usedPages; count > 0; count--) {
+    const start = breaks[count]![end]!
+    chapters[count - 1] = sections.slice(start, end); end = start
+  }
   const availableHeight = plan.page.height - style.contentsRowsTop - style.contentsBottomInset
-  const rowHeight = availableHeight / (maxRows - 1)
+  const rowHeight = availableHeight / Math.max(1, costs[usedPages]![sections.length]!)
+  const contentsRight = style.contentsLeft + style.columnStep + style.pageNumberOffset
+  const contentsWidth = contentsRight - style.contentsLeft
   const label = (entry: Entry) => {
     const first = frontCount + entry.musicStart + 1
     return entry.pageCount === 1 ? String(first) : `${first}–${first + entry.pageCount - 1}`
@@ -56,10 +74,11 @@ export function scorebookFrontPages(plan: Plan, entries: Entry[]) {
   }
   let fontSize = Math.min(style.entryTitle * 2, rowHeight / plan.contents.rowHeightEm)
   try {
-    for (const row of rows) {
-      const units = 'entry' in row ? measure(row.entry.title) + measure(label(row.entry)) + style.contentsLeaderSpaceEm * 2 + style.contentsLeaderMinimumEm : measure(row.section.title)
+    for (const entry of entries) {
+      const units = measure(entry.title) + measure(label(entry)) + style.contentsLeaderSpaceEm * 2 + style.contentsLeaderMinimumEm
       fontSize = Math.min(fontSize, style.pageNumberOffset / units)
     }
+    for (const section of sections) fontSize = Math.min(fontSize, contentsWidth / (measure(section.title) + 4))
   } finally { measuring.remove() }
   const cover = page()
   text(cover, plan.title, plan.page.width / 2, style.coverTitleY, style.coverTitle, website).setAttribute('text-anchor', 'middle')
@@ -69,27 +88,40 @@ export function scorebookFrontPages(plan: Plan, entries: Entry[]) {
     const svg = page()
     svg.dataset.scorebookContents = String(index + 1)
     text(svg, '目录', style.contentsLeft, style.contentsTop, style.contentsTitle)
-    for (let side = 0; side < 2; side++) {
-      const x = style.contentsLeft + side * style.columnStep, right = x + style.pageNumberOffset
-      for (const [rowIndex, row] of columns[index * 2 + side]!.entries()) {
-        const y = style.contentsRowsTop + rowIndex * rowHeight
-        if ('section' in row) { text(svg, row.section.title, x, y, fontSize); continue }
-        const entry = row.entry, url = `${website}scores/${encodeURIComponent(entry.slug ?? entry.file?.replace(/\.m3n$/, '') ?? '')}`
-        const name = text(svg, entry.title, x, y, fontSize, url)
-        const number = text(svg, label(entry), right, y, fontSize, url)
-        number.setAttribute('text-anchor', 'end')
-        // Measurements above use the same installed CJK font at 1px.
-        const start = x + widths.get(entry.title)! * fontSize + fontSize * style.contentsLeaderSpaceEm
-        const end = right - widths.get(label(entry))! * fontSize - fontSize * style.contentsLeaderSpaceEm
-        // Explicit dash segments survive both native PDF and browser SVG export.
-        const leader = document.createElementNS(ns, 'path')
-        const dash = fontSize * .1, step = fontSize * .26, baseline = y - fontSize * .25
-        const segments: string[] = []
-        for (let left = start; left < end; left += step) segments.push(`M${left} ${baseline}H${Math.min(left + dash, end)}`)
-        for (const [key, value] of Object.entries({ d: segments.join(' '), fill: 'none', stroke: '#666', 'stroke-width': fontSize * .04 })) leader.setAttribute(key, String(value))
-        leader.setAttribute('data-scorebook-leader', '')
-        svg.insertBefore(leader, name.parentNode)
+    let sectionTop = style.contentsRowsTop
+    for (const section of chapters[index]!) {
+      const center = (style.contentsLeft + contentsRight) / 2
+      const heading = text(svg, section.title, center, sectionTop, fontSize)
+      heading.setAttribute('text-anchor', 'middle')
+      heading.setAttribute('data-scorebook-section', section.id)
+      const halfTitle = widths.get(section.title)! * fontSize / 2 + fontSize * .8
+      const rule = document.createElementNS(ns, 'path')
+      const ruleY = sectionTop - fontSize * .35
+      for (const [key, value] of Object.entries({ d: `M${style.contentsLeft} ${ruleY}H${center - halfTitle} M${center + halfTitle} ${ruleY}H${contentsRight}`, fill: 'none', stroke: '#666', 'stroke-width': fontSize * .04 })) rule.setAttribute(key, String(value))
+      rule.setAttribute('data-scorebook-section-rule', section.id)
+      svg.append(rule)
+      for (let side = 0; side < 2; side++) {
+        const x = style.contentsLeft + side * style.columnStep, right = x + style.pageNumberOffset
+        for (const [rowIndex, entry] of section.columns[side]!.entries()) {
+          const y = sectionTop + (headingRows + rowIndex) * rowHeight
+          const url = `${website}scores/${encodeURIComponent(entry.slug ?? entry.file?.replace(/\.m3n$/, '') ?? '')}`
+          const name = text(svg, entry.title, x, y, fontSize, url)
+          const number = text(svg, label(entry), right, y, fontSize, url)
+          number.setAttribute('text-anchor', 'end')
+          // Measurements above use the same installed CJK font at 1px.
+          const start = x + widths.get(entry.title)! * fontSize + fontSize * style.contentsLeaderSpaceEm
+          const end = right - widths.get(label(entry))! * fontSize - fontSize * style.contentsLeaderSpaceEm
+          // Explicit dash segments survive both native PDF and browser SVG export.
+          const leader = document.createElementNS(ns, 'path')
+          const dash = fontSize * .1, step = fontSize * .26, baseline = y - fontSize * .25
+          const segments: string[] = []
+          for (let left = start; left < end; left += step) segments.push(`M${left} ${baseline}H${Math.min(left + dash, end)}`)
+          for (const [key, value] of Object.entries({ d: segments.join(' '), fill: 'none', stroke: '#666', 'stroke-width': fontSize * .04 })) leader.setAttribute(key, String(value))
+          leader.setAttribute('data-scorebook-leader', '')
+          svg.insertBefore(leader, name.parentNode)
+        }
       }
+      sectionTop += (section.rows + sectionGapRows) * rowHeight
     }
     return svg
   })
