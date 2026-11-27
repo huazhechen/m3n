@@ -27,6 +27,13 @@ assert(scores.length, 'No scores selected')
 const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bundle/bundle.js'))).digest('hex')
 const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
+const experimentalInkBin = Number(argument('proxy-bin') ?? 0)
+assert(Number.isInteger(experimentalInkBin) && experimentalInkBin >= 0 && experimentalInkBin <= 48, 'Invalid proxy bin')
+const experimentalRowReuse = process.argv.includes('--row-reuse')
+const experimentalGreedyCeiling = process.argv.includes('--fast-ceiling')
+assert(!auditLayout || !experimentalRowReuse, 'Surrogate candidates cannot be painted; audit exact widths without --row-reuse')
+assert(!experimentalInkBin || experimentalRowReuse, '--proxy-bin requires --row-reuse')
+assert(!experimentalGreedyCeiling || experimentalRowReuse, '--fast-ceiling requires --row-reuse for final exact verification')
 const warmupIterations = Number(argument('warmup') ?? 0)
 assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIterations <= 10, 'Invalid warmup count')
 const numericLayout = process.argv.includes('--numeric-layout')
@@ -40,11 +47,17 @@ if (checkpoint) {
   assert.equal(checkpoint.rendererHash, rendererHash, 'Cannot resume after changing the renderer')
   assert.equal(checkpoint.auditLayout, auditLayout, 'Cannot resume with a different ink audit setting')
   assert.equal(checkpoint.prune, prune, 'Cannot resume with a different pruning setting')
+  assert.equal(checkpoint.experimentalInkBin ?? 0, experimentalInkBin, 'Cannot resume with different ink bins')
+  assert.equal(Boolean(checkpoint.experimentalRowReuse), experimentalRowReuse, 'Cannot resume with different row reuse')
+  assert.equal(Boolean(checkpoint.experimentalGreedyCeiling), experimentalGreedyCeiling, 'Cannot resume with different ceiling solving')
   assert.equal(checkpoint.warmupIterations ?? 0, warmupIterations, 'Cannot resume with a different warmup count')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
 const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, numericLayout, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
+if (experimentalRowReuse) report.experimentalRowReuse = true
+if (experimentalGreedyCeiling) report.experimentalGreedyCeiling = true
 if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
 const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
@@ -73,6 +86,9 @@ try {
   report.fontPreparationMs = performance.now() - fontStarted
   report.browserReuse = 'single-page-shared-fonts-and-metrics'
   await page.evaluate(enabled => { globalThis.__m3nTraceWidths = enabled }, process.argv.includes('--trace-widths'))
+  await page.evaluate(enabled => { globalThis.__m3nExperimentalRowReuse = enabled }, process.argv.includes('--row-reuse'))
+  await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))
+  await page.evaluate(size => { globalThis.__m3nExperimentalInkBin = size }, experimentalInkBin)
   for (const file of scores) {
     const source = readFileSync(join(sourceRoot, file), 'utf8')
     const sourceHash = createHash('sha256').update(source).digest('hex')

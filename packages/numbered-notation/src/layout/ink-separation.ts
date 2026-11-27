@@ -1,10 +1,39 @@
 import type { ScoreInk } from './geometry.js'
 
+type HorizontalProxy = { source: readonly ScoreInk[]; left:number; nextLeft:number; scale:number; dy:number }
+let hasHorizontalProxies = false
+const horizontalProxies = new WeakMap<readonly ScoreInk[],HorizontalProxy>()
+const proxySources = new WeakMap<readonly ScoreInk[],ScoreInk[]>()
+const proxySeparations = new WeakMap<readonly ScoreInk[],WeakMap<readonly ScoreInk[],number>>()
+export function cacheScoreHorizontalProxy(ink: readonly ScoreInk[], source: readonly ScoreInk[], left:number, nextLeft:number, scale:number) {
+  let sorted = proxySources.get(source)
+  if (!sorted) { sorted = [...source].sort((a,b)=>a.left-b.left); proxySources.set(source,sorted); cacheScoreInkSeparation(sorted) }
+  hasHorizontalProxies = true
+  horizontalProxies.set(ink,{source:sorted,left,nextLeft,scale,dy:0})
+}
+export function inheritScoreHorizontalProxy(source:readonly ScoreInk[], next:readonly ScoreInk[], dy:number) {
+  if (!hasHorizontalProxies) return
+  const saved = horizontalProxies.get(source)
+  if (saved) horizontalProxies.set(next,{...saved,dy:saved.dy+dy})
+}
+
 /** Maximum vertical separation of horizontally intersecting ink. Both inputs
  * are sorted by left edge. Sweep starts, discarding expired heap leaders;
  * only the highest upper bottom / lowest lower top can constrain placement. */
 export function sortedScoreInkSeparation(upper: readonly ScoreInk[], lower: readonly ScoreInk[]): number {
   if (!upper.length || !lower.length) return -Infinity
+  const transformedUpper = hasHorizontalProxies && horizontalProxies.get(upper), transformedLower = hasHorizontalProxies && horizontalProxies.get(lower)
+  if (transformedUpper && transformedLower && transformedUpper.scale>0
+    && transformedUpper.scale===transformedLower.scale && transformedUpper.left===transformedLower.left && transformedUpper.nextLeft===transformedLower.nextLeft) {
+    let pairs = proxySeparations.get(transformedUpper.source)
+    let distance = pairs?.get(transformedLower.source)
+    if (distance===undefined) {
+      distance=sortedScoreInkSeparation(transformedUpper.source,transformedLower.source)
+      if (!pairs) {pairs=new WeakMap();proxySeparations.set(transformedUpper.source,pairs)}
+      pairs.set(transformedLower.source,distance)
+    }
+    return distance+transformedUpper.dy-transformedLower.dy
+  }
   const a = contours.get(upper), b = contours.get(lower)
   if (a && b) {
     a.bottomUses++; b.topUses++

@@ -41,6 +41,8 @@ import { placedNativeControlInk } from './native-controls.js'
 import { nativeCoreInkBox, nativeSystemCore } from './native-core.js'
 import { scoreCorePageLowerBound, scorePageFeasibility } from './layout/height-feasibility.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
+import { proxyScoreWidthInk } from './layout/width-geometry-proxy.js'
+import type { NativeInk } from './native-ink.js'
 
 export type { NativeRenderOptions, NativeRelation, NativeLane, NativeSystem, NativePage, NativeLayout } from './native-layout-model.js'
 import type { NativeRenderOptions, NativeRelation, NativeSystem, NativeLayout } from './native-layout-model.js'
@@ -56,6 +58,7 @@ function validate(options: NativeRenderOptions) {
 
 type NativeRelationPlan = Array<Omit<NativeRelation, 'first' | 'last'> & { first: number; last: number }>
 type NativeLayoutPreparation = { workspaces?: WeakMap<NativeProjection, NativePlacementWorkspace>; canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
+  proxyRows?:Map<string,{left:number;right:number;block:ScorePageBlock;snapshot:NativeRowSnapshot}>
   feasibilityWitnesses?:Map<string,{ends?:number[]}>; horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,ScoreLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
   arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,ScorePageBlock>; unitGaps?: Map<string,ReturnType<typeof nativeRhythmicSpacing>>; measuredProjections?: Map<string, NativeProjection>; rowMinimums?: Map<string, Map<string, number>>
 }
@@ -388,6 +391,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   const systemOf = new Map<NativeGlyph, number>()
+  let proxyPlacementRows: Set<number> | undefined
+  const proxyPlacements = new Map<NativeSystem,{key:string;block:ScorePageBlock;snapshot:NativeRowSnapshot}>()
   const spacingFor=(measures:NativeMeasure[])=>{
     const key=measures.every(m=>!m.continuation && m.lastFragment) ? `${horizontalKey}:${measures.map(m=>m.id).join(':')}` : undefined
     if(preparation && key!==undefined) {
@@ -410,9 +415,20 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
         endingMode !== 'inherited' && system.unitRhythmicGap !== undefined && endingGapReferences.has(system)
           ? { current: system.unitRhythmicGap, reference: endingGapReferences.get(system)! } : undefined)
     }
-    const horizontalKey=cache ? `${nativeRowIdentity(system.measures)}:${x}:${width}` : undefined
-    if(cache && horizontalKey!==undefined) {
-      const saved=cache.horizontal?.get(horizontalKey)
+    if (proxyPlacementRows?.has(system.index)) {
+      const key = JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])
+      const saved = preparation?.proxyRows?.get(key)
+      if (saved) {
+        const warp = <T extends NativeInk>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,x,x+width)
+        const block = {...saved.block,ink:warp(saved.block.ink ?? []),boundaryInk:warp(saved.block.boundaryInk ?? []),edgeInk:warp(saved.block.edgeInk ?? [])}
+        system.measures[0]!.start=x; system.measures.at(-1)!.end=x+width
+        proxyPlacements.set(system,{key:`proxy:${key}:${x}:${width}`,block,snapshot:saved.snapshot})
+        return
+      }
+    }
+    const placedKey=cache ? `${nativeRowIdentity(system.measures)}:${x}:${width}` : undefined
+    if(cache && placedKey!==undefined) {
+      const saved=cache.horizontal?.get(placedKey)
       if(saved){restoreNativeRowHorizontal(system,saved);return}
     }
     const glyphs = placeNativeHorizontal(system.measures, options, x, width)
@@ -427,7 +443,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       const lyricBottom = Math.max(...members.map(glyph => glyph.musicBottom ?? glyph.bottom))
       system.lanes.push({ id: lane, y: 0, top: Math.max(0, ...bars.map(ink => -ink.top), ...members.map(glyph => glyph.top)), bodyBottom, lyricBottom, bottom: bodyBottom, rows })
     }
-    if(cache && horizontalKey!==undefined){cache.horizontal ??= new Map();cache.horizontal.set(horizontalKey,captureNativeRowHorizontal(system))}
+    if(cache && placedKey!==undefined){cache.horizontal ??= new Map();cache.horizontal.set(placedKey,captureNativeRowHorizontal(system))}
   }
   const horizontal = { options, margin, systems, pages: [] }
   const quality = onlyRow===undefined ? nativeLayoutQuality(horizontal) : {totalCost:0,spacingCost:0,overflowCost:0}
@@ -661,6 +677,14 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   stageStarted = timings ? performance.now() : 0
   for (const system of systems) for (const measure of system.measures) for (const column of measure.columns)
     for (const glyph of column.glyphs) systemOf.set(glyph, system.index)
+  if (measurement && rowCache && preparation?.proxyRows && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse) {
+    proxyPlacementRows = new Set(systems.map(system=>system.index))
+    for (const relation of relations) {
+      const first=systemOf.get(relation.first),last=systemOf.get(relation.last)
+      if (first===undefined || last===undefined) continue
+      if (first!==last || relation.kind==='cresc' || relation.kind==='decres') for(let index=first;index<=last;index++) proxyPlacementRows.delete(index)
+    }
+  }
   for (const system of systems) if(onlyRow===undefined || system.index===onlyRow)placeSystem(system,rowCache)
   record('horizontalPlacementMs')
   cacheNativeHairpins(systems)
@@ -680,7 +704,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const cacheSafe = rowCache
   // A single-row geometry probe never reads snapshots of its other rows.
   // Keep their indices, but avoid serializing all of their untouched columns.
-  const rowKeys = cacheSafe ? systems.map(system => onlyRow!==undefined && system.index!==onlyRow ? '' : JSON.stringify([
+  const rowKeys = cacheSafe ? systems.map(system => onlyRow!==undefined && system.index!==onlyRow ? '' : proxyPlacements.get(system)?.key ?? JSON.stringify([
     nativeRowIdentity(system.measures), system.arcContinuationLeft, dependencies.get(system),
     system.measures.map(measure => [measure.start, measure.end, measure.columns.map(column => column.x)]),
   ])) : undefined
@@ -699,11 +723,29 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   if (options.numericLayout && rowCache) rowCache.rows ??= new Map()
+  for (const {key,block,snapshot} of proxyPlacements.values()) {
+    rowCache!.blocks.set(key,block); rowCache!.rows!.set(key,snapshot)
+    if (timings) timings.proxyPlacementHits=(timings.proxyPlacementHits ?? 0)+1
+  }
+  const proxyRows = measurement && preparation && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+    ? preparation.proxyRows ??= new Map() : undefined
+  const proxyKeys = proxyRows ? systems.map(system => JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,dependencies.get(system)])) : undefined
+  if (proxyRows && rowKeys) for (const system of systems) {
+    if (onlyRow !== undefined && system.index !== onlyRow || rowCache!.rows!.has(rowKeys[system.index]!)) continue
+    const saved = proxyRows.get(proxyKeys![system.index]!)
+    if (!saved) continue
+    const left = system.measures[0]!.start, right = system.measures.at(-1)!.end
+    const warp = <T extends NativeInk>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,left,right)
+    rowCache!.blocks.set(rowKeys[system.index]!, { ...saved.block,
+      ink: warp(saved.block.ink ?? []), boundaryInk: warp(saved.block.boundaryInk ?? []), edgeInk: warp(saved.block.edgeInk ?? []) })
+    rowCache!.rows!.set(rowKeys[system.index]!,saved.snapshot)
+    if (timings) timings.proxyRowHits = (timings.proxyRowHits ?? 0) + 1
+  }
   const reused = new Map<NativeSystem, NativeRowSnapshot>()
   if (options.numericLayout && rowKeys) for (const system of systems) {
     if(onlyRow!==undefined && system.index!==onlyRow)continue
     const snapshot = rowCache!.rows!.get(rowKeys[system.index]!)
-    if (snapshot) { reused.set(system, snapshot); restoreNativeRow(system, snapshot) }
+    if (snapshot) { reused.set(system, snapshot); if (!proxyRows) restoreNativeRow(system, snapshot) }
   }
   const activeSystems = systems.filter(system => !reused.has(system) && (onlyRow===undefined || system.index===onlyRow))
   if (timings) timings.numericRowCacheHits = (timings.numericRowCacheHits ?? 0) + reused.size
@@ -737,11 +779,11 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if (first === undefined || last === undefined) continue
     for (let index = onlyRow===undefined ? first : Math.max(first,onlyRow); index <= (onlyRow===undefined ? last : Math.min(last,onlyRow)); index++) {
       if (relation.kind === 'inst' && index !== first && index !== last) continue
-      systems[index]!.relations.push(relation)
+      if (!proxyRows || !reused.has(systems[index]!)) systems[index]!.relations.push(relation)
     }
   }
   for(const system of activeSystems){cacheNativeTuplets(system);cacheNativeArcObstacles(system)}
-  for (const [system, snapshot] of reused) restoreNativeRowRelations(system, snapshot)
+  if (!proxyRows) for (const [system, snapshot] of reused) restoreNativeRowRelations(system, snapshot)
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
@@ -829,6 +871,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       if (rowKeys) {
         rowCache!.blocks.set(rowKeys[system.index]!, block)
         rowCache!.rows!.set(rowKeys[system.index]!, captureNativeRow(system))
+        if (proxyRows && !proxyRows.has(proxyKeys![system.index]!)) proxyRows.set(proxyKeys![system.index]!, {
+          left:system.measures[0]!.start,right:system.measures.at(-1)!.end,block,snapshot:rowCache!.rows!.get(rowKeys[system.index]!)! })
         const next = systems[system.index+1]
         if (!dependencies.has(system) && !options.equalMeasures && system.unitRhythmicGap !== undefined
           && Math.abs(system.measures.at(-1)!.end-(options.width-margin))<1e-6) {

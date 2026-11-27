@@ -33,6 +33,11 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
   evaluate: (ends: number[]) => { pages: number; value?: T }, model: ScorePageCostModel,
   timings?: Record<string, number>): Measured<T> {
   if (optimum.pages <= greedy.pages) return optimum
+  if ((globalThis as {__m3nExperimentalGreedyCeiling?:boolean}).__m3nExperimentalGreedyCeiling) {
+    const greedyCost=scoreLinePlanCost(graph,greedy.ends), optimumCost=scoreLinePlanCost(graph,optimum.ends)
+    if ((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths) console.log('fast-ceiling '+JSON.stringify({greedyCost,optimumCost,rows:greedy.ends.length}))
+    if (greedyCost<=Math.max(.6,2*optimumCost)+1e-12) return greedy
+  }
   const pageCache = createScorePageCostCache(), rowsToResolve = new Set<string>()
   const certifiedCosts = new WeakMap<object, number>(), unconstrainedCosts = new WeakMap<object, number>()
   const solveRestricted = (restricted: Graph, maximumCost: number, knownUnconstrained?: number[]) => {

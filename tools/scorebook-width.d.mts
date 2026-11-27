@@ -31,3 +31,4 @@ export function probeWidthCandidates(measure: (width: number, best: WidthMeasure
 }>
 
 export function selectBestWidth(measure: (width: number, best: WidthMeasurement | null) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[] } }>
+export function verifyEstimatedWidthCandidates(candidates: WidthMeasurement[], measure: (width:number)=>WidthMeasurement|Promise<WidthMeasurement>, options?:{signal?:AbortSignal}):Promise<{best:WidthMeasurement;requests:number;ms:number;verifiedCandidates:WidthMeasurement[];failures:{width:number;error:string}[]}>

@@ -97,3 +97,30 @@ export async function selectBestWidth(measure, options) {
   }
   return { ...result, best }
 }
+
+/** Exact-check estimates in rank order, continuing after page underestimates.
+ * This verifies the returned geometry, not the global width/page error bound. */
+export async function verifyEstimatedWidthCandidates(candidates, measure, { signal } = {}) {
+  const ordered = candidates.filter(safe).sort(rank)
+  const expectedPages = ordered[0]?.pageCount
+  const verifiedCandidates = [], failures = []
+  let best = null, requests = 0
+  const started = performance.now()
+  for (const candidate of ordered) {
+    signal?.throwIfAborted()
+    requests++
+    let exact
+    try { exact = { width: candidate.width, ...await measure(candidate.width) } }
+    catch (error) {
+      signal?.throwIfAborted()
+      failures.push({ width: candidate.width, error: String(error?.message ?? error) })
+      continue
+    }
+    signal?.throwIfAborted()
+    verifiedCandidates.push(exact)
+    if (safe(exact) && (!best || rank(exact, best) < 0)) best = exact
+    if (best && best.pageCount <= expectedPages) break
+  }
+  if (!best) throw new Error('没有通过精确复核的选宽候选。')
+  return { best, requests, ms: performance.now() - started, verifiedCandidates, failures }
+}

@@ -38,3 +38,20 @@ it('matches every pitch, octave, accidental and dotted beam level against the SV
       expect(painter.bodyPieces(glyph)).toEqual(nativeSvgPieces(painter.body(glyph), measurer))
     }
 })
+
+it('reused note templates preserve independently painted geometry and mutable marks', () => {
+  const measurer = new DefaultTextMeasurer(), painter = new NativeMusicPainter(measurer)
+  const source = '{4/4}\nN: {p}1{tip} {f}1{tip} 1{tr} 1{tip} | 1# 1# 1{ac(2e)} 1{tip} |\nL1: 一二三四五六七八'
+  const projection = projectNativeScore(parseM3NDocument(source), { textMeasurer: measurer })
+  for (const glyph of projection.glyphs) {
+    expect(glyph.coreInk).toEqual(painter.bodyPieces(glyph))
+    expect(glyph.musicInk).toEqual(painter.musicPieces(glyph))
+    expect(glyph.tieTop).toBe(-painter.tieBodyInk(glyph).top)
+  }
+  const first = projection.glyphs[0]!, second = projection.glyphs[1]!
+  expect(first.markLayout![0]).not.toBe(second.markLayout![0])
+  const before = second.markLayout![0]!.y
+  first.markLayout![0]!.y += 100
+  expect(second.markLayout![0]!.y).toBe(before)
+  expect(projectNativeScore(parseM3NDocument(source), { textMeasurer: measurer }).glyphs[0]!.markLayout![0]!.y).toBe(before)
+})

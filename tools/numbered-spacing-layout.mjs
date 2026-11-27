@@ -1,6 +1,6 @@
 import { analyzeM3N } from '@m3n/notation'
 import { prepareNumberedNotationFonts, registerScoreFontBundle, NumberedLayoutTask, NumberedTextMeasurementCache } from '@m3n/numbered-notation'
-import { selectBestWidth, numberedLayoutScore } from './scorebook-width.mjs'
+import { selectBestWidth, numberedLayoutScore, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 import { measureNumberedWidth } from './lib/numbered-width-measurement.mjs'
 
 const textMeasurementCache = new NumberedTextMeasurementCache()
@@ -38,13 +38,29 @@ export async function search(source, auditLayout = false, prune = false, pageCon
       return measured.candidate
     } catch (error) { accumulate(error.timings); throw error }
   }, { prune: prune && !auditLayout })
+  let exactWinner
+  if (globalThis.__m3nExperimentalRowReuse) {
+    const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling
+    globalThis.__m3nExperimentalRowReuse = false
+    globalThis.__m3nExperimentalGreedyCeiling = false
+    try {
+      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureNumberedWidth(score,width,{settings}).candidate)
+      exactWinner = verified.best
+      result.verifiedCandidates = verified.verifiedCandidates
+      result.verificationFailures = verified.failures
+      result.renderCache.finalExactMs = verified.ms
+      result.renderCache.finalExactRequests = verified.requests
+    }
+    finally { globalThis.__m3nExperimentalRowReuse = true; globalThis.__m3nExperimentalGreedyCeiling = fastCeiling }
+  }
   const searchMs = performance.now() - searchStarted
-  const best = auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best
+  const best = exactWinner ?? (auditLayout ? measureNumberedWidth(score, result.best.width, { settings, auditLayout: true }).candidate : result.best)
   return { timings, renderCache: { ...result.renderCache, strategy: result.renderCache.strategy + (pageConstrainedBreaks ? '-page-bound' : '') + (numericLayout ? '-numeric' : '') }, textMeasureCalls: timings.textMeasureCalls ?? 0,
     textMeasureCacheHits: timings.textMeasureCacheHits ?? 0,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
     meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingMeanUnevenCost: best.spacingMeanUnevenCost, spacingWorstUnevenCost: best.spacingWorstUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingExpandedCost: best.spacingExpandedCost, spacingCost: best.spacingCost,
     layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
     outside: best.outside, overlaps: best.overlaps,
+    ...(result.verifiedCandidates ? { verifiedCandidates: result.verifiedCandidates, verificationFailures: result.verificationFailures } : {}),
     candidates: result.candidates.map(({ width, pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error })) }
 }

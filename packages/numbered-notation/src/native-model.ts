@@ -62,6 +62,8 @@ export function nativeDisplayPitch(spelling: string): NativePitch {
 /** Typed projection: no generated notation language and no second parser. */
 export function projectNativeScore(document: ScoreDocument, options: NativeModelOptions): NativeProjection {
   const painter = new NativeMusicPainter(options.textMeasurer)
+  const noteMetrics = new Map<string,ReturnType<typeof nativeNoteMetrics>>()
+  const musicTemplates = new Map<string,{marks:NativeMarkPlacement[];core:NativeInk[];music:NativeInk[];ink:NativeInk;tieTop:number}>()
   const ids = scoreEventIds(document), lyrics = options.displayLyrics ?? lyricsByEvent(document), sustains = sustainContinuations(document, lyrics)
   const result: NativeProjection = { measures: [], glyphs: [], diagnostics: [], hasBass: options.includeBass !== false && [...document.parts.values()].some(part => part.bass.some(measure => measure.events.length || measure.multiRest)) }
   const textWidth = (text: string, size = nativeStyle.annotation, family = SCORE_TEXT_FONT) => options.textMeasurer.measureText(text, { fontSize: size, fontFamily: family }).w
@@ -184,7 +186,9 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             right = Math.max(right, ink.right)
             return { left: -ink.left + lyricSpacing.horizontalPadding, right: ink.right + lyricSpacing.horizontalPadding }
           })
-          const metrics = nativeNoteMetrics(pitches, writtenBeats, sustain, options.textMeasurer)
+          const noteKey=JSON.stringify([pitches,writtenBeats,sustain])
+          let metrics=noteMetrics.get(noteKey)
+          if (!metrics) { metrics=nativeNoteMetrics(pitches,writtenBeats,sustain,options.textMeasurer); noteMetrics.set(noteKey,metrics) }
           const musicTop = metrics.top
           const top = Math.max(musicTop, ...glyphControls.map(control => control.top))
           const bottom = Math.max(metrics.bottom, ...glyphControls.map(control => control.bottom))
@@ -201,22 +205,28 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
             glyph.left = Math.max(glyph.musicLeft, lyricLeft)
             glyph.right = Math.max(glyph.musicRight, lyricRight)
           }
-          glyph.markLayout = nativeGlyphMarkStack(glyph, glyphMarks.filter(nativeInnerMark), painter.measurer, nativeCoreGap(document), metrics.top).items
+          const innerMarks=glyphMarks.filter(nativeInnerMark)
+          const musicKey=!glyphGraces.length && !event.postfixes.includes('arp') ? `${noteKey}:${JSON.stringify(innerMarks)}` : undefined
+          const musicTemplate=musicKey===undefined ? undefined : musicTemplates.get(musicKey)
+          glyph.markLayout = musicTemplate ? musicTemplate.marks.map(mark=>({...mark}))
+            : nativeGlyphMarkStack(glyph, innerMarks, painter.measurer, nativeCoreGap(document), metrics.top).items
           // Local marks remain centered on their host, so reserve their full
           // width before wrapping instead of shifting them outside relations.
           glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))
           glyph.musicRight = Math.max(glyph.musicRight ?? 0, ...glyph.markLayout.map(mark => mark.right))
           glyph.left = Math.max(glyph.left, glyph.musicLeft)
           glyph.right = Math.max(glyph.right, glyph.musicRight)
-          glyph.coreInk = painter.bodyPieces(glyph)
-          glyph.musicInk = painter.musicPieces(glyph)
-          const ink = unionNativeInk(glyph.musicInk)
+          glyph.coreInk = musicTemplate?.core ?? painter.bodyPieces(glyph)
+          glyph.musicInk = musicTemplate?.music ?? painter.musicPieces(glyph)
+          const ink = musicTemplate?.ink ?? unionNativeInk(glyph.musicInk)
           // Without side components or marks, the connection body is exactly
           // the music body already measured above. Decorated notes keep their
           // separate connection geometry, which excludes accidentals/graces.
           const sameTieBody = !glyph.graces.length && !glyph.markLayout.length && !event.postfixes.includes('arp')
             && glyph.pitches.every(pitch => !pitch.accidental)
-          glyph.tieTop = -(sameTieBody ? ink : painter.tieBodyInk(glyph)).top
+          glyph.tieTop = musicTemplate?.tieTop ?? -(sameTieBody ? ink : painter.tieBodyInk(glyph)).top
+          if (musicKey!==undefined && !musicTemplate) musicTemplates.set(musicKey,{marks:glyph.markLayout.map(mark=>({...mark})),
+            core:glyph.coreInk,music:glyph.musicInk,ink,tieTop:glyph.tieTop})
           glyph.musicTop = -ink.top; glyph.top = Math.max(-ink.top, ...glyphControls.map(control => control.top))
           glyph.musicBottom = ink.bottom; glyph.bottom = Math.max(ink.bottom, ...glyphControls.map(control => control.bottom))
           glyph.inkLeft = -ink.left; glyph.inkRight = ink.right

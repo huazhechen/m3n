@@ -2,7 +2,7 @@ import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffResources, prepareStaffScore, prepareStaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureStaffWidth } from './lib/staff-width-measurement.mjs'
-import { probeWidthCandidates, chooseBestWidth, numberedLayoutScore } from './scorebook-width.mjs'
+import { probeWidthCandidates, chooseBestWidth, numberedLayoutScore, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 
 export async function prepare() {
   await prepareStaffResources()
@@ -19,6 +19,19 @@ export async function search(source, { auditLayout = false, prune = !auditLayout
   const score = readScore(source)
   const task = await prepareStaffMeasurementTask(score)
   const result = await probeWidthCandidates((width, best) => measureStaffWidth(score, width, {}, undefined, { auditLayout, task, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount }), { prune: prune && !auditLayout })
+  if (globalThis.__m3nExperimentalRowReuse) {
+    const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling
+    globalThis.__m3nExperimentalRowReuse = false
+    globalThis.__m3nExperimentalGreedyCeiling = false
+    try {
+      const verified = await verifyEstimatedWidthCandidates(result.candidates,width=>measureStaffWidth(score,width,{},undefined,{task}))
+      result.best = verified.best
+      result.verifiedCandidates = verified.verifiedCandidates
+      result.verificationFailures = verified.failures
+      result.renderCache.finalExactMs = verified.ms
+      result.renderCache.finalExactRequests = verified.requests
+    } finally { globalThis.__m3nExperimentalRowReuse = true; globalThis.__m3nExperimentalGreedyCeiling = fastCeiling }
+  }
   const searchMs = performance.now() - started
   return { ...result, searchMs }
 }
@@ -40,8 +53,8 @@ export { initialize } from './numbered-spacing-layout.mjs'
 export async function searchSpacing(source, auditLayout = false, prune = false) {
   const started = performance.now()
   const result = await search(source, { auditLayout, prune })
-  const best = chooseBestWidth(result.candidates)
+  const best = result.best ?? chooseBestWidth(result.candidates)
   if (!best) throw new Error('没有可用的五线谱排版候选。' + JSON.stringify(result.candidates))
   return { ...best, pages: best.pageCount, searchMs: result.searchMs,
-    totalMs: performance.now() - started, candidates: result.candidates, renderCache: result.renderCache }
+    totalMs: performance.now() - started, candidates: result.candidates, ...(result.verifiedCandidates ? { verifiedCandidates: result.verifiedCandidates, verificationFailures: result.verificationFailures } : {}), renderCache: result.renderCache }
 }

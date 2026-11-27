@@ -6,6 +6,7 @@ import type { StaffMeasure } from './staff-document.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
 import { textMeasurer } from './layout-svg.js'
 import { createStaffPreparation } from './staff-engine.js'
+import type { StaffSystem } from './system-layout.js'
 
 type ProjectionSettings = { transpose?: number; includeBass?: boolean; tempoScale?: number; systemCjk?: boolean }
 /** Created after font preparation for one immutable score and one selection task. */
@@ -19,6 +20,7 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const preparation = createStaffPreparation(document)
   const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
   return {
+    proxyRows: new Map<string,{width:number;system:StaffSystem}>(),
     feasibilityWitnesses: new Map<number,{ends?:number[]}>(),
     lowerEnvelopes: new WeakMap<StaffMeasure, ScoreHeightEnvelope>(),
     document, measure, preparation, minimum,

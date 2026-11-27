@@ -1,9 +1,42 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseBestWidth, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth } from './scorebook-width.mjs'
+import { chooseBestWidth, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates, refineSharedWidths } from './scorebook-packing.mjs'
 
 const fullWidthOrder = [...widthCandidates, ...Array.from({ length: 33 }, (_, index) => 528 + index * 6).filter(width => !widthCandidates.includes(width))]
+
+test('estimated winners adding a page are replaced by a freshly verified candidate',async()=>{
+  const item=(width,pageCount,totalCost)=>({width,pageCount,totalCost,rows:4,outside:[],overlaps:[]})
+  const visited=[]
+  const verified=await verifyEstimatedWidthCandidates([item(534,1,.1),item(540,1,.2),item(720,1,4)],async width=>{
+    visited.push(width);return item(width,width===534 ? 2 : 1,.3)
+  })
+  assert.deepEqual(visited,[534,540])
+  assert.equal(verified.best.width,540)
+  assert.equal(verified.best.pageCount,1)
+  assert.equal(verified.requests,2)
+})
+
+test('estimated width verification excludes unsafe exact geometry',async()=>{
+  await assert.rejects(verifyEstimatedWidthCandidates([{width:528,pageCount:1,rows:1,totalCost:0,outside:[],overlaps:[]}],async width=>
+    ({width,pageCount:1,rows:1,totalCost:0,outside:['overflow'],overlaps:[]})),/没有通过精确复核/)
+})
+
+test('estimated verification survives one failed engraving and preserves cancellation', async () => {
+  const items = [528, 534].map(width => ({ width, pageCount: 1, rows: 1, totalCost: width / 1000, outside: [], overlaps: [] }))
+  const result = await verifyEstimatedWidthCandidates(items, width => {
+    if (width === 528) throw new Error('unrenderable')
+    return items[1]
+  })
+  assert.equal(result.best.width, 534)
+  assert.deepEqual(result.failures, [{ width: 528, error: 'unrenderable' }])
+  assert.deepEqual(result.verifiedCandidates, [items[1]])
+  const controller = new AbortController()
+  await assert.rejects(verifyEstimatedWidthCandidates(items, () => {
+    controller.abort(new Error('cancelled'))
+    return items[0]
+  }, { signal: controller.signal }), /cancelled/)
+})
 
 test('the shared online and offline search uses nine 24px levels from 528–720px', () => {
   assert.deepEqual(widthCandidates, Array.from({ length: 9 }, (_, index) => 528 + index * 24))
