@@ -14,7 +14,7 @@ export function attachScoreSwipe(root: HTMLElement, navigate: (direction: 'previ
       || document.querySelector('dialog[open], :popover-open')
       || target.closest('a, button, input, select, textarea, [role="slider"], [contenteditable], dialog, [popover]')) return
     for (let node: Element | null = target; node && root.contains(node); node = node.parentElement) {
-      if (node.getAttribute('data-zoomed') === 'true' || node.scrollWidth > node.clientWidth + 1) return
+      if (node.scrollWidth > node.clientWidth + 1) return
       if (node === root) break
     }
     gesture = { id: touch.identifier, x: touch.clientX, y: touch.clientY, started: performance.now(), horizontal: false }
