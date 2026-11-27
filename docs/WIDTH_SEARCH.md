@@ -89,3 +89,5 @@
 五线谱候选阶段延迟生成符杠SVG节点、直接消费原路径精确边界的全量对照与复测，见[符杠数值几何复用](WIDTH_NUMERIC_BEAMS_PERFORMANCE.md)。
 
 简谱将横向度量并入未放置投影、避免复制后再次回填的全量对照，见[未放置度量投影复用](WIDTH_MEASURED_PROJECTION_PERFORMANCE.md)。
+
+五线谱候选字形的临时数组消除、精确缩放结果复用及全量复测见[字形墨迹追加性能](WIDTH_GLYPH_APPEND_PERFORMANCE.md)。

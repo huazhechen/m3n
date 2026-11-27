@@ -4,7 +4,7 @@ import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.j
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
 import { staffCommandPath, staffLinePath, type StaffNumericPath } from './staff-glyph-primitive.js'
-import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffCharacterInk, staffGlyphCharacter, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
+import { staffMusicSize, staffGlyph, staffGlyphMetrics, appendStaffGlyphInk, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
 
 const style = scoreLayoutConfig.staff
 const engine = style.engine
@@ -593,7 +593,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false): X
   const numeric = numericOnly && !p.signature.width && !p.graces.length && !p.item.event.postfixes.includes('arp')
   const ink: Ink[] = []
   const glyph = (name: StaffGlyph, x: number, y: number, size: number, cls?: string) => {
-    if (numeric) ink.push(...staffCharacterInk(staffGlyphCharacter(name), size, x, y))
+    if (numeric) appendStaffGlyphInk(ink, name, size, x, y)
     else {
       const node = staffGlyph(name, x, y, size)
       result.push(cls ? element('g', { class: cls }, [node]) : node)

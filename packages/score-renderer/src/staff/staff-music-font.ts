@@ -17,16 +17,33 @@ export function staffSignatureAdvance(name: StaffGlyph, dy: number): number {
     throw new Error(`五线谱调号缺少轮廓间距：${name}, ${dy}`)
   return glyph.signatureAdvances[index]! * staffMusicSize()
 }
-const characters = new Map(Object.values(glyphs).map(g => [g.character, g]))
+// Bounded to a handful of sizes per glyph: interactive custom sizes must not
+// retain an unbounded global history. Cached boxes never escape this module.
+const scaledGlyphInk = new Map<StaffGlyph, Map<number, readonly Ink[]>>()
+export function appendStaffGlyphInk(target: Ink[], name: StaffGlyph, size: number, x: number, y: number): void {
+  let sizes = scaledGlyphInk.get(name)
+  if (!sizes) { sizes = new Map(); scaledGlyphInk.set(name, sizes) }
+  let boxes = sizes.get(size)
+  if (!boxes) {
+    boxes = glyphs[name].boxes.map(([left, top, right, bottom]) => ({
+      left: left! * size, right: right! * size, top: top! * size, bottom: bottom! * size,
+    }))
+    if (sizes.size >= 8) sizes.clear()
+    sizes.set(size, boxes)
+  }
+  for (const box of boxes) target.push({
+    left: x + box.left, right: x + box.right, top: y + box.top, bottom: y + box.bottom,
+  })
+}
+const characters = new Map(Object.entries(glyphs).map(([name, g]) => [g.character, name as StaffGlyph]))
 /** Also used when reading back SVG, with the very same distributed font. */
 export function staffCharacterInk(value: string, size: number, x: number, y: number): Ink[] {
   const result: Ink[] = []
   for (const character of value) {
-    const g = characters.get(character)
-    if (!g) throw new Error(`五线谱音乐字体缺少字符：${character}`)
-    for (const [left, top, right, bottom] of g.boxes)
-      result.push({ left: x + left! * size, right: x + right! * size, top: y + top! * size, bottom: y + bottom! * size })
-    x += g.advance * size
+    const name = characters.get(character)
+    if (!name) throw new Error(`五线谱音乐字体缺少字符：${character}`)
+    appendStaffGlyphInk(result, name, size, x, y)
+    x += glyphs[name].advance * size
   }
   return result
 }
@@ -40,7 +57,8 @@ class MusicCharacter implements XmlNode {
   readonly children: Array<XmlNode | string> = []
   readonly numericInk: Ink[]
   constructor(private readonly name: StaffGlyph, private readonly x: number, private readonly y: number, private readonly size: number) {
-    this.numericInk = staffCharacterInk(glyphs[name].character, size, x, y)
+    this.numericInk = []
+    appendStaffGlyphInk(this.numericInk, name, size, x, y)
   }
   renderNodes(options?: XmlRenderOptions): XmlNode[] {
     if (options?.resolvedMusicGlyphs) return [element('g', this.attributes, [element('g', {
