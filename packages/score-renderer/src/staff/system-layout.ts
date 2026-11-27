@@ -31,6 +31,42 @@ function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode | un
   const children = nodes(node).flatMap(child => selected(child, keep) ?? [])
   return children.length ? { ...node, numericInk: undefined, renderNodes: undefined, tagName: 'g', children } : undefined
 }
+/** Resolve rhythm labels before enclosing slurs consume their geometry.
+ * Re-running during attachment layout is idempotent: outer slurs never push
+ * their own enclosed numeral away from its music. */
+export function placeStaffTuplets(node: XmlNode, geometry: SvgGeometry,
+  tuplets = findAll(node, child => hasClass(child, 'm3n-tuplet-label'))) {
+  const scale = STAFF_SCALE
+  const rhythmObstacles = tuplets.length ? geometry.withoutClasses(node, [...decorations, 'verse', 'slur']) : []
+  const tupletMusic = new Map<XmlNode, Ink[]>()
+  for (const staff of tuplets.length ? findAll(node, n => hasClass(n, 'staff')) : []) {
+    const labels = nodes(staff).filter(n => tuplets.includes(n))
+    if (!labels.length) continue
+    const music = geometry.withoutClasses(staff, [...decorations, 'verse', 'slur'])
+    for (const label of labels) tupletMusic.set(label, music)
+  }
+  for (const label of tuplets) {
+    const below = label.attributes['data-m3n-below'] === 'true', clearance = (style.music * .1) / scale
+    // Re-anchor bracket strokes and numeral to this staff before
+    // resolving collisions with the actual local music.
+    const localMusic = tupletMusic.get(label)!
+    const pieces = geometry.pieces(label)
+    const closeMusic = localMusic
+    const closeObstacles = rhythmObstacles
+    const offsets = pieces.flatMap(piece => closeMusic
+      .filter(other => overlapsX(piece, other, clearance / 2))
+      .map(other => below ? other.bottom - piece.top + clearance : other.top - piece.bottom - clearance))
+    let dy = offsets.length ? (below ? Math.max(...offsets) : Math.min(...offsets)) : 0
+    const intervals = pieces.flatMap(piece => closeObstacles
+      .filter(other => overlapsX(piece, other, clearance / 2))
+      .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
+      .sort((a, b) => below ? a.start - b.start : b.end - a.end)
+    for (const interval of intervals)
+      if (dy > interval.start && dy < interval.end) dy = below ? interval.end : interval.start
+    if (dy) translate(label, 0, dy)
+    rhythmObstacles.push(...geometry.pieces(label))
+  }
+}
 /** Operate on independent attachments. Musical geometry is never stretched.
  * Empty verse containers remain available for interaction but reserve no ink. */
 export function arrangeStaffSystem(
@@ -123,35 +159,7 @@ export function arrangeStaffSystem(
   // packing verses, so a later collision pass cannot push a numeral below text.
   const tuplets = new Set(byClass('m3n-tuplet-label'))
   const isMovableDecoration = (n: XmlNode) => isDecoration(n) && !tuplets.has(n)
-  const rhythmObstacles = tuplets.size ? geometry.withoutClasses(node, [...decorations, 'verse']) : []
-  const tupletMusic = new Map<XmlNode, Ink[]>()
-  for (const staff of tuplets.size ? findAll(node, n => hasClass(n, 'staff')) : []) {
-    const labels = nodes(staff).filter(n => tuplets.has(n))
-    if (!labels.length) continue
-    const music = geometry.withoutClasses(staff, [...decorations, 'verse'])
-    for (const label of labels) tupletMusic.set(label, music)
-  }
-  for (const label of tuplets) {
-    const below = label.attributes['data-m3n-below'] === 'true', clearance = (style.music * .1) / scale
-    // Re-anchor bracket strokes and numeral to this staff before
-    // resolving collisions with the actual local music.
-    const localMusic = tupletMusic.get(label)!
-    const pieces = geometry.pieces(label)
-    const closeMusic = nearby(localMusic, pieces, clearance / 2)
-    const closeObstacles = nearby(rhythmObstacles, pieces, clearance / 2)
-    const offsets = pieces.flatMap(piece => closeMusic
-      .filter(other => overlapsX(piece, other, clearance / 2))
-      .map(other => below ? other.bottom - piece.top + clearance : other.top - piece.bottom - clearance))
-    let dy = offsets.length ? (below ? Math.max(...offsets) : Math.min(...offsets)) : 0
-    const intervals = pieces.flatMap(piece => closeObstacles
-      .filter(other => overlapsX(piece, other, clearance / 2))
-      .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
-      .sort((a, b) => below ? a.start - b.start : b.end - a.end)
-    for (const interval of intervals)
-      if (dy > interval.start && dy < interval.end) dy = below ? interval.end : interval.start
-    if (dy) translate(label, 0, dy)
-    rhythmObstacles.push(...geometry.pieces(label))
-  }
+  placeStaffTuplets(node, geometry, [...tuplets])
   const verses = byClass('verse')
   for (const verse of verses) if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) verse.children = []
   // Pack actual lyric ink for each staff independently, with no phantom row

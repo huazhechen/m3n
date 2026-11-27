@@ -415,3 +415,27 @@ it.each([.6, 1.2])('uses %s staff spaces as the eighth-note minimum without comp
   expect(positions[5]! - positions[4]! - (head.right - head.left)).toBeCloseTo(2 * spacing * space, 8)
   expect(staffReadingSpacing(result.prepared, spacing, -100).positions).toEqual(positions)
 })
+
+it.each([.6, 1.2])('uses the same duration-normalized gap around dotted notes at spacing %s', async spacing => {
+  const { staffSpacingPositions } = await import('./staff-engine.js')
+  const result = model('{4/4}\nN: 7. (7) 7 7 |', spacing)
+  const head = staffGlyphMetrics('noteheadBlack'), width = head.right - head.left
+  for (const extra of [0, 80]) {
+    const xs = staffSpacingPositions(result.prepared, spacing, extra)
+    const gaps = xs.slice(1).map((x, i) => (x - xs[i]! - width) / result.prepared.weights[i]!)
+    for (const gap of gaps) expect(gap).toBeCloseTo(gaps[0]!, 8)
+  }
+})
+
+it('reserves an independent flag at its actual downward stem position', () => {
+  const result = model('{4/4}\nN: 7. (7) 7 7 |')
+  drawStaffMeasure(result, result.minimum, 0)
+  const note = result.entries[0]![1]!.notes[0]!
+  expect(note.direction).toBe(-1)
+  expect(note.beam).toBeUndefined()
+  const flag = staffGlyphMetrics('flag8Down', note.prepared.size)
+  const head = staffGlyphMetrics(note.prepared.head, note.prepared.size)
+  expect(note.prepared.after).toBeCloseTo(Math.max(head.right - head.left, note.stemX - note.x + flag.right), 8)
+  expect(note.prepared.after).toBeLessThan(head.right - head.left + staffGlyphMetrics('flag8Up', note.prepared.size).right)
+  expect(note.x + note.prepared.after).toBeGreaterThanOrEqual(note.stemX + flag.right)
+})

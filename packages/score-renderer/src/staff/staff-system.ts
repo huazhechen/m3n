@@ -7,7 +7,7 @@ import { staffMusicSize, staffGlyph, staffNavigationGlyph } from './staff-music-
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
-import { arrangeStaffSystem } from './system-layout.js'
+import { arrangeStaffSystem, placeStaffTuplets } from './system-layout.js'
 import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
 const style = scoreLayoutConfig.staff
@@ -281,6 +281,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         staff.children.push(element('g', { class: 'tie', 'data-m3n-join': barJoins }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX,
           line.target - inset - engine.endingBarInset, tieSignatures[staff.attributes['data-staff'] === 'bass' ? 1 : 0])))
       }
+      placeStaffTuplets(node, tieGeometry)
       const slurMusic: Array<Ink[] | undefined> = []
       // Place inner bows first so enclosing bows clear existing relation ink.
       const span = ({ start, end }: typeof intervals[number]) =>

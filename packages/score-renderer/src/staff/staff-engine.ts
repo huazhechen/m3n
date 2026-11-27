@@ -92,13 +92,15 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, readi
     const headWidth = ordinaryHead.right - ordinaryHead.left
     const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
     solution = solveScoreSpacing(metrics.columns.map((column, index) => {
-      const previous = metrics.columns[index - 1]
-      const before = previous ? Math.max(0, (previous.naturalAdvance - headWidth) / increment) : 0
       const after = Math.max(0, (column.naturalAdvance - headWidth) / increment)
       const gap = staffMusicSize() / 4 * spacing
+      // Ink limits and rhythmic advance are parallel constraints. Adding
+      // dotted/flag ink to the duration gap counts that occupied space twice.
+      const inkGap = staffMusicSize() / 4 * .2
       return { cells: [
-        { lane: 'music', left: column.left + gap * before / 2,
-          right: column.after + (index + 1 < metrics.columns.length ? gap * after / 2 : 0), before: 0, after: 0 },
+        { lane: 'music', left: column.left,
+          right: column.after + (index + 1 < metrics.columns.length ? inkGap : 0), before: 0, after: 0 },
+        { lane: 'rhythm', left: 0, right: headWidth + (index + 1 < metrics.columns.length ? gap * after : 0), before: 0, after: 0 },
         ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
       ] }
     }))
@@ -364,7 +366,10 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     const beamed = new Set(beams.filter(beam => beam.lane === lane).flatMap(beam => beam.indices))
     for (const [i, note] of flat.entries()) if (!note.rest && note.dur >= 8 && !beamed.has(i)) {
       const head = staffGlyphMetrics(note.head, note.size)
-      note.after = Math.max(note.after, head.right - head.left + staffGlyphMetrics(`flag${note.dur}Up` as StaffGlyph, note.size).right)
+      const flag = staffGlyphMetrics(`flag${note.dur}${note.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.size)
+      const stemX = note.direction === 1 ? head.right - note.size / 4 * .06 : note.size / 4 * .06
+      note.left = Math.max(note.left, -stemX - flag.left)
+      note.after = Math.max(note.after, stemX + flag.right)
     }
     return laneEntries
   })
