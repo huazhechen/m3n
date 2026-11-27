@@ -1,6 +1,7 @@
+import { isNativeMeasureNumber } from './native-system-labels.js'
 import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
 import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
-import { nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'
+import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal } from './native-horizontal.js'
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
@@ -18,7 +19,7 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
   avoidance: NativeAvoidance): NativePageBlock {
   const height = placeNativeLanes(system), pieces = nativeLanePieces(system, measurer)
   const core = nativeSystemCore(system, measurer) ?? { top: 0, bottom: height }
-  const primitives = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece,
+  const primitives = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ left:piece.left,right:piece.right,
     top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
   primitives.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
   let ink: NativeInk[] = primitives
@@ -41,7 +42,7 @@ export function nativeRowGeometry(system: NativeSystem, measurer: TextMeasurer, 
       top: Math.min(...items.map(piece => piece.top)), bottom: Math.max(...items.map(piece => piece.bottom)),
     }))
   }
-  const boundaryInk = (system.decorationLayout ?? []).filter(item => !item.hidden && item.svg.includes('data-m3n-role="measure-number"'))
+  const boundaryInk = (system.decorationLayout ?? []).filter(item => !item.hidden && isNativeMeasureNumber(item))
     .flatMap(item => {
       const y = system.lanes.find(lane => lane.id === item.lane)!.y
       return nativeSvgPieces(item.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
@@ -69,6 +70,8 @@ export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: Tex
   const top = members.length ? Math.max(...members.map(glyph => Math.min(0, ...(glyph.coreInk ?? []).map(piece => piece.top)))) : 0
   let core = { top, bottom }
   if (horizontal) {
+    // Both endpoint probes consume the same immutable constraint chain.
+    cacheNativeHorizontal(horizontal)
     // With no dynamic profiles, each cell weight is affine in line width.
     // Its weighted core is a ratio of affine functions and is monotone.
     // Endpoints therefore bound every justified or shortened ending width.

@@ -1,3 +1,4 @@
+import { isNativeMeasureNumber } from './native-system-labels.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
@@ -103,7 +104,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
   let placedArc: NativeArc | undefined
   if (relation.kind !== 'inst') {
     const preceding = [...(system.relationLayout ?? [])].filter(([r, placed]) => r.kind !== 'inst' && r.first.lane === relation.first.lane && placed.ink.right > ink.left && placed.ink.left < ink.right)
-    const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane && !label.svg.includes('data-m3n-role="measure-number"'))
+    const labels = (system.decorationLayout ?? []).filter(label => label.lane === relation.first.lane && !isNativeMeasureNumber(label))
       .flatMap(label => nativeSvgPieces(label.svg, measurer))
       .filter(label => label.right > ink.left && label.left < ink.right)
     let dy = 0
@@ -128,7 +129,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
               && placed.ink.right > peerInk.left && placed.ink.left < peerInk.right)
             .map(([, placed]) => placed.ink)
           const peerLabels = (system.decorationLayout ?? [])
-            .filter(label => label.lane === peer.first.lane && !label.svg.includes('data-m3n-role="measure-number"'))
+            .filter(label => label.lane === peer.first.lane && !isNativeMeasureNumber(label))
             .flatMap(label => nativeSvgPieces(label.svg, measurer))
             .filter(label => label.right > peerInk.left && label.left < peerInk.right)
           dy = Math.min(dy, ...[...peerBlockers, ...peerLabels]
@@ -164,7 +165,13 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (edge) lift = Math.max(lift, edge.bottom - piece.top + (system.coreGap ?? nativeCoreGap()) * .12)
         }
       }
-      dy = -nativeArcInkLift(arc.commands, arc.left, arc.right, [...pieces, ...labels, ...bars], lift, arc.slicer)
+      // nativeArcGeometry already clears the music to a fixed point. With
+      // no preceding-relation lift or additional overlapping label/bar ink,
+      // the identical music obstacles cannot require another pass.
+      const addedInk = [...labels, ...bars]
+      const overlapsAdded = addedInk.some(piece => Math.min(arc.right,piece.right)-Math.max(arc.left,piece.left)>=1e-8)
+      dy = lift || overlapsAdded
+        ? -nativeArcInkLift(arc.commands, arc.left, arc.right, [...pieces, ...addedInk], lift, arc.slicer) : -0
       placedArc = { ...arc, top: arc.top - dy, commands: arc.commands.map(command => {
         if (command.op === 'Z') return command
         if (command.op === 'C') return { ...command, y: command.y + dy, cy1: command.cy1 + dy, cy2: command.cy2 + dy }

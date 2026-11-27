@@ -75,10 +75,12 @@ it('keeps row-cache output identical to uncached geometry evaluation', async () 
   for(const [index, row] of cached.systems.entries()) {
     const block=cached.verticalBlocks[cached.headerBlocks.length+index]!
     expect(block.resolvedInk).toBe(true)
-    const lower=nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!)
+    for(const horizontal of [undefined,{minimumNoteGap:8,width:768}]) {
+    const lower=nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!,horizontal)
     expect(lower.core!.bottom).toBeLessThanOrEqual(block.core!.bottom-block.baseline!+1e-5)
     expect(lower.core!.top).toBeGreaterThanOrEqual(block.core!.top-block.baseline!-1e-5)
     expect(Math.max(...lower.ink!.map(p=>p.bottom))).toBeLessThanOrEqual(Math.max(...block.ink!.map(p=>p.bottom-block.baseline!))+1e-5)
     expect(Math.min(...lower.ink!.map(p=>p.top))).toBeGreaterThanOrEqual(Math.min(...block.ink!.map(p=>p.top-block.baseline!))-1e-5)
+    }
   }
 })

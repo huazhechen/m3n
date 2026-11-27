@@ -34,15 +34,22 @@ export function nativeBarSvg(kind: string, x: number, y: number, measurer: TextM
 
 /** Painted bar geometry with the same coordinate rounding as nativeBarSvg. */
 export function nativeBarPieces(kind: string, x: number, y: number, measurer: TextMeasurer): NativeInk[] {
-  const geometry = nativeBarMetrics(kind), top = y + nativeMusicAxis(measurer) - geometry.size / 2
-  const pieces = geometry.bars.map(bar => {
-    const left = n(x - geometry.anchor + bar.x), upper = n(top)
-    return {left, right:left+n(bar.width), top:upper, bottom:upper+n(geometry.size)}
+  const geometry = nativeBarMetrics(kind)
+  const create = () => {
+    const top = y + nativeMusicAxis(measurer) - geometry.size / 2, upper = n(top)
+    return { top, upper, bottom: upper + n(geometry.size), widths: geometry.bars.map(bar => n(bar.width)) }
+  }
+  // Numeric row geometry uses a zero baseline. Cache only font-dependent
+  // vertical values and widths; x must be rounded after actual placement.
+  const frame = y === 0 ? measurer.fixedSymbol?.(`bar-frame:${kind}`, create) ?? create() : create()
+  const pieces = geometry.bars.map((bar, index) => {
+    const left = n(x - geometry.anchor + bar.x)
+    return {left, right:left+frame.widths[index]!, top:frame.upper, bottom:frame.bottom}
   })
   if (geometry.dots.length) {
     const ink = bravuraGeometry('repeatDot',geometry.radius*2,true,measurer,geometry.radius*2).ink
     for (const dot of geometry.dots) for (const ratio of [0.38,0.62])
-      pieces.push(translateNativeInk(ink,n(x-geometry.anchor+dot),n(top+geometry.size*ratio-geometry.radius)))
+      pieces.push(translateNativeInk(ink,n(x-geometry.anchor+dot),n(frame.top+geometry.size*ratio-geometry.radius)))
   }
   return pieces
 }

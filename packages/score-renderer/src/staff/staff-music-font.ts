@@ -3,6 +3,7 @@ import glyphs from './staff-glyphs.json' with { type: 'json' }
 import { element, type Ink, type XmlNode, type XmlRenderOptions } from './layout-svg.js'
 
 export type StaffGlyph = keyof typeof glyphs
+export const staffGlyphCharacter = (name: StaffGlyph): string => glyphs[name].character
 export const staffMusicSize = () => scoreLayoutConfig.staff.music / scoreLayoutConfig.staff.engine.scale // SMuFL: one em = four staff spaces.
 export const staffGlyphMetrics = (name: StaffGlyph, size = staffMusicSize()) => {
   const g = glyphs[name]

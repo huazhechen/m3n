@@ -43,7 +43,7 @@ export function nativeWholeRowFeasibility(candidates: readonly (readonly NativeL
   options: { pageHeight: number; margin: number; gap: number; headerGap: number; ratio: number; primitivePairs?: boolean; wholeRows?: boolean; onWitness?: (ends: number[]) => void }) {
   const { pageHeight, margin, gap, headerGap, ratio } = options
   const boxes = candidates.map((rows, start) => new Map(rows.map(row => [row.end, box(blockFor(start, row.end))])))
-  const advance = (item: Box, previous?: State): State | undefined => {
+  const advance = (item: Box, previous?: State, best?: State, ceiling=Infinity): State | undefined => {
     if (item.bottom - item.top > pageHeight - 2 * margin + 1e-6) return
     let baseline = margin - item.top, page = previous?.page ?? 0
     if (previous) {
@@ -60,6 +60,7 @@ export function nativeWholeRowFeasibility(candidates: readonly (readonly NativeL
         page++; baseline = margin - item.top
       }
     }
+    if(page>=ceiling || best && (page>best.page || page===best.page && baseline>=best.baseline))return
     return { box: item, page, baseline }
   }
   let header: State | undefined
@@ -67,30 +68,62 @@ export function nativeWholeRowFeasibility(candidates: readonly (readonly NativeL
     header = advance(box(block), header)
     if (!header) return () => false
   }
+  const prefixTransitions = new WeakMap<object, WeakMap<Box, State | undefined>>()
+  const noHeader = {}
+  let cachedTransitions = 0
+  const publishWitness = (winner: State | undefined) => {
+    if (!options.onWitness) return
+    const ends: number[] = []
+    for(let state=winner;state?.end!==undefined;state=state.previous)ends.push(state.end)
+    options.onWitness(ends.reverse())
+  }
   return (restricted: readonly (readonly NativeLineCandidate[])[], ceiling: number): boolean => {
-    const states = Array.from({ length: restricted.length + 1 }, () => new Map<number, State>())
-    // A last row's start and this endpoint identify its complete envelope.
-    for (let start = 0; start < restricted.length; start++) {
-      const previous = start === 0 ? [header] : [...states[start]!.values()]
+    if (!restricted.length) return false
+    // Lawler branches share long fixed prefixes. Their exact pagination is
+    // deterministic and independent of the cost/page ceiling being queried.
+    let beginning=0,initial=header
+    while (beginning<restricted.length && restricted[beginning]!.length===1) {
+      const row=restricted[beginning]![0]!,item=boxes[beginning]!.get(row.end)!,key=initial ?? noHeader
+      let peers=prefixTransitions.get(key)
+      let next: State | undefined
+      if (peers?.has(item)) next=peers.get(item)
+      else {
+        next=advance(item,initial)
+        if (next && options.onWitness) {next.previous=initial;next.end=row.end}
+        // Bound retained cache memory, never the number of paths searched.
+        if (cachedTransitions<8192) {
+          if (!peers) {peers=new WeakMap();prefixTransitions.set(key,peers)}
+          peers.set(item,next);cachedTransitions++
+        }
+      }
+      if (!next || next.page>=ceiling) return false
+      initial=next;beginning=row.end
+    }
+    if (beginning===restricted.length) {publishWitness(initial);return true}
+    // Each (start,end) row contributes at most one state, visited in ascending
+    // start order. Appending preserves Map insertion order without allocating
+    // a Map and a copied values array at every (often unreachable) endpoint.
+    const states: Array<State[] | undefined> = []
+    for (let start = beginning; start < restricted.length; start++) {
+      const previous = start === beginning ? [initial] : states[start]
+      if (!previous?.length) continue
       for (const row of restricted[start]!) {
         const item = boxes[start]!.get(row.end)!
         let best: State | undefined
         for (const prior of previous) {
-          const next = advance(item, prior)
-          if (!next || next.page >= ceiling) continue
+          const next = advance(item, prior, best, ceiling)
+          if (!next) continue
           if (options.onWitness) { next.previous = prior; next.end = row.end }
-          if (!best || next.page < best.page || next.page === best.page && next.baseline < best.baseline) best = next
+          best = next
         }
-        if (best) states[row.end]!.set(start, best)
+        if (best) (states[row.end] ??= []).push(best)
       }
-      states[start]!.clear()
+      states[start] = undefined
     }
-    const winners = [...states[restricted.length]!.values()]
+    const winners = states[restricted.length] ?? []
     if (options.onWitness && winners.length) {
       const winner = winners.sort((a,b)=>a.page-b.page || a.baseline-b.baseline)[0]!
-      const ends: number[] = []
-      for(let state: State | undefined=winner;state?.end!==undefined;state=state.previous) ends.push(state.end)
-      options.onWitness(ends.reverse())
+      publishWitness(winner)
     }
     return winners.length > 0
   }

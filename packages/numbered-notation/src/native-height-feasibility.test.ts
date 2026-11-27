@@ -78,3 +78,23 @@ it('core-only page floors never exceed full primitive pagination',()=>{
   expect(nativeCorePageLowerBound(blocks,options)).toBeLessThanOrEqual(actual)
  }
 })
+
+it('reuses fixed-prefix pagination across branches and changing ceilings without changing witnesses',()=>{
+ const graph:NativeLineCandidate[][]=Array.from({length:18},(_,start)=>
+  Array.from({length:Math.min(3,18-start)},(_,slot)=>({end:start+slot+1,density:.7})))
+ const blockFor=(start:number,end:number):NativePageBlock=>({height:25+end-start,
+  core:{top:-8,bottom:12},ink:[{left:0,right:100,top:-10-start%3,bottom:15+(end-start)*2}],resolvedInk:true})
+ const options={pageHeight:130,margin:4,gap:20,headerGap:15,ratio:.3,wholeRows:true,primitivePairs:true}
+ for(const headers of [[],[{height:20,ink:[{left:0,right:100,top:0,bottom:20}]}]]) {
+  let witness:number[]=[]
+  const shared=nativeWholeRowFeasibility(graph,blockFor,headers,{...options,onWitness:ends=>{witness=ends}})
+  for(const last of [12,16,18,12])for(const ceiling of [1,5,2,4,5]) {
+   const restricted=graph.map((rows,start)=>start<last ? rows.slice(0,1) : rows)
+   let expected:number[]=[]
+   const fresh=nativeWholeRowFeasibility(graph,blockFor,headers,{...options,onWitness:ends=>{expected=ends}})
+   witness=[]
+   expect(shared(restricted,ceiling)).toBe(fresh(restricted,ceiling))
+   expect(witness).toEqual(expected)
+  }
+ }
+})

@@ -1,3 +1,4 @@
+import { isNativeMeasureNumber } from './native-system-labels.js'
 import { scoreSvgFontFamilies } from './font-family.js'
 import { nativeBarSvg, nativeLaneBarPositions, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
@@ -60,7 +61,7 @@ class SvgPainter extends NativeMusicPainter {
       svg += `<g data-m3n-lane="melody" data-m3n-relation="volta" transform="translate(0 ${n(lane.y)})">${volta.svg}</g>`
     }
     svg += nativeVoiceConnectorSvg(system, this.layout.margin, this.layout.measurer)
-    for (const decoration of [...(system.decorationLayout ?? [])].filter(decoration => !decoration.hidden).sort((a, b) => Number(a.svg.includes('data-m3n-role="measure-number"')) - Number(b.svg.includes('data-m3n-role="measure-number"')))) svg += `<g${attrs({ 'data-m3n-lane': decoration.lane, transform: `translate(0 ${n(system.lanes.find(lane => lane.id === decoration.lane)!.y)})` })}>${decoration.svg}</g>`
+    for (const decoration of [...(system.decorationLayout ?? [])].filter(decoration => !decoration.hidden).sort((a, b) => Number(isNativeMeasureNumber(a)) - Number(isNativeMeasureNumber(b)))) svg += `<g${attrs({ 'data-m3n-lane': decoration.lane, transform: `translate(0 ${n(system.lanes.find(lane => lane.id === decoration.lane)!.y)})` })}>${decoration.svg}</g>`
     const boundaryInk = this.layout.verticalBlocks[this.layout.headerBlocks.length + system.index]?.boundaryInk ?? []
     const pageTop = system.top + Math.min(0, ...boundaryInk.map(piece => piece.top))
     const paragraphs = [...new Set(system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs.map(glyph => glyph.paragraph))))]

@@ -1,10 +1,10 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
-import { measureNativeHorizontal, nativeBarMetrics, nativeUnitRhythmicGap } from './native-horizontal.js';
+import { cacheNativeHorizontal, measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, nativeUnitRhythmicGap, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js';
 import { layoutNativeScore } from './native-layout.js';
 import type { TextMeasurer } from './native-measure.js';
-import { projectNativeScore } from './native-model.js';
+import { cloneNativeProjection, projectNativeScore } from './native-model.js';
 // Barlow advance widths with deterministic offline em-height estimates.
 // inkBottom distinguishes that estimate's blank tail from a real descender.
 // Ordinary prose is irrelevant to these examples' horizontal music positions.
@@ -15,6 +15,22 @@ const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fo
 const narrowSpacing = { minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 };
 const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9, ...spacing });
 describe('native spacing and measured note envelopes', () => {
+    it('reuses equal-cell solutions across widths without sharing placement targets', () => {
+        const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | (5 6) 7 1 2 | 3 4 5 6 |||\nB: 1 - - - | 2 - - - | 3 - - - |||');
+        const base = projectNativeScore(document, { textMeasurer: measurer });
+        const templates: NativeHorizontalTemplates = new Map();
+        for (const width of [640, 528, 768, 640]) {
+            const options = { minimumNoteGap: 8, equalMeasures: true };
+            const cached = cloneNativeProjection(base), plain = cloneNativeProjection(base);
+            cacheNativeHorizontal(options, templates);
+            expect(nativeHorizontalSpacing(cached.measures, options)).toEqual(nativeHorizontalSpacing(plain.measures, { ...options }));
+            expect(nativeUnitRhythmicGap(cached.measures, options, width)).toBe(nativeUnitRhythmicGap(plain.measures, { ...options }, width));
+            placeNativeHorizontal(cached.measures, options, 13, width);
+            placeNativeHorizontal(plain.measures, { ...options }, 13, width);
+            expect(cached.measures).toEqual(plain.measures);
+            expect(base.glyphs.every(glyph => glyph.x === 0)).toBe(true);
+        }
+    });
     it('matches all four note centres and the flush final bar of an unadorned system', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||', 800, narrowSpacing);
         const expected = [38.084020441228695, 219.4515204412287, 400.8190204412287, 582.1865204412287];
@@ -147,4 +163,21 @@ it('measures physical full-width clearance independently of the tier baseline an
   expect(gap).toBeCloseTo(nativeUnitRhythmicGap(b.measures, loose.options, 500)!, 8)
   expect(nativeUnitRhythmicGap(a.measures, tight.options, 600)!).toBeGreaterThan(gap)
   expect(tight.projection.glyphs.map(g => g.x)).toEqual(snapshot)
+})
+
+it.each([false,true])('rebinds cached control and note targets across widths, equal=%s',equalMeasures=>{
+ const document=parseM3NDocument('{4/4}\nN: 1# 2 {key=G}3 4 | 5 6 7 1e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |||')
+ const base=projectNativeScore(document,{textMeasurer:measurer}),templates:NativeHorizontalTemplates=new Map()
+ for(const width of [528,648,768,552,648]){
+  const options={minimumNoteGap:8,equalMeasures}
+  const cached=cloneNativeProjection(base),fresh=cloneNativeProjection(base)
+  cacheNativeHorizontal(options,templates)
+  measureNativeHorizontal(cached.measures,options)
+  measureNativeHorizontal(fresh.measures,{...options})
+  expect(cached.measures).toEqual(fresh.measures)
+  placeNativeHorizontal(cached.measures,options,12,width)
+  placeNativeHorizontal(fresh.measures,{...options},12,width)
+  expect(cached.measures).toEqual(fresh.measures)
+  expect(base.glyphs.every(glyph=>glyph.x===0)).toBe(true)
+ }
 })

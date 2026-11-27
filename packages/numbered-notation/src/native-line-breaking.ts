@@ -2,11 +2,27 @@
 export type NativeLineCandidate = { end: number; density: number; penalty?: number }
 type Plan = { end: number; count: number; sum: number; square: number; penalty: number; previous?: Plan }
 const epsilon = 1e-12
+type WeightedRow = { end: number; density: number; stretch: number; penalty: number; sourcePenalty?: number }
+const weightedRows = new WeakMap<NativeLineCandidate, WeightedRow>()
+function weightedRow(row: NativeLineCandidate): WeightedRow {
+  let saved = weightedRows.get(row)
+  if (!saved || saved.end !== row.end || saved.density !== row.density || saved.sourcePenalty !== row.penalty) {
+    saved = { end: row.end, density: row.density, stretch: Math.max(0, 1 - row.density),
+      penalty: (row.penalty ?? 0) + 100 * Math.max(0, row.density - 1) ** 2, sourcePenalty: row.penalty }
+    weightedRows.set(row, saved)
+  }
+  return saved
+}
 
+const planPaths = new WeakMap<Plan, number[]>()
 function ends(plan: Plan): number[] {
+  const cached = planPaths.get(plan)
+  if (cached) return cached
   const result: number[] = []
   for (let current: Plan | undefined = plan; current?.count; current = current.previous) result.push(current.end)
-  return result.reverse()
+  result.reverse()
+  planPaths.set(plan, result)
+  return result
 }
 function earlier(a: Plan, b: Plan) {
   const x = ends(a), y = ends(b)
@@ -46,34 +62,40 @@ function hull(points: Plan[]): Plan[] {
  * Forced breaks are encoded by missing crossing edges, not separate solves.
  * Overflow penalties apply only to unavoidable indivisible oversized events.
  * No per-row charge or adjacent-row approximation. */
-export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings?: Record<string, number>): number[] {
+export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings?: Record<string, number>): number[]
+export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings: Record<string, number> | undefined, maximumCost: number): number[] | undefined
+export function planNativeLines(candidates: readonly (readonly NativeLineCandidate[])[], timings?: Record<string, number>, maximumCost = Infinity): number[] | undefined {
   const count = candidates.length
   if (!count) return []
-  const root: Plan = { end: 0, count: 0, sum: 0, square: 0, penalty: 0 }
-  const rows = candidates.map(list => list.map(row => ({ ...row, stretch: Math.max(0, 1 - row.density),
-    penalty: (row.penalty ?? 0) + 100 * Math.max(0, row.density - 1) ** 2 })))
+  let root: Plan = { end: 0, count: 0, sum: 0, square: 0, penalty: 0 }
+  const rows: Array<WeightedRow[] | undefined> = []
+  const rowsAt = (start: number) => rows[start] ??= candidates[start]!.map(weightedRow)
+  const append = (previous: Plan, row: WeightedRow): Plan => ({ end: row.end,
+    count: previous.count + 1, sum: previous.sum + row.stretch,
+    square: previous.square + row.stretch ** 2, penalty: previous.penalty + row.penalty, previous })
+  // Page-constrained subproblems fix a common prefix. Accumulate that prefix
+  // once, preserving addition order and the original tie-breaking path.
+  while (root.end < count && candidates[root.end]!.length === 1) root = append(root, weightedRow(candidates[root.end]![0]!))
+  if (root.end === count) return objective(root) <= maximumCost + epsilon ? ends(root) : undefined
   const lower = Array<number>(count + 1).fill(Infinity)
-  const baseline = Array<(typeof rows)[number][number] | undefined>(count)
+  const baseline = Array<WeightedRow | undefined>(count)
   lower[count] = 0
-  for (let start = count - 1; start >= 0; start--) for (const row of rows[start]!) {
+  for (let start = count - 1; start >= root.end; start--) for (const row of rowsAt(start)) {
     const cost = row.stretch ** 2 + row.penalty + lower[row.end]!
     if (cost < lower[start]! || cost === lower[start] && row.end > (baseline[start]?.end ?? 0)) {
       lower[start] = cost; baseline[start] = row
     }
   }
-  const append = (previous: Plan, row: (typeof rows)[number][number]): Plan => ({ end: row.end,
-    count: previous.count + 1, sum: previous.sum + row.stretch,
-    square: previous.square + row.stretch ** 2, penalty: previous.penalty + row.penalty, previous })
   let best = root
-  for (let start = 0; start < count;) {
+  for (let start = root.end; start < count;) {
     const row = baseline[start]
     if (!row) throw new Error('换行候选无法覆盖完整内容。')
     best = append(best, row); start = row.end
   }
-  let bestCost = objective(best)
+  let bestCost = Math.min(objective(best), maximumCost)
   const states = Array.from({ length: count }, () => new Map<number, Plan[]>())
-  states[0]!.set(0, [root])
-  for (let start = 0; start < count; start++) {
+  states[root.end]!.set(root.count, [root])
+  for (let start = root.end; start < count; start++) {
     for (const points of states[start]!.values()) {
       const retained = hull(points)
       if (timings) {
@@ -83,14 +105,16 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
       for (const previous of retained) {
         // The remaining sum of squares is an admissible lower bound: the
         // full-score variance contribution is nonnegative, even across breaks.
-        if (previous.square + previous.penalty + lower[start]! > bestCost + epsilon) continue
-        for (const row of rows[start]!) {
+        const prefixVariance = previous.count ? Math.max(0, previous.square - previous.sum * previous.sum / previous.count) : 0
+        if (previous.square + previous.penalty + lower[start]! + prefixVariance > bestCost + epsilon) continue
+        for (const row of rowsAt(start)) {
           if (timings) timings.linePlanningGeneratedStates = (timings.linePlanningGeneratedStates ?? 0) + 1
           const plan = append(previous, row)
-          if (plan.square + plan.penalty + lower[row.end]! > bestCost + epsilon) continue
+          const variance = Math.max(0, plan.square - plan.sum * plan.sum / plan.count)
+          if (plan.square + plan.penalty + lower[row.end]! + variance > bestCost + epsilon) continue
           if (row.end === count) {
             const cost = objective(plan)
-            if (cost < bestCost - epsilon || Math.abs(cost - bestCost) <= epsilon && earlier(plan, best)) {
+            if (cost < bestCost - epsilon || Math.abs(cost - bestCost) <= epsilon && (objective(best) > maximumCost + epsilon || earlier(plan, best))) {
               best = plan; bestCost = cost
             }
           } else {
@@ -104,7 +128,7 @@ export function planNativeLines(candidates: readonly (readonly NativeLineCandida
     }
     states[start]!.clear()
   }
-  return ends(best)
+  return objective(best) <= maximumCost + epsilon ? ends(best) : undefined
 }
 
 /** Shared sufficient-statistic hull; resource-constrained solvers additionally

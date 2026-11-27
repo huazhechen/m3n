@@ -10,13 +10,18 @@ export function createNativePageCostCache(){return {heightBounds:new WeakMap<obj
 type Options={rowsToResolve?:Set<string>;cache?:ReturnType<typeof createNativePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ratio:number;wholeRows:boolean;ceiling:number;maximumCost:number;reference?:{required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
 const box=(block:NativePageBlock):Box=>{
  const axis=block.baseline ?? 0
- const ink=(block.ink ?? []).map(piece=>({...piece,top:piece.top-axis,bottom:piece.bottom-axis}))
- const edges=[...ink,...(block.boundaryInk ?? []).map(piece=>({...piece,top:piece.top-axis,bottom:piece.bottom-axis}))]
+ const ink=(block.ink ?? []).map(piece=>({left:piece.left,right:piece.right,top:piece.top-axis,bottom:piece.bottom-axis}))
+ const edges=[...ink,...(block.boundaryInk ?? []).map(piece=>({left:piece.left,right:piece.right,top:piece.top-axis,bottom:piece.bottom-axis}))]
  const top=Math.min(0,...edges.map(piece=>piece.top)),bottom=Math.max(0,...edges.map(piece=>piece.bottom))
  return {top,bottom,coreTop:block.core ? block.core.top-axis : top,coreBottom:block.core ? block.core.bottom-axis : bottom,
   music:Boolean(block.core),scale:block.coreGapScale ?? 1,gap:block.coreGapBefore,before:block.gapBefore ?? 0,ink,resolved:Boolean(block.resolvedInk),sorted:false}
 }
-const ends=(state:NativeLineStatisticPlan)=>{const result:number[]=[];for(let p:NativeLineStatisticPlan|undefined=state;p?.count;p=p.previous)result.push(p.end);return result.reverse()}
+const planPaths=new WeakMap<NativeLineStatisticPlan,number[]>()
+const ends=(state:NativeLineStatisticPlan)=>{
+ const saved=planPaths.get(state);if(saved)return saved
+ const result:number[]=[];for(let p:NativeLineStatisticPlan|undefined=state;p?.count;p=p.previous)result.push(p.end)
+ result.reverse();planPaths.set(state,result);return result
+}
 const objective=(state:NativeLineStatisticPlan)=>2*state.square-state.sum*state.sum/state.count+state.penalty
 const earlier=(a:NativeLineStatisticPlan,b:NativeLineStatisticPlan)=>{const x=ends(a),y=ends(b);for(let i=0;i<Math.min(x.length,y.length);i++)if(x[i]!==y[i])return x[i]!>y[i]!;return false}
 
@@ -55,17 +60,21 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  }
  const cache=reusable.boxes,ids=new Map<Box,number>()
  const getBox=(block:NativePageBlock)=>{let item=cache.get(block);if(!item){item=box(block);cache.set(block,item)}if(!ids.has(item))ids.set(item,ids.size);return item}
- const contextBoxes=graph.map(rows=>new Map(rows.map(row=>[row.end,new Map<number,Box>()])))
- const boxes=graph.map((rows,start)=>new Map(rows.map(row=>[row.end,getBox(blockFor(start,row.end))])))
+ const contextBoxes=graph.map(()=>new Map<number,Map<number,Box>>())
+ // Prefix restrictions leave unreachable graph nodes in place. Their rows
+ // cannot occur in any completion and need neither geometry nor height bounds.
+ const reachable=new Uint8Array(graph.length+1);reachable[0]=1
+ for(let start=0;start<graph.length;start++)if(reachable[start])for(const row of graph[start]!)reachable[row.end]=1
+ const boxes=options.ceiling===1 ? graph.map((rows,start)=>new Map(reachable[start] ? rows.map(row=>[row.end,getBox(blockFor(start,row.end))]) : [])) : []
  // On a single page, the reverse shortest path is an admissible remaining
  // vertical span. Reject impossible prefixes before building their hulls.
  const multipliers=options.ceiling===1 ? [.003,.01,.03] : []
  const signature=[...boxes.flatMap(rows=>[...rows.values()])]
- let bounds=reusable.heightBounds.get(graph)
+ let bounds=options.ceiling===1 ? reusable.heightBounds.get(graph) : {boxes:[],remaining:[],pricedHeight:[]}
  if(!bounds || bounds.boxes.length!==signature.length || bounds.boxes.some((box,index)=>box!==signature[index])) {
   const remaining=graph.map(()=>new Map<number,number>())
   const pricedHeight=graph.map(()=>new Map<number,number[]>())
-  if(options.ceiling===1)for(let start=graph.length-1;start>=0;start--)for(const row of graph[start]!) {
+  if(options.ceiling===1)for(let start=graph.length-1;start>=0;start--)if(reachable[start])for(const row of graph[start]!) {
    const item=boxes[start]!.get(row.end)!
    let height=row.end===graph.length ? item.bottom : Infinity
    const prices=multipliers.map(price=>row.end===graph.length ? price*item.bottom : Infinity)
@@ -101,9 +110,16 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  for(let start=graph.length-1;start>=0;start--)for(const row of graph[start]!){const r=Math.max(0,1-row.density);suffix[start]=Math.min(suffix[start]!,r*r+(row.penalty ?? 0)+100*Math.max(0,row.density-1)**2+suffix[row.end]!)}
  const suffixPlans=horizontalSuffixPlans(graph,options.maximumCost)
  const canFinish=(sum:number,square:number,count:number,penalty:number,end:number)=>{
+  const prefixVariance=count ? Math.max(0,square-sum*sum/count) : 0
+  const mean=count ? sum/count : 0
   for(const group of suffixPlans[end]!) {
    if(square+penalty+group.minimumHalfOrdinate>options.maximumCost+1e-12)continue
-   const k=count+group.count,base=2*square+penalty
+   // Variance decomposes into the two within-part variances and the
+   // squared difference between their means. All three terms are nonnegative.
+   const m=group.count,k=count+m,base=2*square+penalty
+   const delta=count && m ? Math.max(0,group.minimumMean-mean,mean-group.maximumMean) : 0
+   if(square+penalty+group.minimumSquarePenalty+prefixVariance+group.minimumVariance
+     +count*m/k*delta*delta>options.maximumCost+1e-10)continue
    for(const suffix of group.points) {
     const s=sum+suffix.sum
     if(base+2*suffix.square+suffix.penalty-s*s/k<=options.maximumCost+1e-12)return true
@@ -117,28 +133,32 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  for(let start=0;start<graph.length;start++){
   for(const row of graph[start]!){
    const r=Math.max(0,1-row.density),penalty=(row.penalty ?? 0)+100*Math.max(0,row.density-1)**2
-   const groups=new Map<string,State[]>()
+   const groups=new Map<string|number,State[]>()
    for(const frontier of states[start]!.values())for(const prior of frontier){
     const square=prior.square+r*r,totalPenalty=prior.penalty+penalty
     const prefixVariance=Math.max(0,square-(prior.sum+r)**2/(prior.count+1))
     if(square+totalPenalty+prefixVariance+suffix[row.end]!>options.maximumCost+1e-12)continue
+    // Reject horizontally hopeless prefixes before preparing row geometry.
+    if(!canFinish(prior.sum+r,square,prior.count+1,totalPenalty,row.end))continue
     const reference=options.reference
     const first=prior.start<0 || reference && reference.section(start)!==reference.section(prior.start)
     const average=first ? Infinity : prior.gapCount ? prior.gapSum/prior.gapCount : 0
-    const memo=contextBoxes[start]!.get(row.end)!
+    let memo=contextBoxes[start]!.get(row.end)
+    if(!memo){memo=new Map();contextBoxes[start]!.set(row.end,memo)}
     let item=reference ? getBox(blockFor(start,row.end,prior.start,average)) : memo.get(prior.start)
     if(!item){item=getBox(blockFor(start,row.end,prior.start));memo.set(prior.start,item)}
     const position=advance(item,prior);if(!position)continue
     if(options.ceiling===1 && position.baseline+remaining[start]!.get(row.end)!>options.pageHeight-options.margin+1e-6)continue
-    const priced=pricedHeight[start]!.get(row.end)
+    const priced=pricedHeight[start]?.get(row.end)
     if(priced?.some((bound,index)=>square+totalPenalty+prefixVariance+bound-multipliers[index]!*(options.pageHeight-options.margin-position.baseline)>options.maximumCost+1e-10))continue
-    if(!canFinish(prior.sum+r,square,prior.count+1,totalPenalty,row.end))continue
 
     const gap=reference?.required && !reference.required(start) ? undefined : reference?.gap(start,row.end),terminal=reference?.terminal(start,row.end)
     const gapSum=terminal ? 0 : (first ? 0 : prior.gapSum)+(gap ?? 0)
     const gapCount=terminal ? 0 : (first ? 0 : prior.gapCount)+(gap===undefined ? 0 : 1)
-    const state:State={...position,start,gapSum,gapCount,box:item,end:row.end,count:prior.count+1,sum:prior.sum+r,square,penalty:totalPenalty,previous:prior}
-    const key=`${state.count}:${ids.get(item)}:${gapSum}:${gapCount}`,group=groups.get(key) ?? [];group.push(state);groups.set(key,group);generated++
+    const state:State={page:position.page,baseline:position.baseline,start,gapSum,gapCount,box:item,end:row.end,count:prior.count+1,sum:prior.sum+r,square,penalty:totalPenalty,previous:prior}
+    const combined=ids.get(item)!*(graph.length+1)+state.count
+    const key=gapCount===0 && Number.isSafeInteger(combined) ? combined : `${state.count}:${ids.get(item)}:${gapSum}:${gapCount}`
+    const group=groups.get(key) ?? [];group.push(state);groups.set(key,group);generated++
    }
    for(const [groupKey,points] of groups){
     points.sort((a,b)=>a.page-b.page || a.baseline-b.baseline || (earlier(a,b)?-1:1))
@@ -163,7 +183,7 @@ export function planNativeLinesWithPageCost(graph:readonly (readonly NativeLineC
  return best ? ends(best) : undefined
 }
 
-type SuffixGroup={count:number;minimumHalfOrdinate:number;points:NativeLineStatisticPlan[]}
+type SuffixGroup={count:number;minimumHalfOrdinate:number;minimumSquarePenalty:number;minimumVariance:number;minimumMean:number;maximumMean:number;points:NativeLineStatisticPlan[]}
 const horizontalSuffixCache=new WeakMap<object,{maximumCost:number;groups:SuffixGroup[][]}>()
 const suffixTokenEnd={}
 const suffixTokenRows=new WeakMap<object,WeakMap<object,object>>()
@@ -204,7 +224,11 @@ function horizontalSuffixPlans(graph:readonly (readonly NativeLineCandidate[])[]
   suffixStatistics.set(tokens[start]!,{maximumCost,states:suffix[start]!})
  }
  const result=suffix.map(groups=>[...groups].sort((a,b)=>a[0]-b[0]).map(([count,points])=>({count,points,
-  minimumHalfOrdinate:Math.min(...points.map(p=>p.square+p.penalty/2))})))
+  minimumHalfOrdinate:Math.min(...points.map(p=>p.square+p.penalty/2)),
+  minimumSquarePenalty:Math.min(...points.map(p=>p.square+p.penalty)),
+  minimumVariance:count ? Math.min(...points.map(p=>Math.max(0,p.square-p.sum*p.sum/count))) : 0,
+  minimumMean:count ? points[0]!.sum/count : 0,
+  maximumMean:count ? points.at(-1)!.sum/count : 0})))
  horizontalSuffixCache.set(graph,{maximumCost,groups:result})
  return result
 }

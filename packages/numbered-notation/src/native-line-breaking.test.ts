@@ -49,6 +49,15 @@ describe('full-score stretch planning', () => {
     expect(score(selected(candidates, result))).toBeCloseTo(optimum, 12)
   })
 
+  it('uses a feasible cost ceiling without changing the optimum or its tie break', () => {
+    for (let trial = 0; trial < 100; trial++) {
+      const candidates = candidatesFor(Array.from({ length: 4 + trial % 6 }, (_, index) => 15 + (trial * 17 + index * 31) % 80))
+      const expected = planNativeLines(candidates)
+      const cost = score(selected(candidates, expected))
+      expect(planNativeLines(candidates, undefined, cost + 1e-10)).toEqual(expected)
+      expect(planNativeLines(candidates, undefined, cost - .0001)).toBeUndefined()
+    }
+  })
   it('compares forced-break regions in one full-score objective', () => {
     const candidates = candidatesFor([25, 35, 30, 25, 20, 45, 30, 25, 30])
     // No candidate may cross the forced break after the fourth measure.
@@ -123,4 +132,27 @@ describe('full-score stretch planning', () => {
     const result = planNativeLines(candidatesFor(Array(600).fill(10)))
     expect(result).toEqual(Array.from({ length: 60 }, (_, i) => (i + 1) * 10))
   })
+})
+
+it('retains prefix statistics when a fixed prefix leads to alternative suffixes',()=>{
+ const prefix=Array.from({length:30},(_,start)=>[{end:start+1,density:start%3 ? .9 : .2}])
+ const graph=[...prefix,[{end:31,density:.5},{end:32,density:.9}],[{end:33,density:.5}],[{end:33,density:.1}]]
+ const options=[[...prefix.map((_,i)=>i+1),31,33],[...prefix.map((_,i)=>i+1),32,33]]
+ const cost=(path:number[])=>{
+  let start=0,sum=0,square=0
+  for(const end of path){const r=1-graph[start]!.find(row=>row.end===end)!.density;sum+=r;square+=r*r;start=end}
+  return 2*square-sum*sum/path.length
+ }
+ options.sort((a,b)=>cost(a)-cost(b))
+ expect(planNativeLines(graph)).toEqual(options[0])
+ expect(planNativeLines(graph,undefined,cost(options[0]!)-.01)).toBeUndefined()
+})
+
+it('refreshes reused candidate weights after callers edit a row',()=>{
+ const graph:NativeLineCandidate[][]=[[{end:1,density:.8},{end:2,density:.4}],[{end:2,density:.8}]]
+ expect(planNativeLines(graph)).toEqual([1,2])
+ graph[0]![1]!.density=1
+ expect(planNativeLines(graph)).toEqual([2])
+ graph[0]![1]!.penalty=1
+ expect(planNativeLines(graph)).toEqual([1,2])
 })

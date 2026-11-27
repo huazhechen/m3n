@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { element, hasClass, SvgGeometry, textMeasurer, translate, xml } from './layout-svg.js'
+import { element, hasClass, SvgGeometry, InkRangeIndex, textMeasurer, translate, xml } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
   it('keeps borrowed numeric ink equivalent through live transforms and default queries isolated', () => {
@@ -114,4 +114,34 @@ describe('staff geometry traversal', () => {
     expect(geometry.partitionWithoutClasses(root, ['ending']).without).toEqual(geometry.withoutClasses(root, ['ending']))
   })
 
+})
+
+it('queries immutable and appended ink in its original order including zero-width ink', () => {
+  const pieces = Array.from({ length: 500 }, (_, i) => ({ left: (i * 37) % 200, right: (i * 37) % 200 + i % 13, top: i, bottom: i + 1 }))
+  const index = new InkRangeIndex(pieces)
+  for (let step = 0; step < 30; step++) {
+    pieces.push({ left: step * 3, right: step * 3 + step % 5, top: 0, bottom: 1 })
+    for (const gap of [0, .25, 3]) {
+      const left = step * 5, right = left + step % 7
+      expect(index.query(left, right, gap)).toEqual(pieces.filter(p => p.right + gap > left && p.left < right + gap))
+    }
+  }
+})
+
+it('reuses compiled pieces only for unchanged ancestor transforms and immutable readers',()=>{
+ const music=element('g',{},[element('rect',{width:'10',height:'5'}),element('rect',{x:'20',y:'10',width:'3',height:'8'})])
+ const verse=element('g',{class:'verse'},[element('rect',{width:'2',height:'2'})])
+ const root=element('g',{transform:'translate(3 7)'},[music,verse])
+ const borrowed=new SvgGeometry(root,textMeasurer(),true),copied=new SvgGeometry(root,textMeasurer())
+ borrowed.compileStatic(root,node=>hasClass(node,'verse'))
+ const first=borrowed.pieces(root),again=borrowed.pieces(root)
+ expect(again).toEqual(copied.pieces(root))
+ expect(again[0]).toBe(first[0])
+ for(const transform of ['translate(8 11)','scale(-2 3)','rotate(30)','matrix(1 .5 .2 1 3 4)']){
+  root.attributes.transform=transform
+  expect(borrowed.pieces(root)).toEqual(copied.pieces(root))
+ }
+ const publicPieces=copied.pieces(root)
+ publicPieces[0]!.left=-999
+ expect(copied.pieces(root)[0]!.left).not.toBe(-999)
 })

@@ -83,7 +83,7 @@ try {
     const sourceHash = createHash('sha256').update(source).digest('hex')
     const saved = report.entries.find(entry => entry.file === file)
     if (saved) { assert.equal(saved.sourceHash, sourceHash, `Source changed since checkpoint: ${file}`); continue }
-    const profiling=Boolean(argument('cpu-profile'))
+    const profiling=Boolean(argument('cpu-profile')) && (!argument('profile-score') || file.includes(argument('profile-score')))
     const profiler=profiling ? await page.context().newCDPSession(page) : undefined
     if(profiler){await profiler.send('Profiler.enable');await profiler.send('Profiler.start')}
     const result = await page.evaluate(({ source, audit, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks }) => m3n.search(source, audit, prune, localRefine, pageConstrainedBreaks, rowEnvelope, measureAvoidance, numericLayout, avoidance), { source, audit: auditLayout, prune, localRefine, rowEnvelope, measureAvoidance, numericLayout, avoidance, pageConstrainedBreaks })

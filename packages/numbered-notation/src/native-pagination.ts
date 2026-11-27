@@ -8,6 +8,7 @@ export type NativeBlockPosition = { page: number; top: number }
 type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
 type NormalizedBlock={block:NativePageBlock;axis:number;ink:NativeInk[];top:number;lower:number;core:{top:number;bottom:number};sortState:{sorted:boolean}}
 const normalizedBlocks=new WeakMap<NativePageBlock,NormalizedBlock>()
+const immutableCollisions=new WeakMap<NativePageBlock,WeakMap<NativePageBlock,number>>()
 
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateNativeBlocks(blocks: readonly NativePageBlock[], options: {
@@ -58,9 +59,9 @@ export function fitNativeCoreGap(heightAt: (gap: number) => number, capacity: nu
 export function prepareNativePagination(blocks: readonly NativePageBlock[], policy: { wholeRows?: boolean; nonCoreGapRatio?: number; immutableBlocks?:boolean } = {}) {
   const normalized = blocks.map((block, index) => {
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
-    if(saved)return {...saved,index}
+    if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,sortState:saved.sortState,index}
     const axis = block.baseline ?? 0
-    const ink = (block.ink ?? []).map(piece => ({ ...piece, top: piece.top - axis, bottom: piece.bottom - axis }))
+    const ink = (block.ink ?? []).map(piece => ({ left:piece.left,right:piece.right,top: piece.top - axis, bottom: piece.bottom - axis }))
     // Overlay labels affect page edges without becoming inter-row obstacles.
     let top=0,lower=0
     for(const piece of ink){top=Math.min(top,piece.top);lower=Math.max(lower,piece.bottom)}
@@ -68,14 +69,19 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
     const core = block.core ? { top: block.core.top - axis, bottom: block.core.bottom - axis } : { top, bottom: lower }
     const value={ block, axis, ink, top, lower, core, sortState:{sorted:false} }
     if(policy.immutableBlocks)normalizedBlocks.set(block,value)
-    return {...value,index}
+    return {block,axis,ink,top,lower,core,sortState:value.sortState,index}
   })
   type Placed = typeof normalized[number] & { baseline: number }
+  const atBaseline=(item:typeof normalized[number],baseline:number):Placed=>({block:item.block,axis:item.axis,ink:item.ink,top:item.top,
+    lower:item.lower,core:item.core,sortState:item.sortState,index:item.index,baseline})
   // Cache actual ink overlap constraints while trying different core values.
   // Each pair is measured once; fitting then evaluates scalar maxima only.
   const collisions = new Map<number, Map<number, number>>()
   const collisionDistance = (prior: Placed, item: typeof normalized[number]) => {
     if (policy.wholeRows) return prior.lower - item.top
+    const shared = policy.immutableBlocks ? immutableCollisions.get(prior.block) : undefined
+    const known = shared?.get(item.block)
+    if (known !== undefined) return known
     let row = collisions.get(prior.index)
     if (!row) { row = new Map(); collisions.set(prior.index, row) }
     const cached = row.get(item.index)
@@ -84,6 +90,11 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
     if(!item.sortState.sorted){item.ink.sort((a,b)=>a.left-b.left);item.sortState.sorted=true}
     const distance = sortedNativeInkSeparation(prior.ink, item.ink)
     row.set(item.index, distance)
+    if (policy.immutableBlocks) {
+      const pairs = shared ?? new WeakMap<NativePageBlock, number>()
+      pairs.set(item.block, distance)
+      if (!shared) immutableCollisions.set(prior.block, pairs)
+    }
     return distance
   }
   return ({ pageHeight, margin, gap, maxGap = gap, headerGap = nativeCoreGap() * .8 }: ElasticOptions) => {
@@ -121,7 +132,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
         baseline = nextBaseline(item, placed, gap)
       }
       if (baseline + item.lower > pageHeight - margin + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
-      placed.push({ ...item, baseline })
+      placed.push(atBaseline(item,baseline))
     })
     if (placed.length) groups.push({ first, end: normalized.length })
     const balanced = balanceScorePageTail(groups, (first, end) => {
@@ -129,7 +140,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
       for (let index = first; index < end; index++) {
         const item = normalized[index]!, baseline = nextBaseline(item, current, gap)
         if (baseline + item.lower > pageHeight - margin + 1e-6) return false
-        current.push({ ...item, baseline })
+        current.push(atBaseline(item,baseline))
       }
       return true
     }, (first, end) => blocks.slice(first, end).filter(block => block.core).length,
@@ -141,7 +152,7 @@ export function prepareNativePagination(blocks: readonly NativePageBlock[], poli
         let bottom = margin
         for (let index = group.first; index < group.end; index++) {
           const item = normalized[index]!, baseline = nextBaseline(item, current, coreGap)
-          current.push({ ...item, baseline }); bottom = Math.max(bottom, baseline + item.lower)
+          current.push(atBaseline(item,baseline)); bottom = Math.max(bottom, baseline + item.lower)
           if (publish) positions[index] = { page, top: baseline - item.axis }
         }
         return bottom + margin

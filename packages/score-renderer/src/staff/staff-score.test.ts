@@ -9,7 +9,7 @@ import { scorePhysicalSpacing } from '@m3n/numbered-notation'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
-import { planStaffLines, prepareStaffLineGraph } from './line-layout.js'
+import { createStaffMeasureMinimum, planStaffLines, prepareStaffLineGraph } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
@@ -160,3 +160,23 @@ it.each(['yan_hua_yi_leng_01', 'qing_niao_01'])('avoids an isolated final system
   expect(info.lines.every(line => Number.isFinite(line.localReadingPenalty))).toBe(true)
   expect(score).toEqual(before)
 }, 30_000)
+
+
+it('reuses full-row rhythm measurements across break plans without sharing mutable line targets',()=>{
+ const score=analyzeM3N('{4/4}\nN: 1 2 3 4 | (5 6) 7 1e 2e | 3e 4e 5e 6e |||').score
+ const projected=projectStaffDocument(score),measure=textMeasurer()
+ const minimum=createStaffMeasureMinimum(false,measure)
+ minimum.rhythmic=vi.fn(minimum.rhythmic!)
+ const graph=prepareStaffLineGraph(projected,600,false,measure,.6,minimum)
+ const first=graph.makeLines([1,3])
+ const calls=vi.mocked(minimum.rhythmic).mock.calls.length
+ first[0]!.target=1;first[0]!.measures.pop()
+ expect(graph.makeLines([1,3])).toEqual(prepareStaffLineGraph(projected,600,false,measure,.6).makeLines([1,3]))
+ expect(vi.mocked(minimum.rhythmic).mock.calls).toHaveLength(calls)
+ graph.makeLines([2,3])
+ const more=vi.mocked(minimum.rhythmic).mock.calls.length
+ expect(more).toBeGreaterThan(calls)
+ graph.makeLines([2,3])
+ expect(vi.mocked(minimum.rhythmic).mock.calls).toHaveLength(more)
+ expect(graph.makeLines([1],false,0,false)[0]!.unitRhythmicGap).toBeUndefined()
+})

@@ -1,3 +1,4 @@
+import { isNativeMeasureNumber } from './native-system-labels.js'
 import type { NativeSystem } from './native-layout.js'
 import type { NativeRegion } from './native-annotations.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -32,7 +33,7 @@ export function placeNativeVoltas(systems: NativeSystem[], regions: Map<NativeSy
     const lane = system.lanes.find(lane => lane.id === 'melody')
     if (!lane) continue
     // Overlay numbers do not affect ending placement.
-    const withoutNumbers = { ...system, decorationLayout: system.decorationLayout?.filter(label => !label.svg.includes('data-m3n-role="measure-number"')) }
+    const withoutNumbers = { ...system, decorationLayout: system.decorationLayout?.filter(label => !isNativeMeasureNumber(label)) }
     const obstacles = nativeLanePieces(withoutNumbers, measurer, false, false).get(lane.id) ?? []
     const relations = [...(system.relationLayout ?? [])].filter(([relation]) => relation.first.lane === lane.id)
     const fragments = spans.flatMap(span => {

@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, greedyScoreLines, planScoreLinesWithinPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreSvgFontFamilies, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreMaximumCoreGap, scorePhysicalSpacing, scoreLayoutCosts, planScoreLinesGlobally, greedyScoreLines, planScoreLinesWithinPages, scoreWholeRowFeasibility, scoreHeightEnvelope, scoreLyricGapScale, scoreEnvelopeBlock } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
 import { prepareStaffLineGraph, STAFF_SCALE, type StaffLine } from './line-layout.js'
@@ -60,36 +60,74 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   }
   const layouts = new Map<number, Layout>()
   const cache = new Map<boolean, { coreGap?: number; markup: string[] }>()
-  const heightCache = (spacing: number) => {
-    const key = `${spacing}:${Boolean(settings.measureNumbers)}`
-    let saved = measurements.heights.get(key)
+  const lowerEnvelopes = measurements.lowerEnvelopes
+  // Staff pagination uses whole-row envelopes. Fixed noteheads and the
+  // unexpanded staves therefore provide safe vertical bounds at every width.
+  const lowerEnvelopeFor = (item: (typeof projected.measures)[number]) => {
+    let saved = lowerEnvelopes.get(item)
     if (saved) return saved
-    saved = new WeakMap()
     const space = scoreLayoutConfig.staff.music / 4
-    for (const m of projected.measures) {
-      const prepared = measurements.preparation.measure(m, true, projected.hasBass, measure)
-      const core = { top: scoreLayoutConfig.staff.music - space * .05,
-        bottom: scoreLayoutConfig.staff.music * 2 + space * .05
-          + (projected.hasBass ? scoreLayoutConfig.staff.engine.initialBassY * STAFF_SCALE : 0) }
-      const ink = [core]
-      prepared.entries.forEach((entries, lane) => {
-        const dy = lane ? scoreLayoutConfig.staff.engine.initialBassY : 0
-        for (const entry of entries) for (const note of entry.notes) {
-          const glyph = staffGlyphMetrics(note.head, note.size)
-          for (const head of note.heads) ink.push({ top: (dy + head.y + glyph.top) * STAFF_SCALE,
-            bottom: (dy + head.y + glyph.bottom) * STAFF_SCALE })
-          for (const symbol of note.symbols) {
-            const glyph = staffGlyphMetrics(symbol.glyph, symbol.size)
-            ink.push({ top: (dy + symbol.y + glyph.top) * STAFF_SCALE, bottom: (dy + symbol.y + glyph.bottom) * STAFF_SCALE })
-          }
+    const core = { top: scoreLayoutConfig.staff.music - space * .05,
+      bottom: scoreLayoutConfig.staff.music * 2 + space * .05 + (projected.hasBass ? scoreLayoutConfig.staff.engine.initialBassY * STAFF_SCALE : 0) }
+    let top = core.top, bottom = core.bottom
+    const prepared = measurements.preparation.measure(item, true, projected.hasBass, measure)
+    prepared.entries.forEach((entries, lane) => {
+      // Interstaff avoidance can only move the bass down. Its initial bottom
+      // is a lower bound, but its initial top cannot bound the final row top.
+      const dy = lane ? scoreLayoutConfig.staff.engine.initialBassY : 0
+      for (const entry of entries) for (const note of entry.notes) {
+        const glyph = staffGlyphMetrics(note.head, note.size)
+        const restShift = note.rest && note.dur === 1 ? -scoreLayoutConfig.staff.music / STAFF_SCALE / 4 : 0
+        for (const head of note.heads) {
+          if (!lane) top = Math.min(top, (dy + head.y + restShift + glyph.top) * STAFF_SCALE)
+          bottom = Math.max(bottom, (dy + head.y + restShift + glyph.bottom) * STAFF_SCALE)
         }
-      })
-      saved.set(m, scoreHeightEnvelope({ height: core.bottom, core,
-        ink: ink.map(box => ({ ...box, left: 0, right: 1 })) }, staffMusicCentre,
-        [m.melody, m.bass].some(lane => lane.some(event => event.lyrics.some(lyric => lyric.text.trim())))))
-    }
-    measurements.heights.set(key, saved)
+        for (const symbol of note.symbols) {
+          if (!symbol.glyph.startsWith('accidental') && symbol.glyph !== 'augmentationDot') continue
+          const ink = staffGlyphMetrics(symbol.glyph, symbol.size ?? note.size)
+          if (!lane) top = Math.min(top, (dy + symbol.y + ink.top) * STAFF_SCALE)
+          bottom = Math.max(bottom, (dy + symbol.y + ink.bottom) * STAFF_SCALE)
+        }
+        if (!note.rest && note.dur > 1) {
+          // Beam fitting may shorten an individual stem, but its solver
+          // always enforces this minimum at every note of the group.
+          const minimum = note.dur >= 8
+            ? note.size / 4 * Math.max(2.5, (Math.log2(note.dur / 4) - 1) * .7 + .4 + 1)
+            : note.size * .875
+          const ys = note.heads.map(head => head.y)
+          const tip = (note.direction === 1 ? Math.min(...ys) - minimum : Math.max(...ys) + minimum) + dy
+          if (!lane) top = Math.min(top, tip * STAFF_SCALE)
+          bottom = Math.max(bottom, tip * STAFF_SCALE)
+        }
+      }
+    })
+    saved = scoreHeightEnvelope({ height: bottom, core, ink: [{ left: 0, right: 1, top, bottom }] }, staffMusicCentre,
+      [item.melody, item.bass].some(lane => lane.some(event => [event, ...(event.children ?? [])].some(child => child.lyrics.some(lyric => lyric.text.trim())))))
+    lowerEnvelopes.set(item, saved)
     return saved
+  }
+  const canFitLower = (candidateWidth: number, ceiling: number) => {
+    const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
+    const musicWidth = candidateWidth - 2 * margin - gutter - scoreLayoutConfig.staff.rightGutter
+    const header = staffHeader(score, candidateWidth - 2 * margin, measure, settings.transpose)
+    for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
+      const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
+      const envelopes = graph.measured.map(({ measure }) => lowerEnvelopeFor(measure))
+      const feasible = scoreWholeRowFeasibility(graph.candidates, (start, end) => {
+        const members = envelopes.slice(start, end)
+        const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
+        const envelope = { coreAbove, coreBelow,
+          extraAbove: Math.max(...members.map(e => e.coreAbove + e.extraAbove)) - coreAbove,
+          extraBelow: Math.max(...members.map(e => e.coreBelow + e.extraBelow)) - coreBelow,
+          hasLyrics: members.some(e => e.hasLyrics) }
+        return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: true,
+          coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
+          ...(start ? {} : { coreGapBefore: 0 }) }
+      }, [staffHeaderBlock(header.height)], { pageHeight: a4SourcePageHeight(candidateWidth) - 2 * margin,
+        margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3, primitivePairs: true, wholeRows: true })
+      if (feasible(graph.candidates, ceiling)) return true
+    }
+    return false
   }
   const layout = (candidateWidth: number): Layout => {
     validate(candidateWidth)
@@ -103,7 +141,6 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
     const trials = scoreLayoutConfig.staff.noteGapCandidates.map(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
-      const heights = heightCache(spacing)
       // Preserve the last occurrence of a tuplet parent across fragments, just
       // as the complete line scan does, without rescanning the score per row.
       const eventMeasures = new Map<string, number>()
@@ -157,20 +194,20 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       // A one-page optimum cannot violate the greedy page ceiling.
       const greedy = optimum.pages === 1 || greedyEnds.every((end, i) => end === optimum.ends[i]) && greedyEnds.length === optimum.ends.length
         ? optimum : evaluate(greedyEnds)
-      const canFit = optimum.pages > greedy.pages ? scoreWholeRowFeasibility(graph.candidates,
-        (start, _end) => {
-          const original = graph.measured[start]!.measure
-          const envelope = heights.get(original) ?? heights.get(projected.measures.find(m => original.id.startsWith(m.id + '-fragment-'))!)!
-          // Only the invariant first staff is a safe lower bound. A canonical
-          // row's curves, lyrics and inter-staff expansion may overestimate.
-          const block = { ...staffHeaderBlock(scoreLayoutConfig.staff.music),
-            core: { top: 0, bottom: Math.min(scoreLayoutConfig.staff.music, envelope.coreAbove + envelope.coreBelow) },
-            coreGapScale: scoreLyricGapScale(minimumGap),
-            ...(start === 0 ? { coreGapBefore: 0 } : {}),
-            gapBefore: start > 0 && original.section ? scoreLayoutConfig.staff.sectionGap : 0 }
-          return block
+      const lowerRows = optimum.pages > greedy.pages ? graph.measured.map(({ measure }) => lowerEnvelopeFor(measure)) : undefined
+      const canFit = lowerRows ? scoreWholeRowFeasibility(graph.candidates,
+        (start, end) => {
+          const members = lowerRows.slice(start, end)
+          const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
+          const envelope = { coreAbove, coreBelow,
+            extraAbove: Math.max(...members.map(e => e.coreAbove + e.extraAbove)) - coreAbove,
+            extraBelow: Math.max(...members.map(e => e.coreBelow + e.extraBelow)) - coreBelow,
+            hasLyrics: members.some(e => e.hasLyrics) }
+          return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: true,
+            coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1,
+            ...(start ? {} : { coreGapBefore: 0 }) }
         }, [staffHeaderBlock(header.height)],
-        { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3 }) : undefined
+        { pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, headerGap: 0, ratio: .3, primitivePairs: true, wholeRows: true }) : undefined
       const plan = planScoreLinesWithinPages(graph.candidates, greedy, optimum, evaluate, undefined, canFit)
       const lines = linesFor(plan.ends)
       let rowStart = 0
@@ -297,7 +334,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     qualityUpperBound(candidateWidth = width) { return qualityUpperBound(candidateWidth) },
     canExceedQuality(minimum: number, candidateWidth = width) { return qualityUpperBound(candidateWidth) >= minimum },
     canBeatPageQuality(pageCount: number, quality: number, candidateWidth = width) {
-      return pageCount !== 1 || qualityUpperBound(candidateWidth) >= quality
+      if (pageCount === 1) return qualityUpperBound(candidateWidth) >= quality
+      // Pages rank before quality. Exclude only when every tier is unable to
+      // reach the winner's pages, or cannot save a page and loses on font alone.
+      const ceiling = qualityUpperBound(candidateWidth) < quality ? pageCount - 1 : pageCount
+      return canFitLower(candidateWidth, ceiling)
     },
     /** Continuous geometry without generating or mounting an SVG candidate. */
     continuousHeight(coreGap = settings.coreGap) {

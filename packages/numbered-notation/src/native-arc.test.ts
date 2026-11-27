@@ -2,13 +2,26 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { nativeArcSlice } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
-import { nativeArcGeometry, nativeArcPath } from './native-arc.js'
+import { cacheNativeArcObstacles, releaseNativeArcObstacles, nativeArcGeometry, nativeArcPath } from './native-arc.js'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 
 const options = { width: 800, paged: false }
 describe('native musical arc geometry', () => {
+  it.each([
+    '{lg}1 2{/} {lg}3 4{/} | {br} {lg}5 6{/} {lg}7 1e{/} |',
+    '(1~ 1) (2~ 2) 3 4 | {br} (5~ 5) (6~ 6) 7 1e |',
+  ])('preserves every grouped bow when sharing row height preparation: %s', music => {
+    const layout=layoutNativeScore(parseM3NDocument('{4/4}\nN: '+music),options)
+    for(const system of layout.systems) {
+      const arcs=system.relations.filter(r=>r.kind==='tie' || r.kind==='slur')
+      const expected=arcs.map(relation=>nativeArcGeometry(relation,system))
+      cacheNativeArcObstacles(system)
+      try { expect(arcs.map(relation=>nativeArcGeometry(relation,system))).toEqual(expected) }
+      finally { releaseNativeArcObstacles(system) }
+    }
+  })
   it('uses a tapered ribbon whose measured height equals its cubic extremum', () => {
     const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: {lg}1e 2e{/} |||'), options)
     const relation = layout.relations[0]!, system = layout.systems[0]!

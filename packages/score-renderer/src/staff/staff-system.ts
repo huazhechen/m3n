@@ -137,7 +137,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
           next?.source.left?.startsWith('rpt'))
-        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat)
+        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, deferPieces)
         models.push(model)
         node.children.push(measureNode)
         const melodyEntries = model.entries[0] ?? []
@@ -266,13 +266,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         ]))
       }
       const tieGeometry = new SvgGeometry(node, measureText, true)
-      const tieSignatures = ties.length ? ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
+      const localTies = ties.filter(tie => anchors.has(tie.start.id) || anchors.has(tie.end.id))
+      const tieSignatures = localTies.length ? ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
         .flatMap(staff => findAll(staff, n => hasClass(n, 'staff-signature') || hasClass(n, 'inline-signature'))
           .flatMap(signature => tieGeometry.pieces(signature)))) : []
-      const barJoins = ties.length ? findAll(node, n => hasClass(n, 'staff-bar'))
+      const barJoins = localTies.length ? findAll(node, n => hasClass(n, 'staff-bar'))
         .flatMap(bar => findAll(bar, n => Boolean(n.attributes['data-m3n-join'])))
         .map(rule => rule.attributes['data-m3n-join']!).join(' ') : ''
-      for (const tie of ties) {
+      for (const tie of localTies) {
         const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
         if (!first && !last) continue
         const a = first?.last, b = last?.first
@@ -285,7 +286,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const span = ({ start, end }: typeof intervals[number]) =>
         (anchors.get(end.id)?.last.headRight ?? line.target - inset - engine.endingBarInset)
         - (anchors.get(start.id)?.first.headLeft ?? models[0]!.start + staffMusicSize() / 4 * 0.2)
-      const orderedIntervals = [...intervals].sort((a, b) =>
+      const orderedIntervals = intervals.filter(({ start, end }) => {
+        const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
+        return !(lineIndex < from || lineIndex > to)
+      }).sort((a, b) =>
         a.interval.kind === 'lg' && b.interval.kind === 'lg' ? span(a) - span(b)
           : Number(b.interval.kind === 'lg') - Number(a.interval.kind === 'lg'))
       for (const { interval, start, end } of orderedIntervals) {

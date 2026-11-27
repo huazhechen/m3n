@@ -17,9 +17,9 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const measure = textMeasurer(settings.systemCjk)
   const preparation = createStaffPreparation(document)
   const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
-  const heights = new Map<string, WeakMap<StaffMeasure, ScoreHeightEnvelope>>()
   return {
-    heights, document, measure, preparation, minimum,
+    lowerEnvelopes: new WeakMap<StaffMeasure, ScoreHeightEnvelope>(),
+    document, measure, preparation, minimum,
     assertCompatible(candidate: ScoreDocument, next: ProjectionSettings) {
       if (candidate !== score || (next.transpose ?? 0) !== transpose || (next.includeBass ?? true) !== includeBass || (next.tempoScale ?? 1) !== tempoScale || Boolean(next.systemCjk) !== Boolean(settings.systemCjk))
         throw new Error('五线谱测量任务不能跨乐谱或排版设置复用。')

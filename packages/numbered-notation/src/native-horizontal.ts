@@ -30,9 +30,15 @@ export function nativeBarMetrics(kind: string | undefined) {
 type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
 const horizontalContexts=new WeakMap<HorizontalOptions,WeakMap<NativeMeasure[],HorizontalItem[]>>()
-export type NativeHorizontalTemplates = Map<string, { measures: NativeMeasure[]; items: HorizontalItem[] }>
+type ColumnBinding = { measure: number; column: number }
+type ControlBinding = ColumnBinding & { glyph: number; control: number }
+type ItemBinding = { measure: number; navigationMeasure?: number; column?: ColumnBinding; controlColumn?: ColumnBinding; controls?: ControlBinding[] }
+type HorizontalTemplate = { measures: NativeMeasure[]; items: HorizontalItem[]; bindings?: ItemBinding[] }
+export type NativeHorizontalTemplates = Map<string, HorizontalTemplate>
 const horizontalTemplates=new WeakMap<HorizontalOptions,NativeHorizontalTemplates>()
 const horizontalSolutions=new WeakMap<HorizontalItem[],Map<string,ReturnType<typeof solveNativeMinimumSpacing>>>()
+const equalPositions=new WeakMap<HorizontalItem[],Map<number,number[]>>()
+const equalSlices=new WeakMap<HorizontalItem[],HorizontalItem[][]>()
 /** Opt-in for one immutable projection/trial. Placing x/y does not change the
  * constraint chain; another trial receives another context and fresh objects. */
 export function cacheNativeHorizontal(options:HorizontalOptions,templates?:NativeHorizontalTemplates){
@@ -86,19 +92,31 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   const template=templateKey===undefined ? undefined : templates?.get(templateKey)
   if(template && readOnly)return template.items
   if(template) {
-    const measureMap=new Map(template.measures.map((measure,index)=>[measure,measures[index]!]))
-    const columnMap=new Map<NativeColumn,NativeColumn>(),controlMap=new Map<NativeControl,NativeControl>()
-    template.measures.forEach((measure,index)=>measure.columns.forEach((column,at)=>{
-      const target=measures[index]!.columns[at]!
-      columnMap.set(column,target)
-      column.glyphs.forEach((glyph,i)=>glyph.controls.forEach((control,j)=>controlMap.set(control,target.glyphs[i]!.controls[j]!)))
-    }))
-    const items=template.items.map(item=>({...item,measure:measureMap.get(item.measure)!,
-      navigationMeasure:item.navigationMeasure && measureMap.get(item.navigationMeasure),
-      column:item.column && columnMap.get(item.column),controlColumn:item.controlColumn && columnMap.get(item.controlColumn),
-      controls:item.controls?.map(control=>controlMap.get(control)!)}))
+    if(!template.bindings) {
+      const measureMap=new Map(template.measures.map((measure,index)=>[measure,index]))
+      const columnMap=new Map<NativeColumn,ColumnBinding>(),controlMap=new Map<NativeControl,ControlBinding>()
+      template.measures.forEach((measure,index)=>measure.columns.forEach((column,at)=>{
+        columnMap.set(column,{measure:index,column:at})
+        column.glyphs.forEach((glyph,i)=>glyph.controls.forEach((control,j)=>controlMap.set(control,{measure:index,column:at,glyph:i,control:j})))
+      }))
+      template.bindings=template.items.map(item=>({measure:measureMap.get(item.measure)!,
+        navigationMeasure:item.navigationMeasure && measureMap.get(item.navigationMeasure),
+        column:item.column && columnMap.get(item.column),controlColumn:item.controlColumn && columnMap.get(item.controlColumn),
+        controls:item.controls?.map(control=>controlMap.get(control)!)}))
+    }
+    const columnFor=(binding:ColumnBinding|undefined)=>binding && measures[binding.measure]!.columns[binding.column]
+    const items=template.items.map((item,index)=>{
+      const binding=template.bindings![index]!
+      return {measure:measures[binding.measure]!,
+        navigationMeasure:binding.navigationMeasure===undefined ? undefined : measures[binding.navigationMeasure],
+        column:columnFor(binding.column),controlColumn:columnFor(binding.controlColumn),
+        controls:binding.controls?.map(control=>measures[control.measure]!.columns[control.column]!.glyphs[control.glyph]!.controls[control.control]!),
+        boundary:item.boundary,opening:item.opening,prefix:item.prefix,left:item.left,right:item.right,cells:item.cells,fixedAfter:item.fixedAfter}
+    })
     cache!.set(measures,items)
     horizontalSolutions.set(items,horizontalSolutions.get(template.items)!)
+    equalPositions.set(items,equalPositions.get(template.items)!)
+    equalSlices.set(items,equalSlices.get(template.items)!)
     return items
   }
   const scale = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / (nativeStyle.music * .5)
@@ -248,7 +266,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       : next.column ? Math.max(...next.column.glyphs.map(glyph => glyph.inkLeft ?? glyph.musicLeft ?? glyph.left)) : next.left
     item.fixedAfter = item.right + nativeStyle.inlineSectionGap + left
   }
-  if(cache){cache.set(measures,items);horizontalSolutions.set(items,new Map());cacheNativeMinimumSpacing(items)}
+  if(cache){cache.set(measures,items);horizontalSolutions.set(items,new Map());equalPositions.set(items,new Map());equalSlices.set(items,[]);cacheNativeMinimumSpacing(items)}
   if(templateKey!==undefined)templates!.set(templateKey,{measures,items})
   return items
 }
@@ -322,6 +340,8 @@ function equalMeasureRanges(items: HorizontalItem[]) {
 }
 
 function equalMeasurePositions(items: HorizontalItem[], width: number): number[] {
+  const cache = equalPositions.get(items), saved = cache?.get(width)
+  if (saved) return saved
   const ranges = equalMeasureRanges(items)
   if (ranges.length < 2) return solveNativeSpacing(items,width,true).positions
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
@@ -333,13 +353,25 @@ function equalMeasurePositions(items: HorizontalItem[], width: number): number[]
     const previous = ranges[index-1]?.bar
     const left = index*cellWidth + (previous === undefined ? 0 : rightOf(previous))
     const right = (index+1)*cellWidth - (range.bar === undefined ? 0 : leftOf(range.bar))
-    const solved = solveNativeSpacing(items.slice(range.start,range.end),Math.max(1,right-left),true,
+    const solved = solveNativeSpacing(equalMeasureSlice(items, index, range),Math.max(1,right-left),true,
       { left: previous !== undefined && items[previous]!.fixedAfter === undefined,
         right: range.bar !== undefined && items[range.end - 1]?.fixedAfter === undefined })
     solved.positions.forEach((position,offset) => { positions[range.start+offset] = left+position })
     if (range.bar !== undefined) positions[range.bar] = (index+1)*cellWidth
   }
+  cache?.set(width,positions)
   return positions
+}
+
+function equalMeasureSlice(items: HorizontalItem[], index: number, range: {start:number;end:number}) {
+  const slices = equalSlices.get(items)
+  if (!slices) return items.slice(range.start,range.end)
+  let slice = slices[index]
+  if (!slice) {
+    slice = items.slice(range.start,range.end); slices[index] = slice
+    horizontalSolutions.set(slice,new Map());cacheNativeMinimumSpacing(slice)
+  }
+  return slice
 }
 
 export type NativeHorizontalSpacing = {
@@ -352,8 +384,21 @@ export type NativeHorizontalSpacing = {
 export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: HorizontalOptions, width: number): number | undefined {
   const items = itemsFor(measures, options, measures, true)
   const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveNativeSpacing(items, width, true).positions
+  const analysis = rhythmicGapIntervals(items)
+  let clearance = 0
+  for (const gap of analysis.intervals)
+    clearance += Math.max(0, positions[gap.end]! - gap.left - positions[gap.start]! - gap.right)
+  return analysis.weight > 0 ? clearance / analysis.weight : undefined
+}
+
+type RhythmicGapIntervals={weight:number;intervals:{start:number;end:number;left:number;right:number}[]}
+const rhythmicIntervals=new WeakMap<HorizontalItem[],RhythmicGapIntervals>()
+function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
+  const cached=rhythmicIntervals.get(items)
+  if(cached)return cached
   const previous = new Map<string, { index: number; right: number; weight: number }>()
-  let clearance = 0, weight = 0
+  const intervals:RhythmicGapIntervals['intervals']=[]
+  let weight = 0
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     if (cell.sparse) continue
     if (!item.column && !item.boundary) { previous.delete(cell.lane); continue }
@@ -364,13 +409,15 @@ export function nativeUnitRhythmicGap(measures: NativeMeasure[], options: Horizo
     if (before && items[before.index]!.fixedAfter === undefined) {
       const units = (before.weight + (cell.beforeStretch ?? 1)) / 2
       if (units > 0) {
-        clearance += Math.max(0, positions[index]! - left - positions[before.index]! - before.right)
+        intervals.push({start:before.index,end:index,left,right:before.right})
         weight += units
       }
     }
     previous.set(cell.lane, { index, right, weight: cell.afterStretch ?? 1 })
   }
-  return weight > 0 ? clearance / weight : undefined
+  const result={intervals,weight}
+  if(horizontalSolutions.has(items))rhythmicIntervals.set(items,result)
+  return result
 }
 
 /** Measure the exact chain used for placement, including rigid groups, voice
@@ -387,7 +434,7 @@ export function nativeHorizontalSpacing(measures: NativeMeasure[], options: Hori
     const previous = ranges[index - 1]?.bar
     const outside = (previous === undefined ? 0 : rightOf(previous))
       + (range.bar === undefined ? 0 : leftOf(range.bar))
-    const cell = solveNativeSpacing(items.slice(range.start, range.end))
+    const cell = solveNativeSpacing(equalMeasureSlice(items, index, range))
     return outside + cell.minimumWidth
   })
   return { minimumWidth: Math.max(...cellWidths) * ranges.length + tailRight,

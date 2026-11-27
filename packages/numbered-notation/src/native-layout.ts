@@ -13,7 +13,7 @@ import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarInk, nativeLaneBarPositions } from './native-bars.js'
 import { nativeCoreGap, nativeStyle } from './native-style.js'
-import { placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
+import { isNativeMeasureNumber, placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
 import { placeNativeVoltas } from './native-volta-layout.js'
 import { cacheNativeLyricHeights, releaseNativeLyricHeights, type NativeLyricHeightCache, placeNativeLyrics } from './native-lyrics.js'
 import { cacheNativeHairpins, releaseNativeHairpins, nativeHairpinSegments } from './native-hairpin.js'
@@ -62,7 +62,7 @@ export type NativeRenderOptions = {
 }
 export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
-export type NativeSystem = { horizontalDensity?: number; unitRhythmicGap?: number; coreGap?: number; index: number; numericGeometry?: boolean; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
+export type NativeSystem = { horizontalDensity?: number; unitRhythmicGap?: number; coreGap?: number; index: number; numericGeometry?: boolean; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean; measureNumber?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
@@ -242,7 +242,7 @@ type HorizontalMinima = Array<Pick<NativeMeasure, 'minimum' | 'minimumStart' | '
 }>
 type NativeLayoutPreparation = { canvas?:CanvasRenderingContext2D; runtimeMeasurer?:{timings?:Record<string,number>;value:TextMeasurer}; lyricHeights?:NativeLyricHeightCache; projection?: NativeProjection; expanded?: ReturnType<typeof keyedDisplayPerformance>; header: NativeHeaderPreparation; commonHeader?: NativeHeaderPreparation; relations?: NativeRelationPlan
   horizontalTemplates?:Map<string,NativeHorizontalTemplates>; lineGraphs?: Map<string,Map<string,NativeLineCandidate[][]>>; spacings?: Map<string,ReturnType<typeof nativeHorizontalSpacing>>
-  fixedCoreBounds?:Map<string,NativePageBlock>; unitGaps?: Map<string,number|undefined>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
+  arcLeading?:Map<string,number>; fixedCoreBounds?:Map<string,NativePageBlock>; unitGaps?: Map<string,number|undefined>; horizontal?: Map<string, HorizontalMinima>; rowMinimums?: Map<string, Map<string, number>>
   measureHeights?: Map<string, Map<string, NativeHeightEnvelope>>; rowHeights?: Map<string, Map<string, NativeHeightEnvelope>> }
 
 /** One selection/export task, with immutable score inputs. Only unplaced
@@ -411,12 +411,29 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
   const pageCostCache=createNativePageCostCache()
   const rowsToResolve=new Set<string>()
   const certifiedCosts=new WeakMap<object,number>()
-  const solveRestricted = supplied.numericLayout && trial.coreLowerBound ? (restricted: readonly (readonly NativeLineCandidate[])[], maximumCost: number) => {
+  const unconstrainedCosts=new WeakMap<object,number>()
+  const solveRestricted = supplied.numericLayout && trial.coreLowerBound ? (restricted: readonly (readonly NativeLineCandidate[])[], maximumCost: number, knownUnconstrained?: number[]) => {
     const started=timings ? performance.now() : 0
-    trial.restrictBounds?.(restricted)
     const certified=certifiedCosts.get(restricted)
     if(certified!==undefined && certified>maximumCost+1e-12)return undefined
-    let maximum=Math.min(maximumCost,Math.max(nativeLinePlanCost(restricted,planNativeLines(restricted)),
+    let unconstrainedCost=unconstrainedCosts.get(restricted)
+    if(unconstrainedCost===undefined) {
+      const unconstrained=knownUnconstrained ?? planNativeLines(restricted,undefined,maximumCost)
+      if(!unconstrained) {
+        if(timings)timings.numericPageHorizontalPrunes=(timings.numericPageHorizontalPrunes ?? 0)+1
+        return undefined
+      }
+      unconstrainedCost=nativeLinePlanCost(restricted,unconstrained)
+      unconstrainedCosts.set(restricted,unconstrainedCost)
+    }
+    // Even perfect pagination cannot improve the unconstrained horizontal
+    // optimum. Reject these branches before preparing reference/height bounds.
+    if(unconstrainedCost>maximumCost+1e-12) {
+      if(timings)timings.numericPageHorizontalPrunes=(timings.numericPageHorizontalPrunes ?? 0)+1
+      return undefined
+    }
+    trial.restrictBounds?.(restricted)
+    let maximum=Math.min(maximumCost,Math.max(unconstrainedCost,
       certified===undefined ? 0 : certified+.05))
     let result:number[]|undefined
     for(;;) {
@@ -437,6 +454,7 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
     return result
   } : undefined
   if(solveRestricted){
+
     // A feasible optimum of the optimistic model proves the true optimum.
     // Otherwise learn its resolved rows and tighten the model before branching.
     for(;;){
@@ -457,6 +475,7 @@ function completePageConstrainedTrial(document: ScoreDocument, supplied: NativeR
       try{return measure(ends)}catch(error){if((error as {code?:string}).code==='M3N_PAGE_BOUND_REJECTED')return {pages:Infinity};throw error}
     },timings)
     if(timings)timings.numericBalanceMs=(timings.numericBalanceMs ?? 0)+performance.now()-balanceStarted
+
   }
   return planNativeLinesWithinPages(trial.candidates, greedy, optimum, ends => {
     try {
@@ -607,7 +626,12 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const incoming=incomingArcs.get(relation.last)
     if(incoming)incoming.push(relation);else incomingArcs.set(relation.last,[relation])
   }
+  const arcLeadingCache=preparation ? preparation.arcLeading ??= new Map<string,number>() : undefined
   const arcLeading = (measures: NativeMeasure[]) => {
+    const key=arcLeadingCache && measures.length && measures.every(measure=>!measure.continuation && measure.lastFragment)
+      ? `${horizontalKey}:${measures[0]!.id}:${measures.at(-1)!.id}` : undefined
+    const saved=key===undefined ? undefined : arcLeadingCache!.get(key)
+    if(saved!==undefined)return saved
     const firstByLane = new Map<string, NativeGlyph>()
     for(const measure of measures)for(const column of measure.columns)for(const glyph of column.glyphs)
       if(!firstByLane.has(glyph.lane))firstByLane.set(glyph.lane,glyph)
@@ -616,6 +640,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       if(!measures.some(measure=>measure.columns.some(column=>column.glyphs.includes(relation.first))))
         leading=Math.max(leading,nativeStyle.music*.45*1.2-(glyph.musicLeft ?? glyph.left))
     }
+    if(key!==undefined)arcLeadingCache!.set(key,leading)
     return leading
   }
   if (preparation) preparation.rowMinimums ??= new Map()
@@ -829,10 +854,16 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     return rowGaps.get(key)
   }
   let references:ReturnType<typeof nativeEndingReferences>|undefined
-  const referenceBounds=(graph:readonly (readonly NativeLineCandidate[])[])=>nativeEndingReferences(graph,at=>sectionIds[at]!,gapFor)
+  const referenceCache=new WeakMap<object,ReturnType<typeof nativeEndingReferences>>()
+  const referenceBounds=(graph:readonly (readonly NativeLineCandidate[])[])=>{
+    let bounds=referenceCache.get(graph)
+    if(!bounds){bounds=nativeEndingReferences(graph,at=>sectionIds[at]!,gapFor);referenceCache.set(graph,bounds)}
+    return bounds
+  }
   const guaranteedFull=(gap:number,start:number)=>!options.equalMeasures && gap<=(references ??= referenceBounds(linePlan.candidates))[start]!.minimum*1.5
   const referenceSections=new Set<number>()
   const restrictBounds=(graph:readonly (readonly NativeLineCandidate[])[])=>{
+    if (options.equalMeasures) return
     references=referenceBounds(graph)
     referenceSections.clear()
     if(!options.equalMeasures)for(let start=0;start<graph.length;start++)for(const row of graph[start]!) {
@@ -875,11 +906,15 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     let start=0
     const blocks=ends.map(end=>{
       const measures=plannedFragments.slice(start,end)
-      const key=measures.every(measure=>!measure.continuation && measure.lastFragment) ? `${horizontalKey}:${boundKey(start,end)}` : undefined
+      // Bound the weighted static core over every possible ending width,
+      // rather than retaining only the shallowest individual note. Search
+      // widths share the same interval; wider public API calls get a new key.
+      const maximumWidth=Math.max(768,options.width)-2*margin-arcLeading(measures)
+      const key=measures.every(measure=>!measure.continuation && measure.lastFragment) ? `${horizontalKey}:${maximumWidth}:${boundKey(start,end)}` : undefined
       if(preparation)preparation.fixedCoreBounds ??= new Map()
       let block=key===undefined ? undefined : preparation?.fixedCoreBounds?.get(key)
       if(!block) {
-        block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document))
+        block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:maximumWidth})
         if(key!==undefined)preparation?.fixedCoreBounds?.set(key,block)
       }
       start=end;return block
@@ -935,6 +970,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const key=boundKey(start,end)
     const pair=previousStart===undefined ? undefined : cache?.endingPairs?.get(key)?.get(previousStart)
     if(pair) {
+      if(options.equalMeasures)return pair.lower
       const reference=references?.[start],gap=gapFor(start,end)
       if(exactReference!==undefined && referenceSections.has(sectionIds[start]!)) return !options.equalMeasures && gap!==undefined && gap<=exactReference*1.5 ? pair.full : pair.inherited
       if(reference && gap!==undefined && !options.equalMeasures) {
@@ -943,10 +979,13 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       }
       return pair.lower
     }
-    const pairs=cache?.endingPairs?.get(key),reference=references?.[start],gap=gapFor(start,end)
-    if(pairs?.size && reference && gap!==undefined && !options.equalMeasures) {
-      if(gap<=reference.minimum*1.5)return pairs.values().next().value!.full
-      if(gap>reference.maximum*1.5)return cache!.endingInherited!.get(key)!
+    const pairs=cache?.endingPairs?.get(key),reference=references?.[start]
+    if(pairs?.size && reference && !options.equalMeasures) {
+      const gap=gapFor(start,end)
+      if(gap!==undefined) {
+        if(gap<=reference.minimum*1.5)return pairs.values().next().value!.full
+        if(gap>reference.maximum*1.5)return cache!.endingInherited!.get(key)!
+      }
     }
     const measured = cache?.coreBounds?.get(key)
     if (measured) return measured
@@ -980,7 +1019,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   const cacheSafe = rowCache
-  const rowKeys = cacheSafe ? systems.map(system => JSON.stringify([
+  // A single-row geometry probe never reads snapshots of its other rows.
+  // Keep their indices, but avoid serializing all of their untouched columns.
+  const rowKeys = cacheSafe ? systems.map(system => onlyRow!==undefined && system.index!==onlyRow ? '' : JSON.stringify([
     nativeRowIdentity(system.measures), system.arcContinuationLeft, dependencies.get(system),
     system.measures.map(measure => [measure.start, measure.end, measure.columns.map(column => column.x)]),
   ])) : undefined
@@ -1034,7 +1075,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
-    for (let index = first; index <= last; index++) {
+    for (let index = onlyRow===undefined ? first : Math.max(first,onlyRow); index <= (onlyRow===undefined ? last : Math.min(last,onlyRow)); index++) {
       if (relation.kind === 'inst' && index !== first && index !== last) continue
       systems[index]!.relations.push(relation)
     }
@@ -1044,7 +1085,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   for (const relation of relations) {
     const first = systemOf.get(relation.first), last = systemOf.get(relation.last)
     if (first === undefined || last === undefined) continue
-    for (let index = first; index <= last; index++) {
+    for (let index = onlyRow===undefined ? first : Math.max(first,onlyRow); index <= (onlyRow===undefined ? last : Math.min(last,onlyRow)); index++) {
       if (relation.kind === 'inst' && index !== first && index !== last) continue
       const system = systems[index]!
       if (reused.has(system)) continue
@@ -1204,7 +1245,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if (timings) timings.coreInkMs = (timings.coreInkMs ?? 0) + performance.now() - geometryStarted
     const ink = system.lanes.flatMap(lane => (pieces.get(lane.id) ?? []).map(piece => ({ ...piece, top: piece.top + lane.y, bottom: piece.bottom + lane.y })))
     ink.push(...nativeSvgPieces(nativeVoiceConnectorSvg(system, margin, measurer), measurer))
-    const boundaryInk = (system.decorationLayout ?? []).filter(decoration => decoration.svg.includes('data-m3n-role="measure-number"'))
+    const boundaryInk = (system.decorationLayout ?? []).filter(decoration => isNativeMeasureNumber(decoration))
       .flatMap(decoration => {
         const y = system.lanes.find(lane => lane.id === decoration.lane)!.y
         return nativeSvgPieces(decoration.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))

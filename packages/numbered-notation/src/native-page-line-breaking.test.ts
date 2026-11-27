@@ -47,6 +47,15 @@ it('matches exhaustive feasible partitions with height-sensitive page predicates
     const measured = (ends: number[]) => ({ ends, pages: pages(ends), value: ends })
     if (pages(optimumEnds) > ceiling) rejected++
     const result = planNativeLinesWithinPages(graph, measured(greedyEnds), measured(optimumEnds), measured)
+    const shared = planNativeLinesWithinPages(graph, measured(greedyEnds), measured(optimumEnds), measured, undefined,
+      restricted => {
+        expect(planNativeLines(restricted, undefined, nativeLinePlanCost(graph, greedyEnds))).toBeDefined()
+        return true
+      }, undefined, (restricted, maximumCost, unconstrained) => {
+        expect(unconstrained).toEqual(planNativeLines(restricted, undefined, maximumCost))
+        return unconstrained
+      })
+    expect(shared.ends).toEqual(result.ends)
     expect(result.pages).toBeLessThanOrEqual(ceiling)
     const feasible = enumerate(graph).filter(ends => pages(ends) <= ceiling)
     expect(independentCost(graph, result.ends)).toBeCloseTo(Math.min(...feasible.map(ends => independentCost(graph, ends))), 11)

@@ -78,3 +78,27 @@ it('reuses common suffixes safely across cost windows and forced-prefix branches
   }
  }
 })
+
+it('rejects a horizontally over-budget path before preparing its row geometry',()=>{
+ const graph:NativeLineCandidate[][]=[
+  [{end:1,density:.7},{end:2,density:1}],
+  [{end:3,density:1}],
+  [{end:3,density:1}],
+ ]
+ const prepared:string[]=[]
+ const block:NativePageBlock={height:20,core:{top:-10,bottom:10},ink:[{left:0,right:100,top:-10,bottom:10}],resolvedInk:true}
+ const actual=planNativeLinesWithPageCost(graph,(start,end)=>{prepared.push(`${start}:${end}`);return block},[],
+  {pageHeight:100,margin:0,gap:15,headerGap:12,ratio:.3,wholeRows:true,ceiling:2,maximumCost:.1})
+ expect(actual).toEqual([2,3])
+ expect(prepared).not.toContain('0:1')
+})
+
+it('does not prepare unreachable rows when building single-page height bounds',()=>{
+ const graph:NativeLineCandidate[][]=[[{end:2,density:1}],[{end:3,density:1}],[{end:3,density:1}]]
+ const prepared:string[]=[]
+ const block:NativePageBlock={height:20,core:{top:-10,bottom:10},ink:[{left:0,right:100,top:-10,bottom:10}],resolvedInk:true}
+ const actual=planNativeLinesWithPageCost(graph,(start,end)=>{prepared.push(`${start}:${end}`);return block},[],
+  {pageHeight:100,margin:0,gap:15,headerGap:12,ratio:.3,wholeRows:true,ceiling:1,maximumCost:1})
+ expect(actual).toEqual([2,3])
+ expect(prepared).not.toContain('1:3')
+})

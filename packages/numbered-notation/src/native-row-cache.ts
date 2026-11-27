@@ -1,3 +1,4 @@
+import { copyNativeDecoration } from './native-system-labels.js'
 import type { NativeGlyph } from './native-model.js'
 import type { NativeSystem, NativeRelation } from './native-layout.js'
 import type { NativeRelationLayout } from './native-relations.js'
@@ -33,7 +34,7 @@ export type NativeRowSnapshot = {
  * objects only; neither cache hits nor losing plans can move the winner. */
 export function captureNativeRow(system: NativeSystem): NativeRowSnapshot {
   return { lanes: system.lanes.map(lane=>({...lane,rows:[...lane.rows]})),
-    decorations: system.decorationLayout?.map(item=>({...item})), voltas: system.voltas?.map(item=>({...item})),
+    decorations: system.decorationLayout?.map(copyNativeDecoration), voltas: system.voltas?.map(item=>({...item})),
     glyphs: new Map(glyphs(system).map(glyph=>[glyph.id,{top:glyph.top,bottom:glyph.bottom,
       markLayout:glyph.markLayout?.map(item=>({...item})), annotationLayout:glyph.annotationLayout?.map(item=>({...item})),
       lyricBaselines:glyph.lyricBaselines && new Map(glyph.lyricBaselines), lyricHyphenEnds:glyph.lyricHyphenEnds && new Map(glyph.lyricHyphenEnds)}])),
@@ -41,7 +42,7 @@ export function captureNativeRow(system: NativeSystem): NativeRowSnapshot {
 }
 export function restoreNativeRow(system: NativeSystem, snapshot: NativeRowSnapshot) {
   system.lanes = snapshot.lanes.map(lane=>({...lane,rows:[...lane.rows]}))
-  system.decorationLayout = snapshot.decorations?.map(item=>({...item}))
+  system.decorationLayout = snapshot.decorations?.map(copyNativeDecoration)
   system.voltas = snapshot.voltas?.map(item=>({...item}))
   for(const glyph of glyphs(system)) {
     const state=snapshot.glyphs.get(glyph.id)!

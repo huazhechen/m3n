@@ -18,22 +18,21 @@ describe('one staff measurement task', () => {
     }
     expect(JSON.stringify(score)).toBe(original)
   })
-  it('reuses each tier’s independently aligned measure height envelopes across widths', async () => {
+  it('reuses invariant measure bounds across widths and preserves exact layouts', async () => {
     const score = analyzeM3N(source).score, task = await prepareStaffMeasurementTask(score)
     const first = await prepareStaffScore(score, { width: 528 }, undefined, task)
-    first.measurementInfo()
-    const caches = [...task.heights.entries()]
-    expect(caches).toHaveLength(2)
+    first.canBeatPageQuality(2, 0)
+    const bounds = task.document.measures.map(measure => task.lowerEnvelopes.get(measure)!)
+    expect(bounds.every(Boolean)).toBe(true)
     for (const width of [624, 768, 552]) {
       const next = await prepareStaffScore(score, { width }, undefined, task)
-      next.measurementInfo()
-      for (const [key, cache] of caches) {
-        expect(task.heights.get(key)).toBe(cache)
-        for (const measure of task.document.measures) {
-          const envelope = cache.get(measure)!
-          expect(envelope.coreAbove).toBeGreaterThan(0)
-          expect(envelope.coreBelow).toBeGreaterThan(envelope.coreAbove)
-        }
+      next.canBeatPageQuality(2, 0)
+      expect(next.measurementInfo()).toEqual((await prepareStaffScore(score, { width })).measurementInfo())
+      for (const [index, measure] of task.document.measures.entries()) {
+        const envelope = task.lowerEnvelopes.get(measure)!
+        expect(envelope).toBe(bounds[index])
+        expect(envelope.coreAbove).toBeGreaterThan(0)
+        expect(envelope.coreBelow).toBeGreaterThan(envelope.coreAbove)
       }
     }
   })

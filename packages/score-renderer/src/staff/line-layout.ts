@@ -119,23 +119,43 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
     }
     return rows
   })
+  const inheritedTarget = (previous: StaffLine, line: StaffLine) => {
+    const inherited = equal ? Math.max(line.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * line.measures.length + line.measures[0]!.head)
+      : line.minimum + Math.max(0, previous.target - previous.minimum) / previous.weight * line.weight
+    return lastLineWidth(line.minimum, inherited, available, equal ? 0 : line.minimum)
+  }
+  // A row's full-width metrics depend on its members, not on the other
+  // breaks in the candidate plan. Ending shortening still uses each plan's
+  // own preceding rows and never mutates these cached full-width metrics.
+  const rowMetrics = new Map<number, { members: MeasuredStaffMeasure[]; minimumWidth: number; weight: number; rhythmicReady: boolean; gap?: number }>()
   const makeLines = (ends: number[], shorten = true, begin = 0, rhythmic = true) => {
     const lines: StaffLine[] = []
     let start = begin
     for (const end of ends) {
-      const members = measured.slice(start, end), minimumWidth = minimumFor(members)
-      const weight = members.reduce((sum, member) => sum + member.weight, 0)
-      const line: StaffLine = { measures: members, minimum: minimumWidth, reading: minimumWidth,
+      const key = start * (measured.length + 1) + end
+      let metrics = rowMetrics.get(key)
+      if (!metrics) {
+        const members = measured.slice(start, end)
+        metrics = { members, minimumWidth: minimumFor(members),
+          weight: members.reduce((sum, member) => sum + member.weight, 0), rhythmicReady: false }
+        rowMetrics.set(key, metrics)
+      }
+      const { members, minimumWidth, weight } = metrics
+      const line: StaffLine = { measures: members.slice(), minimum: minimumWidth, reading: minimumWidth,
         target: Math.max(available, minimumWidth), weight }
       if (rhythmic && minimum.rhythmic) {
-        let gap = 0, weights = 0
-        members.forEach((member, index) => {
-          const cell = equal ? (line.target - members[0]!.head) / members.length - member.body
-            : (line.target - minimumWidth) * member.weight / weight
-          const result = minimum.rhythmic!(member.measure, index === 0, spacing, Math.max(0, cell))
-          gap += result.gap; weights += result.weight
-        })
-        if (weights > 0) line.unitRhythmicGap = gap / weights
+        if (!metrics.rhythmicReady) {
+          let gap = 0, weights = 0
+          members.forEach((member, index) => {
+            const cell = equal ? (line.target - members[0]!.head) / members.length - member.body
+              : (line.target - minimumWidth) * member.weight / weight
+            const result = minimum.rhythmic!(member.measure, index === 0, spacing, Math.max(0, cell))
+            gap += result.gap; weights += result.weight
+          })
+          if (weights > 0) metrics.gap = gap / weights
+          metrics.rhythmicReady = true
+        }
+        if (metrics.gap !== undefined) line.unitRhythmicGap = metrics.gap
       }
       lines.push(line); start = end
     }
@@ -148,16 +168,14 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
         if ((!next || next.measures[0]!.measure.section) && previous && !line.measures[0]!.measure.section) {
           const fill = count > 0 && !equal && line.unitRhythmicGap !== undefined && line.unitRhythmicGap <= 1.5 * sum / count
           if (!fill) {
-            const inherited = equal ? Math.max(line.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * line.measures.length + line.measures[0]!.head)
-              : line.minimum + Math.max(0, previous.target - previous.minimum) / previous.weight * line.weight
-            line.target = lastLineWidth(line.minimum, inherited, available, equal ? 0 : line.minimum)
+            line.target = inheritedTarget(previous, line)
           }
         } else if (line.unitRhythmicGap !== undefined) { sum += line.unitRhythmicGap; count++ }
       }
     }
     return lines
   }
-  return { candidates, measured, makeLines }
+  return { candidates, measured, makeLines, inheritedTarget }
 }
 
 export function planStaffLines(document: StaffDocument, width: number, equal: boolean, measureText: MeasureText, spacing: number,

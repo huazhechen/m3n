@@ -6,13 +6,13 @@ import type { StaffNumericPath } from './staff-glyph-primitive.js'
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
 
 export type XmlRenderOptions = { resolvedMusicGlyphs?: boolean }
-export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; numericInk?: readonly Ink[]; renderNodes?: (options?: XmlRenderOptions) => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
+export type XmlNode = { tagName: string; attributes: Record<string, string>; children: Array<XmlNode | string>; textValue?: string; preparedMusicInk?: { boxes: readonly Ink[]; classes: readonly string[] }; numericInk?: readonly Ink[]; renderNodes?: (options?: XmlRenderOptions) => Array<XmlNode | string>; numericPath?: StaffNumericPath; pathInk?: { d: string; boxes: readonly Ink[] }; classTokens?: { raw: string; names: Set<string> } }
 export type Ink = { left: number; right: number; top: number; bottom: number }
 export const nodes = (node: XmlNode) => node.children.filter((child): child is XmlNode => typeof child !== 'string')
 export function hasClass(node: XmlNode, name: string): boolean {
   const value = node.attributes.class ?? ''
   if (value === name) return true
-  if (!value || !/\s/.test(value)) return false
+  if (!value || value.length <= name.length || !value.includes(name) || !/\s/.test(value)) return false
   let saved = node.classTokens
   if (!saved || saved.raw !== value) node.classTokens = saved = { raw: value, names: new Set(value.split(/\s+/)) }
   return saved.names.has(name)
@@ -55,14 +55,20 @@ export const element = (
   attributes: Record<string, string> = {},
   children: Array<XmlNode | string> = [],
 ): XmlNode => ({ tagName, attributes, children })
+const pathOwners = new WeakMap<Record<string, string>, XmlNode>()
+const numericPathAttribute: PropertyDescriptor = {
+  enumerable: true, configurable: true,
+  get(this: Record<string, string>) { return pathOwners.get(this)!.numericPath!.text() },
+  set(this: Record<string, string>, value: string) {
+    pathOwners.get(this)!.numericPath = undefined
+    pathOwners.delete(this)
+    Object.defineProperty(this, 'd', { value, enumerable: true, configurable: true, writable: true })
+  },
+}
 export function setNumericPath(node: XmlNode, primitive: StaffNumericPath): void {
   node.numericPath = primitive
-  Object.defineProperty(node.attributes, 'd', { enumerable: true, configurable: true,
-    get: () => primitive.text(), set: (value: string) => {
-      node.numericPath = undefined
-      Object.defineProperty(node.attributes, 'd', { value, enumerable: true, configurable: true, writable: true })
-    },
-  })
+  pathOwners.set(node.attributes, node)
+  Object.defineProperty(node.attributes, 'd', numericPathAttribute)
 }
 export const textContent = (node: XmlNode): string =>
   node.textValue ?? node.children.map((child) => (typeof child === 'string' ? child : textContent(child))).join('')
@@ -82,6 +88,36 @@ export const moveInk = (b: Ink, x: number, y: number): Ink => ({
   bottom: b.bottom + y,
 })
 export const overlapsX = (a: Ink, b: Ink, gap = 0) => a.right + gap > b.left && b.right + gap > a.left
+/** Stable horizontal queries over immutable pieces followed by append-only
+ * placed attachments. Queries preserve source order, including point ink. */
+export class InkRangeIndex {
+  private readonly sorted: Array<{ box: Ink; index: number }>
+  private readonly maximum: number[] = []
+  private readonly count: number
+  constructor(private readonly pieces: readonly Ink[]) {
+    this.count = pieces.length
+    this.sorted = pieces.map((box, index) => ({ box, index })).sort((a, b) => a.box.left - b.box.left)
+    let right = -Infinity
+    for (const item of this.sorted) { right = Math.max(right, item.box.right); this.maximum.push(right) }
+  }
+  query(left: number, right: number, gap = 0): Ink[] {
+    let low = 0, high = this.count
+    while (low < high) { const mid = (low + high) >>> 1; if (this.maximum[mid]! + gap <= left) low = mid + 1; else high = mid }
+    const found: Array<{ box: Ink; index: number }> = []
+    for (let index = low; index < this.count; index++) {
+      const item = this.sorted[index]!
+      if (item.box.left >= right + gap) break
+      if (item.box.right + gap > left) found.push(item)
+    }
+    found.sort((a, b) => a.index - b.index)
+    const result = found.map(item => item.box)
+    for (let index = this.count; index < this.pieces.length; index++) {
+      const box = this.pieces[index]!
+      if (box.left < right + gap && box.right + gap > left) result.push(box)
+    }
+    return result
+  }
+}
 export function translate(node: XmlNode, x: number, y: number) {
   node.attributes.transform = `translate(${x} ${y}) ${node.attributes.transform ?? ''}`
 }
@@ -186,12 +222,24 @@ function omitClasses(classNames: readonly string[]): OmitNode {
     omit.classNames = names
     return omit
 }
+type InkSink = { push(box: Ink): unknown }
+class InkBounds implements InkSink {
+  private count = 0
+  left = Infinity; right = -Infinity; top = Infinity; bottom = -Infinity
+  push(box: Ink) {
+    this.count++
+    this.left = Math.min(this.left, box.left); this.right = Math.max(this.right, box.right)
+    this.top = Math.min(this.top, box.top); this.bottom = Math.max(this.bottom, box.bottom)
+  }
+  value(): Ink { return this.count === 0 ? { left: 0, right: 0, top: 0, bottom: 0 }
+    : { left: this.left, right: this.right, top: this.top, bottom: this.bottom } }
+}
 export class SvgGeometry {
   private glyphDefinitions?: Map<string, XmlNode>
   get definitions(): Map<string, XmlNode> {
     return this.glyphDefinitions ??= new Map(findAll(this.root, n => Boolean(n.attributes.id)).map(n => [n.attributes.id!, n]))
   }
-  private readonly staticPieces = new WeakMap<XmlNode, { transform: string; boxes: Ink[]; block: XmlNode; descendants?: XmlNode[]; classes?: Set<string> }>()
+  private readonly staticPieces = new WeakMap<XmlNode, { transform: string; boxes: Ink[]; positioned?: { matrix: Matrix; boxes: Ink[] }; block: XmlNode; descendants?: XmlNode[]; classes?: Set<string> }>()
   private staticExcluded?: ReadonlySet<string>
   private safeFilters = new WeakMap<OmitNode, boolean>()
   private readonly transforms = new Map<string, Matrix>()
@@ -215,6 +263,15 @@ export class SvgGeometry {
     }
     const visit = (current: XmlNode): boolean => {
       if (mutable(current) || current.tagName === 'text' || current.tagName === 'tspan') return false
+      // Drawing already collected these immutable note primitives. Trust that
+      // preparation only for internal readers and an explicitly class-based
+      // mutation policy; arbitrary public filters still traverse the tree.
+      const prepared = current.preparedMusicInk
+      if (this.borrowImmutableInk && prepared && this.staticExcluded
+        && !prepared.classes.some(name => this.staticExcluded!.has(name)) && !current.attributes.transform) {
+        this.staticPieces.set(current, { block: current, transform: '', boxes: [...prepared.boxes] })
+        return true
+      }
       if (current.numericInk) return true
       const stable: boolean[] = []
       let all = true
@@ -291,14 +348,22 @@ export class SvgGeometry {
       return !intersects(compiled.classes, filter.classNames)
   }
   private collect(node: XmlNode, parent: Matrix, inherited: { size: number; bold: boolean; italic: boolean },
-    omit: OmitNode | undefined, result: Ink[], secondary?: { result: Ink[]; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
+    omit: OmitNode | undefined, result: InkSink, secondary?: { result: Ink[]; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
     const compiled = this.staticPieces.get(node)
     if (compiled && compiled.transform === (node.attributes.transform ?? '') && this.unaffected(compiled, omit) && this.unaffected(compiled, secondary?.omit)) {
-      for (const box of compiled.boxes) { const placed = transform(box, parent, borrow); result.push(placed); secondary?.result.push(placed) }
+      if (borrow && parent !== identity) {
+        // Engraving readers treat compiled ink as immutable. Repeated filtered
+        // queries can share the same transformed pieces until an ancestor moves.
+        let saved = compiled.positioned
+        if (!saved || saved.matrix.some((value, index) => value !== parent[index])) {
+          saved = { matrix: parent, boxes: compiled.boxes.map(box => transform(box, parent, true)) }
+          compiled.positioned = saved
+        }
+        for (const placed of saved.boxes) { result.push(placed); secondary?.result.push(placed) }
+      } else for (const box of compiled.boxes) { const placed = transform(box, parent, borrow); result.push(placed); secondary?.result.push(placed) }
       return
     }
-    const a = node.attributes,
-      num = (key: string, fallback = 0) => parseFloat(a[key] ?? String(fallback))
+    const a = node.attributes
     const raw = a.transform ?? ''
     let m = parent
     if (raw) {
@@ -306,7 +371,17 @@ export class SvgGeometry {
       if (!local) { local = matrix(raw); this.transforms.set(raw, local) }
       m = multiply(parent, local)
     }
+    // Relation placement queries music before compileStatic runs. The numeric
+    // event already owns the exact primitive boxes; avoid walking its note
+    // wrappers again. Arbitrary filters must still inspect the real children.
+    const prepared = this.borrowImmutableInk && node.preparedMusicInk
+    if (prepared && (!omit || omit.classNames && !prepared.classes.some(name => omit.classNames!.has(name)))
+      && (!secondary || secondary.omit.classNames && !prepared.classes.some(name => secondary.omit.classNames!.has(name)))) {
+      for (const box of prepared.boxes) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }
+      return
+    }
     if (node.numericInk) { for (const box of node.numericInk) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }; return }
+    const num = (key: string, fallback = 0) => parseFloat(a[key] ?? String(fallback))
     if (['defs', 'style', 'desc'].includes(node.tagName)) return
     // Paths dominate music drawing; they do not consume inherited font styles.
     const shape = ['path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)
@@ -399,6 +474,8 @@ export class SvgGeometry {
   }
 
   ink(node: XmlNode): Ink {
-    return union(this.pieces(node))
+    const bounds = new InkBounds()
+    this.collect(node, identity, { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false }, undefined, bounds, undefined, true)
+    return bounds.value()
   }
 }

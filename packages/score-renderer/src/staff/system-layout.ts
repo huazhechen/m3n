@@ -3,7 +3,7 @@ import type { ScoreHeightEnvelope } from '@m3n/numbered-notation'
 import { scoreLayoutConfig, lyricSpacing, SCORE_TEXT_FONT, sortedInkSeparation, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap, balanceScorePageTail } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
-  SvgGeometry,
+  SvgGeometry, InkRangeIndex,
   findAll,
   nodes,
   hasClass,
@@ -41,20 +41,47 @@ export function arrangeStaffSystem(
   sectionHeadings: Set<string>,
   deferPieces = false,
 ): StaffSystem {
+  const inkIndices = new WeakMap<Ink[], InkRangeIndex>()
+  const nearby = (music: Ink[], pieces: readonly Ink[], gap: number) => {
+    if (music.length < 256 || !pieces.length) return music
+    let index = inkIndices.get(music)
+    if (!index) { index = new InkRangeIndex(music); inkIndices.set(music, index) }
+    return index.query(Math.min(...pieces.map(p => p.left)), Math.max(...pieces.map(p => p.right)), gap)
+  }
   const classes = new Map<string, XmlNode[]>()
   const wanted = new Set(['reh', 'dir', 'harm', 'verse', 'm3n-tuplet-label', 'staff-line', 'ending', 'mNum', 'staff-clef'])
   const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending|mNum|staff-clef)(?:\s|$)/
+  let needsArrangement = false
   const index = (child: XmlNode) => {
+    if (isDecoration(child) || hasClass(child, 'verse')) needsArrangement = true
     const raw = child.attributes.class
     if (raw && interesting.test(raw)) for (const name of raw.split(/\s+/)) if (wanted.has(name)) {
       let members = classes.get(name)
       if (!members) { members = []; classes.set(name, members) }
       members.push(child)
     }
-    for (const member of child.children) if (typeof member !== 'string') index(member)
+    // Prepared numeric events contain only note primitives, never movable
+    // attachments or staff rules. Those are appended outside the event.
+    if (!child.preparedMusicInk) for (const member of child.children) if (typeof member !== 'string') index(member)
   }
   index(node)
   const byClass = (name: string) => classes.get(name) ?? []
+  // With neither text nor movable attachments, arranging cannot change ink.
+  // In measurement mode avoid compiling a tree solely to traverse it once.
+  if (deferPieces && !needsArrangement) {
+    const scale = STAFF_SCALE
+    const core = union(byClass('staff-line').flatMap(rule => geometry.pieces(rule))
+      .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
+    const bounds = geometry.ink(node)
+    const result: StaffSystem = { node, core, ink: { left: bounds.left * scale, right: bounds.right * scale,
+      top: bounds.top * scale, bottom: bounds.bottom * scale }, pieces: [], spacingPieces: [], edgePieces: [],
+      section: false, staffSpacing: 0, hasLyrics: false }
+    result.materializeInk = () => {
+      const complete = arrangeStaffSystem(node, geometry, width, sectionHeadings)
+      Object.assign(result, complete, { materializeInk: undefined })
+    }
+    return result
+  }
   geometry.compileStatic(node, n => isDecoration(n) || hasClass(n, 'verse'), [...decorations, 'verse'])
   const scale = STAFF_SCALE,
     gap = style.attachmentGap / scale
@@ -111,11 +138,13 @@ export function arrangeStaffSystem(
     // resolving collisions with the actual local music.
     const localMusic = tupletMusic.get(label)!
     const pieces = geometry.pieces(label)
-    const offsets = pieces.flatMap(piece => localMusic
+    const closeMusic = nearby(localMusic, pieces, clearance / 2)
+    const closeObstacles = nearby(rhythmObstacles, pieces, clearance / 2)
+    const offsets = pieces.flatMap(piece => closeMusic
       .filter(other => overlapsX(piece, other, clearance / 2))
       .map(other => below ? other.bottom - piece.top + clearance : other.top - piece.bottom - clearance))
     let dy = offsets.length ? (below ? Math.max(...offsets) : Math.min(...offsets)) : 0
-    const intervals = pieces.flatMap(piece => rhythmObstacles
+    const intervals = pieces.flatMap(piece => closeObstacles
       .filter(other => overlapsX(piece, other, clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
       .sort((a, b) => below ? a.start - b.start : b.end - a.end)
@@ -310,6 +339,7 @@ export function arrangeStaffSystem(
         ...placedDecorations.filter(item => item.lane === undefined || item.lane <= lane).flatMap(item => item.pieces)] : obstacles
     const ending = hasClass(attachment, 'ending') || hasClass(attachment, 'm3n-ending-row')
     const clearance = ending ? (style.music * .07) / scale : localGap
+    const closePlacement = nearby(placementObstacles, attachmentPieces, clearance / 2)
     if (hasClass(attachment, 'tempo')) {
       // Octave lines belong to the notes. Tempo is always outside a crossed
       // upper octave line, even if the inner gap could fit the text.
@@ -319,12 +349,12 @@ export function arrangeStaffSystem(
     if (ending) {
       // Empty space underneath a volta's horizontal rule is not ink. Let
       // high notes and slurs fit there when they clear the hooks and number.
-      const offsets = attachmentPieces.flatMap(piece => placementObstacles
+      const offsets = attachmentPieces.flatMap(piece => closePlacement
         .filter(other => overlapsX(piece, other, clearance / 2))
         .map(other => other.top - piece.bottom - clearance))
       if (offsets.length) dy = Math.min(...offsets)
     }
-    const intervals = attachmentPieces.flatMap(piece => placementObstacles
+    const intervals = attachmentPieces.flatMap(piece => closePlacement
       .filter(other => overlapsX(piece, other, isHairpin(attachment) && hairpinPieces.has(other) ? 0 : clearance / 2))
       .map(other => ({ start: other.top - piece.bottom - clearance, end: other.bottom - piece.top + clearance })))
       .sort((a, b) => below ? a.start - b.start : b.end - a.end)

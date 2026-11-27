@@ -103,11 +103,18 @@ describe('measured bar alignment', () => {
 })
 
 it('direct bar pieces match painted coordinates, including fractional anchors and repeat dots', () => {
+  const symbols = new Map<string, object>()
+  const cached: TextMeasurer = { measureText: measurer.measureText.bind(measurer),
+    fixedSymbol<T extends object>(key: string, create: () => T): T {
+      if (!symbols.has(key)) symbols.set(key, create())
+      return symbols.get(key) as T
+    } }
   for (const kind of ['single','dbl','end','rptstart','rptend','rptboth'])
     for (const x of [0,-12.123456789,479.189365789]) for (const y of [0,37.987654321]) {
       const svg = nativeBarSvg(kind,x,y,measurer)
       expect(nativeBarPieces(kind,x,y,measurer)).toEqual(nativeSvgPieces(svg,measurer))
       expect(nativeBarInk(kind,x,y,measurer)).toEqual(nativeSvgInk(svg,measurer))
+      expect(nativeBarPieces(kind,x,y,cached)).toEqual(nativeSvgPieces(svg,measurer))
     }
 })
 

@@ -1,12 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
-import { placeNativeBarLabels } from './native-system-labels.js'
+import { copyNativeDecoration, isNativeMeasureNumber, placeNativeBarLabels } from './native-system-labels.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeBarInk, nativeMeasureBarPositions } from './native-bars.js'
 import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
 
 const measurer = new DefaultTextMeasurer()
+
+it('defers hidden numeric labels through row snapshots and preserves their SVG', () => {
+  const width=528, layout=layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 |'),{width,paged:false,numericLayout:true,textMeasurer:measurer})
+  const system=layout.systems[0]!
+  system.measures.at(-1)!.number=1234
+  system.decorationLayout=[]
+  let labelsMeasured=0
+  const probe={measureText(text: string,style: Parameters<DefaultTextMeasurer['measureText']>[1]) {
+    if(text==='1234')labelsMeasured++
+    return measurer.measureText(text,style)
+  }}
+  placeNativeBarLabels(system,[],probe,false,width)
+  const hidden=system.decorationLayout!.find(isNativeMeasureNumber)!
+  const snapshot=copyNativeDecoration(hidden)
+  expect(labelsMeasured).toBe(0)
+  system.decorationLayout=[]
+  placeNativeBarLabels(system,[],measurer,true,width)
+  expect(snapshot.svg).toBe(system.decorationLayout!.find(isNativeMeasureNumber)!.svg)
+  expect(labelsMeasured).toBeGreaterThan(0)
+})
 
 describe('bar labels with small page margins', () => {
   it.each([false, true].flatMap(paged => [0, 24 * .2].map(pageMargin => ({ paged, pageMargin }))))('keeps multi-digit measure numbers and repeat counts in the canvas: $paged/$pageMargin', ({ paged, pageMargin }) => {

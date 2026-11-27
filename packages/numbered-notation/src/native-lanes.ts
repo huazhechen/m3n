@@ -1,3 +1,4 @@
+import { isNativeMeasureNumber } from './native-system-labels.js'
 import type { NativeSystem } from './native-layout.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeSvgPieces, type NativeInk } from './native-ink.js'
@@ -29,7 +30,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
         if(system.numericGeometry && cached) {
           for(const piece of cached) {
             const left=piece.left+glyph.x,right=piece.right+glyph.x
-            if(right>left && piece.bottom>piece.top)pieces.push({...piece,left,right})
+            if(right>left && piece.bottom>piece.top)pieces.push({left,right,top:piece.top,bottom:piece.bottom})
           }
         } else for(const piece of painter.musicPieces(system.numericGeometry ? {...glyph,y:0} : glyph, beams.claimed.get(glyph), coreOnly))
           if(piece.right>piece.left && piece.bottom>piece.top)pieces.push(piece)
@@ -67,7 +68,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
       } else if (system.numericGeometry && placed.pieces) pieces.push(...placed.pieces)
       else add(placed.svg)
     }
-    if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id && !decoration.svg.includes('data-m3n-role="measure-number"')) add(decoration.svg)
+    if (!coreOnly) for (const decoration of system.decorationLayout ?? []) if (decoration.lane === lane.id && !isNativeMeasureNumber(decoration)) add(decoration.svg)
     if (includeRelations && !coreOnly && lane.id === 'melody') for (const volta of system.voltas ?? []) add(volta.svg)
     result.set(lane.id, pieces)
   }

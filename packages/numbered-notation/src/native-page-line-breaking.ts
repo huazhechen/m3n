@@ -41,7 +41,7 @@ function compare(a: Problem, b: Problem): number {
  * feasible paths. No row-count proxy, beam cap or quantized page height.
  * Worst-case work is exponential; instrumentation exposes that cost. */
 export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>, optimum: Measured<T>,
-  evaluate: (ends: number[]) => { pages: number; value?: T }, timings?: Record<string, number>, canFit?: (restricted: Graph, ceiling: number) => boolean, getFeasible?: () => Measured<T> | undefined, solveRestricted?: (graph: Graph, maximumCost: number) => number[] | undefined): Measured<T> {
+  evaluate: (ends: number[]) => { pages: number; value?: T }, timings?: Record<string, number>, canFit?: (restricted: Graph, ceiling: number) => boolean, getFeasible?: () => Measured<T> | undefined, solveRestricted?: (graph: Graph, maximumCost: number, unconstrained?: number[]) => number[] | undefined): Measured<T> {
   if (optimum.pages <= greedy.pages) return optimum
   let incumbent = greedy, incumbentCost = nativeLinePlanCost(graph, greedy.ends)
   const improve = () => {
@@ -81,22 +81,33 @@ export function planNativeLinesWithinPages<T>(graph: Graph, greedy: Measured<T>,
       const prefix = problem.ends.slice(0, index)
       const start = prefix.at(-1) ?? 0
       const excluded = index === problem.prefix.length ? [...problem.excluded, problem.ends[index]!] : [problem.ends[index]!]
+      // A fixed transition has no sibling partition. Reject it before
+      // copying the full graph or setting up any page-bound solver.
+      const alternatives = graph[start]!.filter(row => !excluded.includes(row.end))
+      if (!alternatives.length) continue
       const forced = new Map<number, number>()
       let previous = 0
       for (const end of prefix) { forced.set(previous, end); previous = end }
       const restricted = graph.map((rows, at) => forced.has(at) ? rows.filter(row => row.end === forced.get(at))
-        : at === start ? rows.filter(row => !excluded.includes(row.end)) : rows)
+        : at === start ? alternatives : rows)
       const reachable = Array<boolean>(graph.length + 1).fill(false)
       reachable[graph.length] = true
       for (let at = graph.length - 1; at >= 0; at--) reachable[at] = restricted[at]!.some(row => reachable[row.end])
       if (!reachable[0]) continue
+      improve()
+      const started = timings ? performance.now() : 0
+      // Shared by numbered and staff notation: page constraints cannot beat
+      // the unconstrained horizontal optimum. Apply its cap before height work.
+      const unconstrained = planNativeLines(restricted, undefined, incumbentCost)
+      if (!unconstrained) {
+        if (timings) timings.pageBoundHorizontalPrunes = (timings.pageBoundHorizontalPrunes ?? 0) + 1
+        continue
+      }
       if (canFit && !canFit(restricted, greedy.pages)) {
         if (timings) timings.pageBoundHeightPrunes = (timings.pageBoundHeightPrunes ?? 0) + 1
         continue
       }
-      improve()
-      const started = timings ? performance.now() : 0
-      const ends = solveRestricted ? solveRestricted(restricted,incumbentCost) : planNativeLines(restricted)
+      const ends = solveRestricted ? solveRestricted(restricted,incumbentCost,unconstrained) : unconstrained
       if (!ends) continue
       if (timings) {
         timings.pageBoundDpSolves = (timings.pageBoundDpSolves ?? 0) + 1
