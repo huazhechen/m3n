@@ -22,7 +22,9 @@ const comparePositions=(a:State,b:State)=>a.page-b.page || a.baseline-b.baseline
 
 /** Minimum horizontal cost in an optimistic Markov pagination model. The
  * full paginator also checks remote rows; unknown/ending shapes use lower
- * bounds. Thus this result is a bound/witness, never an unchecked final plan.
+ * bounds. Reference means affect terminal row geometry only; ordinary rows
+ * keep their statistics for later endings without changing their own shape.
+ * Thus this result is a bound/witness, never an unchecked final plan.
  * At equal last row/count, lower page position dominates for every suffix.
  * A point above the statistic hull of lower-position states cannot minimize
  * the concave final objective. No height quantization or frontier size cap. */
@@ -133,7 +135,9 @@ export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCan
    const reference=options.reference,tracksReference=reference && (!reference.required || reference.required(start))
    const gap=tracksReference ? reference?.gap(start,row.end) : undefined,terminal=reference?.terminal(start,row.end)
    let memo:Map<number,Box>|undefined
-   const groups=new Map<string|number,State[]>()
+   const groups:State[][]=[]
+   const plainGroups=new Map<string|number,State[]>()
+   const meanGroups=new Map<string|number,Map<number,State[]>>()
    for(const frontier of previous)for(const prior of frontier){
     const square=prior.square+r*r,totalPenalty=prior.penalty+penalty
     const prefixVariance=Math.max(0,square-(prior.sum+r)**2/(prior.count+1))
@@ -144,7 +148,10 @@ export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCan
     const average=first ? Infinity : prior.gapCount ? prior.gapSum/prior.gapCount : reference?.emptyMean ?? 0
     // Sections certified independent of their running mean still depend on
     // the preceding row, but not on each frontier state's copy of that row.
-    let item=tracksReference ? getBox(blockFor(start,row.end,prior.start,average)) : memo?.get(prior.start)
+    // Only terminal rows consume the section mean in their geometry.
+    // Ordinary rows keep tracking that mean for later endings, but all states
+    // with the same preceding row share this exact geometry query.
+    let item=tracksReference && terminal ? getBox(blockFor(start,row.end,prior.start,average)) : memo?.get(prior.start)
     if(!item){item=getBox(blockFor(start,row.end,prior.start,reference ? average : undefined));(memo ??= new Map()).set(prior.start,item)}
     const position=advance(item,prior);if(!position)continue
     if(options.ceiling===1 && position.baseline+remaining[start]!.get(row.end)!>options.pageHeight-options.margin+1e-6)continue
@@ -155,12 +162,25 @@ export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCan
     const gapCount=terminal ? 0 : (first ? 0 : prior.gapCount)+(gap===undefined ? 0 : 1)
     const state:State={page:position.page,baseline:position.baseline,start,gapSum,gapCount,box:item,end:row.end,count:prior.count+1,sum:prior.sum+r,square,penalty:totalPenalty,previous:prior}
     const id=ids.get(item)!,combined=id*(graph.length+1)+state.count
-    const key=gapCount===0 && Number.isSafeInteger(combined) ? combined : `${state.count}:${id}:${gapSum}:${gapCount}`
-    const group=groups.get(key)
-    if(group)group.push(state);else groups.set(key,[state])
+    let group:State[]|undefined
+    if(gapCount===0) {
+     const key=Number.isSafeInteger(combined) ? combined : `${state.count}:${id}`
+     group=plainGroups.get(key)
+     if(!group){group=[];plainGroups.set(key,group);groups.push(group)}
+    } else {
+     // Number keys preserve every bit of the accumulated spacing sum, without
+     // serializing it for each state. Keep first-seen group order unchanged.
+     const resource=combined*(graph.length+1)+gapCount
+     const key=Number.isSafeInteger(resource) ? resource : `${state.count}:${id}:${gapCount}`
+     let sums=meanGroups.get(key)
+     if(!sums){sums=new Map();meanGroups.set(key,sums)}
+     group=sums.get(gapSum)
+     if(!group){group=[];sums.set(gapSum,group);groups.push(group)}
+    }
+    group.push(state)
     generated++
    }
-   for(const points of groups.values()){
+   for(const points of groups){
     if(points.length===1){(states[row.end] ??= []).push(points);retained++;largest=Math.max(largest,1);continue}
     points.sort(comparePositions)
     const hull:State[]=[]

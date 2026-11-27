@@ -134,3 +134,20 @@ it('reuses predecessor geometry when a section does not require the running spac
  expect(reused.plan).toEqual(full.plan)
  expect(reused.calls).toBeLessThan(full.calls)
 })
+
+it('reuses ordinary-row geometry while retaining distinct means for terminal rows', () => {
+ const n=10
+ const graph:ScoreLineCandidate[][]=Array.from({length:n},(_,start)=>Array.from({length:Math.min(3,n-start)},(_,i)=>({end:start+i+1,density:.4+(start*7+i*3)%9/20})))
+ const calls=new Map<string,number>(),endingMeans=new Set<number>()
+ const block:ScorePageBlock={height:20,core:{top:0,bottom:20},ink:[{left:0,right:100,top:0,bottom:20}],resolvedInk:true}
+ const plan=planScoreLinesWithPageCost(graph,(start,end,previous,reference)=>{
+  if(end!==n){const key=`${start}:${end}:${previous}`;calls.set(key,(calls.get(key) ?? 0)+1)}
+  else if(reference!==undefined)endingMeans.add(reference)
+  return block
+ },[],{pageHeight:200,margin:0,gap:5,headerGap:0,ceiling:2,maximumCost:100,
+  reference:{section:()=>0,gap:(start,end)=>2+start*3+end,terminal:(_start,end)=>end===n}})
+ expect(plan).toBeDefined()
+ expect(calls.size).toBeGreaterThan(10)
+ expect([...calls.values()].every(count=>count===1)).toBe(true)
+ expect(endingMeans.size).toBeGreaterThan(1)
+})
