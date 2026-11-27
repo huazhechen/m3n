@@ -100,3 +100,15 @@ it('reserves a fixed raster edge guard without changing design glyph metrics', (
   expect(layout.measurer.designMetrics).toBe(true)
   expect(layoutNativeScore(score, { width: 528, paged: true, pageMargin: 32, numericLayout: true }).margin).toBe(32)
 })
+
+// This score used to leave local hairpin rows unresolved, causing thousands
+// of disjoint-prefix searches at the 600px candidate.
+it('resolves local hairpin geometry before falling back to partition enumeration', () => {
+  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8'))
+  const timings: Record<string, number> = {}
+  const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
+  expect(layout.pages.length).toBe(3)
+  expect(layout.systems.length).toBe(40)
+  expect(timings.numericEndingBoundsMs).toBeGreaterThan(0)
+  expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
+}, 30000)

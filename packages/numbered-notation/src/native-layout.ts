@@ -519,9 +519,11 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     for(let start=0;start<linePlan.candidates.length;start++)if(prefixes[start])for(const row of linePlan.candidates[start]!)prefixes[row.end] ??= [...prefixes[start]!,row.end]
     for(let start=0;start<linePlan.candidates.length;start++)for(const row of linePlan.candidates[start]!) {
       if(rows && !rows.has(`${start}:${row.end}`))continue
+      // Only an endpoint outside this row makes its geometry depend on a
+      // different partition. Local hairpins and tuplets are exact row data.
       if(external.some(relation=>{
         const first=fragmentOf.get(relation.first)!,last=fragmentOf.get(relation.last)!
-        return first<row.end && last>=start && (relation.kind!=='tuplet' || first<start || last>=row.end)
+        return first<row.end && last>=start && (first<start || last>=row.end)
       }))continue
       const terminal=row.end===plannedFragments.length || sectionIds[row.end]!==sectionIds[row.end-1]
       const members=plannedFragments.slice(start,row.end),key=nativeRowIdentity(members)
@@ -536,7 +538,14 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
         return block
       }
       const full=collect([...prefixes[start]!,row.end,...suffix],'full')
-      if(!terminal)continue
+      // Nonterminal rows always use full width. Keep their resolved ink even
+      // when a local hairpin prevents the ordinary snapshot cache from doing so.
+      if(!terminal) {
+        cache.coreBounds ??= new Map()
+        cache.coreBounds.set(key,intersectNativeRowBounds([full]))
+        cache.coreRevision=(cache.coreRevision ?? 0)+1
+        continue
+      }
       const pairs=new Map<number,{full:ScorePageBlock;inherited:ScorePageBlock;lower:ScorePageBlock}>()
       const inheritedVariants:ScorePageBlock[]=[]
       for(let before=0;before<start;before++)if(prefixes[before] && sectionIds[before]===sectionIds[start]
