@@ -1,4 +1,4 @@
-import { scoreRhythmicWeight } from './score-layout-policy.js'
+import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './score-layout-policy.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
@@ -71,7 +71,7 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
   return { opening, closing }
 }
 const minimumCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
-  const durationScale = scoreRhythmicWeight(duration)
+  const durationScale = scoreRhythmicWeight(duration > 0 ? duration : 1)
   // Rhythm alone determines stretch; ink and lyrics only constrain minima.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1
@@ -173,7 +173,6 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   }
   // Adjacency belongs to a voice. Finer notes or controls in another voice
   // do not interrupt its beam or sustain; its own controls and bars still do.
-  const groupStarts = new Set<SpacingCell>(), groupEnds = new Set<SpacingCell>()
   const previousByLane = new Map<string, { item: HorizontalItem; cell: SpacingCell }>()
   for (const item of items) for (const cell of item.cells) {
     const previous = previousByLane.get(cell.lane)
@@ -184,14 +183,14 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     // The measure identity and intervening control items keep bars/settings out.
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
-    if (previous?.item.measure === item.measure && left && right && (sustain || nativeBeamCount(left, right))) {
-      previous.cell.afterStretch = (previous.cell.afterStretch ?? 1) * nativeStyle.groupSpacingRatio
-      cell.beforeStretch = (cell.beforeStretch ?? 1) * nativeStyle.groupSpacingRatio
-      previous.cell.after *= nativeStyle.groupSpacingRatio
-      cell.before *= nativeStyle.groupSpacingRatio
-    } else if (previous?.item.measure === item.measure && left && right) {
-      // Group boundaries reserve an absolute clearance, independent of duration.
-      groupEnds.add(previous.cell); groupStarts.add(cell)
+    if (previous) {
+      const grouped = previous.item.measure === item.measure && left && right
+        && (sustain || nativeBeamCount(left, right))
+      const weight = scoreRhythmicGapWeight(left?.multiRest ? 1 : left?.beats, right?.multiRest ? 1 : right?.beats,
+        grouped ? nativeStyle.groupSpacingRatio : 1)
+      const halfGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * weight / 2
+      previous.cell.after = halfGap; cell.before = halfGap
+      previous.cell.afterStretch = weight; cell.beforeStretch = weight
     }
     previousByLane.set(cell.lane, { item, cell })
   }
@@ -200,12 +199,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const floor = glyph ? (options.minimumNoteGapFloor ?? 0) / 2 : 0
-    const groupGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) / 2
-    if (groupStarts.has(cell)) cell.before = groupGap
-    if (groupEnds.has(cell)) cell.after = groupGap
     cell.before = Math.max(cell.before, floor); cell.after = Math.max(cell.after, floor)
-    const left = index === 0 ? 0 : Math.max(groupStarts.has(cell) ? groupGap : cell.before, floor)
-    const right = index === items.length - 1 ? 0 : Math.max(groupEnds.has(cell) ? groupGap : cell.after, floor)
+    const left = index === 0 ? 0 : Math.max(cell.before, floor)
+    const right = index === items.length - 1 ? 0 : Math.max(cell.after, floor)
     cell.left += left; cell.right += right; cell.before = cell.after = 0
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {

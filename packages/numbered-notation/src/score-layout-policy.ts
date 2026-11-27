@@ -31,30 +31,11 @@ export function scoreRhythmicWeight(duration: number): number {
   return Math.sqrt(Math.max(.01, duration))
 }
 
-/** The most frequent per-measure shortest duration, capped at an eighth.
- * Quantization only stabilizes equivalent tuplet arithmetic. Ties favor the
- * shorter duration so input/voice ordering cannot change the result. */
-export function scoreSpacingBasis(measures: readonly (readonly number[])[]): number {
-  const counts = new Map<number, number>()
-  for (const durations of measures) {
-    const positive = durations.filter(duration => Number.isFinite(duration) && duration > 0)
-    if (!positive.length) continue
-    const duration = Math.round(Math.min(...positive) * 1e8) / 1e8
-    counts.set(duration, (counts.get(duration) ?? 0) + 1)
-  }
-  let basis = .5, most = 0
-  for (const [duration, count] of counts) if (count > most || count === most && duration < basis) {
-    basis = duration; most = count
-  }
-  return Math.min(.5, basis)
-}
-
-/** LilyPond-style duration spacing: one head plus one increment at the
- * reference duration, then one increment per doubling. Shorter values shrink
- * only the following space; the physical head keeps its measured width. */
-export function scoreNaturalAdvance(duration: number, basis: number, headWidth: number, increment: number): number {
-  if (![duration, basis].every(value => Number.isFinite(value) && value > 0)
-    || ![headWidth, increment].every(value => Number.isFinite(value) && value >= 0)) throw new Error('自然间距参数无效。')
-  const ratio = duration / basis
-  return headWidth + increment * (ratio < 1 ? ratio : 1 + Math.log2(ratio))
+/** Directed pair clearance: quarter = 1; zero-time structural items = quarter.
+ * The left onset owns 75% of the rhythmic signal, the right owns 25%.
+ * Ink reservations stay independent of this minimum/stretch weight. */
+export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1): number {
+  const a = scoreRhythmicWeight(left && left > 0 ? left : 1)
+  const b = scoreRhythmicWeight(right && right > 0 ? right : 1)
+  return a ** .75 * b ** .25 * groupRatio
 }

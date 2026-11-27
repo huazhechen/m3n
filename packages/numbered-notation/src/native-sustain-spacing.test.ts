@@ -1,3 +1,4 @@
+import { scoreRhythmicGapWeight } from './score-layout-policy.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
 import { measureNativeHorizontal, placeNativeHorizontal } from './native-horizontal.js'
@@ -27,10 +28,9 @@ describe('sustain group spacing', () => {
     const groupedMinimum = pair.minimum
     dash.sustain = false
     measureNativeHorizontal([pair], options)
-    const roots = Math.sqrt(duration) + 1
-    // The independent attack now reserves a fixed 0.4em, while the
-    // sustain pair still uses its original duration-scaled half clearance.
-    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 - 9 / 4 * roots, 8)
+    // Identical ink, different grouping: only the common pair's 0.5
+    // multiplier changes, including for dotted head durations.
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1) * .5, 8)
   })
 
   it.each([

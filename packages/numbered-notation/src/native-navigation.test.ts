@@ -65,8 +65,9 @@ describe('measured navigation geometry', () => {
             const bar = nativeBarMetrics('rptstart');
             const barRight = measure.openingBarX! + bar.width - bar.anchor;
             expect(control.x! - barRight).toBeCloseTo(minimumNoteGap, 8);
-            // The following sixteenth contributes half of a quarter's margin.
-            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap / 2 * 1.5, 8);
+            // The structural symbol is a quarter; the following sixteenth
+            // contributes 25% of the logarithmic pair weight.
+            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap * .25 ** .125, 8);
         }
     });
     it.each([false, true])('keeps Segno attached to the preceding bar under justification (equalMeasures=%s)', equalMeasures => {

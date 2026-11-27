@@ -59,11 +59,11 @@ it('allows fewer staff rows for extended sounds without copying numbered sustain
   expect(staff.layoutInfo().lines.length).toBeLessThan(numbered.systemCount)
 })
 
-it('breaks rapid groups around natural spacing instead of packing three bars down to collision limits', async () => {
+it('breaks rapid groups using shared pair minima without shrinking the music font', async () => {
   const music = '((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) ((5 6 5 6)) | '.repeat(8)
   const score = analyzeM3N(`{4/4}\nN: ${music}`).score
   const size = scoreLayoutConfig.staff.music
   const staff = await prepareStaffScore(score, { width: 640 })
-  expect(staff.layoutInfo().lines.map(line => line.measures.length)).toEqual([2, 2, 2, 2])
+  expect(staff.layoutInfo().lines.map(line => line.measures.length)).toEqual([2, 3, 3])
   expect(scoreLayoutConfig.staff.music).toBe(size)
 })

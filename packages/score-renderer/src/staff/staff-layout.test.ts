@@ -119,7 +119,7 @@ describe('staff layout contract', () => {
   })
 
   it.each([528, 768])('keeps combined tempo above explicit 8va on the initial and continuation systems at %s', width => {
-    const document = projectStaffDocument(analyzeM3N('{4/4}{60qpm}\nN: {8va}{expression=Lento}1e 2e 3e 4e | {br}{72qpm}{expression=Meno}5e 6e 7e 1ee{/} |||').score)
+    const document = projectStaffDocument(analyzeM3N('{4/4}{60qpm}\nN: {8va}{expression=Lento molto espressivo}1e 2e 3e 4e | {br}{72qpm}{expression=Meno mosso}5e 6e 7e 1ee{/} |||').score)
     const measure = textMeasurer(), lines = planStaffLines(document, width, false, measure, .25)
     const systems = engraveStaffSystems(document, lines, width, measure, .25, false)
     expect(systems).toHaveLength(2)

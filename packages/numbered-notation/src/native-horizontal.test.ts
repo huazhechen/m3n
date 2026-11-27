@@ -61,9 +61,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [48.02737, 48.79284, 47.56453].entries())
+        for (const [index, gap] of [47.9386215, 48.75088249, 47.46900488].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(339.43639, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(339.19051798, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -76,9 +76,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(source, 800, narrowSpacing);
         // The repeat opening is included once; sustain widths include both round caps.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(81.1910274032034, 5);
+        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(80.37298409170944, 5);
         const opening = result.projection.measures[9]!;
-        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(135.41860242849134, 5);
+        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(132.11969055797954, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {

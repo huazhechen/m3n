@@ -1,4 +1,4 @@
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreSpacingBasis, scoreNaturalAdvance, scoreReadingWindows } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance, scoreLayoutConfig, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -53,7 +53,7 @@ export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, 
     preferredNext: prepared.metrics.columns[index]!.naturalAdvance })))
   return { positions, reading, compressionPenalty: 0 }
 }
-/** Final physical whitespace / LilyPond duration weights, in logical px.
+/** Final physical whitespace / shared directional pair weights, in logical px.
  * Boundary springs represent the last event's duration, not a free extra gap. */
 export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
   const positions = staffSpacingPositions(prepared, spacing, extra)
@@ -63,7 +63,7 @@ export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number,
   for (let i = 0; i + 1 < positions.length; i++) {
     const durationWeight = Math.max(0, (prepared.metrics.columns[i]!.naturalAdvance - headWidth) / increment)
     if (!durationWeight) continue
-    gap += Math.max(0, positions[i + 1]! - positions[i]! - headWidth)
+    gap += Math.max(0, positions[i + 1]! - positions[i]! - prepared.metrics.columns[i]!.after - prepared.metrics.columns[i + 1]!.left)
     weight += durationWeight
   }
   // The two boundary springs together hold the duration of the final event.
@@ -94,13 +94,12 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, readi
     solution = solveScoreSpacing(metrics.columns.map((column, index) => {
       const after = Math.max(0, (column.naturalAdvance - headWidth) / increment)
       const gap = staffMusicSize() / 4 * spacing
-      // Ink limits and rhythmic advance are parallel constraints. Adding
-      // dotted/flag ink to the duration gap counts that occupied space twice.
+      // Physical music ink plus the shared pair clearance; lyrics are a
+      // parallel constraint, never an additional rhythmic width.
       const inkGap = staffMusicSize() / 4 * .2
       return { cells: [
         { lane: 'music', left: column.left,
-          right: column.after + (index + 1 < metrics.columns.length ? inkGap : 0), before: 0, after: 0 },
-        { lane: 'rhythm', left: 0, right: headWidth + (index + 1 < metrics.columns.length ? gap * after : 0), before: 0, after: 0 },
+          right: column.after + (index + 1 < metrics.columns.length ? Math.max(inkGap, gap * after) : 0), before: 0, after: 0 },
         ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
       ] }
     }))
@@ -194,10 +193,7 @@ export type PreparedNote = {
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
 export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
-export function createStaffPreparation(document?: StaffDocument) {
-  const durations = document?.measures.map(measure => [measure.melody, measure.bass].flatMap(lane =>
-    lane.flatMap(event => event.children?.map(() => event.beats / event.children!.length) ?? [event.beats])))
-  const basis = scoreSpacingBasis(durations ?? [])
+export function createStaffPreparation(_document?: StaffDocument) {
   const measures = new WeakMap<StaffMeasure, Map<string, PreparedMeasure>>()
   return {
     lyricAttributes: new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts: new Map<string, StaffLyricText>(),
@@ -206,7 +202,7 @@ export function createStaffPreparation(document?: StaffDocument) {
       if (!variants) { variants = new Map(); measures.set(measure, variants) }
       const key = `${first}:${hasBass}`
       let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, basis); variants.set(key, prepared) }
+      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText); variants.set(key, prepared) }
       return prepared
     },
   }
@@ -285,7 +281,7 @@ function beamGroups(count: number, unit: number) {
   if (count > 3 && count % 3 === 0) return Array.from({ length: count / 3 }, () => 12 / unit)
   return Array.from({ length: Math.ceil(count * 4 / unit) }, () => 1)
 }
-function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, basis: number): PreparedMeasure {
+function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText): PreparedMeasure {
   const signatures: Signature[] = [], beams: PreparedMeasure['beams'] = []
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
@@ -377,6 +373,11 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     onset: entry.item.children ? entry.item.onset + i * entry.item.beats / entry.notes.length : entry.item.onset,
     duration: entry.item.children ? entry.item.beats / entry.notes.length : entry.item.beats }))))
   const onsets = [...new Set(timed.map(({ onset }) => Math.round(onset * 1e8) / 1e8))].sort((a, b) => a - b)
+  const beamFor = new Map<PreparedNote, object>()
+  for (const beam of beams) {
+    const flat = entries[beam.lane]!.flatMap(entry => entry.notes)
+    for (const index of beam.indices) beamFor.set(flat[index]!, beam)
+  }
   const columns = onsets.map((onset, onsetIndex) => {
     const notes = timed.filter(value => Math.abs(value.onset - onset) < 1e-7)
     const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
@@ -412,9 +413,21 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       }
     }
     const ordinaryHead = staffGlyphMetrics('noteheadBlack')
-    const duration = (onsets[onsetIndex + 1] ?? Math.max(...entries.flatMap(lane => lane.map(entry => entry.item.onset + entry.item.beats)))) - onset
-    column.naturalAdvance = duration > 0
-      ? scoreNaturalAdvance(duration, basis, ordinaryHead.right - ordinaryHead.left, staffMusicSize() / 4 * style.spacingIncrementSpaces) : 0
+    const end = Math.max(...timed.map(value => value.onset + value.duration))
+    const duration = (onsets[onsetIndex + 1] ?? end) - onset
+    const nextOnset = onsets[onsetIndex + 1]
+    const nextDuration = nextOnset === undefined ? undefined : (onsets[onsetIndex + 2] ?? end) - nextOnset
+    const nextNotes = timed.filter(value => Math.abs(value.onset - (nextOnset ?? Infinity)) < 1e-7)
+    // Shared time columns stay aligned. Tighten only if every attacking
+    // voice continues into the next column through its own common beam.
+    const grouped = notes.length > 0 && notes.every(value => {
+      const next = nextNotes.find(other => other.laneIndex === value.laneIndex)
+      if (!next) return false
+      return beamFor.has(value.note) && beamFor.get(value.note) === beamFor.get(next.note)
+    })
+    const weight = scoreRhythmicGapWeight(duration, nextDuration, grouped ? style.groupSpacingRatio : 1)
+    column.naturalAdvance = ordinaryHead.right - ordinaryHead.left
+      + weight * staffMusicSize() / 4 * style.spacingIncrementSpaces
     column.rhythmLeft = (ordinaryHead.right - ordinaryHead.left) / 2
     column.rhythmAfter = Math.max(0, column.naturalAdvance - column.rhythmLeft)
     return column

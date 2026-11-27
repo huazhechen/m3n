@@ -21,7 +21,7 @@ describe('semantic automatic arc alignment', () => {
   })
 
   it('keeps local heights when a regular note interrupts the phrases', () => {
-    const result = layout('{8/4}\nN: {lg}(1 2){/} 3 {lg}4 5 6 7 1e 2e{/} |||', 320)
+    const result = layout('{8/4}\nN: {lg}(1 2){/} 3 {lg}4 5 6 7 1e 2e{/} |||', 800)
     const relations = arcs(result)
     expect(relations[0]!.arcGroup).not.toBe(relations[1]!.arcGroup)
     expect(heights(result)[0]).toBeLessThan(heights(result)[1]!)

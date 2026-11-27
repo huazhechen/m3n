@@ -73,8 +73,8 @@ describe('native instrumental parentheses', () => {
   })
 
   it('reserves the measured bracket ink and clearance at both interval endpoints', () => {
-    const plain = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), { width: 800, paged: false })
-    const instrumental = layoutNativeScore(parseM3NDocument('{4/4}\nN: {inst}1 2 3 4{/} |||'), { width: 800, paged: false })
+    const plain = layoutNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), { width: 800, paged: false, minimumNoteGap: 8 })
+    const instrumental = layoutNativeScore(parseM3NDocument('{4/4}\nN: {inst}1 2 3 4{/} |||'), { width: 800, paged: false, minimumNoteGap: 8 })
     const first = instrumental.projection.glyphs[0]!, last = instrumental.projection.glyphs.at(-1)!
     const added = first.parenthesisLeft! + last.parenthesisRight!
     expect(added).toBeGreaterThan(0)

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { solveElasticSprings, spacingStrainBadness } from './elastic-spacing.js'
-import { scoreNaturalAdvance, scoreSpacingBasis } from './score-layout-policy.js'
 
 describe('line strain against available compression travel', () => {
   it('rejects a line below the minimum and prices the fraction of available travel', () => {
@@ -77,25 +76,5 @@ describe('bidirectional spacing springs', () => {
     expect(solveElasticSprings(springs, 1).lengths).toEqual([10, 15])
     expect(() => solveElasticSprings(springs, NaN)).toThrow()
     expect(() => solveElasticSprings([{ minimum: 5, natural: 2, stretch: 1 }], 10)).toThrow()
-  })
-})
-
-describe('duration-based natural advances', () => {
-  it('uses the common per-measure shortest duration with a maximum of an eighth', () => {
-    expect(scoreSpacingBasis([[1, 2], [.5, 1], [.5, 2], [.125, 1]])).toBe(.5)
-    expect(scoreSpacingBasis([[.25, 1], [.25, .5], [.5, 1]])).toBe(.25)
-    expect(scoreSpacingBasis([[1, 2]])).toBe(.5)
-    expect(scoreSpacingBasis([])).toBe(.5)
-  })
-  it('selects the same basis independently of measure order, including ties', () => {
-    expect(scoreSpacingBasis([[.25], [.5]])).toBe(.25)
-    expect(scoreSpacingBasis([[.5], [.25]])).toBe(.25)
-  })
-  it.each([[.125, 1.5], [.25, 1.8], [.5, 2.4], [1, 3.6], [2, 4.8], [4, 6]])('gives duration %s a natural advance of %s staff spaces', (duration, expected) => {
-    expect(scoreNaturalAdvance(duration, .5, 1.2, 1.2)).toBeCloseTo(expected, 10)
-  })
-  it('retains actual glyph width and scales without pixel constants', () => {
-    expect(scoreNaturalAdvance(.5, .5, 8.26, 8.4)).toBeCloseTo(16.66)
-    expect(scoreNaturalAdvance(.5, .5, 16.52, 16.8)).toBeCloseTo(33.32)
   })
 })
