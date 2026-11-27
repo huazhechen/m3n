@@ -34,7 +34,7 @@ import { type ScoreLineCandidate } from './layout/line-breaking.js'
 export { wrapNativeText } from './native-header.js'
 import { cacheNativeHorizontal, type NativeHorizontalTemplates, measureNativeHorizontal, nativeHorizontalSpacing, nativeRhythmicSpacing, nativeLastLineWidth, placeNativeHorizontal } from './native-horizontal.js'
 import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, type TextMeasurer } from './native-measure.js'
-import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
+import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeColumn, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
 import { placedNativeControlInk } from './native-controls.js'
@@ -221,11 +221,12 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const projectionStarted = timings ? performance.now() : 0
   let projection: NativeProjection
   let selectedGlyphs: Set<NativeGlyph> | undefined
+  let borrowedGlyphs = Boolean(measuredProjection && options.numericLayout && onlyRow === undefined)
   if (preparation?.projection) {
     const source=measuredProjection ?? preparation.projection
     selectedGlyphs=onlyRow!==undefined && endsOverride?.at(-1)===source.measures.length
       ? new Set(source.measures.slice(endsOverride[onlyRow-1] ?? 0,endsOverride[onlyRow]).flatMap(m=>m.columns.flatMap(c=>c.glyphs))) : undefined
-    projection = cloneNativeProjection(source,selectedGlyphs)
+    projection = borrowedGlyphs ? source : cloneNativeProjection(source,selectedGlyphs)
     // Parenthesis padding follows the current trial's note gap. Reuse text
     // metrics, but rebuild this mutable padding using the original arithmetic.
     let enclosure: { left: number; right: number } | undefined
@@ -375,7 +376,6 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
   }
   const systemOf = new Map<NativeGlyph, number>()
-  for(const system of systems)for(const measure of system.measures)for(const column of measure.columns)for(const glyph of column.glyphs)systemOf.set(glyph,system.index)
   const spacingFor=(measures:NativeMeasure[])=>{
     const key=measures.every(m=>!m.continuation && m.lastFragment) ? `${horizontalKey}:${measures.map(m=>m.id).join(':')}` : undefined
     if(preparation && key!==undefined) {
@@ -611,7 +611,37 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return bound
   } : undefined, score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit, onlyRow) => {
+  if (borrowedGlyphs) {
+    const started = timings ? performance.now() : 0
+    const owned = cloneNativeProjection(projection)
+    const measures = new Map(projection.measures.map((measure, index) => [measure, owned.measures[index]!]))
+    let columns: Map<NativeColumn, NativeColumn> | undefined
+    // Keep preparation's columns intact: horizontal templates can still use
+    // them to bind controls lazily. Split descriptors retain their own spans.
+    for (const fragment of plannedFragments) if (!measures.has(fragment)) {
+      columns ??= new Map(projection.measures.flatMap((measure, index) => measure.columns.map((column, at) =>
+        [column, owned.measures[index]!.columns[at]!] as const)))
+      measures.set(fragment, { ...fragment, columns: fragment.columns.map(column => columns!.get(column)!) })
+    }
+    for (const system of systems) system.measures = system.measures.map(measure => measures.get(measure)!)
+    for (let index = 0; index < plannedFragments.length; index++) plannedFragments[index] = measures.get(plannedFragments[index]!)!
+    projection = owned
+    incomingArcs.clear()
+    for (const [index, relation] of relations.entries()) {
+      const endpoints = preparation!.relations![index]!
+      relation.first = owned.glyphs[endpoints.first]!; relation.last = owned.glyphs[endpoints.last]!
+      if (relation.kind === 'tie' || relation.kind === 'slur') {
+        const incoming = incomingArcs.get(relation.last)
+        if (incoming) incoming.push(relation); else incomingArcs.set(relation.last, [relation])
+      }
+    }
+    cacheNativeHorizontal(options, templates)
+    borrowedGlyphs = false
+    recordPart('deferredGlyphCopyMs', started)
+  }
   stageStarted = timings ? performance.now() : 0
+  for (const system of systems) for (const measure of system.measures) for (const column of measure.columns)
+    for (const glyph of column.glyphs) systemOf.set(glyph, system.index)
   for (const system of systems) if(onlyRow===undefined || system.index===onlyRow)placeSystem(system,rowCache)
   record('horizontalPlacementMs')
   cacheNativeHairpins(systems)

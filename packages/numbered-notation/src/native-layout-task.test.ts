@@ -7,6 +7,32 @@ import { renderNativePages } from './native-svg.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
+it('detaches borrowed glyphs, controls and split columns without changing preparation or earlier layouts', () => {
+  const document = parseM3NDocument('{4/4}\nN: {inst}{lg}' + '1 2 3 4 | {key=G}5 6 7 1e | '.repeat(8) + '{/}{/} 1^^ |||')
+  const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  const options = { width: 720, minimumNoteGap: 16, numericLayout: true, paged: true, pageMargin: 0, wrapWidthRatio: .3 }
+  layoutNativeScore(document, { ...options, layoutTask, textMeasurementCache })
+  const preparation = layoutTask.preparationFor(document, options, textMeasurementCache)
+  const measured = structuredClone(preparation.measuredProjections)
+  const rejected: Record<string, number> = {}
+  expect(() => layoutNativeScore(document, { ...options, width: 534, layoutTask, textMeasurementCache }, rejected, 1.01, 1))
+    .toThrow('cannot improve')
+  expect(rejected.deferredGlyphCopyMs).toBeUndefined()
+  expect(preparation.measuredProjections).toEqual(measured)
+  const saved: Array<{ layout: ReturnType<typeof layoutNativeScore>; svg: string[] }> = []
+  for (const width of [320, 534, 624, 720]) {
+    const timings: Record<string, number> = {}
+    const layout = layoutNativeScore(document, { ...options, width, layoutTask, textMeasurementCache }, timings)
+    if (width === 320) expect(layout.systems.some(system => system.measures.some(measure => measure.continuation))).toBe(true)
+    const svg = renderNativePages(layout)
+    expect(svg).toEqual(renderNativePages(layoutNativeScore(document, { ...options, width })))
+    expect(timings.deferredGlyphCopyMs).toBeGreaterThanOrEqual(0)
+    expect(preparation.measuredProjections).toEqual(measured)
+    saved.push({ layout, svg })
+    for (const prior of saved) expect(renderNativePages(prior.layout)).toEqual(prior.svg)
+  }
+})
+
 it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('shares unplaced preparation across widths and settings without sharing placement: %s', file => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
   const before = structuredClone(document), layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
