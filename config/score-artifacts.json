@@ -2,7 +2,7 @@
   "version": 1,
   "staffGeneration": "deferred",
   "rendererSha256": "92341c421b70db9f0624b40e2d6ff2f29eaf87c9d99fbf18360ed6ba45fee6e6",
-  "fontManifestSha256": "2b6a60986bfcba9d35dce9dc2839d52edc531477d7db03541e156df3c6aa6aa7",
+  "fontManifestSha256": "1613eeb56fb352eba8ec3ea5b908f5cae989b1424cc1db7f1de02ec50a858f2e",
   "entries": {
     "src/examples/huan_le_song.m3n": {
       "sourceSha256": "af615eff67abd4c57c45e52dca988de91d80de3fe387ad6d07da4320f749f60b",
@@ -505,9 +505,9 @@
       "fontSha256": "64635c9fd011052c60714a27462ec9cab231f65d5d72d5c597e0499d09cbf35b"
     },
     "src/scores/zhi_dao_shi_jie_de_jin_tou_01.m3n": {
-      "sourceSha256": "5f3cad37603ee2255c38399c6e37f6485159d40e895d17003e0e98abdb8c9efc",
-      "font": "NotoSansSC-c3cd336738d44de6.ttf",
-      "fontSha256": "d6def39e23e7f178051cf5cc8043ff21899769499a7656926861994418ba498e"
+      "sourceSha256": "140ce990d470192950ad7a6a9d0beff019ed14d7bbb8345de0fbb4edd866d125",
+      "font": "NotoSansSC-3cbb4c8e339ac160.ttf",
+      "fontSha256": "640c5638b8c0997f28da1cf0eb682df488d911ff33e27ac7618c0b412e65efee"
     },
     "src/scores/zhui_meng_ren_01.m3n": {
       "sourceSha256": "5867a580929d4470bdfc4884c636e4ef299df9aff3dbc3be4be53a23a3e8ec47",
