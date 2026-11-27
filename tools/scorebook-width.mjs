@@ -28,8 +28,8 @@ export function widthQualityUpperBound(width, numbered) {
   // Shared averaged scores lack a notation tag: use a bound safe for both.
   return numbered === true ? additive : numbered === false ? legacy : Math.max(legacy, additive)
 }
-export function widthCannotWin(width, best) {
-  return Boolean(best && best.pageCount === 1 && widthQualityUpperBound(width, best.totalCost !== undefined ? true : undefined) < numberedLayoutScore(best))
+export function widthCannotWin(width, best, minimumPageCount = 1) {
+  return Boolean(best && best.pageCount === minimumPageCount && widthQualityUpperBound(width, best.totalCost !== undefined ? true : undefined) < numberedLayoutScore(best))
 }
 
 export function chooseBestWidth(candidates) {
@@ -42,20 +42,27 @@ export function chooseBestWidth(candidates) {
 export async function probeWidthCandidates(measure, { verify, signal, prune = false } = {}) {
   const candidates = []
   const skippedWidths = []
-  let requests = 0
+  const estimatedSkippedWidths = []
+  let endpointPages
+  let requests = 0, tierRechecks = 0
   let best = null
   let verifiedWidths = 0
   // Short scores are sensitive to the loose tier's different break patterns.
-  // Classify with both tiers at the minimum width before reducing long-score
-  // candidate work. This remains an empirical, explicitly opted-in surrogate.
+  // Recheck the minimum with both tiers if its tight trial already fits one
+  // page; multi-page scores keep the cheap tier. This remains an empirical, explicitly opted-in surrogate.
   const singleTier=globalThis.__m3nExperimentalSingleTier
-  if(singleTier)globalThis.__m3nExperimentalSingleTier=false
+
   const probe = async width => {
     signal?.throwIfAborted()
     requests++
     let result
     try {
       result = { width, ...await measure(width, best) }
+      if(singleTier && width===widthMinimum && safe(result) && result.pageCount===1) {
+        globalThis.__m3nExperimentalSingleTier=false
+        requests++;tierRechecks++
+        result={width,...await measure(width,best)}
+      }
       if (verify && safe(result)) {
         verifiedWidths++
         result = { ...result, ...await verify(width, result) }
@@ -67,6 +74,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     }
     signal?.throwIfAborted()
     candidates.push(result)
+    if(globalThis.__m3nExperimentalRowReuse && globalThis.__m3nExperimentalEndpointFloor && width===widthMaximum && safe(result))endpointPages=result.pageCount
     if(singleTier && width===widthMinimum)globalThis.__m3nExperimentalSingleTier=safe(result) && result.pageCount>1
     if (safe(result) && (!best || rank(result, best) < 0)) best = result
   }
@@ -74,7 +82,10 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     signal?.throwIfAborted()
     // Audits intentionally visit every original candidate, including losers.
     if (prune && !verify && widthCannotWin(width, best)) skippedWidths.push(width)
-    else await probe(width)
+    else if(prune && !verify && endpointPages!==undefined && widthCannotWin(width,best,Math.min(endpointPages,best?.pageCount ?? 1))) {
+      // Explicitly lossy: page counts need not be monotone in width.
+      skippedWidths.push(width);estimatedSkippedWidths.push(width)
+    } else await probe(width)
   }
   // Find a strong incumbent at 48px intervals before filling the original
   // 24px grid. Every omitted level still needs the same strict upper-bound
@@ -91,7 +102,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
   for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4)
     if (!measured.has(width)) await consider(width)
   return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
-    uniqueWidths: requests, hits: 0, verifiedWidths, skippedWidths } }
+    uniqueWidths: requests-tierRechecks, tierRechecks, hits: 0, verifiedWidths, skippedWidths, estimatedSkippedWidths } }
   } finally { if(singleTier)globalThis.__m3nExperimentalSingleTier=singleTier }
 }
 

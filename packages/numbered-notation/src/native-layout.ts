@@ -660,7 +660,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     let bound = foundationBounds.get(key)
     if (!bound) {
       const measures=plannedFragments.slice(start,end)
-      bound = nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:available-arcLeading(measures)},templates)
+      bound = measurement && (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse
+        ? fixedCoreLowerBound(start,end)
+        : nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(document),{...options,width:available-arcLeading(measures)},templates)
       foundationBounds.set(key,bound)
     }
     return bound

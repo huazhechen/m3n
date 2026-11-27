@@ -39,6 +39,7 @@ assert(Number.isInteger(experimentalWidthBin) && experimentalWidthBin>=0 && expe
 assert(Number.isInteger(experimentalInkBin) && experimentalInkBin >= 0 && experimentalInkBin <= 48, 'Invalid proxy bin')
 const experimentalRowReuse = process.argv.includes('--row-reuse')
 const experimentalGreedyCeiling = process.argv.includes('--fast-ceiling')
+assert(!process.argv.includes('--endpoint-floor') || experimentalRowReuse, '--endpoint-floor requires --row-reuse')
 assert(!process.argv.includes('--single-tier') || experimentalRowReuse, '--single-tier requires --row-reuse')
 assert(!process.argv.includes('--equal-tier') || experimentalRowReuse, '--equal-tier requires --row-reuse')
 assert(!process.argv.includes('--cross-tier') || experimentalRowReuse, '--cross-tier requires --row-reuse')
@@ -66,6 +67,7 @@ if (checkpoint) {
   assert.equal(checkpoint.experimentalWidthBin ?? 0, experimentalWidthBin, 'Cannot resume with different geometry width bins')
   assert.equal(checkpoint.experimentalPageCostPasses ?? 0, experimentalPageCostPasses, 'Cannot resume with a different page cost pass budget')
   assert.equal(Boolean(checkpoint.experimentalRowReuse), experimentalRowReuse, 'Cannot resume with different row reuse')
+  assert.equal(Boolean(checkpoint.experimentalEndpointFloor),process.argv.includes('--endpoint-floor'),'Cannot resume with a different endpoint page floor')
   assert.equal(Boolean(checkpoint.experimentalSingleTier),process.argv.includes('--single-tier'),'Cannot resume with a different single-tier surrogate')
   assert.equal(Boolean(checkpoint.experimentalEqualTier),process.argv.includes('--equal-tier'),'Cannot resume with a different equal-measure tier surrogate')
   assert.equal(Boolean(checkpoint.experimentalTierReuse), process.argv.includes('--cross-tier'), 'Cannot resume with different tier reuse')
@@ -82,6 +84,7 @@ report.detailedTimings = auditLayout || process.argv.includes('--detailed-timing
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalWidthBin) report.experimentalWidthBin = experimentalWidthBin
 report.experimentalPageCostPasses = experimentalPageCostPasses
+report.experimentalEndpointFloor=process.argv.includes('--endpoint-floor')
 report.experimentalSingleTier=process.argv.includes('--single-tier')
 report.experimentalEqualTier=process.argv.includes('--equal-tier')
 if(coldEachScore)report.coldEachScore=true
@@ -131,6 +134,7 @@ const openBrowser=async()=>{
   await page.evaluate(size => { globalThis.__m3nExperimentalWidthBin = size }, experimentalWidthBin)
   await page.evaluate(passes => { globalThis.__m3nExperimentalPageCostPasses = passes }, experimentalPageCostPasses)
   await page.evaluate(enabled => { globalThis.__m3nExperimentalTierReuse = enabled }, process.argv.includes('--cross-tier'))
+  await page.evaluate(enabled=>{globalThis.__m3nExperimentalEndpointFloor=enabled},process.argv.includes('--endpoint-floor'))
   await page.evaluate(enabled=>{globalThis.__m3nExperimentalSingleTier=enabled},process.argv.includes('--single-tier'))
   await page.evaluate(enabled=>{globalThis.__m3nExperimentalEqualTier=enabled},process.argv.includes('--equal-tier'))
   await page.evaluate(enabled => { globalThis.__m3nDetailedLayoutTimings = enabled }, process.argv.includes('--detailed-timings'))

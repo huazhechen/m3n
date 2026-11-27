@@ -103,6 +103,7 @@ export function completePageConstrainedTrial(document: ScoreDocument, supplied: 
     }
   }
   if (supplied.numericLayout && trial.coreLowerBound) return planScoreLinesWithRefinedPages(trial.candidates, greedy, optimum, evaluate, {
+    candidateWidth: supplied.width,
     blockFor: (start, end, previousStart, reference) => trial.coreLowerBound!(start, end, rowCache, previousStart, reference),
     headers: greedy.value.verticalBlocks.slice(0, greedy.value.headerBlocks.length),
     options: { immutableBlocks: true, pageHeight: Math.floor(supplied.width * A4_CONTENT_ASPECT_RATIO), margin: greedy.value.margin,

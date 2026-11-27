@@ -4,10 +4,10 @@ import { greedyScoreLines, scoreLinePlanCost, planScoreLinesWithinPages } from '
 import { planScoreLinesWithRefinedPages } from './refined-page-breaking.js'
 import { prepareScorePagination, type ScorePageBlock } from './pagination.js'
 
-it.each([false,true])('keeps refinement exact or returns a measured feasible plan under a candidate budget (%s)', estimated => {
-  const globals=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number}
-  const before={reuse:globals.__m3nExperimentalRowReuse,passes:globals.__m3nExperimentalPageCostPasses}
-  globals.__m3nExperimentalRowReuse=estimated;globals.__m3nExperimentalPageCostPasses=1
+it.each([[false,false],[true,false],[false,true],[true,true]])('keeps refinement exact or returns a measured feasible plan under a candidate budget (%s, boundary=%s)', (estimated,boundary) => {
+  const globals=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number;__m3nExperimentalSingleTier?:boolean}
+  const before={reuse:globals.__m3nExperimentalRowReuse,passes:globals.__m3nExperimentalPageCostPasses,single:globals.__m3nExperimentalSingleTier}
+  globals.__m3nExperimentalRowReuse=estimated;globals.__m3nExperimentalPageCostPasses=1;globals.__m3nExperimentalSingleTier=boundary
   try {
   let seed = 1097, violations = 0
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
@@ -38,11 +38,11 @@ it.each([false,true])('keeps refinement exact or returns a measured feasible pla
     evaluate(greedy.ends); evaluate(optimum.ends)
     const timings:Record<string,number>={}
     const actual = planScoreLinesWithRefinedPages(graph, greedy, optimum, evaluate, {
-      options, headers: [], revision: () => learned.size,
+      candidateWidth:boundary ? 720 : 624, options, headers: [], revision: () => learned.size,
       blockFor: (start, end) => learned.get(`${start}:${end}`) ?? lower,
     },timings)
-    if(estimated && greedy.pages>1) {
-      expect(timings.numericPageCostCalls ?? 0).toBeLessThanOrEqual(1)
+    if(estimated && (greedy.pages>1 || boundary)) {
+      expect(timings.numericPageCostCalls ?? 0).toBeLessThanOrEqual(greedy.pages>1 ? 1 : 8)
       expect(evaluate(actual.ends).pages).toBe(actual.pages)
       expect(actual.pages).toBeLessThanOrEqual(greedy.pages)
       expect(scoreLinePlanCost(graph,actual.ends)).toBeLessThanOrEqual(scoreLinePlanCost(graph,greedy.ends)+1e-12)
@@ -53,7 +53,7 @@ it.each([false,true])('keeps refinement exact or returns a measured feasible pla
     expect(actual.pages).toBe(expected.pages)
   }
   expect(violations).toBeGreaterThan(10)
-  } finally {globals.__m3nExperimentalRowReuse=before.reuse;globals.__m3nExperimentalPageCostPasses=before.passes}
+  } finally {globals.__m3nExperimentalRowReuse=before.reuse;globals.__m3nExperimentalPageCostPasses=before.passes;globals.__m3nExperimentalSingleTier=before.single}
 })
 
 it('propagates geometry failures instead of treating them as a candidate budget exit', () => {

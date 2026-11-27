@@ -1,3 +1,4 @@
+import { scoreLayoutConfig } from '../score-layout-config.js'
 import { planScoreLinesGlobally, type ScoreLineCandidate } from './line-breaking.js'
 import { greedyScoreLines, planScoreLinesWithinPages, scoreLinePlanCost, improveFeasibleScoreLines } from './page-line-breaking.js'
 import { planScoreLinesWithPageCost, createScorePageCostCache, type ScorePageCostOptions } from './page-cost-breaking.js'
@@ -16,6 +17,7 @@ export function measureScoreGreedyPageCeiling<T>(graph: Graph, optimum: Measured
   return evaluate(ends)
 }
 export type ScorePageCostModel = {
+  candidateWidth?: number
   blockFor: (start: number, end: number, previousStart?: number, reference?: number) => ScorePageBlock
   headers: readonly ScorePageBlock[]
   options: Omit<ScorePageCostOptions, 'ceiling' | 'maximumCost' | 'cache' | 'rowsToResolve' | 'reference'>
@@ -38,13 +40,16 @@ export function planScoreLinesWithRefinedPages<T>(graph: Graph, greedy: Measured
     if ((globalThis as {__m3nTraceWidths?:boolean}).__m3nTraceWidths) console.log('fast-ceiling '+JSON.stringify({greedyCost,optimumCost,rows:greedy.ends.length}))
     if (greedyCost<=Math.max(.6,1.5*optimumCost)+1e-12) return greedy
   }
-  // Preserve full refinement when a single page is already feasible: its
-  // horizontal optimum is especially sensitive near width/page transitions.
+  // Single-page refinement is sensitive near width/page transitions. Only
+  // the opted-in maximum-width candidate receives a larger finite budget.
   // Candidate-only budget: retain the measured feasible plan if refinement
   // would exceed it. Exact searches never interpret an unfinished proof as a
   // rejection; final verification disables row reuse and runs to completion.
-  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number}
-  const limit=experiment.__m3nExperimentalRowReuse && greedy.pages>1 ? experiment.__m3nExperimentalPageCostPasses ?? 0 : 0
+  const experiment=globalThis as {__m3nExperimentalRowReuse?:boolean;__m3nExperimentalPageCostPasses?:number;__m3nExperimentalSingleTier?:boolean}
+  const budget=experiment.__m3nExperimentalPageCostPasses ?? 0
+  const boundary=experiment.__m3nExperimentalSingleTier && model.candidateWidth===scoreLayoutConfig.pageWidth.unit*scoreLayoutConfig.pageWidth.maximumMultiple
+  const limit=experiment.__m3nExperimentalRowReuse && budget>0
+    ? greedy.pages>1 ? budget : boundary ? Math.max(8,budget) : 0 : 0
   let passes=0
   const exhausted=Symbol('candidate refinement budget exhausted')
   try {

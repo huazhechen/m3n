@@ -139,3 +139,20 @@ it('rejects a width by the full optimistic row graph before engraving either spa
   expect(timings.pageFeasibilityPrunes).toBe(1)
   expect(timings.completedLayoutTrials).toBeUndefined()
 })
+
+it('constructs corrected TrueType outlines without decoding and discarding every fontkit path',()=>{
+  const font=fontkit.create(resources.find((font:{file:string})=>font.file.startsWith('Barlow')).data)
+  const Path=font.glyphForCodePoint(48).path.constructor as new()=>ReturnType<typeof fontDesignGlyphPath>
+  let discarded=0
+  class Glyph {
+    _getContours(){return [[{x:0,y:0,onCurve:true},{x:10,y:0,onCurve:true},{x:0,y:10,onCurve:true}]]}
+    get path(){discarded++;return new Path()}
+  }
+  for(let index=0;index<16;index++) {
+    const glyph=new Glyph() as unknown as Parameters<typeof fontDesignGlyphPath>[0]
+    const path=fontDesignGlyphPath(glyph)
+    expect(fontDesignGlyphPath(glyph)).toBe(path)
+    expect(fontDesignPathInk(path)).toEqual({left:0,right:10,top:0,bottom:10})
+  }
+  expect(discarded).toBe(1)
+})

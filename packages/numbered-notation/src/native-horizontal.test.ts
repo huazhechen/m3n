@@ -1,7 +1,7 @@
 import { parseM3NDocument } from '@m3n/notation';
 import { readFileSync } from 'node:fs';
 import { describe,expect,it } from 'vitest';
-import { cacheNativeHorizontal, measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeRhythmicSpacing, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js';
+import { cacheNativeHorizontal, measureNativeHorizontal, nativeBarMetrics, nativeHorizontalSpacing, nativeUnitRhythmicGap, nativeRhythmicSpacing, placeNativeHorizontal, placeNativeCoreHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js';
 import { nativeLayoutQuality } from './native-quality.js'
 import { layoutNativeScore } from './native-layout.js';
 import type { TextMeasurer } from './native-measure.js';
@@ -195,4 +195,24 @@ it.each([false,true])('rebinds cached control and note targets across widths, eq
   expect(cached.measures).toEqual(fresh.measures)
   expect(base.glyphs.every(glyph=>glyph.x===0)).toBe(true)
  }
+})
+
+it.each([false,true])('core-bound placement matches full music coordinates without mutating template targets, equal=%s',equalMeasures=>{
+  const source='{4/4}\nN: 1# 2 {key=G}3 4 | 5 6 7 1e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |||'
+  for(const minimumNoteGap of [8,16]) {
+    const base=projectNativeScore(parseM3NDocument(source),{textMeasurer:measurer})
+    const templates:NativeHorizontalTemplates=new Map()
+    const options={minimumNoteGap,equalMeasures}
+    cacheNativeHorizontal(options,templates)
+    const minimum=nativeHorizontalSpacing(base.measures,options).minimumWidth
+    const unplaced=structuredClone(base)
+    for(const width of [minimum,528,720,552]) {
+      const fast=cloneNativeProjection(base),full=cloneNativeProjection(base)
+      placeNativeCoreHorizontal(fast.measures,options,width)
+      placeNativeHorizontal(full.measures,{...options},0,width)
+      expect(fast.measures.map(measure=>measure.columns.map(column=>({x:column.x,glyphs:column.glyphs.map(glyph=>glyph.x)}))))
+        .toEqual(full.measures.map(measure=>measure.columns.map(column=>({x:column.x,glyphs:column.glyphs.map(glyph=>glyph.x)}))))
+      expect(base).toEqual(unplaced)
+    }
+  }
 })

@@ -487,3 +487,23 @@ export function placeNativeHorizontal(measures: NativeMeasure[], options: Horizo
   })
   return glyphs
 }
+
+/** Bounds need music coordinates only. Reuse the immutable constraint chain
+ * without rebinding controls, navigation or bar placement to a cloned row. */
+export function placeNativeCoreHorizontal(measures:NativeMeasure[],options:HorizontalOptions,width:number) {
+  if(measures.some(measure=>measure.continuation || !measure.lastFragment)) {
+    placeNativeHorizontal(measures,options,0,width)
+    return
+  }
+  const items=itemsFor(measures,options,measures,true)
+  const positions=options.equalMeasures ? equalMeasurePositions(items,width) : solveScoreSpacing(items,width,true).positions
+  const targets=new Map(measures.map(measure=>[measure.id,measure]))
+  for(let index=0;index<items.length;index++) {
+    const item=items[index]!
+    if(!item.column)continue
+    const target=targets.get(item.measure.id)!
+    const column=target===item.measure ? item.column : target.columns[item.measure.columns.indexOf(item.column)]!
+    column.x=positions[index]!
+    for(const glyph of column.glyphs)glyph.x=positions[index]!
+  }
+}

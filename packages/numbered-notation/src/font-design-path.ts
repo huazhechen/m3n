@@ -5,6 +5,7 @@ type OutlinePath = Path & { commands: { command: string; args: number[] }[] }
 const bounds = new WeakMap<Path, Map<number, ReturnType<typeof nativePathInk>>>()
 const commands: Record<string, string> = { moveTo: 'M', lineTo: 'L', quadraticCurveTo: 'Q', bezierCurveTo: 'C', closePath: 'Z' }
 const glyphPaths = new WeakMap<Glyph, Path>()
+const pathConstructors = new WeakMap<object, new () => Path>()
 type ContourPoint = { x: number; y: number; onCurve: boolean }
 
 /** fontkit 1.1.1 inserts an extra quadratic segment when a TrueType contour
@@ -15,7 +16,16 @@ export function fontDesignGlyphPath(glyph: Glyph): Path {
   if (saved) return saved
   const contours = (glyph as Glyph & { _getContours?: () => ContourPoint[][] })._getContours?.()
   if (!contours) return glyph.path
-  const path = new (glyph.path.constructor as new () => Path)()
+  // Reading glyph.path constructs fontkit's outline, which is then discarded
+  // because its off-curve contour handling needs the correction below. The
+  // path class is shared by glyphs of the same prototype; resolve it once.
+  const prototype=Object.getPrototypeOf(glyph) ?? glyph
+  let Constructor=pathConstructors.get(prototype)
+  if(!Constructor) {
+    Constructor=glyph.path.constructor as new () => Path
+    pathConstructors.set(prototype,Constructor)
+  }
+  const path = new Constructor()
   for (const contour of contours) {
     if (!contour.length) continue
     const firstOnCurve = contour.findIndex(point => point.onCurve)

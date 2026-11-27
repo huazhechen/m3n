@@ -1,7 +1,7 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
 import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
 import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
-import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
+import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeCoreHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
 import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
@@ -56,9 +56,9 @@ export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: Tex
     // Its weighted core is a ratio of affine functions and is monotone.
     // Endpoints therefore bound every justified or shortened ending width.
     const minimum = nativeHorizontalSpacing(cloned, horizontal).minimumWidth
-    placeNativeHorizontal(cloned, horizontal, 0, minimum)
+    placeNativeCoreHorizontal(cloned, horizontal, minimum)
     const compact = nativeSystemCore(system, measurer)
-    placeNativeHorizontal(cloned, horizontal, 0, Math.max(minimum, horizontal.width))
+    placeNativeCoreHorizontal(cloned, horizontal, Math.max(minimum, horizontal.width))
     const full = nativeSystemCore(system, measurer)
     if (compact && full) core = { top: Math.max(compact.top, full.top), bottom: Math.min(compact.bottom, full.bottom) }
   }

@@ -215,7 +215,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       const greedy = measureScoreGreedyPageCeiling(graph.candidates, optimum, evaluate)
       const lowerRows = optimum.pages > greedy.pages ? graph.measured.map(({ measure }) => lowerEnvelopeFor(measure)) : undefined
       const plan = lowerRows ? planScoreLinesWithRefinedPages(graph.candidates, greedy, optimum, evaluate,
-        staffPageCostModel(graph, rowCache, lowerRows, Boolean(score.equalMeasures), minimumGap, height, header.height, headerGap)) : optimum
+        {...staffPageCostModel(graph, rowCache, lowerRows, Boolean(score.equalMeasures), minimumGap, height, header.height, headerGap),candidateWidth}) : optimum
       const lines = linesFor(plan.ends)
       let rowStart = 0
       const finalSystems = lines.map((line, index) => {

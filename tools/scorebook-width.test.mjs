@@ -596,7 +596,7 @@ test('a valid endpoint does not hide an underestimated winner during verificatio
   assert.equal(result.best.width,540)
 })
 
-test('single-tier experiment classifies with both tiers and restores its scope on completion and cancellation',async()=>{
+test('single-tier experiment rechecks short scores with both tiers and restores its scope on completion and cancellation',async()=>{
   const previous=globalThis.__m3nExperimentalSingleTier
   try {
     for(const pages of [1,2]) {
@@ -607,8 +607,11 @@ test('single-tier experiment classifies with both tiers and restores its scope o
         return {width,pageCount:pages,totalCost:1,rows:4,outside:[],overlaps:[]}
       })
       assert.equal(result.candidates.length,33)
-      assert.deepEqual(visited[0],[528,false])
+      assert.deepEqual(visited[0],[528,true])
       assert(visited.slice(1).every(([,single])=>single===(pages>1)))
+      assert.equal(result.renderCache.tierRechecks,pages===1 ? 1 : 0)
+      assert.equal(result.renderCache.uniqueWidths,33)
+      assert.equal(result.renderCache.requests,pages===1 ? 34 : 33)
       assert.equal(globalThis.__m3nExperimentalSingleTier,true)
     }
     const controller=new AbortController()
@@ -620,5 +623,30 @@ test('single-tier experiment classifies with both tiers and restores its scope o
   } finally {
     if(previous===undefined)delete globalThis.__m3nExperimentalSingleTier
     else globalThis.__m3nExperimentalSingleTier=previous
+  }
+})
+
+test('endpoint page-floor pruning is explicit, separately counted and disabled during audits',async()=>{
+  const previous={reuse:globalThis.__m3nExperimentalRowReuse,floor:globalThis.__m3nExperimentalEndpointFloor}
+  try {
+    globalThis.__m3nExperimentalEndpointFloor=true
+    for(const reuse of [false,true])for(const audit of [false,true]) {
+      globalThis.__m3nExperimentalRowReuse=reuse
+      const result=await probeWidthCandidates(width=>({width,pageCount:2,rows:8,totalCost:width===528 ? .1 : 4,outside:[],overlaps:[]}),
+        {prune:true,...audit ? {verify:async()=>({})} : {}})
+      if(!reuse || audit) {
+        assert.equal(result.candidates.length,33)
+        assert.deepEqual(result.renderCache.estimatedSkippedWidths,[])
+      } else {
+        assert(result.renderCache.estimatedSkippedWidths.length>0)
+        assert(result.renderCache.estimatedSkippedWidths.every(width=>result.renderCache.skippedWidths.includes(width)))
+        assert(result.candidates.some(candidate=>candidate.width===720))
+        assert.equal(chooseBestWidth(result.candidates).width,528)
+      }
+    }
+  } finally {
+    for(const [key,value] of Object.entries({__m3nExperimentalRowReuse:previous.reuse,__m3nExperimentalEndpointFloor:previous.floor})) {
+      if(value===undefined)delete globalThis[key];else globalThis[key]=value
+    }
   }
 })
