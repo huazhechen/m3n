@@ -246,6 +246,8 @@ export class SvgGeometry {
   private readonly transforms = new Map<string, Matrix>()
   private readonly pathBounds = new Map<string, Ink>()
   private readonly paths = new WeakMap<XmlNode, { d: string | StaffNumericPath; half: number; boxes: readonly Ink[] }>()
+  private readonly leafTextInk = new WeakMap<XmlNode, { content: string; size: number; bold: boolean; italic: boolean;
+    x: string | undefined; y: string | undefined; anchor: string; boxes: Ink[] }>()
   constructor(
     private readonly root: XmlNode,
     readonly measure: MeasureText,
@@ -424,7 +426,8 @@ export class SvgGeometry {
     } else if (node.tagName === 'text' && a['font-family'] === scoreLayoutConfig.fonts.music) {
       boxes = staffCharacterInk(textContent(node), num('font-size', style.size), num('x'), num('y'))
     } else if (node.tagName === 'text') {
-      const size = Math.max(
+      const leaf = !node.children.length || node.children.length === 1 && typeof node.children[0] === 'string'
+      const size = leaf ? Math.max(style.size, a['font-size'] ? parseFloat(a['font-size']) : -Infinity) : Math.max(
         style.size,
         ...findAll(node, (n) => Boolean(n.attributes['font-size'])).map((n) => parseFloat(n.attributes['font-size']!)),
       )
@@ -432,13 +435,20 @@ export class SvgGeometry {
         .replace(/[\t\r\n]/g, '')
         .trim()
       if (!content.replace(/[\u200B\u2800]/g, '')) return
-      const metrics = this.measure(content, size, style.bold, style.italic),
-        anchor = a['text-anchor'] ?? 'start'
-      const x = num('x') - (anchor === 'middle' ? metrics.width / 2 : anchor === 'end' ? metrics.width : 0),
-        y = num('y')
-      boxes = [
-        { left: x + metrics.left, right: x + metrics.right, top: y - metrics.ascent, bottom: y + metrics.descent },
-      ]
+      const anchor = a['text-anchor'] ?? 'start'
+      // Internal engraving holds the font measurer fixed. Cache only a leaf's
+      // local rectangle, checking every editable input; ancestor transforms
+      // remain live. Public readers still observe changing font measurers.
+      const cached = this.borrowImmutableInk && leaf ? this.leafTextInk.get(node) : undefined
+      if (cached && cached.content === content && cached.size === size && cached.bold === style.bold
+        && cached.italic === style.italic && cached.x === a.x && cached.y === a.y && cached.anchor === anchor) boxes = cached.boxes
+      else {
+        const metrics = this.measure(content, size, style.bold, style.italic)
+        const x = num('x') - (anchor === 'middle' ? metrics.width / 2 : anchor === 'end' ? metrics.width : 0), y = num('y')
+        boxes = [{ left: x + metrics.left, right: x + metrics.right, top: y - metrics.ascent, bottom: y + metrics.descent }]
+        if (this.borrowImmutableInk && leaf) this.leafTextInk.set(node, { content, size, bold: style.bold, italic: style.italic,
+          x: a.x, y: a.y, anchor, boxes: boxes as Ink[] })
+      }
     } else if (['rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline'].includes(node.tagName)) {
       if (node.tagName === 'rect')
         boxes = [{ left: num('x'), right: num('x') + num('width'), top: num('y'), bottom: num('y') + num('height') }]

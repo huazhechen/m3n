@@ -2,6 +2,44 @@ import { describe, expect, it } from 'vitest'
 import { element, hasClass, SvgGeometry, InkRangeIndex, textMeasurer, translate, xml } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
+  it('keeps cached leaf text exact through edits, inherited styles, transforms and nested spans', () => {
+    const measure = (text: string, size: number, bold = false, italic = false) => ({
+      width: text.length * size, left: italic ? -2 : 0, right: text.length * size + (bold ? 3 : 0), ascent: size * .8, descent: size * .2,
+    })
+    const label = element('text', {x:'3',y:'7','text-anchor':'middle'}, ['标签'])
+    const root = element('g', {'font-size':'12'}, [label])
+    const cached = new SvgGeometry(root, measure, true), reference = new SvgGeometry(root, measure)
+    const compare = () => {
+      for (let use = 0; use < 3; use++) {
+        expect(cached.pieces(root)).toEqual(reference.pieces(root))
+        expect(cached.ink(root)).toEqual(reference.ink(root))
+        expect(cached.partitionWithoutClasses(root, ['verse'])).toEqual(reference.partitionWithoutClasses(root, ['verse']))
+      }
+    }
+    compare()
+    for (const edit of [
+      () => { label.children[0] = '更多文字' },
+      () => { label.attributes.x = '-8.125'; label.attributes.y = '23.456' },
+      () => { label.attributes['text-anchor'] = 'end' },
+      () => { root.attributes['font-size'] = '24' },
+      () => { root.attributes.class = 'reh dynam' },
+      () => { root.attributes.transform = 'translate(15 -9) scale(-2 1.5)' },
+      () => { label.attributes['font-size'] = '8'; label.attributes['stroke-width'] = '2' },
+      () => { label.children = [element('tspan', {'font-size':'32'}, ['嵌套'])] },
+      () => { label.children = ['\u200B'] },
+      () => { label.textValue = '覆盖文字' },
+    ]) { edit(); compare() }
+    const mutable = reference.pieces(root); mutable[0]!.left = -100000
+    compare()
+  })
+  it('does not cache a public text measurer whose results can change', () => {
+    let width = 10
+    const label = element('text', {}, ['Text'])
+    const geometry = new SvgGeometry(label, () => ({width,left:0,right:width,ascent:8,descent:2}))
+    expect(geometry.ink(label).right).toBe(10)
+    width = 20
+    expect(geometry.ink(label).right).toBe(20)
+  })
   it('keeps borrowed numeric ink equivalent through live transforms and default queries isolated', () => {
     const box = Object.freeze({ left: 1, right: 4, top: -2, bottom: 5 })
     const note = element('g', {})
