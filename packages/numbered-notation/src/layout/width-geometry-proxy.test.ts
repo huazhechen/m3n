@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { proxyScoreWidthInk, proxyScoreWidthPartition } from './width-geometry-proxy.js'
+import { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from './width-geometry-proxy.js'
 import { sortedScoreInkSeparation } from './ink-separation.js'
 import { scorePageGeometry } from './page-geometry.js'
 import type { ScoreInk } from './geometry.js'
@@ -13,6 +13,27 @@ const brute = (a:readonly ScoreInk[],b:readonly ScoreInk[]) => {
 }
 
 describe('experimental horizontal geometry proxies',()=>{
+  it('transforms complete aggregate bounds without splitting them into bins',()=>{
+    const globals=globalThis as {__m3nExperimentalInkBin?:number}
+    const before=globals.__m3nExperimentalInkBin
+    try {
+      globals.__m3nExperimentalInkBin=12
+      const original=Object.freeze({left:0,right:720,top:-4,bottom:8})
+      expect(proxyScoreWidthBounds(original,0,720,2,530)).toEqual({left:2,right:530,top:-4,bottom:8})
+      expect(original.right).toBe(720)
+    } finally {globals.__m3nExperimentalInkBin=before}
+  })
+  it('shares only the tier dimension when explicitly enabled',()=>{
+    const globals=globalThis as {__m3nExperimentalTierReuse?:boolean},before=globals.__m3nExperimentalTierReuse
+    try {
+      globals.__m3nExperimentalTierReuse=false
+      expect(scoreWidthProxyKey(1,'row',true)).not.toBe(scoreWidthProxyKey(2.4,'row',true))
+      globals.__m3nExperimentalTierReuse=true
+      expect(scoreWidthProxyKey(1,'row',true)).toBe(scoreWidthProxyKey(2.4,'row',true))
+      expect(scoreWidthProxyKey(1,'row',true)).not.toBe(scoreWidthProxyKey(1,'fragment',true))
+      expect(scoreWidthProxyKey(1,'row',true)).not.toBe(scoreWidthProxyKey(1,'row',false))
+    } finally {globals.__m3nExperimentalTierReuse=before}
+  })
   it('preserves channel membership and shared primitive identity',()=>{
     const all=[{left:0,right:5,top:1,bottom:4},{left:7,right:9,top:0,bottom:2},{left:10,right:15,top:2,bottom:6}]
     const partition=proxyScoreWidthPartition(all,[all[0]!,all[2]!],0,15,2,32)

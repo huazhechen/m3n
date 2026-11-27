@@ -161,3 +161,26 @@ it('compiled surrogate plans preserve unplaced inputs and leave exact final geom
   expect(final.renderContinuous()).toEqual(fresh.renderContinuous())
   expect(surrogate.quality).toEqual(quality)
 })
+
+
+it('counts deferred compiled geometry separately from other trials preparing in between',()=>{
+  let clock=0
+  class MeteredMeasurer extends DefaultTextMeasurer {
+    override measureText(...args:Parameters<DefaultTextMeasurer['measureText']>) {
+      clock++
+      return super.measureText(...args)
+    }
+  }
+  const now=vi.spyOn(performance,'now').mockImplementation(()=>clock)
+  try {
+    vi.stubGlobal('__m3nExperimentalRowReuse',true)
+    const document=parseM3NDocument('{title=计时}{4/4}\nN: '+'1 2 3 4 |{br} '.repeat(12))
+    const options={width:528,numericLayout:true,pageMargin:0,layoutTask:new NativeLayoutTask(),textMeasurementCache:new NumberedTextMeasurementCache(),textMeasurer:new MeteredMeasurer()}
+    PreparedNumberedNotationScore.measure(document,options)
+    const start=clock,timings:Record<string,number>={}
+    PreparedNumberedNotationScore.measure(document,{...options,width:576},timings)
+    expect(timings.compiledProxyPlans).toBeGreaterThan(0)
+    const independent=['projectionMs','horizontalMeasureMs','lineBreakMs','horizontalQualityMs','horizontalPlacementMs','decorationsLyricsMs','verticalPaginationMs']
+    expect(independent.reduce((sum,name)=>sum+(timings[name] ?? 0),0)).toBeLessThanOrEqual(clock-start)
+  } finally {now.mockRestore()}
+})

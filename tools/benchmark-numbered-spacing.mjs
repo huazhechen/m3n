@@ -19,7 +19,8 @@ mkdirSync(bundle, { recursive: true })
 writeFileSync(join(bundle, 'entry.ts'), staffMode
   ? `export { initialize, searchSpacing as search } from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};\n`
   : `export * from ${JSON.stringify(join(root, 'tools/numbered-spacing-layout.mjs'))};\n`)
-execFileSync(process.execPath, [join(root, 'tools/build-numbered-audit-bundle.mjs'), bundle], { stdio: 'inherit' })
+const bundleFlags = ['--external-fonts', '--minify'].filter(flag => process.argv.includes(flag))
+execFileSync(process.execPath, [join(root, 'tools/build-numbered-audit-bundle.mjs'), bundle, ...bundleFlags], { stdio: 'inherit' })
 const scores = ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(sourceRoot, scope))
   .filter(file => file.endsWith('.m3n')).sort().map(file => `${scope}/${file}`))
   .filter(file => !argument('score') || file.includes(argument('score')))
@@ -31,6 +32,7 @@ const experimentalInkBin = Number(argument('proxy-bin') ?? 0)
 assert(Number.isInteger(experimentalInkBin) && experimentalInkBin >= 0 && experimentalInkBin <= 48, 'Invalid proxy bin')
 const experimentalRowReuse = process.argv.includes('--row-reuse')
 const experimentalGreedyCeiling = process.argv.includes('--fast-ceiling')
+assert(!process.argv.includes('--cross-tier') || experimentalRowReuse, '--cross-tier requires --row-reuse')
 assert(!auditLayout || !experimentalRowReuse, 'Surrogate candidates cannot be painted; audit exact widths without --row-reuse')
 assert(!experimentalInkBin || experimentalRowReuse, '--proxy-bin requires --row-reuse')
 assert(!experimentalGreedyCeiling || experimentalRowReuse, '--fast-ceiling requires --row-reuse for final exact verification')
@@ -49,14 +51,17 @@ if (checkpoint) {
   assert.equal(checkpoint.prune, prune, 'Cannot resume with a different pruning setting')
   assert.equal(checkpoint.experimentalInkBin ?? 0, experimentalInkBin, 'Cannot resume with different ink bins')
   assert.equal(Boolean(checkpoint.experimentalRowReuse), experimentalRowReuse, 'Cannot resume with different row reuse')
+  assert.equal(Boolean(checkpoint.experimentalTierReuse), process.argv.includes('--cross-tier'), 'Cannot resume with different tier reuse')
   assert.equal(Boolean(checkpoint.experimentalGreedyCeiling), experimentalGreedyCeiling, 'Cannot resume with different ceiling solving')
   assert.equal(checkpoint.warmupIterations ?? 0, warmupIterations, 'Cannot resume with a different warmup count')
   assert.equal(checkpoint.baselineRevision, baseline?.revision, 'Cannot resume against a different baseline')
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
 const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, numericLayout, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+report.bundleFlags = bundleFlags
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalRowReuse) report.experimentalRowReuse = true
+if (process.argv.includes('--cross-tier')) report.experimentalTierReuse = true
 if (experimentalGreedyCeiling) report.experimentalGreedyCeiling = true
 if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
@@ -72,6 +77,11 @@ try {
   await page.route(`${origin}/**`, route => {
     const path = new URL(route.request().url()).pathname
     if (path === '/') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><html style="font-synthesis:none"><body></body></html>' })
+    if (path.startsWith('/audit-assets/')) {
+      const asset = join(bundle, 'bundle', path.slice(1))
+      if (!existsSync(asset)) return route.abort()
+      return route.fulfill({ path: asset, contentType: path.endsWith('.woff2') ? 'font/woff2' : 'font/ttf' })
+    }
     if (path.startsWith('/fonts/')) {
       const font = fonts.find(font => path === '/fonts/' + font.file)
       if (!font) return route.abort()
@@ -89,6 +99,7 @@ try {
   await page.evaluate(enabled => { globalThis.__m3nExperimentalRowReuse = enabled }, process.argv.includes('--row-reuse'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))
   await page.evaluate(size => { globalThis.__m3nExperimentalInkBin = size }, experimentalInkBin)
+  await page.evaluate(enabled => { globalThis.__m3nExperimentalTierReuse = enabled }, process.argv.includes('--cross-tier'))
   for (const file of scores) {
     const source = readFileSync(join(sourceRoot, file), 'utf8')
     const sourceHash = createHash('sha256').update(source).digest('hex')

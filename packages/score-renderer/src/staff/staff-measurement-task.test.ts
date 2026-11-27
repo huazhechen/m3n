@@ -12,6 +12,28 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 const source = '{title=测量任务}{key=G}{4/4}\nN: 1# (2 3) 4 5 | ([6 7 1e:2]) 2e 3e 4e |||\nB: 1d 2d 3d 4d | 5d 6d 7d 1 |\nL: 春夏秋冬 | 山川天地 |'
 describe('one staff measurement task', () => {
+  it('keeps exact final geometry independent of cross-tier surrogate visits and split spans',async()=>{
+    const score=analyzeM3N('{4/4}\nN: '+('((1 2 3 4)) ((5 6 7 1e)) ((2e 3e 4e 5e)) ((6e 7e 1ee 2ee)) | ').repeat(6)+'1^^ |||').score
+    const task=await prepareStaffMeasurementTask(score)
+    try {
+      vi.stubGlobal('__m3nExperimentalRowReuse',true)
+      vi.stubGlobal('__m3nExperimentalTierReuse',true)
+      vi.stubGlobal('__m3nExperimentalInkBin',12)
+      for(const width of [360,528,720,534]) {
+        const candidate=await prepareStaffScore(score,{width},undefined,task)
+        expect(candidate.measurementInfo().rows).toBeGreaterThan(0)
+      }
+      expect(task.proxyRows.size).toBeGreaterThan(0)
+      vi.stubGlobal('__m3nExperimentalRowReuse',false)
+      for(const measureNumbers of [false,true]) {
+        const settings={width:534,measureNumbers}
+        const final=await prepareStaffScore(score,settings,undefined,task)
+        const fresh=await prepareStaffScore(score,settings)
+        expect(final.layoutInfo()).toEqual(fresh.layoutInfo())
+        expect(final.continuousHeight()).toBe(fresh.continuousHeight())
+      }
+    } finally {vi.unstubAllGlobals()}
+  })
   it('preserves exact numeric row geometry and SVG when collecting pagination ink eagerly', async () => {
     for (const music of [source, '{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||',
       '{4/4}\nN: {cresc}1 2 3 4{/} | ([5 6 7:2]) 1e 2e 3e |||']) {

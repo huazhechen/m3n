@@ -41,7 +41,7 @@ import { placedNativeControlInk } from './native-controls.js'
 import { nativeCoreInkBox, nativeSystemCore } from './native-core.js'
 import { scoreCorePageLowerBound, scorePageFeasibility } from './layout/height-feasibility.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
-import { proxyScoreWidthInk } from './layout/width-geometry-proxy.js'
+import { proxyScoreWidthInk, scoreWidthProxyKey } from './layout/width-geometry-proxy.js'
 import type { NativeInk } from './native-ink.js'
 
 export type { NativeRenderOptions, NativeRelation, NativeLane, NativeSystem, NativePage, NativeLayout } from './native-layout-model.js'
@@ -423,7 +423,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const placeSystem = (system: NativeSystem,cache?:NativePageTrialCache) => {
     const {x,width} = placementFrame(system)
     if (proxyPlacementRows?.has(system.index)) {
-      const key = JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])
+      const key = scoreWidthProxyKey(minimumNoteGap, minimumNoteGapFloor, options.equalMeasures ?? false, nativeRowIdentity(system.measures),system.arcContinuationLeft)
       const saved = preparation?.proxyRows?.get(key)
       if (saved) {
         const warp = <T extends NativeInk>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,x,x+width)
@@ -664,6 +664,9 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return bound
   } : undefined, score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit, onlyRow) => {
+  // Preparation and completion can be interleaved across spacing trials.
+  // The deferred path must not charge another trial's work to this one.
+  stageStarted = timings ? performance.now() : 0
   // A fully compiled surrogate plan needs no mutable glyph arena, relation
   // placement or snapshot restoration. Keep this path inside measurement;
   // the selected width is still verified with the experiment switched off.
@@ -672,7 +675,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const proxyTemplates = preparation.proxyRows
     const compiled = systems.map(system => {
       const frame = placementFrame(system)
-      const key = JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])
+      const key = scoreWidthProxyKey(minimumNoteGap, minimumNoteGapFloor, options.equalMeasures ?? false, nativeRowIdentity(system.measures),system.arcContinuationLeft)
       const saved = proxyTemplates.get(key)
       return saved ? {system,frame,key,saved} : undefined
     })
@@ -784,7 +787,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   // In the explicit experiment, relation heights belong to the row template;
   // width-dependent endpoint spans no longer force new glyph arrangements.
   // Exact measurements still key snapshots by their complete dependencies.
-  const proxyKeys = proxyRows ? systems.map(system => JSON.stringify([horizontalKey,nativeRowIdentity(system.measures),system.arcContinuationLeft,undefined])) : undefined
+  const proxyKeys = proxyRows ? systems.map(system => scoreWidthProxyKey(minimumNoteGap, minimumNoteGapFloor, options.equalMeasures ?? false, nativeRowIdentity(system.measures),system.arcContinuationLeft)) : undefined
   if (proxyRows && rowKeys) for (const system of systems) {
     if (onlyRow !== undefined && system.index !== onlyRow || rowCache!.blocks.has(rowKeys[system.index]!)) continue
     const saved = proxyRows.get(proxyKeys![system.index]!)

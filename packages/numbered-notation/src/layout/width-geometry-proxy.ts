@@ -4,6 +4,21 @@ import { cacheScoreHorizontalProxy } from './ink-separation.js'
 const binnedSources = new WeakMap<readonly ScoreInk[], { size: number; ink: ScoreInk[] }>()
 const complements = new WeakMap<readonly ScoreInk[], WeakMap<readonly ScoreInk[], ScoreInk[]>>()
 
+/** Candidate-only templates may share vertical geometry across spacing tiers.
+ * All musical identities and non-spacing context remain in the key. */
+export function scoreWidthProxyKey(tier: string | number, ...context: unknown[]): string {
+  const shared = (globalThis as {__m3nExperimentalTierReuse?:boolean}).__m3nExperimentalTierReuse
+  return JSON.stringify([shared ? null : tier, ...context])
+}
+
+/** An aggregate bound is already one rectangle. Binning it would allocate an
+ * entire row of boxes and taking its first bin would truncate the bound. */
+export function proxyScoreWidthBounds<T extends ScoreInk>(piece: T, left: number, right: number, nextLeft: number, nextRight: number): T {
+  const scale = right > left ? (nextRight - nextLeft) / (right - left) : 1
+  return { ...piece, left: nextLeft + (piece.left - left) * scale,
+    right: nextLeft + (piece.right - left) * scale }
+}
+
 /** Conservative horizontal bins for candidate geometry only. */
 function candidateInk<T extends ScoreInk>(source: readonly T[]): readonly T[] {
   const size = (globalThis as { __m3nExperimentalInkBin?: number }).__m3nExperimentalInkBin ?? 0

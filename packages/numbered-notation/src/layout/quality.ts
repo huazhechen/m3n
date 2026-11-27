@@ -46,16 +46,26 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
  * deviation keep an isolated stretched row visible even in a long score. */
 export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16, tightGap = referenceGap / 2, rowGaps: readonly number[] = gaps) {
   if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
-  const meanRhythmicGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length
+  const lower = (tightGap + referenceGap) / 2, upper = referenceGap * 1.5
+  let gapSum=0, crampedSum=0, expandedSum=0
+  for (const gap of gaps) {
+    gapSum+=gap
+    crampedSum+=Math.max(0,lower/Math.max(Number.EPSILON,gap)-1)**2
+    expandedSum+=Math.max(0,gap/upper-1)**2
+  }
+  const meanRhythmicGap = gapSum / gaps.length
   const meanRowGap = rowGaps.reduce((sum, gap) => sum + gap, 0) / Math.max(1, rowGaps.length)
   const denominator = Math.max(Number.EPSILON, meanRowGap) ** 2
-  const deviations = rowGaps.map(gap => (gap - meanRowGap) ** 2 / denominator)
-  const spacingMeanUnevenCost = deviations.reduce((sum, value) => sum + value, 0) / Math.max(1, rowGaps.length)
-  const spacingWorstUnevenCost = Math.max(0, ...deviations)
+  let deviationSum=0,spacingWorstUnevenCost=0
+  for(const gap of rowGaps) {
+    const deviation=(gap-meanRowGap)**2/denominator
+    deviationSum+=deviation
+    spacingWorstUnevenCost=Math.max(spacingWorstUnevenCost,deviation)
+  }
+  const spacingMeanUnevenCost = deviationSum / Math.max(1, rowGaps.length)
   const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
-  const lower = (tightGap + referenceGap) / 2, upper = referenceGap * 1.5
-  const spacingCrampedCost = gaps.reduce((sum, gap) => sum + Math.max(0, lower / Math.max(Number.EPSILON, gap) - 1) ** 2, 0) / gaps.length
-  const spacingExpandedCost = gaps.reduce((sum, gap) => sum + Math.max(0, gap / upper - 1) ** 2, 0) / gaps.length
+  const spacingCrampedCost = crampedSum / gaps.length
+  const spacingExpandedCost = expandedSum / gaps.length
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
     spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
 }

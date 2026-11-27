@@ -14,7 +14,7 @@ import { staffGlyphMetrics } from './staff-music-font.js'
 import { staffMusicCentre, staffHeaderBlock } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { staffPageCostModel } from './staff-page-model.js'
-import { proxyScoreWidthInk, proxyScoreWidthPartition } from '@m3n/numbered-notation/layout'
+import { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from '@m3n/numbered-notation/layout'
 
 const ns = 'http://www.w3.org/2000/svg'
 export type StaffSettings = {
@@ -165,14 +165,15 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           const line = graph.makeLines([end], false, start, false)[0]!
           if (target !== undefined) line.target = target
           const proxyRows = (globalThis as {__m3nExperimentalRowReuse?:boolean}).__m3nExperimentalRowReuse ? measurements.proxyRows : undefined
-          const proxyKey = proxyRows ? JSON.stringify([spacing,Boolean(settings.measureNumbers),line.measures.map(({measure}) => [measure.id,...measure.melody.map(event => event.id),...measure.bass.map(event=>event.id)])]) : undefined
+          const proxyKey = proxyRows ? scoreWidthProxyKey(spacing,Boolean(settings.measureNumbers),line.measures.map(({measure}) => measurements.proxyIdentityFor(measure))) : undefined
           const savedProxy = proxyKey === undefined ? undefined : proxyRows?.get(proxyKey)
           if (savedProxy) {
             const warp = <T extends import('./layout-svg.js').Ink>(pieces: readonly T[]) => proxyScoreWidthInk(pieces,0,savedProxy.width,0,line.target*STAFF_SCALE)
             const old = savedProxy.system
             const partition = proxyScoreWidthPartition(old.pieces,old.spacingPieces,0,savedProxy.width,0,line.target*STAFF_SCALE)
             system = {...old, pieces:partition.pieces,spacingPieces:partition.included,boundaryPieces:partition.excluded,edgePieces:warp(old.edgePieces),
-              ink:warp([old.ink])[0]!,core:warp([old.core])[0]!}
+              ink:proxyScoreWidthBounds(old.ink,0,savedProxy.width,0,line.target*STAFF_SCALE),
+              core:proxyScoreWidthBounds(old.core,0,savedProxy.width,0,line.target*STAFF_SCALE)}
             rowCache.set(key,system)
             return system
           }

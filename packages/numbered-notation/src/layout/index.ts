@@ -4,7 +4,7 @@
 export { planScoreLinesGlobally, type ScoreLineCandidate } from './line-breaking.js'
 export { greedyScoreLines, planScoreLinesWithinPages } from './page-line-breaking.js'
 export { scorePageFeasibility } from './height-feasibility.js'
-export { proxyScoreWidthInk, proxyScoreWidthPartition } from './width-geometry-proxy.js'
+export { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from './width-geometry-proxy.js'
 export { prepareScorePagination, type ScorePageBlock } from './pagination.js'
 export { scoreHeightEnvelope, mergeScoreHeightEnvelopes, scoreEnvelopeBlock, type ScoreHeightEnvelope } from './height-envelope.js'
 export { planScoreLinesWithRefinedPages, measureScoreGreedyPageCeiling, type ScorePageCostModel } from './refined-page-breaking.js'

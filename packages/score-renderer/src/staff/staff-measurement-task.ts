@@ -19,7 +19,16 @@ export async function prepareStaffMeasurementTask(score: ScoreDocument, settings
   const measure = textMeasurer(settings.systemCjk)
   const preparation = createStaffPreparation(document)
   const minimum = createStaffMeasureMinimum(document.hasBass, measure, preparation)
+  // Complete measures and interned split spans are immutable within this
+  // task. Their object identities avoid serializing every event per row.
+  const proxyIdentities = new WeakMap<StaffMeasure, number>()
+  let nextProxyIdentity = 0
   return {
+    proxyIdentityFor(member: StaffMeasure) {
+      let identity = proxyIdentities.get(member)
+      if (identity === undefined) { identity = nextProxyIdentity++; proxyIdentities.set(member, identity) }
+      return identity
+    },
     proxyRows: new Map<string,{width:number;system:StaffSystem}>(),
     feasibilityWitnesses: new Map<number,{ends?:number[]}>(),
     lowerEnvelopes: new WeakMap<StaffMeasure, ScoreHeightEnvelope>(),
