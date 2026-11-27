@@ -61,9 +61,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [47.9386215, 48.75088249, 47.46900488].entries())
+        for (const [index, gap] of [49.9386215, 48.75088249, 47.46900488].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(339.19051798, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(341.19051798, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);

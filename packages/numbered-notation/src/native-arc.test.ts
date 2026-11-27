@@ -66,10 +66,9 @@ describe('native musical arc geometry', () => {
   it('uses independent flatter and thinner ties without inheriting an adjacent phrase slur', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1~ 1) {lg}2 3{/} 4 |||'), options)
     const system = score.systems[0]!, tie = score.relations.find(r => r.kind === 'tie')!, slur = score.relations.find(r => r.kind === 'slur')!
-    expect(tie.arcGroup).not.toBe(slur.arcGroup)
     const tieArc = nativeArcGeometry(tie, system), slurArc = nativeArcGeometry(slur, system)
     expect(tieArc.height).toBeLessThan(slurArc.height)
-    const sameSpanSlur = nativeArcGeometry({ ...tie, kind: 'slur', arcGroup: undefined }, system)
+    const sameSpanSlur = nativeArcGeometry({ ...tie, kind: 'slur' }, system)
     expect(tieArc.height).toBeLessThan(sameSpanSlur.height)
     const middle = (arc: typeof tieArc) => nativeArcSlice(arc.commands, (arc.left + arc.right) / 2)!
     expect(middle(tieArc).bottom - middle(tieArc).top).toBeLessThan(middle(slurArc).bottom - middle(slurArc).top)

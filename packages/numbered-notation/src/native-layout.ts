@@ -34,7 +34,6 @@ import { CanvasTextMeasurer, DefaultTextMeasurer, NumberedTextMeasurementCache, 
 import { projectNativeScore, cloneNativeProjection, type NativeGlyph, type NativeMeasure, type NativeProjection } from './native-model.js'
 import { placeNativeLanes, nativeLanePieces } from './native-lanes.js'
 import { nativeVoiceConnectorSvg } from './native-voice-connector.js'
-import { alignNativeArcs } from './native-relation-alignment.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeSystemCore } from './native-core.js'
 import { nativeCorePageLowerBound } from './native-height-feasibility.js'
@@ -54,7 +53,7 @@ export type NativeRenderOptions = {
   minimumNoteGap?: number; minimumNoteGapFloor?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
-export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number; arcGroup?: number }
+export type NativeRelation = { kind: 'tie' | 'slur' | 'cresc' | 'decres' | 'inst' | 'tuplet'; first: NativeGlyph; last: NativeGlyph; label?: string; level: number }
 export type NativeLane = { id: string; y: number; top: number; bottom: number; bodyBottom?: number; lyricBottom?: number; rows: number[] }
 export type NativeSystem = { horizontalDensity?: number; unitRhythmicGap?: number; coreGap?: number; index: number; numericGeometry?: boolean; measures: NativeMeasure[]; lanes: NativeLane[]; top: number; bottom: number; page: number; volta: boolean; relations: NativeRelation[]; arcContinuationLeft?: number; decorationLayout?: { lane: string; svg: string; hidden?: boolean; measureNumber?: boolean }[]; relationLayout?: Map<NativeRelation, NativeRelationLayout>; voltas?: { left: number; right: number; ending: string; top: number; svg: string }[] }
 export type NativePage = { coreGap?: number; header?: string; index: number; width: number; height: number; systems: NativeSystem[] }
@@ -153,7 +152,6 @@ function relationsFor(document: ScoreDocument, projection: NativeProjection): Na
     const start = order.get(relation.first)!, end = order.get(relation.last)!
     relation.level = Math.max(-1, ...relations.slice(0, index).filter(other => other.kind !== 'inst' && other.first.lane === relation.first.lane && order.get(other.first)! < end && order.get(other.last)! > start).map(other => other.level)) + 1
   }
-  alignNativeArcs(relations, projection)
   return relations
 }
 

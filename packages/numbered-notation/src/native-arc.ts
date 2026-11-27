@@ -7,7 +7,7 @@ import { placedNativeControlInk } from './native-controls.js'
 import type { NativeGlyph } from './native-model.js'
 import type { NativeInk } from './native-ink.js'
 
-type RelationLaneContext={members:NativeGlyph[];pieces?:NativeInk[];arcHeights?:Map<number,number>}
+type RelationLaneContext={members:NativeGlyph[];pieces?:NativeInk[]}
 const relationContexts=new WeakMap<NativeSystem,Map<string,RelationLaneContext>>()
 /** Coordinates and inner music stay fixed throughout the relation pass. */
 export function cacheNativeArcObstacles(system:NativeSystem){relationContexts.set(system,new Map())}
@@ -64,22 +64,7 @@ export function nativeArcGeometry(relation: NativeRelation, system: NativeSystem
   // Bezier bow, including intermediate systems. Scale its rise to this local
   // span, rather than drawing a fixed hook followed by a horizontal strip.
   const localSpan = Math.max(0, right - left)
-  const groupedHeight=()=>{
-    const local=automaticHeight(relation)
-    if(relation.arcGroup===undefined)return local
-    const context=relationContexts.get(system)?.get(relation.first.lane)
-    if(context) {
-      if(!context.arcHeights) {
-        const present=new Set(members),heights=new Map<number,number>()
-        for(const peer of system.relations)if(peer.arcGroup!==undefined && present.has(peer.first) && present.has(peer.last))
-          heights.set(peer.arcGroup,Math.max(heights.get(peer.arcGroup) ?? -Infinity,automaticHeight(peer)))
-        context.arcHeights=heights
-      }
-      return Math.max(local,context.arcHeights.get(relation.arcGroup) ?? -Infinity)
-    }
-    return Math.max(local,...system.relations.filter(peer=>peer.arcGroup===relation.arcGroup && members.includes(peer.first) && members.includes(peer.last)).map(automaticHeight))
-  }
-  const height = complete ? groupedHeight()
+  const height = complete ? automaticHeight(relation)
     : relation.kind === 'slur' ? Math.min((nativeStyle.music * .7), (nativeStyle.music * .2) + nativeStyle.music * .09 * Math.sqrt(localSpan / nativeStyle.music))
       : Math.min((nativeStyle.music * .3), (nativeStyle.music * .3) * Math.sqrt(localSpan / (nativeStyle.music * 3)))
   // Every fragment is a tapered bow. Ties use a flatter, thinner profile and

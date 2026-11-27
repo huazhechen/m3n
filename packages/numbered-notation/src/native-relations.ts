@@ -148,8 +148,15 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
     }
     if (isArc) {
       const arc = initialArc!
+      // Bare collision avoidance permits a ribbon to touch a bar. Reserve
+      // a music-size clearance around its actual painted pieces, independent of leading.
+      const barGap = nativeStyle.music / 12
       const bars = system.measures.flatMap((_, index) =>
-        nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar => nativeBarPieces(bar.kind, bar.x, 0, measurer)))
+        nativeLaneBarPositions(system.measures, index, relation.first.lane).flatMap(bar =>
+          nativeBarPieces(bar.kind, bar.x, 0, measurer).map(piece => ({
+            left: piece.left - barGap, right: piece.right + barGap,
+            top: piece.top - barGap, bottom: piece.bottom + barGap,
+          }))))
       const pieces = nativeArcObstacles(system,relation.first.lane)
       let lift = 0
       const compare = (a: typeof relation.first, b: typeof relation.first) => (a.event?.sourceStart ?? 0) - (b.event?.sourceStart ?? 0) || a.slot - b.slot || a.time - b.time
