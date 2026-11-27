@@ -114,6 +114,54 @@ test('narrow screens fit whole vertical pages and mode changes restore continuou
   expect(selectedWidth).toBeLessThanOrEqual(768)
 })
 
+for (const notation of ['movable', 'staff']) {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 720, height: 600 },
+    { width: 1280, height: 900 },
+    { width: 3200, height: 900 },
+  ]) {
+    test(`${notation} ${viewport.width}px: single and multiple pages share whole-page bounds`, async ({ page }) => {
+      await page.addInitScript(notation => localStorage.setItem('m3n:notation-mode', notation), notation)
+      await page.setViewportSize(viewport)
+      let singleWidth = 0
+      for (const rows of [1, 30]) {
+        await page.goto(`/scores/local-pages-${rows}`)
+        const paper = page.locator('.score-paper')
+        await expect(paper).toHaveAttribute('data-viewport-paged', 'true')
+        await expect(paper).not.toHaveAttribute('aria-busy', 'true')
+        for (const immersive of [false, true]) {
+          if (immersive) await page.getByRole('button', { name: '沉浸浏览', exact: true }).click()
+          await expect.poll(() => paper.evaluate((element, immersive) => {
+            const sheets = [...element.querySelectorAll('.score-page-sheet')].map(sheet => sheet.getBoundingClientRect())
+            const first = sheets[0]!
+            const firstRow = sheets.filter(sheet => Math.abs(sheet.top - first.top) < 1)
+            const header = document.querySelector('.top-nav')!.getBoundingClientRect()
+            const controls = document.querySelector('.control-transport')!.getBoundingClientRect()
+            const multipleRows = firstRow.length < sheets.length
+            return {
+              firstFits: first.top >= (immersive ? 0 : header.bottom)
+                && first.bottom <= (immersive ? innerHeight : controls.top),
+              horizontalScroll: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+              verticalScrollMatchesRows: (document.documentElement.scrollHeight > innerHeight) === multipleRows,
+              innerScroll: element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth,
+              narrowStacked: innerWidth > 720 || firstRow.length === 1,
+            }
+          }, immersive)).toEqual({
+            firstFits: true, horizontalScroll: false, verticalScrollMatchesRows: true,
+            innerScroll: false, narrowStacked: true,
+          })
+          if (!immersive) {
+            const width = (await paper.locator('.score-page-sheet').first().boundingBox())!.width
+            if (rows === 1) singleWidth = width
+            else expect(width).toBeCloseTo(singleWidth, 0)
+          }
+        }
+      }
+    })
+  }
+}
+
 test('a non-touch portrait window keeps desktop page fitting', async ({ page }) => {
   await page.setViewportSize({ width: 744, height: 1133 })
   await page.goto('/scores/local-pages-30')
