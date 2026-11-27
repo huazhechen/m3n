@@ -406,7 +406,7 @@ it('keeps pair spacing local and independent of unrelated score durations', asyn
   expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5))
 })
 
-it.each([.8, 1.6])('uses %s staff spaces as the quarter-note base minimum without compressing', async spacing => {
+it.each([.6, 1.8])('uses %s staff spaces as the quarter-note base minimum without compressing', async spacing => {
   const { staffReadingSpacing } = await import('./staff-engine.js')
   const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |', spacing)
   const positions = staffReadingSpacing(result.prepared, spacing, 0).positions
@@ -416,7 +416,7 @@ it.each([.8, 1.6])('uses %s staff spaces as the quarter-note base minimum withou
   expect(staffReadingSpacing(result.prepared, spacing, -100).positions).toEqual(positions)
 })
 
-it.each([.8, 1.6])('uses the same duration-normalized gap around dotted notes at spacing %s', async spacing => {
+it.each([.6, 1.8])('uses the same duration-normalized gap around dotted notes at spacing %s', async spacing => {
   const { staffSpacingPositions } = await import('./staff-engine.js')
   const result = model('{4/4}\nN: 7. (7) 7 7 |', spacing)
   for (const extra of [0, 80]) {
@@ -439,7 +439,7 @@ it('reserves an independent flag at its actual downward stem position', () => {
   expect(note.x + note.prepared.after).toBeGreaterThanOrEqual(note.stemX + flag.right)
 })
 
-it.each([.8, 1.6])('opens the long side of staff syncopation at spacing %s', async spacing => {
+it.each([.6, 1.8])('opens the long side of staff syncopation at spacing %s', async spacing => {
   const { staffSpacingPositions } = await import('./staff-engine.js')
   const result = model('{4/4}\nN: (7) 7 (7) |', spacing)
   for (const extra of [0, 80]) {

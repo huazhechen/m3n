@@ -392,7 +392,7 @@ describe('staff layout contract', () => {
   })
   it('keeps continuous engraving available when the header and first system exceed A4', async () => {
     const render = await prepare(`{title=${'长标题'.repeat(200)}}{4/4}\nN: 1 2 3 4 |||`, 320)
-    expect([.8, 1.6]).toContain(render.layoutInfo().spacing)
+    expect([.6, 1.8]).toContain(render.layoutInfo().spacing)
     expect(render.pageCount(false)).toBe(1)
     expect(() => render.pageCount(true)).toThrow('单个五线谱谱行')
     expect(() => render(true)).toThrow('单个五线谱谱行')
