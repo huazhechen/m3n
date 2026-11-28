@@ -120,7 +120,7 @@ describe('short final rows', () => {
   })
 
   it('does not overflow when a densely populated final bar inherits a sparse preceding bar', () => {
-    const layout = layoutNativeScore(parseM3NDocument('{2/4}\nN: 1^ | {br} (1 2) 3 |||'), options)
+    const layout = layoutNativeScore(parseM3NDocument('{1/4}\nN: 1 | {br} ((1 2 3 4)) |||'), options)
     expect(layout.systems).toHaveLength(2)
     const current = nativeHorizontalSpacing(layout.systems[1]!.measures, {})
     const preceding = nativeHorizontalSpacing(layout.systems[0]!.measures, {})

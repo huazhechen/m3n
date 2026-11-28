@@ -72,14 +72,14 @@ describe('full-score stretch planning', () => {
     expect(planScoreLinesGlobally(candidatesFor([25, 25, 25]))).toEqual([3])
   })
 
-  it('balances Clarinet Polka section B with linear duration spacing at 720px', () => {
+  it('balances Clarinet Polka section B into three rows of three measures at 720px with 0.6em spacing', () => {
     const source = readFileSync(new URL('../../../../src/scores/dan_huang_guan_bo_er_ka_01.m3n', import.meta.url), 'utf8')
     const document = parseM3NDocument(source)
     const layout = layoutNativeScore(document, { width: 720, paged: false, minimumNoteGap: 15 })
     // B follows the 17 written measures of A, including its pickup.
     const section = new Set(layout.projection.measures.slice(17, 26))
     const rows = layout.systems.filter(system => system.measures.some(measure => section.has(measure)))
-    expect(rows.map(system => system.measures.length)).toEqual([4, 5])
+    expect(rows.map(system => system.measures.length)).toEqual([3, 3, 3])
     expect(rows.flatMap(system => system.measures)).toEqual([...section])
   })
 
