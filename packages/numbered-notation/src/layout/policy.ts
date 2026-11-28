@@ -38,16 +38,17 @@ export function scoreAttachmentHeight(name: string): number | undefined {
   return ratio === undefined ? undefined : scoreLayoutConfig.numbered.music * ratio
 }
 
-/** Duration springs use quarter-note units in both notation engines. */
-export function scoreRhythmicWeight(duration: number): number {
-  return Math.sqrt(Math.max(.01, duration))
+/** Duration springs use quarter-note units; adapters choose their duration power. */
+export function scoreRhythmicWeight(duration: number, durationPower = .5): number {
+  return Math.max(.01, duration) ** durationPower
 }
 
 /** Directed pair clearance: quarter = 1; zero-time structural items = quarter.
  * The left onset owns 75% of the rhythmic signal, the right owns 25%.
+ * Numbered notation uses power 1; staff keeps the default square root.
  * Ink reservations stay independent of this minimum/stretch weight. */
-export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1): number {
-  const a = scoreRhythmicWeight(left && left > 0 ? left : 1)
-  const b = scoreRhythmicWeight(right && right > 0 ? right : 1)
+export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1, durationPower = .5): number {
+  const a = scoreRhythmicWeight(left && left > 0 ? left : 1, durationPower)
+  const b = scoreRhythmicWeight(right && right > 0 ? right : 1, durationPower)
   return a ** .75 * b ** .25 * groupRatio
 }

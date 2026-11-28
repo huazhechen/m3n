@@ -71,7 +71,7 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
   return { opening, closing }
 }
 const minimumCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
-  const durationScale = scoreRhythmicWeight(duration > 0 ? duration : 1)
+  const durationScale = scoreRhythmicWeight(duration > 0 ? duration : 1, 1)
   // Rhythm alone determines stretch; ink and lyrics only constrain minima.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1
@@ -179,7 +179,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     // A displayed sustain dash continues the preceding sound, including a
-    // fractional tied head. Keep actual durations in the square-root springs.
+    // fractional tied head. Keep actual durations in the linear springs.
     // The measure identity and intervening control items keep bars/settings out.
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
@@ -187,7 +187,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       const grouped = previous.item.measure === item.measure && left && right
         && (sustain || nativeBeamCount(left, right))
       const weight = scoreRhythmicGapWeight(left?.multiRest ? 1 : left?.beats, right?.multiRest ? 1 : right?.beats,
-        grouped ? nativeStyle.groupSpacingRatio : 1)
+        grouped ? nativeStyle.groupSpacingRatio : 1, 1)
       const halfGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * weight / 2
       previous.cell.after = halfGap; cell.before = halfGap
       previous.cell.afterStretch = weight; cell.beforeStretch = weight

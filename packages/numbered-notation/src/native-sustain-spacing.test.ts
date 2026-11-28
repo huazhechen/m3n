@@ -12,7 +12,7 @@ describe('sustain group spacing', () => {
   it.each([
     ['quarter head', '1~ 1^.', 1],
     ['dotted head', '1^.. (0)', 1.5],
-  ])('retains square-root group clearances for a %s into a dash', (_name, notes, duration) => {
+  ])('retains linear group clearances for a %s into a dash', (_name, notes, duration) => {
     const { measures } = project(`{4/4}\nN: ${notes} |||`)
     const measure = measures[0]!
     const glyphs = measure.columns.flatMap(column => column.glyphs)
@@ -30,7 +30,7 @@ describe('sustain group spacing', () => {
     measureNativeHorizontal([pair], options)
     // Identical ink, different grouping: only the common pair's 0.5
     // multiplier changes, including for dotted head durations.
-    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1) * .5, 8)
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1, 1, 1) * .5, 8)
   })
 
   it.each([

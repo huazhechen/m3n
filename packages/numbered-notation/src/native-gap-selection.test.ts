@@ -46,6 +46,8 @@ it('keeps White Birch horizontal geometry identical in paged and continuous disp
 
 it('rejects an extra-page loose tier before comparing physical spacing', () => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/li_hua_you_kai_fang_01.m3n', import.meta.url), 'utf8'))
+  // Keep the fixture across the one-page boundary with linear duration weights.
+  document.coreGapEm = 1.25
   const settings = { ...options, width: 528 }
   const tight = layoutNativeScore(document, { ...settings, minimumNoteGap: 8 })
   const loose = layoutNativeScore(document, { ...settings, minimumNoteGap: 16 })

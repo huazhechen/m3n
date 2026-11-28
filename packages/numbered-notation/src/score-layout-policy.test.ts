@@ -27,3 +27,10 @@ it('gives onset duration the larger share while keeping equal durations and cont
   expect(scoreRhythmicGapWeight(1.5, .5) / scoreRhythmicGapWeight(.5, 1.5)).toBeCloseTo(3 ** .25)
   expect(scoreRhythmicGapWeight(.5, 1)).toBeLessThan(scoreRhythmicGapWeight(1, .5))
 })
+
+it('uses linear numbered durations while retaining square-root staff durations', () => {
+  expect(scoreRhythmicGapWeight(.5, .25, .5, 1) / scoreRhythmicGapWeight(.25, .25, .5, 1)).toBeCloseTo(2 ** .75)
+  expect(scoreRhythmicGapWeight(.5, .25, 1) / scoreRhythmicGapWeight(.25, .25, 1)).toBeCloseTo(2 ** .375)
+  expect(scoreRhythmicGapWeight(.5, .5, .5, 1)).toBeCloseTo(.25)
+  expect(scoreRhythmicGapWeight(undefined, 0, 1, 1)).toBe(1)
+})

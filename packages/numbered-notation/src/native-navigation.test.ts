@@ -67,7 +67,7 @@ describe('measured navigation geometry', () => {
             expect(control.x! - barRight).toBeCloseTo(minimumNoteGap, 8);
             // The structural symbol is a quarter; the following sixteenth
             // contributes 25% of the logarithmic pair weight.
-            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap * .25 ** .125, 8);
+            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap * .25 ** .25, 8);
         }
     });
     it.each([false, true])('keeps Segno attached to the preceding bar under justification (equalMeasures=%s)', equalMeasures => {
