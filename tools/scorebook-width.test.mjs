@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { scorePageCost } from '@m3n/numbered-notation/layout-quality'
 import { chooseBestWidth, exactScoreWidthPolicy, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates, refineSharedWidths } from './scorebook-packing.mjs'
 
@@ -685,12 +686,13 @@ test('explicit short-score policies restore both tiers without changing other se
 })
 
 test('additional pages can win on total cost and are not capped by the incumbent', async () => {
+  const firstExtraPageCost = scorePageCost(2)
   const item = (width, pageCount, totalCost) => ({width,pageCount,totalCost,outside:[],overlaps:[]})
-  assert.equal(chooseBestWidth([item(720,1,2.1),item(552,2,0)]).width,552)
-  assert.equal(chooseBestWidth([item(720,1,1.9),item(552,2,0)]).width,720)
+  assert.equal(chooseBestWidth([item(720,1,firstExtraPageCost + .1),item(552,2,0)]).width,552)
+  assert.equal(chooseBestWidth([item(720,1,firstExtraPageCost - .1),item(552,2,0)]).width,720)
   const {best}=await selectBestWidth((width, incumbent) => {
     assert.equal(incumbent,null)
-    return width===552 ? item(width,2,0) : item(width,1,2.1)
+    return width===552 ? item(width,2,0) : item(width,1,firstExtraPageCost + .1)
   },{prune:true})
   assert.equal(best.width,552)
   assert.equal(best.pageCount,2)

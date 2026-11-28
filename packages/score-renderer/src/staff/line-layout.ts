@@ -1,13 +1,13 @@
-import { planScoreLinesGlobally, type ScoreLineCandidate, lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
-import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, staffSpacingWeight, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
+import { planScoreLinesGlobally, type ScoreLineCandidate, lastLineWidth, scoreLayoutConfig, prepareScoreStretch, mergeScoreStretch, distributeScoreStretchGroups, inheritScoreStretchWidth, type ScoreStretch } from '@m3n/numbered-notation/layout'
+import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, staffSpacingWeight, staffSpacingStretch, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 
 export { STAFF_SCALE }
-export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number }
+export type MeasuredStaffMeasure = { id: string; measure: StaffMeasure; body: number; reading: number; head: number; weight: number; inset: number; stretch?: readonly [ScoreStretch, ScoreStretch] }
 export type StaffLine = { measures: MeasuredStaffMeasure[]; minimum: number; reading?: number; localReadingPenalty?: number; target: number; weight: number; unitRhythmicGap?: number; rhythmicGaps?: readonly number[] }
 type StaffMeasureDescription = { weight: number; beats: number; labelWidth: number }
-export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; rhythmic?: (measure: StaffMeasure, first: boolean, spacing: number, extra: number) => { gap: number; weight: number; gaps: readonly number[] }; weight?: (measure: StaffMeasure) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription }
+export type StaffMeasureMinimum = ((measure: StaffMeasure, first: boolean, spacing: number) => number) & { preferred?: (measure: StaffMeasure, first: boolean, spacing: number) => number; localReading?: (measure: StaffMeasure, spacing: number, extra: number) => number; rhythmic?: (measure: StaffMeasure, first: boolean, spacing: number, extra: number) => { gap: number; weight: number; gaps: readonly number[] }; weight?: (measure: StaffMeasure) => number; split?: (measure: StaffMeasure, maximumBeats: number) => StaffMeasure[]; describe?: (measure: StaffMeasure) => StaffMeasureDescription; stretch?: (measure: StaffMeasure, first: boolean, spacing: number) => ScoreStretch }
 /** Fixed minima and private drawing models are prepared once in this task. */
 export function createStaffMeasureMinimum(hasBass: boolean, measureText: MeasureText, preparation: StaffPreparation = createStaffPreparation()): StaffMeasureMinimum {
   const metrics = new WeakMap<StaffMeasure, Array<StaffMeasureMetrics | undefined>>()
@@ -28,6 +28,7 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
     variants[index]!.set(spacing, value)
     return value
   }
+  minimum.stretch = (measure, first, spacing) => staffSpacingStretch(preparation.measure(measure, first, hasBass, measureText), spacing)
   minimum.preferred = minimum
   const localReadings = new WeakMap<StaffMeasure, Map<string, number>>()
   minimum.localReading = (measure, spacing, extra) => {
@@ -92,7 +93,8 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
     const label = measure.melody[0]?.event
     const { labelWidth, weight } = minimum.describe?.(measure) ?? describeStaffMeasure(measure, measureText)
     const inset = labelWidth && !label?.sectionLabelBreakAfter && labelWidth <= width / 2 ? labelWidth / STAFF_SCALE : 0
-    return { id: measure.id, measure, body, reading: minimum.preferred?.(measure, false, spacing) ?? body, head: solo - body + inset, inset, weight: minimum.weight?.(measure) ?? weight }
+    return { id: measure.id, measure, body, reading: minimum.preferred?.(measure, false, spacing) ?? body, head: solo - body + inset, inset, weight: minimum.weight?.(measure) ?? weight,
+      stretch: minimum.stretch ? [minimum.stretch(measure, false, spacing), minimum.stretch(measure, true, spacing)] : undefined }
   }
   const visit = (measure: StaffMeasure, depth = 0) => {
     const item = measureOne(measure)
@@ -121,7 +123,8 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
   })
   const inheritedTarget = (previous: StaffLine, line: StaffLine) => {
     const inherited = equal ? Math.max(line.minimum, (previous.target - previous.measures[0]!.head) / previous.measures.length * line.measures.length + line.measures[0]!.head)
-      : line.minimum + Math.max(0, previous.target - previous.minimum) / previous.weight * line.weight
+      : inheritScoreStretchWidth({ minimumWidth: line.minimum, stretch: staffLineStretch(line) },
+        { minimumWidth: previous.minimum, stretch: staffLineStretch(previous) }, previous.target)
     return lastLineWidth(line.minimum, inherited, available, equal ? 0 : line.minimum)
   }
   // A row's full-width metrics depend on its members, not on the other
@@ -147,9 +150,9 @@ export function prepareStaffLineGraph(document: StaffDocument, width: number, eq
         if (!metrics.rhythmicReady) {
           let gap = 0, weights = 0
           const gaps: number[] = []
+          const extras = staffLineExtras(line, equal)
           members.forEach((member, index) => {
-            const cell = equal ? (line.target - members[0]!.head) / members.length - member.body
-              : (line.target - minimumWidth) * member.weight / weight
+            const cell = extras[index]!
             const result = minimum.rhythmic!(member.measure, index === 0, spacing, Math.max(0, cell))
             gap += result.gap; weights += result.weight
             gaps.push(...result.gaps)
@@ -186,4 +189,21 @@ export function planStaffLines(document: StaffDocument, width: number, equal: bo
   suppliedMinimum?: StaffMeasureMinimum, _rowCost = 1): StaffLine[] {
   const graph = prepareStaffLineGraph(document, width, equal, measureText, spacing, suppliedMinimum)
   return graph.makeLines(planScoreLinesGlobally(graph.candidates))
+}
+
+const lineStretchPlans = new WeakMap<StaffLine, { groups: ScoreStretch[]; merged: ScoreStretch }>()
+function staffLinePlans(line: StaffLine) {
+  let saved = lineStretchPlans.get(line)
+  if (!saved) {
+    const groups = line.measures.map((member, index) => member.stretch?.[index === 0 ? 1 : 0] ?? prepareScoreStretch([member.weight]))
+    saved = { groups, merged: mergeScoreStretch(groups) }
+    lineStretchPlans.set(line, saved)
+  }
+  return saved
+}
+export function staffLineStretch(line: StaffLine): ScoreStretch { return staffLinePlans(line).merged }
+/** The same allocation drives rhythmic scoring and final measure drawing. */
+export function staffLineExtras(line: StaffLine, equal: boolean): number[] {
+  if (equal) return line.measures.map(member => (line.target - line.measures[0]!.head) / line.measures.length - member.body)
+  return distributeScoreStretchGroups(staffLinePlans(line).groups, Math.max(0, line.target - line.minimum))
 }

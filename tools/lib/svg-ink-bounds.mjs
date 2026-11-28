@@ -18,6 +18,8 @@ export function createSvgInkMeasurer(referenceSvg) {
       let box
       if (piece.tagName === 'text') {
         context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+        // Match SVG shaping: design layouts opt out of pixel-rounded advances.
+        context.textRendering = ({ geometricprecision: 'geometricPrecision', optimizelegibility: 'optimizeLegibility', optimizespeed: 'optimizeSpeed' })[style.textRendering.toLowerCase()] ?? 'auto'
         context.textAlign = 'left'; context.textBaseline = 'alphabetic'
         const metrics = context.measureText(piece.textContent)
         const shift = style.textAnchor === 'middle' ? metrics.width / 2 : style.textAnchor === 'end' ? metrics.width : 0

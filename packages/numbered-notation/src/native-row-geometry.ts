@@ -1,7 +1,7 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
 import { cloneNativeProjection, type NativeMeasure } from './native-model.js'
 import { placeNativeLyrics, nativeLyricPieces } from './native-lyrics.js'
-import { cacheNativeHorizontal, nativeHorizontalSpacing, placeNativeCoreHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
+import { cacheNativeHorizontal, nativeCoreHorizontalIsAffine, nativeHorizontalSpacing, placeNativeCoreHorizontal, type NativeHorizontalTemplates } from './native-horizontal.js'
 import type { NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
 import { nativeLanePieces, placeNativeLanes } from './native-lanes.js'
@@ -51,15 +51,20 @@ export function nativeRowCoreLowerBound(measures: NativeMeasure[], measurer: Tex
   if (horizontal) {
     // Both endpoint probes consume the same immutable constraint chain.
     cacheNativeHorizontal(horizontal, templates)
-    // With no dynamic profiles, each cell weight is affine in line width.
-    // Its weighted core is a ratio of affine functions and is monotone.
-    // Endpoints therefore bound every justified or shortened ending width.
-    const minimum = nativeHorizontalSpacing(cloned, horizontal).minimumWidth
-    placeNativeCoreHorizontal(cloned, horizontal, minimum)
-    const compact = nativeSystemCore(system, measurer)
-    placeNativeCoreHorizontal(cloned, horizontal, Math.max(minimum, horizontal.width))
-    const full = nativeSystemCore(system, measurer)
-    if (compact && full) core = { top: Math.max(compact.top, full.top), bottom: Math.min(compact.bottom, full.bottom) }
+    // Credit-based stretch can change slope inside the width interval.
+    // Its endpoints alone are insufficient; retain the width-independent
+    // shallowest-body proof unless every spring has zero activation force.
+    if (nativeCoreHorizontalIsAffine(cloned, horizontal)) {
+      // With no dynamic profiles, each cell weight is affine in line width.
+      // Its weighted core is a ratio of affine functions and is monotone.
+      // Endpoints therefore bound every justified or shortened ending width.
+      const minimum = nativeHorizontalSpacing(cloned, horizontal).minimumWidth
+      placeNativeCoreHorizontal(cloned, horizontal, minimum)
+      const compact = nativeSystemCore(system, measurer)
+      placeNativeCoreHorizontal(cloned, horizontal, Math.max(minimum, horizontal.width))
+      const full = nativeSystemCore(system, measurer)
+      if (compact && full) core = { top: Math.max(compact.top, full.top), bottom: Math.min(compact.bottom, full.bottom) }
+    }
   }
   // Sounding ink has width-independent vertical extents. Keep these page
   // edges even when a shortened ending's dynamic profiles are unresolved.

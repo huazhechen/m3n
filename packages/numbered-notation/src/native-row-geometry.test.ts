@@ -91,3 +91,23 @@ it('keeps row-cache output identical to uncached geometry evaluation', async () 
     }
   }
 })
+
+
+it.each([false, true])('keeps credited-stretch page bounds conservative across widths, equal=%s', async equalMeasures => {
+  const { nativeRowCoreLowerBound } = await import('./native-row-geometry.js')
+  const { nativeCoreHorizontalIsAffine } = await import('./native-horizontal.js')
+  const document = parseM3NDocument('{4/4}\nN: 1# 2ee {key=G}3 4 | 5 6 7 1e |||')
+  let credited = 0
+  for (const width of [528, 552, 576, 600, 624, 648, 672, 696, 720]) {
+    const layout = layoutNativeScore(document, { width, paged: false, numericLayout: true, minimumNoteGap: 8, equalMeasures })
+    for (const [index, system] of layout.systems.entries()) {
+      const horizontal = { width: 720, minimumNoteGap: 8, equalMeasures }
+      if (!nativeCoreHorizontalIsAffine(system.measures, horizontal)) credited++
+      const lower = nativeRowCoreLowerBound(system.measures, layout.measurer, horizontal)
+      const block = layout.verticalBlocks[layout.headerBlocks.length + index]!
+      expect(lower.core!.top).toBeGreaterThanOrEqual(block.core!.top - block.baseline! - 1e-7)
+      expect(lower.core!.bottom).toBeLessThanOrEqual(block.core!.bottom - block.baseline! + 1e-7)
+    }
+  }
+  expect(credited).toBeGreaterThan(0)
+})

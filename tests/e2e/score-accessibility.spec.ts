@@ -12,7 +12,7 @@ test('plain text measures support native folding without exposing the score grap
   await entry.focus()
   await page.keyboard.press('Enter')
   const measures=reading.locator('.score-accessible-measure')
-  await expect(measures).toHaveCount(59)
+  await expect(measures).toHaveCount(58)
   const overview=reading.locator('.score-accessible-overview')
   await expect(overview.locator('h3').first()).not.toBeVisible()
   await overview.locator('summary').click()

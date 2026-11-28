@@ -8,7 +8,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v90-exact`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v101-exact`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 function spacingLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -185,7 +185,7 @@ async function probePreparedWidths(prepare, { signal, candidatePolicy }) {
       const item = queue.shift()
       if (!cannotWin(item) && !widthCannotWin(item.width, best) && !item.refined) {
         try { item.lower = item.plan.lowerBound() }
-        catch (error) {
+        catch {
           signal?.throwIfAborted()
           // A failed bound is not proof that the exact layout is invalid.
           await complete(item)

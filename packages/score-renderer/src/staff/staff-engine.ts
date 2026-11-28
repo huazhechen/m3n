@@ -1,5 +1,5 @@
-import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, cacheScoreMinimumSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, applyScorePairGap, cacheScoreMinimumSpacing, scoreSpacingStretch, prepareScoreStretch, scoreStretchForce, type ScoreStretch, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, lyricSpacing, lyricPairGap, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode, SvgGeometry } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -45,7 +45,8 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number) {
     notes.push(columns.length)
     columns.push({ cells: [
       { lane: 'music', left: index === 0 ? Math.max(column.left, metrics.tieLeading ?? 0) : column.left,
-        right: Math.max(column.after, index + 1 === metrics.columns.length ? metrics.tieTrailing ?? 0 : 0), before: 0, after: 0 },
+        right: Math.max(column.after, index + 1 === metrics.columns.length ? metrics.tieTrailing ?? 0 : 0), before: 0, after: 0,
+        stretchLeft: column.left, stretchRight: column.after },
       ...(metrics.ties ?? []).flatMap((tie, i) => index === tie.start || index === tie.end
         ? [{ lane: `tie-${i}`, sparse: true, left: 0, right: index === tie.start ? tie.minimum : 0,
           before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }] : []),
@@ -64,9 +65,12 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number) {
     const half = staffMusicSize() / 4 * spacing * weight / 2
     const before = columns[i - 1]!.cells[0]!, after = columns[i]!.cells[0]!
     before.right += half; after.left += half
+    before.stretchRight = (before.stretchRight ?? before.right - half) + half
+    after.stretchLeft = (after.stretchLeft ?? after.left - half) + half
     before.afterStretch = weight; after.beforeStretch = weight
     intervals.push({ start: i - 1, end: i, left: right.left, right: left.right, weight })
   }
+  applyScorePairGap(columns, lyricPairGap(spacing, style.noteGapCandidates) / STAFF_SCALE, lane => lane.startsWith('lyrics-'))
   // This chain belongs to immutable prepared metrics and one spacing tier.
   // Reuse the shared exact hard-spacing preparation across candidate widths.
   cacheScoreMinimumSpacing(columns)
@@ -83,6 +87,24 @@ function staffSpacingSolution(prepared: PreparedMeasure, spacing: number, extra:
 }
 export function staffSpacingWeight(prepared: PreparedMeasure) {
   return staffColumnSpacing(prepared.metrics, style.minimumNoteGap).stretchWeight
+}
+const measureStretchPlans = new WeakMap<StaffMeasureMetrics, Map<number, ScoreStretch>>()
+export function staffSpacingStretch(prepared: PreparedMeasure, spacing: number): ScoreStretch {
+  let variants = measureStretchPlans.get(prepared.metrics)
+  if (!variants) { variants = new Map(); measureStretchPlans.set(prepared.metrics, variants) }
+  const cached = variants.get(spacing)
+  if (cached) return cached
+  const base = staffColumnSpacing(prepared.metrics, spacing)
+  let plan = scoreSpacingStretch(base.columns)
+  const reserved = Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - prepared.metrics.start - base.minimumWidth)
+  if (reserved > 0) {
+    const force = scoreStretchForce(plan, reserved)
+    plan = prepareScoreStretch(plan.weights, plan.credits.map((credit, index) => Math.max(credit, force * plan.weights[index]!)))
+  }
+  // Empty/multi-rest cells still occupy their allocated measure width.
+  if (!plan.order.length) plan = prepareScoreStretch([1])
+  variants.set(spacing, plan)
+  return plan
 }
 export function staffSpacingPositions(prepared: PreparedMeasure, spacing: number, extra: number) {
   const { base, positions } = staffSpacingSolution(prepared, spacing, extra)
@@ -468,10 +490,10 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       for (const lyric of note.item.lyrics) {
         if (lyric.kind !== 'text' || !lyric.text.replace(/[\s\u200B\u2800]/g, '')) continue
         const ink = measureText(lyric.text.replaceAll('~', ' '), lyricSpacing.fontSize / STAFF_SCALE)
-        const half = ink.width / 2, padding = lyricSpacing.horizontalPadding / STAFF_SCALE
+        const half = ink.width / 2
         const underline = lyric.underlined ? style.lyricUnderlineHalfWidth / STAFF_SCALE : 0
-        const left = half - Math.min(0, ink.left, -underline) - center + padding
-        const after = Math.max(half + underline, ink.right - half) + center + padding
+        const left = half - Math.min(0, ink.left, -underline) - center
+        const after = Math.max(half + underline, ink.right - half) + center
           + (hasLyricHyphen(lyric) ? lyricHyphenAdvance(lyricSpacing.fontSize) / STAFF_SCALE : 0)
         column.lyricLeft = Math.max(column.lyricLeft, left)
         column.lyricAfter = Math.max(column.lyricAfter, after)

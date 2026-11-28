@@ -9,6 +9,7 @@ import { nativeSvgInk } from './native-ink.js'
 import { SCORE_LATIN_FONT, SCORE_TEXT_FONT, SCORE_MUSIC_FONT, SCORE_CJK_FONT } from './font-family.js'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
+import { nativeLayoutQuality } from './native-quality.js'
 import { fontDesignGlyphPath, fontDesignPathInk } from './font-design-path.js'
 import { measureNativeControl } from './native-controls.js'
 import { NativeNumberedNotationScore } from './native-score.js'
@@ -39,6 +40,7 @@ it('measures and renders Segno with real design fonts', () => {
   const source = '{title=设计字体}{key=C}{4/4}\nN: {segno}1 2 3 4 |{br} 5 6 7 1e |||'
   const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 720, paged: true, textMeasurer: measurer })
   expect(pages.length).toBeGreaterThan(0)
+  expect(pages.every(page => page.includes('text-rendering="geometricPrecision"'))).toBe(true)
 })
 
 it('preserves TrueType contours starting off-curve without inserting an extra segment', () => {
@@ -151,13 +153,16 @@ it('uses the painted number and white frame as numeric row-edge geometry, includ
     }
 })
 
-it('rejects a width by the full optimistic row graph before engraving either spacing tier',()=>{
+it('completes credited rows when the conservative page proof is inconclusive',()=>{
   const score=parseM3NDocument(readFileSync(new URL('../../../src/scores/feng_01.m3n',import.meta.url),'utf8'))
+  const options={width:696,paged:true,pageMargin:0,numericLayout:true,textMeasurer:fontDesignMeasurer()}
+  const expected=layoutNativeScore(score,options)
   const timings:Record<string,number>={}
-  expect(()=>layoutNativeScore(score,{width:696,paged:true,pageMargin:0,numericLayout:true,textMeasurer:fontDesignMeasurer()},timings,.7,2))
-    .toThrow('Optimistic row graph cannot reach the incumbent page ceiling')
-  expect(timings.pageFeasibilityPrunes).toBe(1)
-  expect(timings.completedLayoutTrials).toBeUndefined()
+  const actual=layoutNativeScore(score,options,timings,.7,2)
+  expect(actual.pages.length).toBe(expected.pages.length)
+  expect(nativeLayoutQuality(actual)).toEqual(nativeLayoutQuality(expected))
+  expect(timings.pageFeasibilityPrunes ?? 0).toBe(0)
+  expect(timings.completedLayoutTrials).toBeGreaterThan(0)
 })
 
 it('constructs corrected TrueType outlines without decoding and discarding every fontkit path',()=>{

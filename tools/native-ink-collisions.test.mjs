@@ -204,12 +204,14 @@ test('uses painted ascenders/descenders and respects each anchor and group trans
   const results=await page.evaluate(()=>{
     const svg=document.querySelector('svg'),ctx=document.createElement('canvas').getContext('2d')
     ctx.font='normal 400 40px serif';ctx.textAlign='left';ctx.textBaseline='alphabetic'
-    return ['start','middle','end'].map(anchor=>{
+    return ['auto', 'geometricPrecision', 'optimizeLegibility', 'optimizeSpeed'].flatMap(rendering => ['start','middle','end'].map(anchor=>{
+      svg.setAttribute('text-rendering', rendering)
+      ctx.textRendering = rendering
       svg.innerHTML=`<g transform="translate(10 20) scale(1.5)"><text x="70" y="80" font-family="serif" font-size="40" text-anchor="${anchor}">Ag</text></g>`
       const m=ctx.measureText('Ag'),text=svg.querySelector('text'),bounds=createSvgInkMeasurer()
       const shift=anchor==='middle'?m.width/2:anchor==='end'?m.width:0
       return {actual:bounds(text),group:bounds(svg.querySelector('g')),expected:{x:10+1.5*(70-shift-m.actualBoundingBoxLeft),y:20+1.5*(80-m.actualBoundingBoxAscent),width:1.5*(m.actualBoundingBoxLeft+m.actualBoundingBoxRight),height:1.5*(m.actualBoundingBoxAscent+m.actualBoundingBoxDescent)}}
-    })
+    }))
   })
   for(const {actual,group,expected}of results)for(const key of Object.keys(expected)){
     assert.ok(Math.abs(actual[key]-expected[key])<1e-6,`${key} must use actual painted metrics`)

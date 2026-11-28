@@ -14,7 +14,7 @@ export type { ScoreFontResource } from './fonts.js'
 export { NumberedTextMeasurementCache } from './native-measure.js'
 export { NativeLayoutTask as NumberedLayoutTask } from './native-layout.js'
 
-export { lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenMetrics, lyricHyphenGeometry, lyricHyphenAdvance } from './lyric-spacing.js'
+export { lyricSpacing, lyricPairGap, hasLyricHyphen, connectsLyricWord, lyricHyphenMetrics, lyricHyphenGeometry, lyricHyphenAdvance } from './lyric-spacing.js'
 
 export { nativeDynamicGlyph as scoreDynamicGlyph } from './native-dynamics.js'
 

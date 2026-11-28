@@ -1,7 +1,7 @@
 {
   "version": 1,
   "staffGeneration": "deferred",
-  "rendererSha256": "33cf9175ec112964dcc610d32255abc716c286df0441dd873ef4b32ecdc006f4",
+  "rendererSha256": "fd067eb6c16bad5f8239dceaa8d69451505c1060ac6406a86ed38245764dddef",
   "fontManifestSha256": "21fa71cc8c1ae5f07ed66f30134e269899974805709393c226a8914bfba07c4f",
   "entries": {
     "src/examples/huan_le_song.m3n": {
@@ -135,7 +135,7 @@
       "fontSha256": "12d5082a690932055bb4206cf08c4ff07f6634647de16ffc956f910e588e046f"
     },
     "src/scores/hei_se_you_mo_01.m3n": {
-      "sourceSha256": "9679f1d7c0f95a0b00d1890a8c2d01b1cc99b3d7d76cf73a4317683f2ababc86",
+      "sourceSha256": "94e2a13531eaaf1506a5b4bfcc3e8e92e70c21adb0c736afa282fef3f5542a0e",
       "font": "NotoSansSC-28b1e9c394072921.ttf",
       "fontSha256": "36afb4ce1cd4aea78c0509c8830f3499fef42f131cdb45bf4e172a70313db4b4"
     },
@@ -375,7 +375,7 @@
       "fontSha256": "8937b418d6f094af99382fca4d7ea52556928dbd8583d74d252717b4084d636b"
     },
     "src/scores/turkish_march_01.m3n": {
-      "sourceSha256": "7e855d47ab12e8599d1726054d6681a1db3ecad81e622ba36be5e3554f9d7a3f",
+      "sourceSha256": "c7eb931f549fb457ae6f69f5aadcfd9fd00d5cb87a6881c477084e841a7e2dd7",
       "font": "NotoSansSC-e894de818f8909d7.ttf",
       "fontSha256": "c658b6d6a898e1c8c45186241665e471d9e6f0f19d622a0342fe7adff9eacf02"
     },

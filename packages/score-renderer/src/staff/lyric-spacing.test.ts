@@ -14,7 +14,7 @@ import { engraveStaffSystems } from './staff-system.js'
 const measureText: MeasureText = (text, size) => ({ width: text.length * size, left: 0, right: text.length * size, ascent: size * 0.8, descent: size * 0.2 })
 const source = '{2/4}\nN: ||: (1 2 3 4) :|||\nL1: Spring summer autumn winter\nL2: Morning evening sunshine moonlight'
 
-it.each([0.25, 0.28125, 0.3125, 0.34375, 0.375])('reserves 1px per lyric edge without adding music clearance at spacing %s', spacing => {
+it.each([[0.8, 0], [1.6, 2], [2.4, 4]])('reserves a pair gap for music spacing %s without adding music clearance', (spacing, gap) => {
   const document = projectStaffDocument(analyzeM3N(source).score)
   const measure = document.measures[0]!
   const model = createStaffMeasure(measure, false, false, measureText, spacing)
@@ -27,7 +27,7 @@ it.each([0.25, 0.28125, 0.3125, 0.34375, 0.375])('reserves 1px per lyric edge wi
     const center = (index: number) => (notes[index]!.headLeft + notes[index]!.headRight) / 2
     const left = center(i) - measureText(words[i]!, lyricSpacing.fontSize / STAFF_SCALE).width / 2
     const right = center(i - 1) + measureText(words[i - 1]!, lyricSpacing.fontSize / STAFF_SCALE).width / 2
-    expect((left - right) * STAFF_SCALE).toBeCloseTo(2)
+    expect((left - right) * STAFF_SCALE).toBeCloseTo(gap)
   }
 })
 
@@ -48,7 +48,7 @@ it('uses the shared lyric font and M/8 clearance for both vertical gaps', () => 
   expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.numbered.music / scoreLayoutConfig.page.lyricGapDivisor)
 })
 
-it('includes lyric underline stroke caps in the 2px minimum clearance', () => {
+it('includes lyric underline stroke caps in the zero-gap minimum clearance', () => {
   const document = projectStaffDocument(analyzeM3N('{2/4}\nN: (1 2 3 4) |||\nL: (Spring) (summer) (autumn) (winter)').score)
   const model = createStaffMeasure(document.measures[0]!, false, false, measureText, 0.25)
   expect(model.entries[0]!.every(entry => entry.item.lyrics[0]?.underlined)).toBe(true)
@@ -56,5 +56,5 @@ it('includes lyric underline stroke caps in the 2px minimum clearance', () => {
   const centers = model.entries[0]!.map(entry => (entry.notes[0]!.headLeft + entry.notes[0]!.headRight) / 2)
   const widths = ['Spring', 'summer', 'autumn', 'winter'].map(word => measureText(word, lyricSpacing.fontSize / STAFF_SCALE).width)
   for (let i = 1; i < centers.length; i++)
-    expect((centers[i]! - centers[i - 1]! - (widths[i]! + widths[i - 1]!) / 2) * STAFF_SCALE - 1).toBeCloseTo(2)
+    expect((centers[i]! - centers[i - 1]! - (widths[i]! + widths[i - 1]!) / 2) * STAFF_SCALE - 1).toBeCloseTo(0)
 })

@@ -106,19 +106,19 @@ describe('native spacing and measured note envelopes', () => {
         expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
             .toEqual([[51], [52], [53, 54, 55], [56, 57, 58], [59, 60, 61]]);
     });
-    it('lets wide lyrics share the minimum note clearance instead of accumulating it', () => {
+    it.each([[8, 0], [12, 2], [16, 4]])('uses lyric pair gaps instead of accumulating music clearance at tier %s', (minimumNoteGap, pairGap) => {
         const textMeasurer: TextMeasurer = { measureText(text, style) {
                 return { w: text === '0' ? 11.154 : [...text].length * 20, h: style.fontSize, baseline: style.fontSize * 0.8 };
             } };
         const measure = (count: number) => {
             const document = parseM3NDocument(`{4/4}\nN: ${Array(count).fill('1').join(' ')} |||\nL: ${Array(count).fill('(春风)').join(' ')}`);
             const projection = projectNativeScore(document, { textMeasurer });
-            measureNativeHorizontal(projection.measures, { minimumNoteGap: 9 });
+            measureNativeHorizontal(projection.measures, { minimumNoteGap });
             return projection.measures[0]!;
         };
         const two = measure(2), three = measure(3);
         // Lyric ink and minimum music clearance occupy the same space.
-        expect(three.minimum - two.minimum).toBeCloseTo(2 * (20 + 0.4 * 16 / 18.04 + 1), 5);
+        expect(three.minimum - two.minimum).toBeCloseTo(2 * (20 + 0.4 * 16 / 18.04) + pairGap, 5);
     });
     it.each(['before', 'after'])('measures each forced row independently of adjacent springs (%s break)', kind => {
         const phrase = '||: 1 2 3 4 | 5 6 7 1e :||';

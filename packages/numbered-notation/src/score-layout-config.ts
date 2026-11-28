@@ -3,9 +3,9 @@
  * Presentation scales the whole SVG. Font ink and final coordinates stay fractional.
  * Music-attached geometry is derived from the core font em at its use sites.
  */
-// 共用歌词字号与横向留白；两种谱式的纵向歌词净空统一为M/8。
+// 歌词横向两两间距随音乐三档选择；纵向净空共用M/8。
 const numberedMusic = 24
-const lyrics = { fontSize: numberedMusic * 2 / 3, horizontalPadding: numberedMusic / 24, preferredExtraGap: numberedMusic / 12 } as const
+const lyrics = { fontSize: numberedMusic * 2 / 3, pairGaps: [0, numberedMusic / 12, numberedMusic / 6] } as const
 
 const fontFamilies = {
   latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',
