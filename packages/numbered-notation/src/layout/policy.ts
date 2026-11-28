@@ -1,14 +1,14 @@
 import { scoreLayoutConfig } from '../score-layout-config.js'
 
 /** Local clearance follows music size, independent of page stretching. */
-export const scoreAttachmentGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
-  scoreLayoutConfig[notation].music / scoreLayoutConfig.page.attachmentGapDivisor
+export const scoreAttachmentGap = (_notation: 'numbered' | 'staff' = 'numbered'): number =>
+  scoreLayoutConfig.numbered.music / scoreLayoutConfig.page.attachmentGapDivisor
 
 /** Header block clearance is four H, with H = N / 6. */
 export const scoreHeaderGap = (rowGap: number): number => rowGap * 2 / 3
 /** Inline section starts replace the ordinary core gap; no additive spacer. */
-export const scoreSectionCoreGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
-  scoreLayoutConfig[notation].music * 1.5
+export const scoreSectionCoreGap = (_notation: 'numbered' | 'staff' = 'numbered'): number =>
+  scoreLayoutConfig.numbered.music * 1.5
 
 export const scoreMaximumCoreGap = (minimum: number): number => minimum * 1.1
 export const scoreLyricGapScale = (minimum: number): number => minimum > 0
@@ -46,10 +46,10 @@ export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio
 }
 
 /** Inter-system policy only: measured music, lyrics, headers and attachments
- * retain their measured geometry. Both notations use their music em. */
+ * retain their measured geometry. Both notations use the shared numbered M. */
 export type ScoreVerticalSpacing = { minimum: number; comfortable: number; maximum: number }
-export function scoreVerticalSpacing(notation: 'numbered' | 'staff' = 'numbered'): ScoreVerticalSpacing {
-  const minimum = scoreLayoutConfig[notation].music * scoreLayoutConfig[notation].minimumRowGapEm
+export function scoreVerticalSpacing(_notation: 'numbered' | 'staff' = 'numbered'): ScoreVerticalSpacing {
+  const minimum = scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.minimumRowGapEm
   return { minimum, comfortable: minimum * 1.5, maximum: minimum * 2 }
 }
 export function scoreVerticalCost(gap: number, spacing: ScoreVerticalSpacing): number {

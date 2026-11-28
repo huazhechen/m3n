@@ -279,9 +279,10 @@ describe('staff layout contract', () => {
     const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/ai_ru_chao_shui_01.m3n'), 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 720 })).layoutInfo()
     const document = projectStaffDocument(score), measure = textMeasurer()
-    const graph = prepareStaffLineGraph(document, 718, false, measure, info.spacing)
+    const musicWidth = info.availableWidth + scoreLayoutConfig.staff.contentEdgeInset
+    const graph = prepareStaffLineGraph(document, musicWidth, false, measure, info.spacing)
     const ends = info.lines.map(line => graph.measured.findIndex(member => member.id === line.measures.at(-1)) + 1)
-    const systems = engraveStaffSystems(document, graph.makeLines(ends), 718, measure, info.spacing, false)
+    const systems = engraveStaffSystems(document, graph.makeLines(ends), musicWidth, measure, info.spacing, false)
     const lowerIndex = systems.findIndex((system, index) => index > 0 && findAll(system.node, node => hasClass(node, 'ending')).length > 0)
     expect(lowerIndex).toBeGreaterThan(0)
     const upper = systems[lowerIndex - 1]!, lower = systems[lowerIndex]!
@@ -292,11 +293,15 @@ describe('staff layout contract', () => {
     expect(upper.hasLyrics).toBe(true)
     expect(ending.length).toBeGreaterThan(0)
     let pairs = 0
-    expect(info.pageCount).toBe(1)
-    const upperPlaced = info.pages[0]!.systems[lowerIndex - 1]!, lowerPlaced = info.pages[0]!.systems[lowerIndex]!
-    const gap = info.pages[0]!.gap
+    const placed = info.pages.flatMap((page, index) => page.systems.map(system => ({ ...system, page: index, gap: page.gap })))
+    const upperPlaced = placed[lowerIndex - 1]!, lowerPlaced = placed[lowerIndex]!
+    const gap = lowerPlaced.gap
+    // A page break removes the pair from same-page collision constraints.
+    // Independently exercise the shared adjacent-system rule in that case.
+    const delta = upperPlaced.page === lowerPlaced.page ? lowerPlaced.y - upperPlaced.y
+      : systemDistance(upper, lower, gap)
     for (const a of upper.spacingPieces) for (const b of ending) if (overlapsX(a, b)) {
-      expect(lowerPlaced.y + b.top - upperPlaced.y - a.bottom).toBeGreaterThanOrEqual(gap * .5 - 1e-6)
+      expect(delta + b.top - a.bottom).toBeGreaterThanOrEqual(gap * .5 - 1e-6)
       pairs++
     }
     expect(pairs).toBeGreaterThan(0)
@@ -465,7 +470,7 @@ it('renders an unmeasured interlude with a multimeasure rest symbol and no text 
   expect(marker.flatMap(nodes).some(node => node.tagName === 'text' || node.attributes['stroke-dasharray'])).toBe(false)
 })
 
-it('keeps bass slurs on the bass staff instead of lifting them over the treble staff', () => {
+it('keeps bass slurs on their own staff and opens interstaff clearance for actual treble ink', () => {
   const document = projectStaffDocument(analyzeM3N('{4/4}\nN: 1e 2e 3e 4e |\nB: {lg}1d 2d 3d 4d{/} |').score)
   const measure = textMeasurer()
   const lines = planStaffLines(document, 640, false, measure, 0.25)
@@ -473,7 +478,14 @@ it('keeps bass slurs on the bass staff instead of lifting them over the treble s
   const geometry = new SvgGeometry(system.node, measure)
   const slur = findAll(system.node, n => hasClass(n, 'slur'))[0]!
   const treble = findAll(system.node, n => n.attributes['data-staff'] === 'melody')[0]!
-  expect(geometry.ink(slur).top).toBeGreaterThan(geometry.ink(treble).bottom)
+  expect(slur.attributes['data-m3n-staff']).toBe('1')
+  let pairs = 0
+  for (const curve of geometry.pieces(slur)) for (const music of geometry.pieces(treble))
+    if (overlapsX(curve, music)) {
+      expect(curve.top - music.bottom).toBeGreaterThanOrEqual(scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE - 1e-6)
+      pairs++
+    }
+  expect(pairs).toBeGreaterThan(0)
 })
 
 it('separates nested slurs including their shared endpoint', () => {

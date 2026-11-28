@@ -66,7 +66,7 @@ describe('staff tempo captions', () => {
         const a = findAll(label, n => n.tagName === 'text')[0]!
         const b = findAll(numeric, n => n.tagName === 'text')[0]!
         for (const name of ['font-size', 'font-family', 'font-weight', 'y']) expect(b.attributes[name]).toBe(a.attributes[name])
-        expect(Number(b.attributes['font-size'])).toBeCloseTo(scoreLayoutConfig.staff.annotation / STAFF_SCALE)
+        expect(Number(b.attributes['font-size'])).toBeCloseTo(scoreLayoutConfig.staff.tempo / STAFF_SCALE)
       }
     },
   )

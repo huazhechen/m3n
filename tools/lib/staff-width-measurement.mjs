@@ -1,4 +1,4 @@
-import { withScoreWidthCandidatePolicy, scoreWidthPolicyState } from '@m3n/numbered-notation/layout'
+import { withScoreWidthCandidatePolicy, scoreWidthPolicyState, scoreVerticalSpacing } from '@m3n/numbered-notation/layout'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareStaffScore } from '@m3n/score-renderer/staff'
 import { a4SourcePageHeight } from '@m3n/score-renderer'
@@ -22,7 +22,7 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   timings.layoutMs = performance.now() - started
   if (!auditLayout) {
     timings.totalMs = performance.now() - started
-    return { width, minimumRowGap: scoreLayoutConfig.staff.music*scoreLayoutConfig.staff.minimumRowGapEm, pageCount, rows: info.rows, outside: [], overlaps: [], ...info.quality, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }
+    return { width, minimumRowGap: scoreVerticalSpacing('staff').minimum, pageCount, rows: info.rows, outside: [], overlaps: [], ...info.quality, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity, qualityScore, timings }
   }
   let stage = performance.now()
   const pages = render(true)
@@ -51,7 +51,7 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
     })
     timings.geometryMs = performance.now() - stage
     timings.totalMs = performance.now() - started
-    return { width, minimumRowGap: scoreLayoutConfig.staff.music*scoreLayoutConfig.staff.minimumRowGapEm, pageCount, rows: info.lines.length, outside, overlaps, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity,
+    return { width, minimumRowGap: scoreVerticalSpacing('staff').minimum, pageCount, rows: info.lines.length, outside, overlaps, lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity,
       ...info.quality, qualityScore, timings }
   } finally { host.remove() }
 }

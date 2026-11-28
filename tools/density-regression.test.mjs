@@ -6,7 +6,7 @@ const limit = { staffHeight: 210, numberedHeight: 230, staffRows: 2, numberedRow
 function result() {
   const layout = { naturalHeight: 150, rows: 1, pages: 1, displayedEvents: 8, measureRows: [['first', 'last']] }
   return { staff: structuredClone(layout), numbered: structuredClone(layout),
-    readability: { staffFrameMm: 7.55625, numberedFrameMm: 8.71875, lyricEmMm: 4.65 } }
+    readability: { staffFrameMm: 8.71875, numberedFrameMm: 8.71875, lyricEmMm: 4.65 } }
 }
 
 test('allows automatic reflow while preserving explicit line ends', () => {

@@ -162,11 +162,11 @@ it('reserves a complete numeral body for narrow range digits', () => {
     expect(separators[0]).toBe(separators[1]);
 });
 
-it('uses independent 36px title and 18px subtitle baseline advances', () => {
+it('uses shared 32px title and 16px subtitle baseline advances', () => {
     const document = { ...parseM3NDocument('N: 1 2 3 4 |||'), title: '主标题\n第二行', subtitle: '副标题\n第二行' };
     const header = nativeHeaderGeometry(document, 800, 0, measurer);
     const root = new DOMParser().parseFromString(header.svg, 'text/html');
-    for (const [role, advance] of [['title', 36], ['subtitle', 18]] as const) {
+    for (const [role, advance] of [['title', 32], ['subtitle', 16]] as const) {
         const rows = [...root.querySelectorAll(`[data-m3n-role="${role}"]`)];
         expect(rows).toHaveLength(2);
         expect(Number(rows[1]!.getAttribute('y')) - Number(rows[0]!.getAttribute('y'))).toBeCloseTo(advance);

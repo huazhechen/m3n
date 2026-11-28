@@ -1,4 +1,4 @@
-import { nativeStyle } from './native-style.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import type { NativeGlyph } from './native-model.js'
 
@@ -38,7 +38,7 @@ export function nativeHairpinSegments(relation: NativeRelation, systems: readonl
   const begin = context ? context.positions!.get(relation.first) ?? -1 : systems.findIndex(system => members(system).includes(relation.first))
   const end = relation.last.lane !== relation.first.lane ? -1 : context ? context.positions!.get(relation.last) ?? -1 : systems.findIndex(system => members(system).includes(relation.last))
   if (begin < 0 || end < begin) return []
-  const size = nativeStyle.music, stroke = size*.035
+  const { hairpinStroke: stroke, hairpinHalfOpening: opening } = scoreLayoutConfig.numbered
   const ranges = systems.slice(begin,end+1).flatMap((system,index) => {
     const glyphs = members(system)
     if (!glyphs.length) return []
@@ -53,7 +53,7 @@ export function nativeHairpinSegments(relation: NativeRelation, systems: readonl
   })
   const total = ranges.reduce((sum,range) => sum+range.right-range.left,0)
   let distance = 0
-  const half = (position: number) => size*.2*(relation.kind === 'decres' ? 1-position/total : position/total)
+  const half = (position: number) => opening*(relation.kind === 'decres' ? 1-position/total : position/total)
   const result=ranges.map(range => {
     const startHalf = half(distance)
     distance += range.right-range.left

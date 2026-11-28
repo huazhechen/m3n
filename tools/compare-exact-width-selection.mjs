@@ -12,7 +12,7 @@ const qualityFields = ['meanRhythmicGap', 'spacingUnevenCost', 'spacingMeanUneve
 export function compareExactWidthSelection(before, after, { epsilon = 1e-8 } = {}) {
   assert(Number.isFinite(epsilon) && epsilon >= 0, 'Invalid numerical tolerance')
   assert(before.complete && after.complete, 'Both reports must be complete')
-  for (const report of [before, after]) assert((!report.productionPolicy || report.entries.every(entry => entry.renderCache?.strategy?.includes('v80-exact'))) && !report.experimentalRowReuse
+  for (const report of [before, after]) assert((!report.productionPolicy || report.entries.every(entry => /-v\d+-exact$/.test(entry.renderCache?.strategy ?? ''))) && !report.experimentalRowReuse
     && !report.experimentalGreedyCeiling && !(report.experimentalPageCostPasses > 0), 'Estimated reports cannot establish exact parity')
   assert.equal(after.notation, before.notation, 'Notation differs')
   assert(before.fontHashes?.length && after.fontHashes?.length, 'Font hashes are required')

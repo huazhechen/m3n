@@ -52,7 +52,7 @@ def save_subset(name, text):
     manifest.append(dict(file=name, web_file=web_target.name, characters=''.join(chr(c) for c in codes), bytes=target.stat().st_size, web_bytes=web_target.stat().st_size))
 
 # Source text is a conservative superset of displayed metadata and lyrics.
-labels = '演唱作词作曲音域：→演奏顺序：'
+labels = '演唱作词作曲编曲音域：→演奏顺序：'
 for path in sorted([*root.glob('src/scores/*.m3n'), *root.glob('src/works/*.m3n'), *root.glob('src/examples/*.m3n')]):
     source = path.read_text()
     text = labels + ''.join(chr(c) for c in range(32, 127)) + source

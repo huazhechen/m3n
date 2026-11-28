@@ -5,9 +5,9 @@ import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
-import { findAll, SvgGeometry, xml } from './layout-svg.js'
+import { findAll, SvgGeometry, xml, readXml } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
-import { createStaffMeasure, drawStaffMeasure, drawStaffBar } from './staff-engine.js'
+import { createStaffMeasure, drawStaffMeasure, drawStaffBar, STAFF_SCALE } from './staff-engine.js'
 
 const measureText = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 function model(source: string, spacing = .25) {
@@ -100,7 +100,7 @@ describe('staff rhythm engraving', () => {
     const result = createStaffMeasure(measure, false, false, text, .25)
     drawStaffMeasure(result, result.minimum, 0)
     const [first, second] = result.entries[0]!.map(entry => entry.notes[0]!)
-    const gap = .25 * scoreLayoutConfig.staff.engine.spacingUnit / scoreLayoutConfig.staff.engine.scale
+    const gap = .25 * scoreLayoutConfig.staff.space / scoreLayoutConfig.staff.engine.scale
     expect(second!.x - second!.prepared.left - (first!.x + first!.prepared.after)).toBeGreaterThanOrEqual(gap - 1e-7)
     const centers = [first!, second!].map(note => (note.headLeft + note.headRight) / 2)
     const size = scoreLayoutConfig.lyrics.fontSize / scoreLayoutConfig.staff.engine.scale
@@ -293,16 +293,19 @@ it.each(['tip', 'brk', 'hold', 'str'])('puts %s opposite final stems, including 
         else expect(ink.bottom).toBeLessThan(Math.min(...heads.map(head => head.top)))
         expect(xml(symbol)).toContain(note.direction === 1 ? 'Below' : 'Above')
         if (mark === 'tip') {
-          const center = (ink.top + ink.bottom) / 2, unit = staffMusicSize() / 4
-          const rule = staffMusicSize() + Math.round((center - staffMusicSize()) / unit) * unit
-          expect(Math.abs(center - rule)).toBeGreaterThan((ink.bottom - ink.top) / 2)
+          const center = (ink.top + ink.bottom) / 2
+          for (const line of findAll(drawing, n => n.attributes.class === 'staff-line' || n.attributes.class === 'ledger-line')) {
+            const rule = geometry.ink(line)
+            if (rule.left < ink.right && rule.right > ink.left)
+              expect(Math.abs(center - (rule.top + rule.bottom) / 2)).toBeGreaterThan((ink.bottom - ink.top) / 2)
+          }
         }
       }
     }
   }
 })
 
-it.each([28, 35])('measures proportional tuplet bracket clearance at music size %s', size => {
+it.each([28, 35])('keeps shared tuplet text and bracket clearance fixed at staff music size %s', size => {
   const previous = scoreLayoutConfig.staff.music;
   scoreLayoutConfig.staff.music = size;
   try {
@@ -314,11 +317,11 @@ it.each([28, 35])('measures proportional tuplet bracket clearance at music size 
     const text = findAll(label, n => n.tagName === 'text')[0]!;
     const geometry = new SvgGeometry(label, measured);
     const paths = findAll(label, n => n.tagName === 'path');
-    const center = Number(text.attributes.x), width = measured('3', size * .4 / scoreLayoutConfig.staff.engine.scale).width;
-    expect(Number(text.attributes['font-size'])).toBe(size * .4 / scoreLayoutConfig.staff.engine.scale);
+    const center = Number(text.attributes.x), width = measured('3', scoreLayoutConfig.staff.tupletFontSize / scoreLayoutConfig.staff.engine.scale).width;
+    expect(Number(text.attributes['font-size'])).toBe(scoreLayoutConfig.staff.tupletFontSize / scoreLayoutConfig.staff.engine.scale);
     expect(text.attributes['font-family']).toBe(scoreLayoutConfig.fonts.text);
-    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - (staffMusicSize() / 4 * 0.3) + (staffMusicSize() / 4 * 0.1) / 2);
-    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + (staffMusicSize() / 4 * 0.3) - (staffMusicSize() / 4 * 0.1) / 2);
+    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE + scoreLayoutConfig.staff.tupletStroke / STAFF_SCALE / 2);
+    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE - scoreLayoutConfig.staff.tupletStroke / STAFF_SCALE / 2);
   } finally { scoreLayoutConfig.staff.music = previous; }
 });
 
@@ -495,4 +498,58 @@ it('scales painted noteheads, stems, beams and staff rules together from seven t
       expect(after[i]!.height).toBeCloseTo(box.height * 8 / 7, 2)
     })
   } finally { scoreLayoutConfig.staff.music = original }
+})
+
+
+it.each(['1', '1d', '1ee', '1eee'])('keeps outward staccato dots at the attachment gap beyond the last ledger: %s', pitch => {
+  const current = model(`{4/4}\nN: ${pitch}{tip} |`)
+  const painted = readXml(xml(drawStaffMeasure(current, current.minimum, 0)))
+  const geometry = new SvgGeometry(painted, measureText)
+  const head = geometry.ink(findAll(painted, node => node.attributes.class === 'notehead')[0]!)
+  const dot = geometry.ink(findAll(painted, node => node.attributes['data-m3n-glyph']?.startsWith('articStaccato') ?? false)[0]!)
+  expect(findAll(painted, node => node.attributes.class === 'ledger-line').length).toBeGreaterThan(0)
+  const below = current.entries[0]![0]!.notes[0]!.direction === 1
+  const gap = below ? dot.top - head.bottom : head.top - dot.bottom
+  expect(gap * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap, 6)
+})
+
+it('keeps staccato dots clear of the five actual staff lines', () => {
+  for (const pitch of ['1e', '2e', '3e', '4e', '5e', '6e', '7e']) {
+    const current = model(`{4/4}\nN: ${pitch}{tip} |`)
+    const painted = readXml(xml(drawStaffMeasure(current, current.minimum, 0)))
+    const geometry = new SvgGeometry(painted, measureText)
+    const dot = geometry.ink(findAll(painted, node => node.attributes['data-m3n-glyph']?.startsWith('articStaccato') ?? false)[0]!)
+    const center = (dot.top + dot.bottom) / 2, radius = (dot.bottom - dot.top) / 2
+    for (const line of findAll(painted, node => node.attributes.class === 'staff-line')) {
+      const ink = geometry.ink(line), rule = (ink.top + ink.bottom) / 2
+      expect(Math.abs(center - rule)).toBeGreaterThanOrEqual(radius + staffMusicSize() / 4 * .15 - 1e-6)
+    }
+  }
+})
+
+
+it.each([false, true])('only avoids ledger segments that overlap the staccato dot horizontally: shifted=%s', shifted => {
+  const current = model('{4/4}\nN: 1ee{tip} |')
+  const note = current.entries[0]![0]!.notes[0]!
+  // Put the dot toward the staff, where this high note has real ledgers.
+  note.prepared.direction = 1
+  if (shifted) note.prepared.symbols.find(symbol => symbol.glyph.startsWith('articStaccato'))!.x += staffMusicSize() * 2
+  const painted = readXml(xml(drawStaffMeasure(current, current.minimum, 0)))
+  const geometry = new SvgGeometry(painted, measureText)
+  const head = geometry.ink(findAll(painted, node => node.attributes.class === 'notehead')[0]!)
+  const dot = geometry.ink(findAll(painted, node => node.attributes['data-m3n-glyph']?.startsWith('articStaccato') ?? false)[0]!)
+  const gap = (dot.top - head.bottom) * STAFF_SCALE
+  if (shifted) expect(gap).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap, 6)
+  else {
+    expect(gap).toBeGreaterThan(scoreLayoutConfig.staff.attachmentGap)
+    const center = (dot.top + dot.bottom) / 2, radius = (dot.bottom - dot.top) / 2
+    for (const ledger of findAll(painted, node => node.attributes.class === 'ledger-line')) {
+      const ink = geometry.ink(ledger), rule = (ink.top + ink.bottom) / 2
+      if (ink.left < dot.right && ink.right > dot.left)
+        expect(Math.abs(center - rule)).toBeGreaterThanOrEqual(radius + staffMusicSize() / 4 * .15 - 1e-6)
+    }
+  }
+  const numeric = drawStaffMeasure(current, current.minimum, 0, false, true)
+  const ordinary = drawStaffMeasure(current, current.minimum, 0)
+  expect(new SvgGeometry(numeric, measureText).pieces(numeric)).toEqual(new SvgGeometry(ordinary, measureText).pieces(ordinary))
 })

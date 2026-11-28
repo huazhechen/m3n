@@ -30,7 +30,7 @@ if (process.argv[2] === '--worker') {
     const sharedFont = join(fontDirectory, 'fixture-font.ttf'), metadata = join(fontDirectory, 'fixture-font.json')
     const { builtinPdfCharacters } = await import('../prepare-builtin-pdf-font.mjs')
     const text = ['tools/scorebook-notation.test.mjs', 'tools/online-scorebook-parity.test.mjs', 'src/lib/online-scorebook.ts']
-      .map(file => readFileSync(join(root, file), 'utf8')).join('') + builtinPdfCharacters() + '演唱作词作曲音域：→演奏顺序：'
+      .map(file => readFileSync(join(root, file), 'utf8')).join('') + builtinPdfCharacters() + '演唱作词作曲编曲音域：→演奏顺序：'
     writeFileSync(textFile, [...new Set(text)].join(''))
     const python = process.env.M3N_FONT_PYTHON || (existsSync(join(root, '.tmp/font-subset-env/bin/python')) ? join(root, '.tmp/font-subset-env/bin/python') : 'python3')
     const font = existsSync(metadata) ? JSON.parse(readFileSync(metadata, 'utf8')) : JSON.parse(execFileSync(python, [join(root, 'tools/prepare-browser-test-font.py'),

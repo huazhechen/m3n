@@ -15,7 +15,7 @@ const notes: Record<number, StaffGlyph> = {
 export function staffTempoBeat(unit: number, dots: number, x: number, baseline: number, textSize: number, measureText: MeasureText) {
   const digits = measureText('0123456789', textSize)
   const textHeight = digits.ascent + digits.descent
-  const musicHeight = textHeight * scoreLayoutConfig.staff.musicSizeRatio
+  const musicHeight = textHeight * (scoreLayoutConfig.staff.space / 7)
   const reference = staffGlyphMetrics('metNoteQuarterUp', 1)
   const size = musicHeight * 1.25 / (reference.bottom - reference.top)
   const name = notes[unit]

@@ -1,4 +1,4 @@
-import { paginateStaffRows } from './staff-row-pagination.js'
+import { paginateStaffRows, type StaffHeaderSize } from './staff-row-pagination.js'
 import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreHeaderGap, scoreLyricGapScale, type ScoreVerticalSpacing } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
@@ -91,7 +91,7 @@ export function arrangeStaffSystem(
   const interesting = /(?:^|\s)(?:reh|dir|harm|verse|m3n-tuplet-label|staff-line|ending|mNum|staff-clef)(?:\s|$)/
   let needsArrangement = false
   const index = (child: XmlNode) => {
-    if (isDecoration(child) || hasClass(child, 'verse')) needsArrangement = true
+    if (isDecoration(child) || hasClass(child, 'verse') || child.attributes['data-staff'] === 'bass') needsArrangement = true
     const raw = child.attributes.class
     if (raw && interesting.test(raw)) for (const name of raw.split(/\s+/)) if (wanted.has(name)) {
       let members = classes.get(name)
@@ -137,7 +137,7 @@ export function arrangeStaffSystem(
         'text',
         {
           x: String(x),
-          y: String(y + i * size * 1.25),
+          y: String(y + i * size),
           'font-size': String(size),
           'font-family': SCORE_TEXT_FONT,
           ...(bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}),
@@ -189,6 +189,13 @@ export function arrangeStaffSystem(
         if (members) members.push(verse)
         else rows.set(row, [verse])
       }
+    if (lane + 1 < lanes) {
+      const music = staffs.flatMap(staff => geometry.withoutClasses(staff, ['verse']))
+      const next = staffsByMeasure.flatMap(staves => staves[lane + 1] ?? [])
+        .flatMap(staff => geometry.withoutClasses(staff, ['verse']))
+      for (const piece of music) for (const other of nearby(next, [piece], gap / 2))
+        if (overlapsX(piece, other, gap / 2)) staffSpacing = Math.max(staffSpacing, piece.bottom + gap - other.top)
+    }
     if (!rows.size) continue
     const music = staffs.flatMap(staff => geometry.withoutClasses(staff, ['verse']))
     const lyricPieces = [...rows.values()].flatMap(row => row.flatMap(verse => geometry.pieces(verse)))
@@ -201,14 +208,14 @@ export function arrangeStaffSystem(
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,
         bounds = union(members.flatMap((v) => geometry.pieces(v)))
-      const dy = bottom + gap - bounds.top
+      const dy = bottom + style.lyricGap / scale - bounds.top
       members.forEach((v) => translate(v, 0, dy))
       bottom = bounds.bottom + dy
     }
     if (lane + 1 < lanes) {
       const next = staffsByMeasure.flatMap(staffs => staffs[lane + 1] ?? [])
       const nextInk = union(next.flatMap((staff) => geometry.pieces(staff)))
-      const shift = Math.max(0, bottom + gap - nextInk.top)
+      const shift = Math.max(0, bottom + style.lyricGap / scale - nextInk.top)
       if (shift) {
         // Reopen the complete grand staff before drawing connecting barlines.
         staffSpacing = Math.max(staffSpacing, shift)
@@ -330,8 +337,8 @@ export function arrangeStaffSystem(
     let dy = 0
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
-    const localGap = hasClass(attachment, 'harm') ? style.music / scoreLayoutConfig.page.chordGapDivisor / scale
-      : ['reh', 'dir'].some(kind => hasClass(attachment, kind)) ? style.music / scoreLayoutConfig.page.annotationGapDivisor / scale : gap
+    const localGap = hasClass(attachment, 'harm') ? style.chordGap / scale
+      : ['reh', 'dir'].some(kind => hasClass(attachment, kind)) ? style.annotationGap / scale : gap
     const attachmentLane = attachment.attributes['data-m3n-staff']
     const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
     const localUpperText = lanes === 1 && ['dir', 'harm', 'fing'].some(kind => hasClass(attachment, kind))
@@ -357,8 +364,8 @@ export function arrangeStaffSystem(
     if (hasClass(attachment, 'tempo')) {
       // Octave lines belong to the notes. Tempo is always outside a crossed
       // upper octave line, even if the inner gap could fit the text.
-      for (const piece of attachmentPieces) for (const octave of upperOctaves)
-        if (overlapsX(piece, octave, clearance / 2)) dy = Math.min(dy, octave.top - piece.bottom - clearance)
+      for (const octave of upperOctaves)
+        if (overlapsX(moveInk(ink, dx, 0), octave, clearance / 2)) dy = Math.min(dy, octave.top - ink.bottom - clearance)
     }
     if (ending) {
       // Empty space underneath a volta's horizontal rule is not ink. Let
@@ -387,6 +394,14 @@ export function arrangeStaffSystem(
         if (overlapsX(piece, next, clearance / 2)) staffSpacing = Math.max(staffSpacing, piece.bottom + clearance - next.top)
     }
     if (isHairpin(attachment)) placed.forEach((piece) => hairpinPieces.add(piece))
+  }
+  for (let lane = 1; lane < lanes; lane++) {
+    const above = [...belowMusic(lane - 1), ...placedDecorations
+      .filter(item => item.lane === lane - 1).flatMap(item => item.pieces)]
+    const below = findAll(node, child => hasClass(child, 'slur') && child.attributes['data-m3n-staff'] === String(lane))
+      .flatMap(slur => geometry.pieces(slur))
+    for (const piece of below) for (const other of nearby(above, [piece], gap / 2))
+      if (overlapsX(piece, other, gap / 2)) staffSpacing = Math.max(staffSpacing, other.bottom + gap - piece.top)
   }
   if (inlineHeading) {
     const label = inlineHeading,
@@ -456,7 +471,7 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top)
 }
 export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number; verticalCost?: number }
-export function paginateStaff(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
+export function paginateStaff(systems: StaffSystem[], height: number, headerHeight: StaffHeaderSize, minimum: number,
   paged: boolean, maximum = scoreMaximumCoreGap(minimum), headerGap = scoreHeaderGap(minimum), vertical?: ScoreVerticalSpacing, pageCeiling?: number): StaffPage[] {
   return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum, headerGap, vertical, pageCeiling)
 }

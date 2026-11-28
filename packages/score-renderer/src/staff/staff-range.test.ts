@@ -95,7 +95,7 @@ it.each([1, -1])('keeps short ties visible in both stem directions (%s)', direct
   const markup = xml(drawStaffTie(first, last, 0, 300)[0]!)
   const d = /d="([^"]+)"/.exec(markup)![1]!
   const values = d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
-  expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2 * scoreLayoutConfig.staff.musicSizeRatio)
+  expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2 * (scoreLayoutConfig.staff.space / 7))
   expect(markup).toContain('fill="#000"')
   expect((values[3]! - values[1]!) * direction).toBeGreaterThan(0)
 })
@@ -119,7 +119,7 @@ it.each([.6, 1.8])('reserves readable ties at minimum width in spacing tier %s',
       const values = tieCoordinates(path)
       expect(values[6]! - values[0]!).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .001)
       expect(Math.abs(values[1]! - first!.ys[paths.indexOf(path)]!)).toBeGreaterThanOrEqual(staffMusicSize() / 4 * .7 - .001)
-      expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2 * scoreLayoutConfig.staff.musicSizeRatio)
+      expect(Math.abs(values[5]! - values[9]!) * .75 * STAFF_SCALE).toBeGreaterThanOrEqual(1.2 * (scoreLayoutConfig.staff.space / 7))
     }
   }
 })

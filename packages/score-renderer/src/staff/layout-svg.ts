@@ -1,5 +1,5 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
-import { SCORE_TEXT_FONT, scoreFontFamily } from '@m3n/numbered-notation'
+import { SCORE_TEXT_FONT, scoreFontFamily, fontDesignMeasurer } from '@m3n/numbered-notation'
 import { parse } from 'txml/txml'
 import { svgPathBbox } from 'svg-path-bbox'
 import { staffCharacterInk } from './staff-music-font.js'
@@ -123,17 +123,24 @@ export function translate(node: XmlNode, x: number, y: number) {
   node.attributes.transform = `translate(${x} ${y}) ${node.attributes.transform ?? ''}`
 }
 export type FontInk = { width: number; left: number; right: number; ascent: number; descent: number }
-export type MeasureText = (text: string, size: number, bold?: boolean, italic?: boolean, family?: string) => FontInk
+export type MeasureText = ((text: string, size: number, bold?: boolean, italic?: boolean, family?: string) => FontInk) & { readonly designMetrics?: boolean }
 export function textMeasurer(systemCjk = false): MeasureText {
-  const context = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null
+  const design = systemCjk ? undefined : fontDesignMeasurer()
+  const context = !design && typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null
   const cache = new Map<string, FontInk>()
-  return (text, size, bold = false, italic = false, family = SCORE_TEXT_FONT) => {
+  const measure: MeasureText = (text, size, bold = false, italic = false, family = SCORE_TEXT_FONT) => {
     family = scoreFontFamily(family, systemCjk)
     const key = `${family}:${size}:${bold}:${italic}:${text}`
     const saved = cache.get(key)
     if (saved) return saved
     let result: FontInk
-    if (context) {
+    if (design) {
+      const m = design.measureText(text, { fontFamily: family, fontSize: size,
+        fontWeight: bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.textWeight,
+        fontStyle: italic ? 'italic' : 'normal' })
+      result = { width: m.advance ?? m.w, left: m.inkLeft ?? 0, right: m.inkRight ?? m.w,
+        ascent: m.baseline, descent: m.h - m.baseline }
+    } else if (context) {
       context.font = `${italic ? 'italic' : 'normal'} ${bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.textWeight} ${size}px ${family}`
       const m = context.measureText(text)
       result = {
@@ -153,6 +160,7 @@ export function textMeasurer(systemCjk = false): MeasureText {
     cache.set(key, result)
     return result
   }
+  return Object.assign(measure, { designMetrics: Boolean(design) })
 }
 type Matrix = [number, number, number, number, number, number]
 const identity: Matrix = [1, 0, 0, 1, 0, 0]
