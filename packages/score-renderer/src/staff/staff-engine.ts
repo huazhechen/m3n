@@ -24,7 +24,7 @@ export type StaffMeasureMetrics = {
   columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; structural?: boolean; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
 /** Music and visible boundaries use the same hard-spacing solver as numbered notation.
- * A row's 1S structural prefix is outside this chain and never stretches or scores. */
+ * A row's fixed structural prefix is outside this chain and never stretches or scores. */
 const columnSpacings = new WeakMap<StaffMeasureMetrics, Map<number, {
   columns: SpacingColumn[]; notes: number[]; intervals: ScoreRhythmicInterval[]; minimumWidth: number; stretchWeight: number
 }>>()
@@ -188,9 +188,9 @@ export type PreparedNote = {
   graces: Array<{ note: PreparedNote; x: number; slash: boolean; group: number }>; graceWidth: number
 }
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
-export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
+export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[]; flexible?: boolean }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
-export function createStaffPreparation(document?: StaffDocument) {
+export function createStaffPreparation(document?: StaffDocument, beamDirections: ReadonlyMap<string, number> = new Map()) {
   const attachmentGap = scoreAttachmentGap('staff')
   const incomingTies = new Set<string>()
   for (const lane of ['melody', 'bass'] as const) {
@@ -209,7 +209,7 @@ export function createStaffPreparation(document?: StaffDocument) {
       if (!variants) { variants = new Map(); measures.set(measure, variants) }
       const key = `${first}:${hasBass}`
       let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE); variants.set(key, prepared) }
+      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, beamDirections); variants.set(key, prepared) }
       return prepared
     },
   }
@@ -288,11 +288,12 @@ function beamGroups(count: number, unit: number) {
   if (count > 3 && count % 3 === 0) return Array.from({ length: count / 3 }, () => 12 / unit)
   return Array.from({ length: Math.ceil(count * 4 / unit) }, () => 1)
 }
-function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>, attachmentGap: number): PreparedMeasure {
+function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>, attachmentGap: number, beamDirections: ReadonlyMap<string, number>): PreparedMeasure {
   const signatures: Signature[] = [], beams: PreparedMeasure['beams'] = []
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
     if (first) {
+      signature.width = style.rowClefInset / STAFF_SCALE
       const glyph = bass ? 'fClef' : 'gClef', m = staffGlyphMetrics(glyph)
       appendSignature(signature, { symbols: [{ glyph, x: -m.left, y: bass ? (staffMusicSize() / 4) * 5 : (staffMusicSize() / 4) * 7 }], width: m.right - m.left + (staffMusicSize() / 4 * 1) })
     }
@@ -345,10 +346,21 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       bucket = next; previousKey = entry.item.key
     }
     flush()
-    // A beam group has one stem direction, independent of candidate width.
+    const tupletNotes = new Set(laneEntries.filter(entry => entry.item.children).flatMap(entry => entry.notes))
+    // Fixed preparation keeps conventional directions; eligible plain groups
+    // can be tried at their actual row width without changing horizontal inputs.
     for (const beam of beams.filter(beam => beam.lane === lane)) {
       const notes = beam.indices.map(i => flat[i]!), ys = notes.flatMap(note => note.heads.map(head => head.y))
-      const direction = ys.reduce((sum, y) => sum + y, 0) / ys.length > (staffMusicSize() * 1.5) ? 1 : -1
+      const space = staffMusicSize() / 4, middle = 6 * space
+      const mean = ys.reduce((sum, y) => sum + y, 0) / ys.length
+      // Alternate directions must preserve all horizontal inputs. Chords,
+      // grace groups, articulation marks and tie ports keep their fixed choice.
+      beam.flexible = notes.every(note => !tupletNotes.has(note) && note.heads.length === 1 && !note.graces.length && !note.item.event.tie
+        && !incomingTies.has(note.item.id) && !note.item.event.postfixes.length)
+        && Math.min(...ys) >= 4 * space && Math.max(...ys) <= 8 * space
+        && Math.abs(mean - middle) <= space
+        && Math.abs((Math.min(...ys) + Math.max(...ys)) / 2 - middle) <= space
+      const direction = (beam.flexible ? beamDirections.get(notes[0]!.item.id) : undefined) ?? (mean > middle ? 1 : -1)
       for (const note of notes) {
         if (note.direction === direction) continue
         const oldLeft = Math.max(0, -Math.min(...note.heads.map(h => h.x)))
@@ -582,7 +594,7 @@ function noteGeometry(note: PreparedNote): FixedNoteGeometry {
   fixedNoteGeometry.set(note, saved)
   return saved
 }
-function positionNote(note: StaffNoteAnchor, x: number, y: number) {
+function positionNote(note: StaffNoteAnchor, x: number, y: number, compact = true) {
   const p = note.prepared, fixed = noteGeometry(p)
   note.x = x; note.direction = p.direction
   note.ys = p.heads.map(h => y + h.y)
@@ -591,7 +603,18 @@ function positionNote(note: StaffNoteAnchor, x: number, y: number) {
   const mainWidth = fixed.glyph.right
   note.stemX = x + (p.direction === 1 ? mainWidth - (p.size / 4 * 0.05) : (p.size / 4 * 0.05))
   const outer = p.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
-  note.stemEnd = outer - p.direction * Math.max(p.size * 0.875, p.size * 0.625 + Math.max(0, Math.log2(p.dur / 8)) * (p.size / 4 * 0.5))
+  const space = p.size / 4
+  const flagMinimum = space * (2.5 + Math.max(0, Math.log2(p.dur / 8)) * .5)
+  const normal = Math.max(style.stemDefaultSpaces * space, flagMinimum)
+  note.stemEnd = outer - p.direction * normal
+  if (compact && !p.rest) {
+    // Retract only the part projecting beyond the staff. Keep ordinary
+    // interior stems and all flag requirements; grace stems keep their scale.
+    const boundary = y + staffMusicSize() * (p.direction === 1 ? 1 : 2)
+    const excess = Math.max(0, p.direction * (boundary - note.stemEnd))
+    const minimum = Math.max(style.stemCompactMinimumSpaces * space, flagMinimum)
+    note.stemEnd += p.direction * Math.min(normal - minimum, excess)
+  }
 }
 function supportsNumericNote(note: StaffNoteAnchor): boolean {
   const p = note.prepared
@@ -692,7 +715,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false, ou
   const graceGroups = new Map<number, Array<{ anchor: StaffNoteAnchor; slash: boolean }>>()
   for (const child of p.graces) {
     const anchor: StaffNoteAnchor = { prepared: child.note, x: 0, ys: [], headLeft: 0, headRight: 0, direction: 1, stemX: 0, stemEnd: 0 }
-    positionNote(anchor, note.x - p.left + p.signature.width + (p.signature.width ? (staffMusicSize() / 4 * 0.6) : 0) + child.x, staveY)
+    positionNote(anchor, note.x - p.left + p.signature.width + (p.signature.width ? (staffMusicSize() / 4 * 0.6) : 0) + child.x, staveY, false)
     const group = graceGroups.get(child.group) ?? []
     group.push({ anchor, slash: child.slash })
     graceGroups.set(child.group, group)
@@ -718,7 +741,7 @@ function positionBeam(beam: StaffBeam) {
   const first = beam.notes[0]!, last = beam.notes.at(-1)!, direction = first.direction
   const dx = last.stemX - first.stemX
   const slope = dx ? Math.max(-0.2, Math.min(0.2, (last.stemEnd - first.stemEnd) / dx)) : 0
-  // Keep the ordinary stem length on average. Requiring that full length
+  // Keep the individually permitted stem lengths on average. Requiring that full length
   // at every extreme of a leap makes all the other stems needlessly long.
   let origin = beam.notes.reduce((sum, note) => sum + note.stemEnd - slope * (note.stemX - first.stemX), 0) / beam.notes.length
   for (const note of beam.notes) {

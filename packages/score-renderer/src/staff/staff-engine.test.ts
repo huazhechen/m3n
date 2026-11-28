@@ -124,15 +124,19 @@ describe('staff rhythm engraving', () => {
     const bar = drawStaffBar(ordinary.measure.source.right, ordinary.minimum, 0)
     expect(geometry.ink(bar).left - last.headRight).toBeGreaterThanOrEqual(.25 * space - .001)
   })
-  it('preserves a full staff space after the row signature before notes, rests, accidentals and graces', () => {
+  it('preserves 0.8S before clefs and 1.6S after signatures including accidentals, ledgers and graces', () => {
     for (const music of ['1 2 3 4', '1# 2 3 4', '1d 2 3 4', '1{ac(6 7)} 2 3 4', '0 2 3 4']) {
       const doc = projectStaffDocument(analyzeM3N(`{4/4}\nN: 1 2 3 4 | ${music} |`).score)
       const current = createStaffMeasure(doc.measures[1]!, true, false, measureText, .25)
-      const drawing = drawStaffMeasure(current, current.minimum, 0)
-      const event = findAll(drawing, n => n.attributes.id === current.measure.melody[0]!.id)[0]!
-      const geometry = new SvgGeometry(drawing, measureText)
-      const signature = findAll(drawing, n => n.attributes.class === 'staff-signature')[0]!
-      expect(geometry.ink(event).left - geometry.ink(signature).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .001)
+      for (const extra of [0, 80]) {
+        const drawing = drawStaffMeasure(current, current.minimum + extra, 0)
+        const event = findAll(drawing, n => n.attributes.id === current.measure.melody[0]!.id)[0]!
+        const geometry = new SvgGeometry(drawing, measureText)
+        const signature = findAll(drawing, n => n.attributes.class === 'staff-signature')[0]!
+        const clef = findAll(signature, n => n.attributes.class === 'staff-clef')[0]!
+        expect(geometry.ink(clef).left).toBeCloseTo(.8 * staffMusicSize() / 4, 6)
+        expect(geometry.ink(event).left - geometry.ink(signature).right).toBeGreaterThanOrEqual(1.6 * staffMusicSize() / 4 - .001)
+      }
     }
   })
   it('keeps staff reading space independent of digit size and proportional to its own music frame', () => {
@@ -555,4 +559,29 @@ it.each([false, true])('only avoids ledger segments that overlap the staccato do
   const numeric = drawStaffMeasure(current, current.minimum, 0, false, true)
   const ordinary = drawStaffMeasure(current, current.minimum, 0)
   expect(new SvgGeometry(numeric, measureText).pieces(numeric)).toEqual(new SvgGeometry(ordinary, measureText).pieces(ordinary))
+})
+
+
+it('retracts only staff-exterior ordinary stem ends, preserving flag length and translation', () => {
+  const space = staffMusicSize() / 4
+  const cases: Array<[string, number[]]> = [
+    ['1 2 3 4 5 6 7 1e 2e 3e', [3.5, 3.5, 3.5, 3.5, 3, 3, 3, 3, 3, 3.5]],
+    ['[1 3 5:h] [5 7 2e:h]', [3, 3]],
+    ['(((5)))', [3.5]], // Thirty-second flag still requires 3.5S.
+    ['((((5))))', [4]], // Sixty-fourth flag still requires 4S.
+  ]
+  for (const [music, expected] of cases) {
+    const result = model(`{4/4}\nN: ${music} |||`)
+    for (const offset of [0, 137.25]) {
+      result.staves[0]!.y = offset
+      drawStaffMeasure(result, result.minimum + 100, 0)
+      const notes = result.entries[0]!.flatMap(entry => entry.notes)
+      expect(notes).toHaveLength(expected.length)
+      for (const [i, note] of notes.entries()) {
+        expect(note.beam).toBeUndefined()
+        const outer = note.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
+        expect(note.direction * (outer - note.stemEnd) / space).toBeCloseTo(expected[i]!)
+      }
+    }
+  }
 })

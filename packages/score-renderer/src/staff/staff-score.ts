@@ -94,17 +94,10 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           if (!lane) top = Math.min(top, (dy + symbol.y + ink.top) * STAFF_SCALE)
           bottom = Math.max(bottom, (dy + symbol.y + ink.bottom) * STAFF_SCALE)
         }
-        if (!note.rest && note.dur > 1) {
-          // Beam fitting may shorten an individual stem, but its solver
-          // always enforces this minimum at every note of the group.
-          const minimum = note.dur >= 8
-            ? note.size / 4 * Math.max(2.5, (Math.log2(note.dur / 4) - 1) * .7 + .4 + 1)
-            : note.size * .875
-          const ys = note.heads.map(head => head.y)
-          const tip = (note.direction === 1 ? Math.min(...ys) - minimum : Math.max(...ys) + minimum) + dy
-          if (!lane) top = Math.min(top, tip * STAFF_SCALE)
-          bottom = Math.max(bottom, tip * STAFF_SCALE)
-        }
+        // Stem lengths now compact at staff boundaries and flexible beam
+        // directions are chosen after exact attachment placement. Their
+        // initial tips are not invariant lower bounds; keep the immutable
+        // heads, accidentals and dots above as the coarse feasibility proof.
       }
     })
     saved = scoreHeightEnvelope({ height: bottom, core, ink: [{ left: 0, right: 1, top, bottom }] }, staffMusicCentre,

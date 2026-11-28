@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { analyzeM3N } from '@m3n/notation'
-import { scoreCorePageLowerBound } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreCorePageLowerBound } from '@m3n/numbered-notation/layout'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffPreparation } from './staff-engine.js'
 import { createStaffMeasureMinimum, planStaffLines } from './line-layout.js'
@@ -96,4 +96,35 @@ it.each([
       expect(scoreCorePageLowerBound(lower, { pageHeight: height, margin: 10, gap: 24, headerGap: 16, directional: true })).toBeLessThanOrEqual(pages)
     }
   }
+})
+
+// These examples flip a flexible beam only after full attachment avoidance.
+// The paused layout must make the same choices, and its proof cannot retain
+// the initial stem/beam edge when that edge disappears after a flip.
+it.each([
+  '{2/4}\nN: 1ee ((3 2e 2e 2e)) |',
+  '{2/4}\nN: 1d ((5 2e 5 5)) |',
+  '{3/4}\nN: 1ee ((7 1e 7 1e)) 1d |\nL: 啊 啊 啊 啊 啊 啊',
+])('staged bounds survive flexible beam direction refinement: %s', source => {
+  const previous = scoreLayoutConfig.staff.reuseBeamOuterSpace
+  scoreLayoutConfig.staff.reuseBeamOuterSpace = true
+  try {
+    const doc = projectStaffDocument(analyzeM3N(source).score)
+    const preparation = createStaffPreparation(doc), minimum = createStaffMeasureMinimum(false, measure, preparation)
+    const lines = planStaffLines(doc, 640, false, measure, .8, minimum)
+    const staged = prepareStaffSystems(doc, lines, 640, measure, .8, false, 1, preparation)
+    const exact = engraveStaffSystems(doc, lines, 640, measure, .8, false, 1, preparation, undefined, undefined, true, false)
+    expect(exact.some(row => Number(row.node.attributes['data-m3n-beam-flips']) > 0)).toBe(true)
+    staged.forEach((row, index) => {
+      const result = row.complete(), actual = exact[index]!, lower = row.lowerBound.lowerBoundGeometry!
+      expect(xml(result.node)).toBe(xml(actual.node))
+      expect(result.pieces).toEqual(actual.pieces)
+      expect(result.spacingPieces).toEqual(actual.spacingPieces)
+      expect(lower.top).toBeGreaterThanOrEqual(actual.ink.top - 1e-8)
+      expect(lower.bottom).toBeLessThanOrEqual(actual.ink.bottom + 1e-8)
+      for (const [pieces, field] of [[lower.topInk, 'top'], [lower.bottomInk, 'bottom']] as const)
+        for (const piece of pieces) expect(actual.spacingPieces.some(ink => ink.left <= piece.left + 1e-8 && ink.right >= piece.right - 1e-8
+          && (field === 'top' ? ink.top <= piece.top + 1e-8 : ink.bottom >= piece.bottom - 1e-8))).toBe(true)
+    })
+  } finally { scoreLayoutConfig.staff.reuseBeamOuterSpace = previous }
 })

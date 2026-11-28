@@ -10,15 +10,17 @@ const eligible = ['dir', 'harm', 'fing', 'dynam', 'tempo', 'repeatMark', 'octave
  * up after anchoring to local music, a lower attachment only farther down.
  * Keep separate channels: its opposite edge is not a valid constraint.
  * This does not replace or approximate any geometry used by exact layout. */
-export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, width: number, sectionHeadings: Set<string>, attachmentGap: number): ScorePageBlock {
+export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, width: number, sectionHeadings: Set<string>, attachmentGap: number, rulesOnly = false): ScorePageBlock {
   const scale = STAFF_SCALE, style = scoreLayoutConfig.staff
   const geometry = new SvgGeometry(node, measureText, true)
   const firstMeasure = nodes(node).find(n => hasClass(n, 'measure'))
   const inlineHeading = sectionHeadings.has(firstMeasure?.attributes.id ?? '') ? undefined : findAll(node, n => hasClass(n, 'reh'))[0]
   const inset = inlineHeading ? staffInlineHeadingInset(inlineHeading, geometry) : 0
-  const music = geometry.withoutClasses(node, omitted)
-  const staffMusic = findAll(node, n => hasClass(n, 'staff')).flatMap(staff => geometry.withoutClasses(staff, omitted))
   const rules = findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
+  // Flexible beam directions can move stems and their dependent ink. Staff
+  // rules and local text anchoring remain valid for every direction trial.
+  const music = rulesOnly ? rules : geometry.withoutClasses(node, omitted)
+  const staffMusic = rulesOnly ? rules : findAll(node, n => hasClass(n, 'staff')).flatMap(staff => geometry.withoutClasses(staff, omitted))
   const core = union(rules.map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   // Relax only the proof geometry to cover composition roundoff; final layout
   // still uses the original operations and coordinates. Shrink x intervals so
