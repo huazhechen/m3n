@@ -181,7 +181,7 @@ const pageWidth = {
   maximumMultiple: 30,
   sharedMaximumMultiple: 26,
   defaultMultiple: 30,
-  extraPageCost: 2,
+  extraPageCost: 2.4,
   // 页面手动滑条范围，独立于自动搜索的九档。
   manualMinimumMultiple: 10,
   manualMaximumMultiple: 50,

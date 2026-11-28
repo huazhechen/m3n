@@ -15,11 +15,11 @@ it('retains deterministic ordering for infeasible and exactly tied trials', () =
   expect(compare(rejected, rejected)).toBe(0)
 })
 
-it('charges two for the first extra page with decreasing marginal cost', () => {
+it('charges 2.4 for the first extra page with decreasing marginal cost', () => {
   expect(scorePageCost(1)).toBe(0)
-  expect(scorePageCost(2)).toBeCloseTo(2)
-  expect(scorePageCost(3) - scorePageCost(2)).toBeLessThan(2)
+  expect(scorePageCost(2)).toBeCloseTo(2.4)
+  expect(scorePageCost(3) - scorePageCost(2)).toBeLessThan(2.4)
   expect(scorePageCost(4) - scorePageCost(3)).toBeLessThan(scorePageCost(3) - scorePageCost(2))
-  expect(compare({pages:1,cost:1.9,spacing:8},{pages:2,cost:0,spacing:16})).toBeLessThan(0)
-  expect(compare({pages:1,cost:2.1,spacing:8},{pages:2,cost:0,spacing:16})).toBeGreaterThan(0)
+  expect(compare({pages:1,cost:2.3,spacing:8},{pages:2,cost:0,spacing:16})).toBeLessThan(0)
+  expect(compare({pages:1,cost:2.5,spacing:8},{pages:2,cost:0,spacing:16})).toBeGreaterThan(0)
 })
