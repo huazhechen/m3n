@@ -7,7 +7,7 @@ import { staffSlur } from './staff-slur.js'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
-import { createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
+import { StaffMeasureExecutionReuse, createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffNavigationGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
@@ -75,12 +75,13 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
   preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly): StaffSystem[] {
-  const systems = buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,selectedLine,endpointLine,numericOnly,deferPieces,false) as StaffSystem[]
-  return refineStaffBeamDirections(systems,document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,selectedLine,endpointLine,numericOnly,deferPieces)
+  const executionReuses = numericOnly ? new Map<number, StaffMeasureExecutionReuse>() : undefined
+  const systems = buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,selectedLine,endpointLine,numericOnly,deferPieces,false,executionReuses) as StaffSystem[]
+  return refineStaffBeamDirections(systems,document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,selectedLine,endpointLine,numericOnly,deferPieces,executionReuses)
 }
 function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText,
   spacing: number, measureNumbers: boolean, tempoScale: number, preparation: StaffPreparation, selectedLine: number|undefined,
-  endpointLine: ((id: string) => number|undefined)|undefined, numericOnly: boolean, deferPieces: boolean): StaffSystem[] {
+  endpointLine: ((id: string) => number|undefined)|undefined, numericOnly: boolean, deferPieces: boolean, executionReuses?: Map<number, StaffMeasureExecutionReuse>): StaffSystem[] {
   if (!style.reuseBeamOuterSpace) return systems
   for (const [resultIndex, initial] of systems.entries()) {
     const index = selectedLine ?? resultIndex, line = lines[index]!
@@ -108,7 +109,7 @@ function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocume
         const plans = relationPlans.get(preparation)
         if (plans) relationPlans.set(trialPreparation, plans)
         const trial = (buildStaffSystems(document, lines, width, measureText, spacing, measureNumbers,
-          tempoScale, trialPreparation, index, endpointLine, numericOnly, deferPieces, false) as StaffSystem[])[0]!
+          tempoScale, trialPreparation, index, endpointLine, numericOnly, deferPieces, false, executionReuses) as StaffSystem[])[0]!
         // Compare complete, fully arranged ink, including lyrics and slurs.
         // Near ties prefer upward stems beside lyrics, within the original
         // row height ceiling. Musical size and attachment gaps never shrink.
@@ -122,6 +123,7 @@ function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocume
     }
     best.node.attributes['data-m3n-beam-flips'] = String(choices.size)
     systems[resultIndex] = best
+    executionReuses?.delete(index)
   }
   return systems
 }
@@ -132,15 +134,16 @@ export type PreparedStaffSystem = { lowerBound: ScorePageBlock; complete: () => 
 export function prepareStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number,
   measureNumbers: boolean, tempoScale: number, preparation: StaffPreparation, endpointLine?: (id: string) => number | undefined): PreparedStaffSystem[] {
   if(document.hasBass)throw new Error('Directional staff bounds currently require a single staff')
-  const rows = buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,undefined,endpointLine,true,false,true) as PreparedStaffSystem[]
+  const executionReuses = new Map<number, StaffMeasureExecutionReuse>()
+  const rows = buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,undefined,endpointLine,true,false,true,executionReuses) as PreparedStaffSystem[]
   return rows.map((row,index) => {
     let completed: StaffSystem | undefined
     return {lowerBound:row.lowerBound,complete:() => completed ??= refineStaffBeamDirections([row.complete()],document,lines,width,measureText,spacing,
-      measureNumbers,tempoScale,preparation,index,endpointLine,true,false)[0]!}
+      measureNumbers,tempoScale,preparation,index,endpointLine,true,false,executionReuses)[0]!}
   })
 }
 function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale: number,
-  preparation: StaffPreparation, selectedLine: number|undefined, endpointLine: ((id: string) => number | undefined)|undefined, numericOnly: boolean, deferPieces: boolean, lowerOnly: boolean) {
+  preparation: StaffPreparation, selectedLine: number|undefined, endpointLine: ((id: string) => number | undefined)|undefined, numericOnly: boolean, deferPieces: boolean, lowerOnly: boolean, executionReuses?: Map<number, StaffMeasureExecutionReuse>) {
   const scale = STAFF_SCALE, rawWidth = width / scale, attachmentGap = preparation.attachmentGap
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
@@ -174,6 +177,11 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
   return lines.map((line, lineIndex) => ({ line, lineIndex }))
     .filter(({ lineIndex }) => selectedLine === undefined || lineIndex === selectedLine)
     .map(({ line, lineIndex }) => {
+    let executionReuse = executionReuses?.get(lineIndex)
+    if (executionReuses && !executionReuse) {
+      executionReuse = new StaffMeasureExecutionReuse()
+      executionReuses.set(lineIndex, executionReuse)
+    }
     let bassY = engine.initialBassY
     for (let pass = 0; pass < 8; pass++) {
       const addTempo = (qpm: number, meterCount: number, meterUnit: number, tempoX: number, parent: XmlNode, direction?: string) => {
@@ -207,12 +215,14 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
       const total = line.target - inset
       let x = 0
       for (const [index, member] of line.measures.entries()) {
-        const model = (numericOnly && !lowerOnly ? borrowStaffMeasure : createStaffMeasure)(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
+        const model = numericOnly && (!lowerOnly || executionReuse)
+          ? borrowStaffMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation, executionReuse)
+          : createStaffMeasure(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
         const target = document.score.equalMeasures ? (total - (line.measures[0]!.head - inset)) / line.measures.length + (index ? 0 : member.head - inset) : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
           next?.source.left?.startsWith('rpt'))
-        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, numericOnly, lowerOnly ? paint => deferredMusic.push(paint) : undefined)
+        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, numericOnly, lowerOnly ? paint => deferredMusic.push(paint) : undefined, executionReuse)
         models.push(model)
         node.children.push(measureNode)
         const melodyEntries = model.entries[0] ?? []

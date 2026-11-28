@@ -557,8 +557,8 @@ const placementWorkspaces = new WeakMap<StaffPreparation, WeakMap<PreparedMeasur
 /** Candidate drawing captures its own coordinates. Anchors are private scratch
  * state used only until a row's relations and attachments have been placed. */
 export function borrowStaffMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, spacing: number, bassY: number,
-  preparation: StaffPreparation): StaffMeasureLayout {
-  let workspaces = placementWorkspaces.get(preparation)
+  preparation: StaffPreparation, reuse?: StaffMeasureExecutionReuse): StaffMeasureLayout {
+  let workspaces = reuse?.models ?? placementWorkspaces.get(preparation)
   if (!workspaces) { workspaces = new WeakMap(); placementWorkspaces.set(preparation, workspaces) }
   const prepared = preparation.measure(measure, first, hasBass, measureText)
   let model = workspaces.get(prepared)
@@ -809,7 +809,9 @@ function positionBeam(beam: StaffBeam) {
   }
   for (const note of beam.notes) note.stemEnd = origin + slope * (note.stemX - first.stemX)
 }
-function drawBeam(beam: StaffBeam, numeric = false): XmlNode {
+function drawBeam(beam: StaffBeam, numeric = false, reuse?: Map<StaffBeam, () => XmlNode>): XmlNode {
+  const saved = numeric && reuse?.get(beam)
+  if (saved) return saved()
   const notes = beam.notes, direction = notes[0]!.direction, space = notes[0]!.prepared.size / 4
   const max = Math.max(...notes.map(n => Math.log2(n.prepared.dur / 4)))
   const paths: StaffNumericPath[] = []
@@ -833,15 +835,21 @@ function drawBeam(beam: StaffBeam, numeric = false): XmlNode {
     }
   }
   const attributes = { class: 'beam', 'data-m3n-join': notes.map(note => `${note.stemX},${note.stemEnd}`).join(' ') }
-  const render = () => element('g', attributes, paths.map(primitive => {
+  const render = (attrs = attributes) => element('g', attrs, paths.map(primitive => {
     const path = element('path', { fill: '#000', stroke: 'none' })
     setNumericPath(path, primitive)
     return path
   }))
   // Candidate pagination needs the exact existing path boxes. Materialize
   // path nodes and their lazy SVG attributes only when this row is painted.
-  return numeric ? { tagName: 'g', attributes, children: [], numericInk: paths.flatMap(path => path.boxes),
-    renderNodes: () => [render()] } : render()
+  if (!numeric) return render()
+  const ink = paths.flatMap(path => path.boxes)
+  const create = (): XmlNode => {
+    const attrs = { ...attributes }
+    return { tagName: 'g', attributes: attrs, children: [], numericInk: ink, renderNodes: () => [render(attrs)] }
+  }
+  reuse?.set(beam, create)
+  return create()
 }
 function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, measureText: MeasureText): XmlNode {
   const pitched = notes.find(n => !n.prepared.rest), below = pitched?.direction === -1
@@ -898,6 +906,17 @@ function staffEventAttributes(item: StaffEvent): Record<string, string> {
   }
   return attrs
 }
+/** Owned by one row's synchronous beam trials, never by a rendering task.
+ * Prepared identity fixes direction and all music inputs; placement remains
+ * valid only while every coordinate-producing input is exactly unchanged. */
+export class StaffMeasureExecutionReuse {
+  readonly models = new WeakMap<PreparedMeasure, StaffMeasureLayout>()
+  readonly placements = new WeakMap<StaffMeasureLayout, {
+    spacing: number; width: number; x: number; ys: number[]; localPositions: number[]
+    runs: Map<StaffMeasureLayout['entries'][number][number], StaffNumericMusicRun>
+    beams: Map<StaffBeam, () => XmlNode>
+  }>()
+}
 /** A numeric music run is an execution record, not a tree of note nodes.
  * Semantic wrappers and painted primitives are created only for output or an
  * explicit geometry filter that actually needs to inspect individual notes. */
@@ -947,23 +966,32 @@ class StaffNumericMusicRun {
     return node
   }
 }
-export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false, numericOnly = false, deferMusic?: (paint: () => void) => void): XmlNode {
+export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false, numericOnly = false, deferMusic?: (paint: () => void) => void, reuse?: StaffMeasureExecutionReuse): XmlNode {
   const { prepared } = model
+  let placement = numericOnly ? reuse?.placements.get(model) : undefined
+  if (placement && (!Object.is(placement.spacing, model.spacing) || !Object.is(placement.width, width)
+    || !Object.is(placement.x, x) || model.staves.some((stave, lane) => !Object.is(stave.y, placement!.ys[lane])))) placement = undefined
   const extra = Math.max(0, width - model.minimum)
-  const localPositions = staffSpacingPositions(prepared, model.spacing, extra)
-  const positions = localPositions.map(position => x + model.start + position)
-  const columns = noteColumns(prepared)
-  for (const [lane, stave] of model.staves.entries()) {
-    stave.x = x; stave.width = width; stave.noteStartX = x + model.start
-    for (const [entryIndex, entry] of model.entries[lane]!.entries()) for (const [i, note] of entry.notes.entries()) {
-      const { column, endColumn, before, fraction } = columns[lane]![entryIndex]![i]!
-      positionNote(note, positions[column]!, stave.y)
-      const end = endColumn < 0 ? x + width - model.endInset : positions[endColumn]!
-      const time = endColumn === 0 ? positions[0]! : positions[before]! + (end - positions[before]!) * fraction
-      note.durationEndX = Math.max(note.headRight, time - staffMusicSize() / 8)
+  const localPositions = placement?.localPositions ?? staffSpacingPositions(prepared, model.spacing, extra)
+  if (!placement) {
+    const positions = localPositions.map(position => x + model.start + position)
+    const columns = noteColumns(prepared)
+    for (const [lane, stave] of model.staves.entries()) {
+      stave.x = x; stave.width = width; stave.noteStartX = x + model.start
+      for (const [entryIndex, entry] of model.entries[lane]!.entries()) for (const [i, note] of entry.notes.entries()) {
+        const { column, endColumn, before, fraction } = columns[lane]![entryIndex]![i]!
+        positionNote(note, positions[column]!, stave.y)
+        const end = endColumn < 0 ? x + width - model.endInset : positions[endColumn]!
+        const time = endColumn === 0 ? positions[0]! : positions[before]! + (end - positions[before]!) * fraction
+        note.durationEndX = Math.max(note.headRight, time - staffMusicSize() / 8)
+      }
+    }
+    model.beams.forEach(positionBeam)
+    if (numericOnly && reuse) {
+      placement = { spacing: model.spacing, width, x, ys: model.staves.map(stave => stave.y), localPositions, runs: new Map(), beams: new Map() }
+      reuse.placements.set(model, placement)
     }
   }
-  model.beams.forEach(positionBeam)
   const measureNode = element('g', { id: model.measure.id, class: 'measure' })
   // Audit-only attributes are materialized together with the SVG element.
   // Candidate geometry only needs the captured local positions and children.
@@ -990,13 +1018,22 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
       // Original music precedes those mutable children in the final SVG.
       const tail = staff.children.splice(musicIndex)
       let musicRun: StaffNumericMusicRun | undefined
+      let runStart: StaffMeasureLayout['entries'][number][number] | undefined, reusedRun = false
       const flushMusic = () => {
-        if (musicRun) { staff.children.push(musicRun.node()); musicRun = undefined }
+        if (musicRun) {
+          if (placement && !reusedRun) placement.runs.set(runStart!, musicRun)
+          staff.children.push(musicRun.node()); musicRun = undefined
+        }
       }
       for (const entry of model.entries[lane]!) {
         if (numericOnly && entry.notes.every(supportsNumericNote)) {
-          musicRun ??= new StaffNumericMusicRun(stave.y)
-          musicRun.append(entry)
+          if (!musicRun) {
+            runStart = entry
+            musicRun = placement?.runs.get(entry)
+            reusedRun = Boolean(musicRun)
+            musicRun ??= new StaffNumericMusicRun(stave.y)
+          }
+          if (!reusedRun) musicRun.append(entry)
           if (entry.item.children && entry.item.event.tuplet) {
             flushMusic()
             staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
@@ -1021,7 +1058,7 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
         if (entry.item.children && entry.item.event.tuplet) staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
       }
       flushMusic()
-      for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly))
+      for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly, placement?.beams))
       staff.children.push(...tail)
     }
     if (deferMusic) deferMusic(paintMusic)

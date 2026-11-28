@@ -4,7 +4,7 @@ import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasureMinimum } from './line-layout.js'
 import { xml, SvgGeometry, hasClass, findAll } from './layout-svg.js'
-import { createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure } from './staff-engine.js'
+import { StaffMeasureExecutionReuse, createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure } from './staff-engine.js'
 
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 const measure = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
@@ -104,4 +104,44 @@ describe('native candidate isolation', () => {
         .toBe(xml(drawStaffMeasure(fresh, fresh.minimum + extra, 17)))
     }
   })
+})
+
+
+it.each([
+  '{4/4}\nN: ((7 1e 7 1e)) 2 3 4 | ((5 6 5 6)) 1 2 3 |',
+  '{4/4}\nN: ((7 1e 7 1e)) 5{tip} 6. 7 | 1 2 3 4 |||',
+  '{key=F}{4/4}\nN: [135:h]{arp}{ac(6# 7)} 2{tip} 3{prall} 4 |||\nB: 1d 2d 3d 4d |||',
+  '{4/4}\nN: ([0 2# 3:2]) 4 5 6 |||',
+])('reuses unchanged positioned music across beam trials without changing retained candidates: %s', source => {
+  const document = projectStaffDocument(analyzeM3N(source).score)
+  const base = createStaffPreparation(document), reuse = new StaffMeasureExecutionReuse()
+  const retained: Array<{ node: ReturnType<typeof drawStaffMeasure>; svg: string; ink: ReturnType<SvgGeometry['pieces']> }> = []
+  const item = document.measures.at(-1)!
+  for (const bassY of [130, 180, 130]) for (const spacing of [.6, 1.8]) for (const extra of [0, 37.12345]) {
+    const previous = borrowStaffMeasure(item, true, document.hasBass, measure, spacing, bassY, base, reuse)
+    // An unrelated direction view must retrieve the same immutable measure.
+    const first = base.measure(document.measures[0]!, true, document.hasBass, measure)
+    const beam = document.measures.length > 1 ? first.beams.find(beam => beam.flexible) : undefined
+    const note = beam && first.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+    const view = base.withBeamDirections(note ? new Map([[note.item.id, -note.direction]]) : new Map(), document)
+    const model = borrowStaffMeasure(item, true, document.hasBass, measure, spacing, bassY, view, reuse)
+    expect(model).toBe(previous)
+    const expected = createStaffMeasure(item, true, document.hasBass, measure, spacing, bassY, base)
+    const reference = drawStaffMeasure(expected, expected.minimum + extra, -17.12345)
+    const svg = xml(reference), ink = new SvgGeometry(reference, measure).pieces(reference)
+    for (let repeat = 0; repeat < 2; repeat++) {
+      const placement = reuse.placements.get(model)
+      const node = drawStaffMeasure(model, model.minimum + extra, -17.12345, false, true, undefined, reuse)
+      if (repeat) expect(reuse.placements.get(model)).toBe(placement)
+      // Public geometry output stays owned even when private numeric runs reuse ink.
+      const output = new SvgGeometry(node, measure).pieces(node)
+      expect(output).toEqual(ink)
+      if (output.length) output[0]!.top += 10000
+      retained.push({ node, svg, ink })
+      for (const old of retained) {
+        expect(xml(old.node)).toBe(old.svg)
+        expect(new SvgGeometry(old.node, measure).pieces(old.node)).toEqual(old.ink)
+      }
+    }
+  }
 })
