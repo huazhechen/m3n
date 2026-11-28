@@ -334,8 +334,8 @@ export class SvgGeometry {
   }
   /** Emit final scaled boxes directly. Each occurrence owns its output box,
    * even when included and excluded nodes borrow the same immutable ink. */
-  partitionScaledWithoutClasses(node: XmlNode, classes: readonly string[], scale: number): { all: Ink[]; without: Ink[]; boundary: Ink[] } {
-    const all: Ink[] = [], without: Ink[] = [], boundary: Ink[] = []
+  partitionScaledWithoutClasses(node: XmlNode, classes: readonly string[], scale: number, selectedClasses?: readonly string[]): { all: Ink[]; without: Ink[]; boundary: Ink[]; selected: Ink[] } {
+    const all: Ink[] = [], without: Ink[] = [], boundary: Ink[] = [], selected: Ink[] = []
     const output: InkSink = { push: box => {
       const scaled = { left: box.left * scale, right: box.right * scale,
         top: box.top * scale, bottom: box.bottom * scale }
@@ -344,13 +344,15 @@ export class SvgGeometry {
     // collect emits to the main sink before the filtered sink for each box.
     const filtered: InkSink = { push: () => { without.push(all[all.length - 1]!) } }
     this.collect(node, identity, { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false },
-      undefined, output, { result: filtered, omit: omitClasses(classes) })
+      undefined, output, { result: filtered, omit: omitClasses(classes) }, this.borrowImmutableInk, selectedClasses && {
+        result: { push: () => { selected.push(all[all.length - 1]!) } }, match: omitClasses(selectedClasses),
+      })
     let index = 0
     for (const box of all) {
       if (box === without[index]) index++
       else boundary.push(box)
     }
-    return { all, without, boundary }
+    return { all, without, boundary, selected }
   }
   pieces(
     node: XmlNode,
@@ -373,6 +375,32 @@ export class SvgGeometry {
         }
         if (known) return true
       }
+      if (filter.classNames) {
+        if (!compiled.classes) {
+          const classes = new Set<string>()
+          const visit = (node: XmlNode, include: boolean) => {
+            const raw = include && node.attributes.class
+            if (raw) {
+              if (!/\s/.test(raw)) classes.add(raw)
+              else {
+                let saved = node.classTokens
+                if (!saved || saved.raw !== raw) node.classTokens = saved = { raw, names: new Set(raw.split(/\s+/)) }
+                for (const name of saved.names) classes.add(name)
+              }
+            }
+            // Numeric music already describes all semantic descendants.
+            // Class queries can use that summary without materializing virtual
+            // event/note wrappers. Arbitrary predicates still traverse below.
+            const prepared = this.borrowImmutableInk && node.preparedMusicInk
+            if (prepared) { for (const name of prepared.classes) classes.add(name); return }
+            for (const child of node.geometryChildren?.() ?? node.children)
+              if (typeof child !== 'string') visit(child, true)
+          }
+          visit(compiled.block, false)
+          compiled.classes = classes
+        }
+        return !intersects(compiled.classes, filter.classNames)
+      }
       if (!compiled.descendants) {
         const descendants: XmlNode[] = []
         const visit = (node: XmlNode) => {
@@ -382,14 +410,20 @@ export class SvgGeometry {
         }
         visit(compiled.block); compiled.descendants = descendants
       }
-      if (!filter.classNames) return !compiled.descendants.some(filter)
-      compiled.classes ??= new Set(compiled.descendants.flatMap(child => (child.attributes.class ?? '').split(/\s+/)))
-      return !intersects(compiled.classes, filter.classNames)
+      return !compiled.descendants.some(filter)
   }
   private collect(node: XmlNode, parent: Matrix, inherited: { size: number; bold: boolean; italic: boolean },
-    omit: OmitNode | undefined, result: InkSink, secondary?: { result: InkSink; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
+    omit: OmitNode | undefined, result: InkSink, secondary?: { result: InkSink; omit: OmitNode }, borrow = this.borrowImmutableInk,
+    selection?: { result: InkSink; match: OmitNode }): void {
+    // A matching subtree emits into both channels. Nested matches must not
+    // duplicate ink, and the main sink runs first for direct scaled output.
+    if (selection?.match(node)) {
+      const main = result, selected = selection.result
+      result = { push: box => { main.push(box); selected.push(box) } }
+      selection = undefined
+    }
     const compiled = this.staticPieces.get(node)
-    if (compiled && compiled.transform === (node.attributes.transform ?? '') && this.unaffected(compiled, omit) && this.unaffected(compiled, secondary?.omit)) {
+    if (compiled && compiled.transform === (node.attributes.transform ?? '') && this.unaffected(compiled, omit) && this.unaffected(compiled, secondary?.omit) && this.unaffected(compiled, selection?.match)) {
       if (borrow && parent !== identity) {
         // Engraving readers treat compiled ink as immutable. Repeated filtered
         // queries can share the same transformed pieces until an ancestor moves.
@@ -415,7 +449,8 @@ export class SvgGeometry {
     // wrappers again. Arbitrary filters must still inspect the real children.
     const prepared = this.borrowImmutableInk && node.preparedMusicInk
     if (prepared && (!omit || omit.classNames && !prepared.classes.some(name => omit.classNames!.has(name)))
-      && (!secondary || secondary.omit.classNames && !prepared.classes.some(name => secondary.omit.classNames!.has(name)))) {
+      && (!secondary || secondary.omit.classNames && !prepared.classes.some(name => secondary.omit.classNames!.has(name)))
+      && (!selection || selection.match.classNames && !prepared.classes.some(name => selection.match.classNames!.has(name)))) {
       for (const box of prepared.boxes) { const placed = transform(box, m, borrow); result.push(placed); secondary?.result.push(placed) }
       return
     }
@@ -434,7 +469,7 @@ export class SvgGeometry {
     if (node.tagName === 'use') {
       const ref = this.definitions.get((a['xlink:href'] ?? a.href ?? '').replace(/^#/, ''))
       if (!ref) throw new Error('五线谱字形引用缺失。')
-      this.collect(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style, undefined, result, secondary, borrow)
+      this.collect(ref, multiply(m, [1, 0, 0, 1, num('x'), num('y')]), style, undefined, result, secondary, borrow, selection)
       return
     }
     const half = a.stroke === 'none' ? 0 : num('stroke-width') / 2
@@ -514,7 +549,7 @@ export class SvgGeometry {
       }
     } else {
       for (const child of node.geometryChildren?.() ?? node.children)
-        if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result, secondary && !secondary.omit(child) ? secondary : undefined, borrow)
+        if (typeof child !== 'string' && !omit?.(child)) this.collect(child, m, style, omit, result, secondary && !secondary.omit(child) ? secondary : undefined, borrow, selection)
       return
     }
     for (const b of boxes) { const placed = transform({ left: b.left - half, right: b.right + half, top: b.top - half, bottom: b.bottom + half }, m); result.push(placed); secondary?.result.push(placed) }

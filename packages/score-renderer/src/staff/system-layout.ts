@@ -36,12 +36,6 @@ export function staffInlineHeadingInset(label: XmlNode, geometry: SvgGeometry): 
   const content = textContent(label).replace(/[\t\r\n]/g, '').trim()
   return (geometry.measure(content, scoreLayoutConfig.staff.annotation, true).width + style.sectionLabelInset) / STAFF_SCALE
 }
-/** Keep ancestor transforms when measuring only selected attachments. */
-function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode | undefined {
-  if (keep(node)) return node
-  const children = nodes(node).flatMap(child => selected(child, keep) ?? [])
-  return children.length ? { ...node, numericInk: undefined, renderNodes: undefined, tagName: 'g', children } : undefined
-}
 /** Resolve rhythm labels before enclosing slurs consume their geometry.
  * Re-running during attachment layout is idempotent: outer slurs never push
  * their own enclosed numeral away from its music. */
@@ -442,13 +436,11 @@ function finishStaffSystem(node: XmlNode, geometry: SvgGeometry, byClass: (name:
     ink: { left: 0, right: 0, top: 0, bottom: 0 }, core,
     section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: byClass('verse').some(verse => verse.children.length > 0) }
   const materialize = () => {
-    const partition = geometry.partitionScaledWithoutClasses(node, ['mNum', 'staff-clef'], scale)
+    const partition = geometry.partitionScaledWithoutClasses(node, ['mNum', 'staff-clef'], scale, byClass('staff-clef').length ? ['staff-clef'] : undefined)
     // The shared paginator already sees ordinary music ink. Only symbols
     // excluded from row spacing need the separate page-boundary channel.
     const pieces = partition.all, spacingPieces = partition.without, boundaryPieces = partition.boundary
-    const edgePieces = ['staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
-      (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
-        .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: attachmentGap })))
+    const edgePieces = partition.selected.map(p => ({ ...p, gap: attachmentGap }))
     result.pieces = pieces; result.spacingPieces = spacingPieces; result.boundaryPieces = boundaryPieces; result.edgePieces = edgePieces
     result.ink = union(pieces)
     result.materializeInk = undefined

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { element, hasClass, SvgGeometry, InkRangeIndex, textMeasurer, translate, xml } from './layout-svg.js'
+import { element, hasClass, SvgGeometry, InkRangeIndex, textMeasurer, translate, xml, type XmlNode } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
   it('keeps cached leaf text exact through edits, inherited styles, transforms and nested spans', () => {
@@ -209,4 +209,81 @@ it('streams scaled partitions with exact occurrence identities and live transfor
     actual.all[0]!.left = -999
     expect(geometry.partitionScaledWithoutClasses(root, ['ending'], .75).all).toEqual(expected)
   }
+})
+
+
+it('collects selected edge ink in the final partition without cloning ancestor trees', () => {
+  // Independent oracle: the previous edge path cloned selected ancestors,
+  // preserving transforms and inherited text styles before collecting ink.
+  const select = (node: XmlNode): XmlNode | undefined => {
+    if (hasClass(node, 'staff-clef')) return node
+    const children = node.children.flatMap(child => typeof child === 'string' ? [] : select(child) ?? [])
+    return children.length ? { ...node, numericInk: undefined, renderNodes: undefined, tagName: 'g', children } : undefined
+  }
+  for (const borrowed of [false, true]) for (const compiled of [false, true]) {
+    const nested = element('g', { class: 'staff-clef', transform: 'translate(2 -3)' }, [
+      element('rect', { x: '-1', y: '2', width: '4', height: '8' }),
+    ])
+    const clef = element('g', { class: 'staff-clef', transform: 'scale(1.25 .75)' }, [
+      nested, element('text', { x: '3', y: '9' }, ['edge']),
+    ])
+    const music = element('g', {}, [clef, element('rect', { width: '10', height: '4' })])
+    // A prepared ancestor containing a selected class must be traversed.
+    music.preparedMusicInk = { boxes: new SvgGeometry(music, textMeasurer()).pieces(music), classes: ['staff-clef'] }
+    const root = element('g', { transform: 'translate(10 20)', 'font-size': '15', 'font-weight': 'bold' }, [
+      element('g', { class: 'staff' }, [music,
+        element('g', { class: 'verse' }, [element('text', {}, ['mutable'])]),
+        element('g', { class: 'mNum' }, [element('rect', { width: '2', height: '3' })]),
+      ]),
+    ])
+    const geometry = new SvgGeometry(root, textMeasurer(), borrowed)
+    if (compiled) geometry.compileStatic(root, node => hasClass(node, 'verse'), ['verse'])
+    for (const offset of [0, 7, -2]) {
+      if (offset) translate(root, offset, -1)
+      const reference = new SvgGeometry(root, textMeasurer())
+      const selected = reference.pieces(select(root)!).map(box => ({
+        left: box.left * .75, right: box.right * .75, top: box.top * .75, bottom: box.bottom * .75,
+      }))
+      const partition = geometry.partitionScaledWithoutClasses(root, ['mNum', 'staff-clef'], .75, ['staff-clef'])
+      expect(partition.selected).toEqual(selected)
+      expect(partition.selected.every(box => partition.boundary.includes(box))).toBe(true)
+      expect(partition.selected.every(box => !partition.without.includes(box))).toBe(true)
+      expect(partition.selected.length).toBe(selected.length)
+      partition.selected[0]!.left = -999
+      expect(geometry.partitionScaledWithoutClasses(root, ['mNum', 'staff-clef'], .75, ['staff-clef']).selected).toEqual(selected)
+    }
+  }
+})
+
+
+it('uses numeric music class summaries without materializing wrappers for unrelated filters', () => {
+  let materialized = 0
+  const box = Object.freeze({ left: 2, right: 6, top: -1, bottom: 8 })
+  const run = element('g')
+  run.preparedMusicInk = { boxes: [box], classes: ['note'] }
+  run.geometryChildren = () => {
+    materialized++
+    return [element('g', { class: 'note secondary', id: 'virtual-note' }, [
+      { ...element('g'), numericInk: [box] },
+    ])]
+  }
+  // The summary must include every semantic class, including multi-class ones.
+  run.preparedMusicInk.classes = ['note', 'secondary']
+  const verse = element('g', { class: 'verse' }, [element('rect', { y: '20', width: '5', height: '2' })])
+  const root = element('g', {}, [element('g', { class: 'staff' }, [
+    run, element('rect', { class: 'stable ornament', x: '10', width: '2', height: '3' }), verse,
+  ])])
+  const geometry = new SvgGeometry(root, textMeasurer(), true)
+  geometry.compileStatic(root, n => hasClass(n, 'verse'), ['verse'])
+  expect(materialized).toBe(0)
+  const all = geometry.pieces(root)
+  expect(geometry.withoutClasses(root, ['staff-clef'])).toEqual(all)
+  expect(geometry.partitionScaledWithoutClasses(root, ['staff-clef'], 1, ['staff-clef']).selected).toEqual([])
+  expect(materialized).toBe(0)
+  // A matching class or arbitrary predicate must still inspect the semantic
+  // wrappers; summaries are only a proof that a filter cannot match.
+  expect(geometry.withoutClasses(root, ['secondary'])).toEqual(all.slice(1))
+  expect(materialized).toBeGreaterThan(0)
+  expect(geometry.without(root, n => n.attributes.id === 'virtual-note')).toEqual(all.slice(1))
+  expect(geometry.withoutClasses(root, ['ornament'])).toEqual([all[0], all[2]])
 })
