@@ -58,15 +58,15 @@ it('calibrates font loss at the readable and small-font ends of the search range
   expect(cost(720) - cost(696)).toBeCloseTo(.9375)
 })
 
-it('keeps an exceptional row visible instead of averaging its unevenness away', async () => {
+it('uses normalized variance without an extra worst-row penalty', async () => {
   const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
   const few = cost([16, 16, 16, 32])
   expect(few.spacingMeanUnevenCost).toBeCloseTo(.12)
-  expect(few.spacingWorstUnevenCost).toBeCloseTo(.36)
-  expect(few.spacingUnevenCost).toBeCloseTo(.48)
+  expect(few.spacingUnevenCost).toBeCloseTo(.12)
+  expect(cost([16, 16, 16, 32, 16, 16, 16, 32]).spacingUnevenCost).toBeCloseTo(.12)
   const many = cost([...Array<number>(19).fill(16), 32])
-  expect(many.spacingWorstUnevenCost).toBeGreaterThan(.8)
-  expect(many.spacingUnevenCost).toBeGreaterThan(many.spacingMeanUnevenCost * 10)
+  expect(many.spacingUnevenCost).toBeCloseTo(19 / 441)
+  expect(many.spacingUnevenCost).toBe(many.spacingMeanUnevenCost)
 })
 
 it('uses the same comfort rules at each notation scale and both endpoints', async () => {
@@ -100,7 +100,7 @@ it('does not trade an isolated stretched tail for a marginally larger font', asy
   const isolated = cost([...ordinary, ...Array<number>(12).fill(120)])
   const balanced = cost([...ordinary, ...Array<number>(12).fill(42)])
   expect(isolated.spacingExpandedCost).toBeGreaterThan(balanced.spacingExpandedCost)
-  expect(isolated.spacingWorstUnevenCost).toBeGreaterThan(balanced.spacingWorstUnevenCost)
+  expect(isolated.spacingUnevenCost).toBeGreaterThan(balanced.spacingUnevenCost)
   // Averaged expansion alone would choose the isolated row for its font gain.
   expect(isolated.spacingExpandedCost + font(738)).toBeLessThan(balanced.spacingExpandedCost + font(744))
   expect(balanced.spacingCost + font(744)).toBeLessThan(isolated.spacingCost + font(738))
@@ -127,7 +127,7 @@ it('prefers comfortable spacing over uniformly crowded rows at both notation sca
     const comfortable = cost([16 * scale, 20 * scale], 16 * scale, 8 * scale, [12 * scale, 28 * scale])
     expect(crowded.spacingCrampedCost).toBeCloseTo(1 / 9)
     expect(crowded.spacingCost).toBeCloseTo(4 / 9)
-    expect(comfortable.spacingCost).toBeCloseTo(.32)
+    expect(comfortable.spacingCost).toBeCloseTo(.16)
     expect(crowded.spacingCost).toBeGreaterThan(comfortable.spacingCost)
   }
 })

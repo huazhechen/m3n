@@ -42,10 +42,10 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
 
 /** Each normalized interval gets one comfort vote, including zero-cost samples.
  * Uniformity compares the rows' inherited rhythmic gaps, so musical variation
- * inside a row does not masquerade as an uneven line break. Mean + worst row
- * deviation keep an isolated stretched row visible even in a long score. */
+ * inside a row does not masquerade as an uneven line break. Normalized
+ * variance keeps repeated layouts comparable regardless of row count. */
 export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = scoreLayoutConfig.numbered.noteGapCandidates.at(-1)!, _tightGap = referenceGap / 2, rowGaps: readonly number[] = gaps) {
-  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingWorstUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
+  if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
   const lower = referenceGap, upper = referenceGap * 1.5
   let gapSum=0, crampedSum=0, expandedSum=0
   for (const gap of gaps) {
@@ -56,16 +56,15 @@ export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = sco
   const meanRhythmicGap = gapSum / gaps.length
   const meanRowGap = rowGaps.reduce((sum, gap) => sum + gap, 0) / Math.max(1, rowGaps.length)
   const denominator = Math.max(Number.EPSILON, meanRowGap) ** 2
-  let deviationSum=0,spacingWorstUnevenCost=0
+  let deviationSum=0
   for(const gap of rowGaps) {
     const deviation=(gap-meanRowGap)**2/denominator
     deviationSum+=deviation
-    spacingWorstUnevenCost=Math.max(spacingWorstUnevenCost,deviation)
   }
   const spacingMeanUnevenCost = deviationSum / Math.max(1, rowGaps.length)
-  const spacingUnevenCost = spacingMeanUnevenCost + spacingWorstUnevenCost
+  const spacingUnevenCost = spacingMeanUnevenCost
   const spacingCrampedCost = crampedSum / gaps.length
   const spacingExpandedCost = expandedSum / gaps.length
-  return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
+  return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost,
     spacingCost: spacingUnevenCost + 4 * spacingCrampedCost + spacingExpandedCost }
 }
