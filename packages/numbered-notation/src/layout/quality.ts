@@ -44,9 +44,9 @@ export function scoreNumberedCost(width: number, densities: readonly number[]) {
  * Uniformity compares the rows' inherited rhythmic gaps, so musical variation
  * inside a row does not masquerade as an uneven line break. Normalized
  * variance keeps repeated layouts comparable regardless of row count. */
-export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = scoreLayoutConfig.numbered.noteGapCandidates.at(-1)!, _tightGap = referenceGap / 2, rowGaps: readonly number[] = gaps) {
+export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = scoreLayoutConfig.numbered.noteGapCandidates.at(-1)!, _tightGap = referenceGap / 2, rowGaps: readonly number[] = gaps, comfort?: { minimum: number; maximum: number }) {
   if (!gaps.length) return { meanRhythmicGap: 0, spacingUnevenCost: 0, spacingMeanUnevenCost: 0, spacingCrampedCost: 0, spacingExpandedCost: 0, spacingCost: 0 }
-  const lower = referenceGap, upper = referenceGap * 1.5
+  const lower = comfort?.minimum ?? referenceGap, upper = comfort?.maximum ?? referenceGap * 1.5
   let gapSum=0, crampedSum=0, expandedSum=0
   for (const gap of gaps) {
     gapSum+=gap

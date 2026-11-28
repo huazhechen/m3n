@@ -46,9 +46,10 @@ export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio
 }
 
 /** Inter-system policy only: measured music, lyrics, headers and attachments
- * retain their measured geometry. Both notations use the shared numbered M. */
+ * retain their measured geometry. Numbered spacing follows M; staff spacing follows S. */
 export type ScoreVerticalSpacing = { minimum: number; comfortable: number; maximum: number }
-export function scoreVerticalSpacing(_notation: 'numbered' | 'staff' = 'numbered'): ScoreVerticalSpacing {
+export function scoreVerticalSpacing(notation: 'numbered' | 'staff' = 'numbered'): ScoreVerticalSpacing {
+  if (notation === 'staff') return scoreLayoutConfig.staff.verticalSpacing
   const minimum = scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.minimumRowGapEm
   return { minimum, comfortable: minimum * 1.5, maximum: minimum * 2 }
 }

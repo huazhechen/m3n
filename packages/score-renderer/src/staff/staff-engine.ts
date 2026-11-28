@@ -1,7 +1,7 @@
-import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
-import { element, setNumericPath, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
+import { element, setNumericPath, type Ink, type MeasureText, type XmlNode, SvgGeometry } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
 import { staffCommandPath, staffLinePath, staffLineInk, type StaffNumericPath } from './staff-glyph-primitive.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, appendStaffGlyphInk, staffSignatureAdvance, type StaffGlyph } from './staff-music-font.js'
@@ -18,37 +18,72 @@ export function staffDuration(beats: number) {
 }
 export type StaffMeasureMetrics = {
   start: number; multiRestWidth: number; endInset: number
+  leading?: boolean; closing?: boolean
   ties?: ReadonlyArray<{ start: number; end: number; minimum: number }>
   tieLeading?: number; tieTrailing?: number
-  columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; lyricRows: Array<{ lane: string; left: number; after: number }> }>
+  columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; structural?: boolean; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
-/** Hard rhythmic minima followed only by nonnegative stretching. */
-const spacingBases = new WeakMap<PreparedMeasure, Map<number, {
-  positions: readonly number[]; weights: number[]; total: number; correction: number
+/** Music and visible boundaries use the same hard-spacing solver as numbered notation.
+ * A row's 1S structural prefix is outside this chain and never stretches or scores. */
+const columnSpacings = new WeakMap<StaffMeasureMetrics, Map<number, {
+  columns: SpacingColumn[]; notes: number[]; intervals: ScoreRhythmicInterval[]; minimumWidth: number; stretchWeight: number
 }>>()
-export function staffSpacingPositions(prepared: PreparedMeasure, spacing: number, extra: number) {
-  let variants = spacingBases.get(prepared)
-  if (!variants) { variants = new Map(); spacingBases.set(prepared, variants) }
-  let basis = variants.get(spacing)
-  if (!basis) {
-    const base = staffColumnSpacing(prepared.metrics, spacing)
-    const edgeWeight = (prepared.weights.at(-1) ?? 1) / 2
-    const weights = [edgeWeight, ...prepared.weights.slice(0, -1), edgeWeight]
-    const total = weights.reduce((sum, weight) => sum + weight, 0)
-    const occupied = prepared.metrics.start + base.minimumWidth + staffMusicSize() / 4 + prepared.metrics.endInset
-    basis = { positions: base.positions, weights, total,
-      correction: Math.max(0, staffMinimumAtSpacing(prepared.metrics, spacing) - occupied) }
-    variants.set(spacing, basis)
+function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number) {
+  let variants = columnSpacings.get(metrics)
+  if (!variants) { variants = new Map(); columnSpacings.set(metrics, variants) }
+  const saved = variants.get(spacing)
+  if (saved) return saved
+  const columns: SpacingColumn[] = [], notes: number[] = [], intervals: ScoreRhythmicInterval[] = []
+  const elements: Array<{ left: number; right: number; weight: number; boundary: boolean; structural?: boolean }> = []
+  const neutral = scoreLayoutConfig.numbered.zeroDurationGapRatio
+  if (metrics.leading) {
+    columns.push({ cells: [{ lane: 'music', left: 0, right: 0, before: 0, after: 0 }] })
+    elements.push({ left: 0, right: 0, weight: neutral, boundary: true })
   }
-  const { weights, total } = basis
-  const surplus = Math.max(0, extra) + basis.correction
-  let offset = total > 0 ? surplus * weights[0]! / total : 0
-  const positions = basis.positions.map((position, index) => {
-    const value = position + offset
-    offset += total > 0 ? surplus * weights[index + 1]! / total : 0
-    return value
-  })
-  return positions
+  const head = staffGlyphMetrics('noteheadBlack'), increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
+  for (const [index, column] of metrics.columns.entries()) {
+    notes.push(columns.length)
+    columns.push({ cells: [
+      { lane: 'music', left: index === 0 ? Math.max(column.left, metrics.tieLeading ?? 0) : column.left,
+        right: Math.max(column.after, index + 1 === metrics.columns.length ? metrics.tieTrailing ?? 0 : 0), before: 0, after: 0 },
+      ...(metrics.ties ?? []).flatMap((tie, i) => index === tie.start || index === tie.end
+        ? [{ lane: `tie-${i}`, sparse: true, left: 0, right: index === tie.start ? tie.minimum : 0,
+          before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }] : []),
+      ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
+    ] })
+    elements.push({ left: column.left, right: column.after,
+      weight: Math.max(0, (column.naturalAdvance - (head.right - head.left)) / increment), boundary: false, structural: Boolean(column.structural) })
+  }
+  if (metrics.closing) {
+    columns.push({ cells: [{ lane: 'music', left: metrics.endInset, right: 0, before: 0, after: 0 }] })
+    elements.push({ left: metrics.endInset, right: 0, weight: neutral, boundary: true })
+  }
+  for (let i = 1; i < elements.length; i++) {
+    const left = elements[i - 1]!, right = elements[i]!
+    const weight = left.boundary || right.boundary || right.structural ? neutral : left.weight
+    const half = staffMusicSize() / 4 * spacing * weight / 2
+    const before = columns[i - 1]!.cells[0]!, after = columns[i]!.cells[0]!
+    before.right += half; after.left += half
+    before.afterStretch = weight; after.beforeStretch = weight
+    intervals.push({ start: i - 1, end: i, left: right.left, right: left.right, weight })
+  }
+  const solution = solveScoreSpacing(columns)
+  const result = { columns, notes, intervals, minimumWidth: solution.minimumWidth, stretchWeight: solution.stretchWeight }
+  variants.set(spacing, result)
+  return result
+}
+function staffSpacingSolution(prepared: PreparedMeasure, spacing: number, extra: number) {
+  const base = staffColumnSpacing(prepared.metrics, spacing)
+  const width = staffMinimumAtSpacing(prepared.metrics, spacing) - prepared.metrics.start + Math.max(0, extra)
+  const solution = solveScoreSpacing(base.columns, Math.max(Number.EPSILON, width), true, { minimumOnly: true })
+  return { base, positions: solution.positions }
+}
+export function staffSpacingWeight(prepared: PreparedMeasure) {
+  return staffColumnSpacing(prepared.metrics, style.minimumNoteGap).stretchWeight
+}
+export function staffSpacingPositions(prepared: PreparedMeasure, spacing: number, extra: number) {
+  const { base, positions } = staffSpacingSolution(prepared, spacing, extra)
+  return base.notes.map(index => positions[index]!)
 }
 export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
   const positions = staffSpacingPositions(prepared, spacing, extra)
@@ -56,69 +91,15 @@ export function staffReadingSpacing(prepared: PreparedMeasure, spacing: number, 
     preferredNext: prepared.metrics.columns[index]!.naturalAdvance })))
   return { positions, reading, compressionPenalty: 0 }
 }
-/** Final physical whitespace / shared directional pair weights, in logical px.
- * Boundary springs represent the last event's duration, not a free extra gap. */
+/** Only real adjacent elements vote; no synthesized exterior half-duration samples. */
 export function staffRhythmicSpacing(prepared: PreparedMeasure, spacing: number, extra: number) {
-  const positions = staffSpacingPositions(prepared, spacing, extra)
-  const head = staffGlyphMetrics('noteheadBlack'), headWidth = head.right - head.left
-  const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
-  let gap = 0, weight = 0
-  const gaps: number[] = []
-  for (let i = 0; i + 1 < positions.length; i++) {
-    const durationWeight = Math.max(0, (prepared.metrics.columns[i]!.naturalAdvance - headWidth) / increment)
-    if (!durationWeight) continue
-    const clearance = Math.max(0, positions[i + 1]! - positions[i]! - prepared.metrics.columns[i]!.after - prepared.metrics.columns[i + 1]!.left)
-    gap += clearance
-    weight += durationWeight
-    gaps.push(clearance * STAFF_SCALE / durationWeight)
-  }
-  // The two boundary springs together hold the duration of the final event.
-  const finalWeight = prepared.weights.at(-1) ?? 0
-  if (finalWeight > 0 && positions.length) {
-    const minimum = staffMinimumAtSpacing(prepared.metrics, spacing)
-    const end = minimum + Math.max(0, extra) - prepared.metrics.endInset
-    const leading = Math.max(0, positions[0]!), trailing = Math.max(0, end - prepared.metrics.start - positions.at(-1)! - headWidth)
-    gap += leading + trailing
-    weight += finalWeight
-    // Each boundary is its own half-duration interval. Pooling their
-    // clearances first would let a loose edge conceal a cramped edge.
-    gaps.push(leading * STAFF_SCALE / (finalWeight / 2), trailing * STAFF_SCALE / (finalWeight / 2))
-  }
-  return { gap: gap * STAFF_SCALE, weight, gaps }
+  const { base, positions } = staffSpacingSolution(prepared, spacing, extra)
+  const result = measureScoreRhythmicIntervals(positions, base.intervals)
+  return { gap: result.clearance * STAFF_SCALE, weight: result.weight, gaps: result.gaps.map(gap => gap * STAFF_SCALE) }
 }
 export function staffMinimumAtSpacing(metrics: StaffMeasureMetrics, spacing: number, _reading = false): number {
-  const right = staffColumnSpacing(metrics, spacing).minimumWidth
-  return Math.max(engine.minimumMeasureWidth, metrics.start + right + staffMusicSize() / 4 + metrics.endInset,
+  return Math.max(engine.minimumMeasureWidth, metrics.start + staffColumnSpacing(metrics, spacing).minimumWidth,
     metrics.start + metrics.multiRestWidth + (metrics.multiRestWidth ? metrics.endInset : 0))
-}
-const columnSpacings = new WeakMap<StaffMeasureMetrics, Map<string, ReturnType<typeof solveScoreSpacing>>>()
-function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number, reading = false) {
-  let variants = columnSpacings.get(metrics)
-  if (!variants) { variants = new Map(); columnSpacings.set(metrics, variants) }
-  const key = `${spacing}:${reading}`
-  let solution = variants.get(key)
-  if (!solution) {
-    const ordinaryHead = staffGlyphMetrics('noteheadBlack')
-    const headWidth = ordinaryHead.right - ordinaryHead.left
-    const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
-    solution = solveScoreSpacing(metrics.columns.map((column, index) => {
-      const after = Math.max(0, (column.naturalAdvance - headWidth) / increment)
-      const gap = staffMusicSize() / 4 * spacing
-      // Physical music ink plus the shared pair clearance; lyrics are a
-      // parallel constraint, never an additional rhythmic width.
-      const inkGap = staffMusicSize() / 4 * .2
-      return { cells: [
-        { lane: 'music', left: index === 0 ? Math.max(column.left, metrics.tieLeading ?? 0) : column.left,
-          right: Math.max(column.after, index + 1 === metrics.columns.length ? metrics.tieTrailing ?? 0 : 0) + (index + 1 < metrics.columns.length ? Math.max(inkGap, gap * after) : 0), before: 0, after: 0 },
-        ...(metrics.ties ?? []).flatMap((tie, i) => index === tie.start || index === tie.end
-          ? [{ lane: `tie-${i}`, sparse: true, left: 0, right: index === tie.start ? tie.minimum : 0,
-            before: 0, after: 0, beforeStretch: 0, afterStretch: 0 }] : []),
-        ...column.lyricRows.map(row => ({ lane: row.lane, sparse: true, left: row.left, right: row.after, before: 0, after: 0 })),
-      ] }
-    }))
-    variants.set(key, solution)
-  }
-  return solution
 }
 const keys = ['Cb', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#']
 const fifths = (key: string) => {
@@ -403,11 +384,13 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
   }
   const columns = onsets.map((onset, onsetIndex) => {
     const notes = timed.filter(value => Math.abs(value.onset - onset) < 1e-7)
-    const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
+    const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, structural: false, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
     for (const { note, laneIndex } of notes) {
+      column.structural ||= Boolean(note.signature.width)
       const chord = note.item.chord ? measureText(note.item.chord, scoreLayoutConfig.staff.chord / STAFF_SCALE).width / 2 : 0
-      column.left = Math.max(column.left, note.left, chord)
-      column.after = Math.max(column.after, note.after, chord)
+      column.left = Math.max(column.left, note.left)
+      column.after = Math.max(column.after, note.after)
+      if (chord) column.lyricRows.push({ lane: `harmony-${laneIndex}`, left: chord, after: chord })
       // Ledger rules project past the head. The old generous constant gap
       // hid this ink; rhythmic tightening must reserve the visible rules.
       if (!note.rest) {
@@ -481,20 +464,31 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     if (lastNote && lastEntry!.item.event.tie)
       tieTrailing = Math.max(tieTrailing, ...lastNote.heads.map((_, i) => staffTiePorts(lastNote, i).start + tieMinimum))
   }
-  const startGap = staffMusicSize() / 4
   const joined = Boolean(measure.joinsPreviousRepeat && !first)
-  const start = measure.source.left?.startsWith('rpt') && !joined
-    ? repeatBarOffset(signatures) + staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right + startGap
-    : Math.max(...signatures.map(s => s.width)) + startGap
-      + (joined && signatures.every(s => !s.symbols.length)
-        ? staffMusicSize() / 4 * 1.05 + staffGlyphMetrics('repeatDot').right
-        : !first && signatures.every(s => !s.symbols.length) ? staffMusicSize() / 4 * .05 : 0)
-  const endInset = measure.source.right?.startsWith('rpt') ? staffMusicSize() / 4 * 1.35 - staffGlyphMetrics('repeatDot').left : staffMusicSize() / 4 * (measure.source.right === 'end' ? .55 : measure.source.right === 'dbl' ? .35 : measure.source.right === 'invis' ? 0 : .05)
+  const signatureRight = Math.max(0, ...signatures.flatMap(signature => signature.symbols.map(symbol =>
+    symbol.x + staffGlyphMetrics(symbol.glyph, symbol.size).right)))
+  const opening = joined ? 'rptboth' : measure.source.left
+  const openingX = !joined && opening?.startsWith('rpt') ? repeatBarOffset(signatures) : 0
+  const openingType = opening && opening !== 'invis' ? opening : !first ? measure.previousBar ?? 'single' : 'invis'
+  const barInk = (type: string | undefined, left: boolean) => {
+    if (type === 'invis') return { left: 0, right: 0 }
+    const node = drawStaffBar(type, 0, 0, left)
+    const ink = new SvgGeometry(node, measureText).ink(node)
+    return { left: ink.left, right: ink.right }
+  }
+  // A preceding bar is painted by the previous measure; its rightmost ink
+  // still bounds this measure's first visible interval.
+  const openingInk = barInk(openingType, Boolean(opening && opening !== 'invis'))
+  const prefixRight = Math.max(signatureRight, openingX + openingInk.right)
+  const start = prefixRight + (first ? style.rowStartClearance / STAFF_SCALE : 0)
+  const leading = !first && (signatureRight > 0 || openingType !== 'invis')
+  const closing = measure.source.right !== 'invis'
+  const endInset = closing ? Math.max(0, -barInk(measure.source.right, false).left) : 0
   const multiRestWidth = measure.source.interlude ? (staffMusicSize() / 4 * 5.9) : measure.source.multiRest ? Math.max((staffMusicSize() / 4 * 4.3), measureText(String(measure.source.multiRest), scoreLayoutConfig.staff.restCount / STAFF_SCALE, true).width) + (staffMusicSize() / 4 * 1.6) : 0
   const headWidth = staffGlyphMetrics('noteheadBlack').right - staffGlyphMetrics('noteheadBlack').left
   const increment = staffMusicSize() / 4 * style.spacingIncrementSpaces
   const weights = columns.map(column => Math.max(0, (column.naturalAdvance - headWidth) / increment))
-  return { entries, signatures, beams, metrics: { start, endInset, multiRestWidth, columns, ties, tieLeading, tieTrailing }, onsets, weights }
+  return { entries, signatures, beams, metrics: { start, endInset, leading, closing, multiRestWidth, columns, ties, tieLeading, tieTrailing }, onsets, weights }
 }
 export type StaffNoteAnchor = {
   prepared: PreparedNote; x: number; ys: number[]; headLeft: number; headRight: number; direction: number

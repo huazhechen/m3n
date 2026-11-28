@@ -46,7 +46,7 @@ describe('staff rhythm engraving', () => {
       const drawing = drawStaffMeasure(result, result.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
       const bar = findAll(drawing, node => node.attributes.class === 'staff-bar')[0]!
       const note = result.entries[0]![0]!.notes[0]!
-      expect(note.x - note.prepared.left - geometry.ink(bar).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 - 1e-7)
+      expect(note.x - note.prepared.left - geometry.ink(bar).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 * (first ? 1 : .25) - 1e-7)
       const clef = findAll(drawing, node => node.attributes.class === 'staff-clef')[0]
       if (clef) expect(geometry.ink(bar).left).toBeGreaterThan(geometry.ink(clef).right)
     }
@@ -120,17 +120,19 @@ describe('staff rhythm engraving', () => {
     const drawing = drawStaffMeasure(ordinary, ordinary.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
     const first = ordinary.entries[0]![0]!.notes[0]!, last = ordinary.entries[0]!.at(-1)!.notes[0]!
     const space = staffMusicSize() / 4
-    expect(first.headLeft).toBeGreaterThanOrEqual(space)
+    expect(first.headLeft).toBeGreaterThanOrEqual(.25 * space)
     const bar = drawStaffBar(ordinary.measure.source.right, ordinary.minimum, 0)
-    expect(geometry.ink(bar).left - last.headRight).toBeGreaterThanOrEqual(space / 2 - space * .05)
+    expect(geometry.ink(bar).left - last.headRight).toBeGreaterThanOrEqual(.25 * space - .001)
   })
-  it('preserves a full staff space before the first painted note, rest, accidental and grace group', () => {
+  it('preserves a full staff space after the row signature before notes, rests, accidentals and graces', () => {
     for (const music of ['1 2 3 4', '1# 2 3 4', '1d 2 3 4', '1{ac(6 7)} 2 3 4', '0 2 3 4']) {
       const doc = projectStaffDocument(analyzeM3N(`{4/4}\nN: 1 2 3 4 | ${music} |`).score)
-      const current = createStaffMeasure(doc.measures[1]!, false, false, measureText, .25)
+      const current = createStaffMeasure(doc.measures[1]!, true, false, measureText, .25)
       const drawing = drawStaffMeasure(current, current.minimum, 0)
       const event = findAll(drawing, n => n.attributes.id === current.measure.melody[0]!.id)[0]!
-      expect(new SvgGeometry(drawing, measureText).ink(event).left).toBeGreaterThanOrEqual(staffMusicSize() / 4 - 1e-7)
+      const geometry = new SvgGeometry(drawing, measureText)
+      const signature = findAll(drawing, n => n.attributes.class === 'staff-signature')[0]!
+      expect(geometry.ink(event).left - geometry.ink(signature).right).toBeGreaterThanOrEqual(staffMusicSize() / 4 - .001)
     }
   })
   it('keeps staff reading space independent of digit size and proportional to its own music frame', () => {
@@ -243,7 +245,7 @@ it('keeps measure 32 of Do-Re-Mi clear of its ending repeat at compact and stret
   const measure = projectStaffDocument(analyzeM3N(source).score).measures[31]!
   expect(measure.source.right).toBe('rptend')
   for (const first of [false, true]) for (const extra of [0, 80]) {
-    const result = createStaffMeasure(measure, first, false, measureText, 0.25)
+    const result = createStaffMeasure(measure, first, false, measureText, .8)
     const drawing = drawStaffMeasure(result, result.minimum + extra, 20)
     const geometry = new SvgGeometry(drawing, measureText)
     const stave = result.staves[0]!
@@ -345,13 +347,13 @@ it('retains normal stems for flat beams and bounds shortened leap stems above th
 })
 
 
-it('keeps common beams at the same minimum gap as beam boundaries', () => {
+it('uses the shared beam coefficient inside common beams', () => {
   const result = model('{2/4}\nN: ((5 5 5 5 5 5 5 5)) |||', .8)
   drawStaffMeasure(result, result.minimum, 0)
   const notes = result.entries[0]!.flatMap(entry => entry.notes)
   expect(result.beams.map(beam => beam.notes.length)).toEqual([4, 4])
   const gap = (a: number, b: number) => notes[b]!.headLeft - notes[a]!.headRight
-  expect(gap(1, 2) / gap(3, 4)).toBeCloseTo(1, 8)
+  expect(gap(1, 2) / gap(3, 4)).toBeCloseTo(scoreLayoutConfig.numbered.groupSpacingRatio, 8)
   expect(gap(1, 2) * scoreLayoutConfig.staff.engine.scale).toBeGreaterThan(1)
 })
 
@@ -359,7 +361,8 @@ it('keeps simultaneous voice attacks and beamed columns at the same rhythmic spa
   const document = projectStaffDocument(analyzeM3N('{2/4}\nN: ((1 1 1 1 1 1 1 1)) |||\nB: 1d 2d |||').score)
   const result = createStaffMeasure(document.measures[0]!, true, true, measureText, .25)
   const columns = result.prepared.metrics.columns
-  expect(columns[0]!.naturalAdvance).toBeCloseTo(columns[1]!.naturalAdvance, 8)
+  const head = staffGlyphMetrics('noteheadBlack'), ink = head.right - head.left
+  expect((columns[1]!.naturalAdvance - ink) / (columns[0]!.naturalAdvance - ink)).toBeCloseTo(scoreLayoutConfig.numbered.groupSpacingRatio, 8)
   expect(columns[4]!.naturalAdvance).toBeCloseTo(columns[0]!.naturalAdvance, 8)
 })
 
@@ -411,11 +414,11 @@ describe('grace group engraving', () => {
   })
 })
 
-it('uses the common directional weights without staff beam tightening', async () => {
+it('uses directional weights with the shared beam coefficient', async () => {
   const { staffReadingSpacing } = await import('./staff-engine.js')
   const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |')
   const space = staffMusicSize() / 4
-  expect(result.prepared.metrics.columns[0]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5))
+  expect(result.prepared.metrics.columns[0]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio)
   expect(result.prepared.metrics.columns[4]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2)
   const compressed = staffReadingSpacing(result.prepared, .25, 0)
   const relaxed = staffReadingSpacing(result.prepared, .25, 100)
@@ -429,7 +432,7 @@ it('keeps pair spacing local and independent of unrelated score durations', asyn
   const document = projectStaffDocument(analyzeM3N('{4/4}\nN: ([3333:2]) 3 3 3 | ([3333:2]) 3 3 3 | (3 3) 3 3 3 |').score)
   const preparation = createStaffPreparation(document)
   const result = preparation.measure(document.measures[2]!, false, false, measureText)
-  expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5))
+  expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio)
 })
 
 it.each([.6, 1.8])('uses %s staff spaces as the quarter-note base minimum without compressing', async spacing => {
@@ -437,7 +440,7 @@ it.each([.6, 1.8])('uses %s staff spaces as the quarter-note base minimum withou
   const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |', spacing)
   const positions = staffReadingSpacing(result.prepared, spacing, 0).positions
   const head = staffGlyphMetrics('noteheadBlack'), space = staffMusicSize() / 4
-  expect(positions[1]! - positions[0]! - (head.right - head.left)).toBeCloseTo(spacing * space * Math.sqrt(.5), 8)
+  expect(positions[1]! - positions[0]! - (head.right - head.left)).toBeCloseTo(spacing * space * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio, 8)
   expect(positions[5]! - positions[4]! - (head.right - head.left)).toBeCloseTo(spacing * space, 8)
   expect(staffReadingSpacing(result.prepared, spacing, -100).positions).toEqual(positions)
 })

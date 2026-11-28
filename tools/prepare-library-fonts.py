@@ -28,7 +28,7 @@ source_paths = paths + [plan_path, Path(__file__), assets / 'NotoSansSC-full.ttf
                         assets / 'Bravura.woff2', root / 'packages/numbered-notation/src/font-data.ts']
 inputs = {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
           for p in sorted(source_paths)}
-text = '演唱作词作曲音域：→演奏顺序：目录–' + ''.join(chr(c) for c in range(32, 127))
+text = '演唱作词作曲编音域：→演奏顺序：目录–' + ''.join(chr(c) for c in range(32, 127))
 text += ''.join(path.read_text() for path in paths) + plan['title']
 text += ''.join(section['title'] for section in plan['sections'])
 text += ''.join(entry['title'] for entry in plan['entries'])

@@ -35,7 +35,7 @@ it('shares the original Medium face between score numbers and Latin text', async
 
 it('includes generated header labels in every score subset', () => {
   for (const font of CJK_FONTS.filter(font => font.file !== 'NotoSansSC-full.ttf')) {
-    for (const char of new Set('演唱作词作曲音域：→演奏顺序：')) {
+    for (const char of new Set('演唱作词作曲编音域：→演奏顺序：')) {
       expect(font.characters, `${font.file}: ${char}`).toContain(char)
     }
   }

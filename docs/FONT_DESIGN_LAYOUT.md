@@ -27,3 +27,5 @@ python3 tools/run-low-memory.py node tools/review-numbered-widths.mjs
 所有单曲及共享中文子集同时覆盖渲染器生成的固定谱头文字，包括“演奏顺序：”。字体预加载、准备和生成使用相同文字覆盖范围；没有演奏顺序时不测量这段前缀，避免独立作品因不可见文字而报缺字。
 
 五线谱回归使用`node tools/verify-staff-font-design.mjs`，支持`--webkit-executable=路径`。它在Chromium／WebKit的桌面及平板模拟中禁止选宽过程调用Canvas文字测量，并逐项比较候选评分与完整数值几何，再单独验收实际SVG墨迹。基本功、土耳其进行曲、大谱表谱例共12例通过，分别自动选690px／3页、588px／2页、534px／1页，无碰撞或越界。修改前本地Chromium及Linux WebKit均选基本功612px／4页；修改后均选690px／3页，与用户iOS Safari报告的选宽页数一致，但没有复现旧版真实iOS测量过程，不能据此断言690与612的原始差异已完全定位。S=7.5、M=24及所有间距参数保持不变。
+
+后续可见间隔规则统一后，最新五线谱断行与验证结果见[五线谱可见间隔统一](STAFF_BOUNDARY_SPACING.md)；上文690px／3页等数据属于切换字体设计度量时的历史结果。
