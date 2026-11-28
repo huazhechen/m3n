@@ -4,6 +4,10 @@ export type LibraryResourceProgress = { completed: number; total: number; instal
 export type LibraryResourceOptions = { sourcesOnly?: boolean; signal?: AbortSignal; onProgress?: (progress: LibraryResourceProgress) => void }
 
 async function inflate(data: Uint8Array): Promise<Uint8Array> {
+  if (typeof DecompressionStream !== 'function') {
+    const { gunzipSync } = await import('fflate')
+    return gunzipSync(data)
+  }
   const stream = new Blob([Uint8Array.from(data)]).stream().pipeThrough(new DecompressionStream('gzip'))
   return new Uint8Array(await new Response(stream).arrayBuffer())
 }

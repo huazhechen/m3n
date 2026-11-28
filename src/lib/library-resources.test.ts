@@ -17,7 +17,12 @@ function fixture() {
   return { source, font, descriptors }
 }
 
-it('downloads both packages concurrently once, reports bytes and reuses all TTF bytes and sources', async () => {
+it.each(['native', 'fallback'])('downloads both packages once using %s gzip decoding and reuses all TTF bytes and sources', async mode => {
+  const NativeDecompressionStream = DecompressionStream
+  const nativeDecompression = vi.fn(function (format: CompressionFormat) {
+    return new NativeDecompressionStream(format)
+  })
+  vi.stubGlobal('DecompressionStream', mode === 'fallback' ? undefined : nativeDecompression)
   const { source, font, descriptors } = fixture()
   const requested: string[] = []
   let finishSources!: () => void
@@ -39,6 +44,7 @@ it('downloads both packages concurrently once, reports bytes and reuses all TTF 
   expect(fonts.register.mock.calls[0][0].map((font: { data: Uint8Array }) => font.data.length)).toEqual([12, 12, 12])
   expect(progress).toHaveBeenLastCalledWith({ completed: source.length + font.length, total: source.length + font.length, installing: false })
   expect(progress.mock.calls.some(([p]) => p.installing)).toBe(true)
+  expect(nativeDecompression).toHaveBeenCalledTimes(mode === 'native' ? 2 : 0)
 })
 
 it('cancels only the waiting export while a reader keeps the shared downloads', async () => {
@@ -79,6 +85,20 @@ it('rejects a truncated package before registering any fonts', async () => {
   const { source, font, descriptors } = fixture()
   vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(Uint8Array.from(url === descriptors.sources.url ? source : font.subarray(0, -1)))))
   await expect(createLibraryResources(descriptors).prepare()).rejects.toThrow('长度不一致')
+  expect(fonts.register).not.toHaveBeenCalled()
+})
+
+it('allows retrying a failed gzip decode when native decompression is unavailable', async () => {
+  vi.stubGlobal('DecompressionStream', undefined)
+  const { source, descriptors } = fixture()
+  const invalid = new Uint8Array(source.length)
+  vi.stubGlobal('fetch', vi.fn()
+    .mockResolvedValueOnce(new Response(invalid))
+    .mockResolvedValueOnce(new Response(Uint8Array.from(source))))
+  const library = createLibraryResources(descriptors)
+  await expect(library.source('one.m3n')).rejects.toThrow()
+  expect(await library.source('one.m3n')).toBe('first source')
+  expect(fetch).toHaveBeenCalledTimes(2)
   expect(fonts.register).not.toHaveBeenCalled()
 })
 
