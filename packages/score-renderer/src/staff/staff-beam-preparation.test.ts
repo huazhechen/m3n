@@ -22,6 +22,14 @@ it('reuses only direction-invariant measure preparation and preserves fresh geom
       const choices = new Map(groups.filter((_, index) => mask & (1 << index)).map(group => [group.id, -group.direction]))
       const shared = preparation.withBeamDirections(choices, document), fresh = createStaffPreparation(document, choices)
       expect(shared.measure(other, first, false, measure)).toBe(untouched)
+      const variant = shared.measure(item, first, false, measure)
+      expect(variant.metrics).toBe(baseline.metrics)
+      expect(variant.signatures).toBe(baseline.signatures)
+      for (const [laneIndex, lane] of variant.entries.entries()) for (const [entryIndex, entry] of lane.entries())
+        for (const [noteIndex, note] of entry.notes.entries()) {
+          const original = baseline.entries[laneIndex]![entryIndex]!.notes[noteIndex]!
+          if (note.direction === original.direction) expect(note).toBe(original)
+        }
       if (mask === 0) expect(shared.measure(item, first, false, measure)).toBe(baseline)
       for (const extra of [0, 37.12345]) {
         const a = createStaffMeasure(item, first, false, measure, .6, 130, shared)
@@ -49,4 +57,41 @@ it('rebuilds incoming-tie context when the supplied preparation was not bound to
   const expected = createStaffPreparation(document, choices).measure(item, true, false, measure)
   expect(actual.beams.some(beam => beam.flexible)).toBe(false)
   expect(actual).toEqual(expected)
+})
+
+
+it.each([
+  '{key=G}{4/4}\nN: ((7 1e 7 1e)) 3{tip} (4 5) 6 | ((6 7 6 7)) 1 2 3 |\nL: 啊 啊 啊 啊 啊 啊 啊 啊',
+  '{4/4}\nN: ((7 1e 7 1e)) 2 {key=G} 3 4 |\nB: ((7d 1 7d 1)) 2d 3d 4d |',
+  '{4/4}\nN: ((6# 7 6# 7)) ([123:2]) 4{ac(5 6)} 5 |',
+])('matches full preparation when flexible direction views share mixed musical inputs: %s', source => {
+  const document = projectStaffDocument(analyzeM3N(source).score), measure = textMeasurer()
+  const task = createStaffPreparation(document)
+  let tested = 0
+  for (const item of document.measures) for (const first of [false, true]) {
+    const base = task.measure(item, first, document.hasBass, measure)
+    const groups = base.beams.filter(beam => beam.flexible).map(beam => {
+      const note = base.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+      return { id: note.item.id, direction: note.direction }
+    })
+    for (let mask = 0; mask < 2 ** groups.length; mask++) {
+      const choices = new Map(groups.filter((_, index) => mask & (1 << index)).map(group => [group.id, -group.direction]))
+      const actual = task.withBeamDirections(choices, document)
+      // Initial non-default preparation keeps the original complete pipeline.
+      const reference = createStaffPreparation(document, choices)
+      const descriptor = actual.measure(item, first, document.hasBass, measure)
+      expect(descriptor).toEqual(reference.measure(item, first, document.hasBass, measure))
+      expect(descriptor.metrics).toBe(base.metrics)
+      for (const spacing of [.6, 1.8]) {
+        const a = createStaffMeasure(item, first, document.hasBass, measure, spacing, 171.234, actual)
+        const b = createStaffMeasure(item, first, document.hasBass, measure, spacing, 171.234, reference)
+        const an = drawStaffMeasure(a, a.minimum + 73.12345, -19.3333, false, true)
+        const bn = drawStaffMeasure(b, b.minimum + 73.12345, -19.3333)
+        expect(xml(an)).toBe(xml(bn))
+        expect(new SvgGeometry(an, measure).pieces(an)).toEqual(new SvgGeometry(bn, measure).pieces(bn))
+      }
+      if (mask) tested++
+    }
+  }
+  expect(tested).toBeGreaterThan(0)
 })

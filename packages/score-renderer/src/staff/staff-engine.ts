@@ -207,15 +207,15 @@ export function createStaffPreparation(document?: StaffDocument, beamDirections:
       previous = entry
     }
   }
-  type Family = { base: PreparedMeasure; beams?: Array<{ id: string; direction: number }>; variants: Map<string, PreparedMeasure> }
+  type Family = { base: PreparedMeasure; beams?: Array<{ id: string; direction: number; notes: PreparedNote[] }>; variants: Map<string, PreparedMeasure> }
   const measures = new WeakMap<StaffMeasure, Map<string, Family>>()
   const defaults = new Map<string, number>()
   const lyricAttributes = new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts = new Map<string, StaffLyricText>()
-  const view = (directions: ReadonlyMap<string, number>): StaffPreparation => ({
+  const view = (directions: ReadonlyMap<string, number>, reuseBase = false): StaffPreparation => ({
     attachmentGap, lyricAttributes, lyricTexts,
     // A legacy caller may supply an unbound preparation, or one made for
     // another document. Preserve fresh-trial incoming-tie semantics there.
-    withBeamDirections: (next, source) => source === document ? view(next) : createStaffPreparation(source, next),
+    withBeamDirections: (next, source) => source === document ? view(next, true) : createStaffPreparation(source, next),
     measure(measure, first, hasBass, measureText) {
       let families = measures.get(measure)
       if (!families) { families = new Map(); measures.set(measure, families) }
@@ -229,8 +229,9 @@ export function createStaffPreparation(document?: StaffDocument, beamDirections:
       // Only flexible beam IDs of this measure affect preparation. Changes
       // elsewhere in the row can share this exact immutable descriptor.
       family.beams ??= family.base.beams.filter(beam => beam.flexible).map(beam => {
-        const note = family!.base.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
-        return { id: note.item.id, direction: note.direction }
+        const lane = family!.base.entries[beam.lane]!.flatMap(entry => entry.notes)
+        const notes = beam.indices.map(index => lane[index]!), note = notes[0]!
+        return { id: note.item.id, direction: note.direction, notes }
       })
       let changed = false
       const choices = family.beams.map(beam => {
@@ -242,7 +243,21 @@ export function createStaffPreparation(document?: StaffDocument, beamDirections:
       const variant = choices.join(':')
       let prepared = family.variants.get(variant)
       if (!prepared) {
-        prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, directions)
+        if (reuseBase && choices.every(direction => direction === 1 || direction === -1)) {
+          // Flexible groups contain one head per note and no grace, marks or
+          // tie ports. Flipping changes only direction: column extents,
+          // signatures, lyrics and rhythm stay exactly the same. Share those
+          // immutable inputs and the shared solver's prepared spacing chain.
+          const replacements = new Map<PreparedNote, PreparedNote>()
+          family.beams.forEach((beam, index) => {
+            const direction = choices[index]!
+            if (direction !== beam.direction) for (const note of beam.notes)
+              replacements.set(note, { ...note, direction })
+          })
+          prepared = { ...family.base, entries: family.base.entries.map(lane => lane.map(entry =>
+            entry.notes.some(note => replacements.has(note))
+              ? { ...entry, notes: entry.notes.map(note => replacements.get(note) ?? note) } : entry)) }
+        } else prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, directions)
         // Bound task retention even for a measure with many flexible groups.
         // Eviction only recomputes a descriptor; it never removes a trial.
         if (family.variants.size >= 16) family.variants.delete(family.variants.keys().next().value!)
