@@ -1,4 +1,5 @@
-import { scoreWidthPolicyState, compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scorePageCost } from '@m3n/numbered-notation/layout-quality'
+import { scoreWidthPolicyState, compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreCorePageLowerBound, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -136,23 +137,48 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     }
     return false
   }
-  const layout = (candidateWidth: number): Layout => {
+  const pendingLayouts = new Map<number, ReturnType<typeof prepareLayout>>()
+  const prepareLayout = (candidateWidth: number, preflight = false) => {
     validate(candidateWidth)
-    const saved = layouts.get(candidateWidth)
-    if (saved) return saved
     signal?.throwIfAborted()
     const innerWidth = candidateWidth - 2 * margin
     const gutter = projected.hasBass ? scoreLayoutConfig.staff.bassGutter : scoreLayoutConfig.staff.singleGutter
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
-    const widthBound = scoreWidthPolicyState().widthBound
     let bestPageCount = Infinity
     let incumbent: { pages: number; cost: number; spacing: number } | undefined
-    const trials = scoreLayoutConfig.staff.noteGapCandidates.flatMap(spacing => {
+    let horizontalLowerBound = Infinity, rowCount = Infinity
+    const lowerCosts: (() => number)[] = []
+    let lowerBound: number | undefined
+    const completions = scoreLayoutConfig.staff.noteGapCandidates.map(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const chosenEnds = planScoreTier(graph.candidates, scoreTierDensityTarget(spacing, scoreLayoutConfig.staff.noteGapCandidates))
       if (!chosenEnds) throw new Error('换行候选无法覆盖完整内容。')
+      const preparedLines = graph.makeLines(chosenEnds)
+      rowCount = Math.min(rowCount, preparedLines.length)
+      if (preflight) {
+      const horizontal = qualityFor(candidateWidth, preparedLines).totalCost
+      horizontalLowerBound = Math.min(horizontalLowerBound, horizontal)
+      lowerCosts.push(() => {
+      const envelopes = preparedLines.map(line => line.measures.map(member => lowerEnvelopeFor(member.measure)))
+      const blocks = envelopes.map(members => {
+        const coreAbove = Math.max(...members.map(e => e.coreAbove)), coreBelow = Math.max(...members.map(e => e.coreBelow))
+        const envelope = { coreAbove, coreBelow,
+          extraAbove: Math.max(...members.map(e => e.coreAbove + e.extraAbove)) - coreAbove,
+          extraBelow: Math.max(...members.map(e => e.coreBelow + e.extraBelow)) - coreBelow,
+          hasLyrics: members.some(e => e.hasLyrics) }
+        return { ...scoreEnvelopeBlock(envelope, 1, staffMusicCentre), resolvedInk: false,
+          coreGapScale: envelope.hasLyrics ? scoreLyricGapScale(minimumGap) : 1 }
+      })
+      const pages = scoreCorePageLowerBound([staffHeaderBlock(header), ...blocks], {
+        pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, vertical, headerGap,
+      })
+      return horizontal + scorePageCost(pages)
+      })
+      }
+      return () => {
+      const widthBound = scoreWidthPolicyState().widthBound
       // Preserve the last occurrence of a tuplet parent across fragments, just
       // as the complete line scan does, without rescanning the score per row.
       const eventMeasures = new Map<string, number>()
@@ -195,7 +221,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }
         return system
       }
-      const linePlans = new Map<string, StaffLine[]>()
+      const linePlans = new Map<string, StaffLine[]>([[chosenEnds.join(':'), preparedLines]])
       const linesFor = (ends: number[]) => {
         const key = ends.join(':')
         let lines = linePlans.get(key)
@@ -240,7 +266,12 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         rowStart = end; return system
       })
       return [{ spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines, plan.verticalCost), pages: plan.pages, placement: 'placement' in plan ? plan.placement : undefined }]
+      }
     })
+    return { get lowerBound() { return lowerBound ??= Math.min(...lowerCosts.map(lower => lower())) }, horizontalLowerBound, rowCount,
+      complete: (): Layout => {
+      const widthBound = scoreWidthPolicyState().widthBound
+      const trials = completions.flatMap(complete => complete())
     if (!trials.length && widthBound)
       throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
     if (!trials.length) throw new Error('五线谱间距候选为空。')
@@ -261,8 +292,13 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     }
     const selected: Layout = { systems, pages, paginationError, furniture: [], header, lines: trial.lines, spacing: trial.spacing, quality: trial.quality, engraved: true }
     layouts.set(candidateWidth, selected)
+    pendingLayouts.delete(candidateWidth)
     return selected
+      },
+    }
   }
+  const layout = (candidateWidth: number): Layout => layouts.get(candidateWidth)
+    ?? (pendingLayouts.get(candidateWidth) ?? prepareLayout(candidateWidth)).complete()
   const publishGutter = (result: Layout) => {
     if (result.gutterPublished) return
     result.gutterPublished = true
@@ -377,6 +413,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     /** Continuous geometry without generating or mounting an SVG candidate. */
     continuousHeight(coreGap = settings.coreGap) {
       return outputPages(layout(width), false, width, coreGap)[0]!.height + 2 * margin
+    },
+    prepareMeasurement(candidateWidth = width) {
+      const prepared = prepareLayout(candidateWidth, true)
+      pendingLayouts.set(candidateWidth, prepared)
+      return { get lowerBound() { return prepared.lowerBound }, horizontalLowerBound: prepared.horizontalLowerBound, rowCount: prepared.rowCount }
     },
     /** Search only needs scalar ranking metadata, without walking SVG trees. */
     measurementInfo(candidateWidth = width) {

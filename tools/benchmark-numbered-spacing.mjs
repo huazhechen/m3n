@@ -31,6 +31,7 @@ const scores = ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join
 assert(scores.length, 'No scores selected')
 const rendererHash = createHash('sha256').update(readFileSync(join(bundle, 'bundle/bundle.js'))).digest('hex')
 const productionPolicy=process.argv.includes('--production-policy')
+assert(!process.argv.includes('--prepared-search') || productionPolicy, '--prepared-search requires --production-policy so prepared candidates are actually used')
 const auditLayout = process.argv.includes('--audit')
 const prune = process.argv.includes('--prune')
 const experimentalInkBin = Number(argument('proxy-bin') ?? 0)
@@ -70,6 +71,7 @@ if (checkpoint) {
   assert.equal(checkpoint.rendererHash, rendererHash, 'Cannot resume after changing the renderer')
   assert.equal(checkpoint.auditLayout, auditLayout, 'Cannot resume with a different ink audit setting')
   assert.equal(checkpoint.prune, prune, 'Cannot resume with a different pruning setting')
+  assert.equal(Boolean(checkpoint.preparedWidthSearch),process.argv.includes('--prepared-search'),'Cannot resume with a different preparation strategy')
   assert.equal(checkpoint.experimentalInkBin ?? 0, experimentalInkBin, 'Cannot resume with different ink bins')
   assert.equal(checkpoint.experimentalWidthBin ?? 0, experimentalWidthBin, 'Cannot resume with different geometry width bins')
   assert.equal(checkpoint.experimentalPageCostPasses ?? 0, experimentalPageCostPasses, 'Cannot resume with a different page cost pass budget')
@@ -94,6 +96,7 @@ if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
 if (experimentalWidthBin) report.experimentalWidthBin = experimentalWidthBin
 report.experimentalPageCostPasses = experimentalPageCostPasses
 report.productionPolicy=productionPolicy
+report.preparedWidthSearch=process.argv.includes('--prepared-search')
 report.experimentalEndpointFloor=process.argv.includes('--endpoint-floor')
 report.experimentalSingleTier=process.argv.includes('--single-tier')
 report.experimentalEqualTier=process.argv.includes('--equal-tier')
@@ -136,6 +139,7 @@ const openBrowser=async()=>{
   latestFontPreparationMs = performance.now() - fontStarted
   report.fontPreparationMs=(report.fontPreparationMs ?? 0)+latestFontPreparationMs
   await page.evaluate(enabled=>{globalThis.__m3nProductionWidthPolicy=enabled},productionPolicy)
+  await page.evaluate(enabled=>{globalThis.__m3nPreparedWidthSearch=enabled},process.argv.includes('--prepared-search'))
   await page.evaluate(enabled => { globalThis.__m3nTraceWidths = enabled }, process.argv.includes('--trace-widths'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalRowReuse = enabled }, process.argv.includes('--row-reuse'))
   await page.evaluate(enabled => { globalThis.__m3nExperimentalGreedyCeiling = enabled }, process.argv.includes('--fast-ceiling'))

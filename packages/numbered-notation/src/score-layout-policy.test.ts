@@ -51,3 +51,19 @@ it('keeps shared gaps and type fixed when S changes, while staff geometry scales
     expect(staff.music).toBeCloseTo(4 * staff.space)
   } finally { staff.space = previous }
 })
+
+it('uses linear short staff durations and square-root long durations with directed geometric pairs', () => {
+  const weight = scoreLayoutConfig.staff.rhythmicWeight
+  for (const duration of [.0625, .125, .25, .5, 1]) {
+    expect(weight(duration)).toBe(duration)
+    expect(scoreRhythmicGapWeight(duration, duration, 1, .75, weight)).toBeCloseTo(duration)
+  }
+  for (const duration of [1.5, 2, 4, 8]) {
+    expect(weight(duration)).toBe(Math.sqrt(duration))
+    expect(scoreRhythmicGapWeight(duration, duration, 1, .75, weight)).toBeCloseTo(Math.sqrt(duration))
+  }
+  expect(scoreRhythmicGapWeight(.5, 2, 1, .75, weight)).toBeCloseTo(.5 ** .75 * Math.sqrt(2) ** .25)
+  expect(scoreRhythmicGapWeight(2, .5, 1, .75, weight)).toBeCloseTo(Math.sqrt(2) ** .75 * .5 ** .25)
+  expect(scoreRhythmicGapWeight(undefined, undefined, 1, .75, weight)).toBe(1)
+  expect(scoreRhythmicGapWeight(.5, .5, .75, .5)).toBeCloseTo(Math.sqrt(.5) * .75)
+})

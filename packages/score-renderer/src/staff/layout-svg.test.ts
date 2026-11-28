@@ -185,3 +185,28 @@ it('reuses compiled pieces only for unchanged ancestor transforms and immutable 
  publicPieces[0]!.left=-999
  expect(copied.pieces(root)[0]!.left).not.toBe(-999)
 })
+
+
+it('streams scaled partitions with exact occurrence identities and live transforms', () => {
+  const shared = Object.freeze({ left: -2, right: 5, top: 0, bottom: 10 })
+  const omitted = element('g', { class: 'ending' }), music = element('g', {})
+  omitted.numericInk = music.numericInk = [shared]
+  const root = element('g', {}, [omitted, music])
+  const geometry = new SvgGeometry(root, textMeasurer(), true)
+  for (const offset of [0, 15, -7]) {
+    if (offset) translate(root, offset, 4)
+    geometry.compileStatic(root, n => hasClass(n, 'ending'), ['ending'])
+    const original = geometry.partitionWithoutClasses(root, ['ending'])
+    const expected = original.all.map(box => ({ left: box.left * .75, right: box.right * .75,
+      top: box.top * .75, bottom: box.bottom * .75 }))
+    const actual = geometry.partitionScaledWithoutClasses(root, ['ending'], .75)
+    expect(actual.all).toEqual(expected)
+    expect(actual.without).toEqual([expected[1]])
+    expect(actual.boundary).toEqual([expected[0]])
+    expect(actual.all[0]).not.toBe(actual.all[1])
+    expect(actual.all[1]).toBe(actual.without[0])
+    expect(actual.all[0]).toBe(actual.boundary[0])
+    actual.all[0]!.left = -999
+    expect(geometry.partitionScaledWithoutClasses(root, ['ending'], .75).all).toEqual(expected)
+  }
+})

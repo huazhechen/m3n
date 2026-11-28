@@ -12,7 +12,7 @@ import { captureNativeRowHorizontal, restoreNativeRowHorizontal, captureNativeRo
 import { nativeRowGeometry, nativeRowCoreLowerBound } from './native-row-geometry.js'
 import { scoreVerticalSpacing, scoreFixedVerticalSpacing } from './layout/policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
-import { scoreNumberedFontCost } from './layout/quality.js'
+import { scoreNumberedFontCost, scorePageCost } from './layout/quality.js'
 import { nativeLayoutQuality } from './native-quality.js'
 import { fontDesignMeasurer } from './font-design.js'
 import { hasPassKeys } from '@m3n/notation'
@@ -113,6 +113,13 @@ export function measureNativeLayout(document: ScoreDocument, supplied: NativeRen
 
 function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptions, timings: Record<string, number> | undefined,
   minimumQuality: number | undefined, maximumPageCount: number | undefined, measurement: boolean): NativeLayout {
+  const prepared = prepareNativeLayoutSelection(document, supplied, timings, minimumQuality, maximumPageCount, measurement)
+  try { return prepared.complete() } finally { prepared.dispose() }
+}
+
+/** Horizontal plans retain unplaced immutable projections until completed. */
+function prepareNativeLayoutSelection(document: ScoreDocument, supplied: NativeRenderOptions, timings: Record<string, number> | undefined,
+  minimumQuality: number | undefined, maximumPageCount: number | undefined, measurement: boolean) {
   validate(supplied)
   // Every component of totalCost is nonnegative, so no layout can exceed 1.
   if (minimumQuality !== undefined && minimumQuality > 1)
@@ -133,6 +140,12 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
     return {minimumNoteGap, trial: prepareNativeScoreAtGap(document,
       {...supplied, paged: true, coreGap: undefined, minimumNoteGap, lineDensityTarget}, timings, preparation, undefined, undefined, undefined, measurement)}
   })
+  return {
+    rowCount: Math.min(...trials.map(({trial}) => trial.systemCount)),
+    horizontalLowerBound: Math.min(...trials.map(({trial}) => trial.tierTotalCost)),
+    lowerBound: () => Math.min(...trials.map(({trial}) => trial.tierTotalCost + scorePageCost(trial.fixedPageFloor()))),
+    dispose: () => releaseNativeLyricHeights(supplied.textMeasurer ?? preparation.runtimeMeasurer?.value),
+    complete: (): NativeLayout => {
   if (supplied.pageConstrainedBreaks !== true && !supplied.numericLayout && minimumQuality !== undefined && trials.every(({ trial }) => trial.score < minimumQuality))
     throw Object.assign(new Error('Width cannot improve the horizontal total cost'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
   if(supplied.numericLayout && maximumPageCount!==undefined) {
@@ -200,8 +213,26 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
   if (!measurement) repaginateNativeLayout(selected, supplied.paged, supplied.coreGap)
   if (timings) timings.repaginationMs = (timings.repaginationMs ?? 0) + performance.now() - repaginationStarted
   return selected
-  } finally {
+    },
+  }
+  } catch (error) {
     releaseNativeLyricHeights(supplied.textMeasurer ?? preparation.runtimeMeasurer?.value)
+    throw error
+  }
+}
+
+export function prepareNativeMeasurement(document: ScoreDocument, supplied: NativeRenderOptions, timings?: Record<string, number>) {
+  const prepared = prepareNativeLayoutSelection(document, supplied, timings, undefined, undefined, true)
+  return {
+    lowerBound: prepared.lowerBound,
+    horizontalLowerBound: prepared.horizontalLowerBound,
+    rowCount: prepared.rowCount,
+    dispose: prepared.dispose,
+    complete: () => {
+      const layout = prepared.complete()
+      return { quality: nativeLayoutQuality(layout), pageCount: layout.pages.length, systemCount: layout.systems.length,
+        width: layout.options.width, margin: layout.margin, pagination: layout.pagination }
+    },
   }
 }
 
@@ -297,13 +328,16 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const available = options.width - 2 * margin
   const headerStarted = timings ? performance.now() : 0
   if (preparation) preparation.commonHeader ??= new Map()
+  // A deferred candidate owns this width's header cache even after the task
+  // prepares another width. Dynamic gap fits must not consult its new cache.
+  const headerPreparation = preparation?.header
   const headerKey=`geometry:${minimumNoteGap}:${scoreVerticalSpacing().minimum}`
-  let header=preparation?.header.get(headerKey) as ReturnType<typeof nativeHeaderGeometry>|undefined
-  if(!header){header=nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeHeaderGap(), options, preparation?.header, preparation?.commonHeader);preparation?.header.set(headerKey,header)}
+  let header=headerPreparation?.get(headerKey) as ReturnType<typeof nativeHeaderGeometry>|undefined
+  if(!header){header=nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeHeaderGap(), options, headerPreparation, preparation?.commonHeader);headerPreparation?.set(headerKey,header)}
   recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
   const headerAtGap = (gap: number) => nativeHeaderGeometry(headerDocument, options.width, margin, measurer,
-    nativeHeaderGap(gap), options, preparation?.header, preparation?.commonHeader)
+    nativeHeaderGap(gap), options, headerPreparation, preparation?.commonHeader)
   let resolvedHeaderGap: number | undefined
   let resolvedHeader: ReturnType<typeof nativeHeaderGeometry>
   const resolvedHeaderAt = (gap: number) => {
@@ -577,6 +611,15 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     return layout
   }
   return { get pageFloor(){return options.numericLayout ? minimumPages() : 1},
+    fixedPageFloor: () => {
+      let start = 0
+      const blocks = linePlan.ends.map(end => { const block = fixedCoreLowerBound(start, end); start = end; return block })
+      return scoreCorePageLowerBound([...header.blocks, ...blocks], {
+        pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO), margin,
+        gap: options.coreGap ?? scoreVerticalSpacing().minimum,
+        vertical: options.coreGap === undefined ? scoreVerticalSpacing() : scoreFixedVerticalSpacing(options.coreGap), headerGap: nativeHeaderGap(),
+      })
+    },
     canFitPageCeiling: options.numericLayout ? ceiling=>{
       const headers=header.blocks.map(block=>({height:block.height,ink:block.ink}))
       preparation ??= {header:new Map()}

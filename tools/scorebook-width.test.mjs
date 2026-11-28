@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseBestWidth, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
+import { chooseBestWidth, exactScoreWidthPolicy, numberedLayoutScore, WidthSearchPruned, widthCandidates, probeWidthCandidates, selectBestWidth, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 import { packScorebook, optimizeScorebook, reorderForSharing, sharedPreferredWidth, sharedScoreGap, sharedWidthMaximum, sharedWidthCandidates, refineSharedWidths } from './scorebook-packing.mjs'
 
 const fullWidthOrder = [...widthCandidates, ...Array.from({ length: 33 }, (_, index) => 528 + index * 6).filter(width => !widthCandidates.includes(width))]
@@ -729,4 +729,101 @@ test('exact search passes combined-score bounds without reviving legacy page cei
   assert.equal(result.best.width,552)
   assert.equal(result.best.pageCount,2)
   assert.deepEqual(exactScoreWidthPolicy,{})
+})
+
+
+test('prepared exact search retains distant nonmonotonic winners and disposes all horizontal plans', async () => {
+  const measure = async width => ({ width, pageCount: width === 714 ? 1 : 2, rows: 10, outside: [], overlaps: [],
+    totalCost: 2 * ((width - 528) / 192) ** 2 + (width === 714 ? 0 : 3) })
+  const expected = await selectBestWidth(measure)
+  const disposed = [], completed = []
+  const actual = await selectBestWidth(measure, {
+    prune: true, candidatePolicy: exactScoreWidthPolicy,
+    prepareCandidate: async width => ({
+      lowerBound: () => 2 * ((width - 528) / 192) ** 2,
+      complete: async policy => { completed.push([width, policy]); return measure(width) },
+      dispose: () => disposed.push(width),
+    }),
+  })
+  assert.deepEqual(actual.best, expected.best)
+  assert.equal(disposed.length, 33)
+  assert.equal(new Set(disposed).size, 33)
+  assert.equal(new Set(completed.map(([width]) => width)).size, completed.length)
+  assert.equal(completed[0][1], exactScoreWidthPolicy)
+  assert(completed.slice(1).every(([,policy]) => policy.widthBound))
+  assert.deepEqual(actual.renderCache.estimatedSkippedWidths, [])
+})
+
+test('prepared exact search disposes completed and pending plans on cancellation', async () => {
+  const controller = new AbortController(), disposed = []
+  await assert.rejects(selectBestWidth(async width => ({width, pageCount: 2, rows: 10, outside: [], overlaps: [], totalCost: 10}), {
+    prune: true, candidatePolicy: exactScoreWidthPolicy, signal: controller.signal,
+    prepareCandidate: async width => ({ lowerBound: () => 0,
+      complete: async () => { controller.abort(); return { width, pageCount: 1, outside: [], overlaps: [], totalCost: 1 } },
+      dispose: () => disposed.push(width),
+    }),
+  }), { name: 'AbortError' })
+  assert.equal(disposed.length, 33)
+})
+
+
+test('prepared exact search establishes an incumbent before preparing dominated widths', async () => {
+  const events = []
+  const result = await selectBestWidth(() => { throw new Error('Unexpected eager measurement') }, {
+    prune: true, candidatePolicy: exactScoreWidthPolicy,
+    prepareCandidate: async width => {
+      events.push(['prepare', width])
+      return {
+        rowCount: 4,
+        lowerBound: () => 0,
+        complete: async () => {
+          events.push(['complete', width])
+          return { width, pageCount: 1, totalCost: 0, outside: [], overlaps: [] }
+        },
+        dispose: () => events.push(['dispose', width]),
+      }
+    },
+  })
+  assert.equal(result.best.width, 528)
+  assert.deepEqual(events, [['prepare', 528], ['complete', 528], ['dispose', 528]])
+  assert.equal(result.renderCache.preparedWidths, 1)
+  assert.equal(result.renderCache.skippedWidths.length, 32)
+  assert.deepEqual(result.renderCache.estimatedSkippedWidths, [])
+})
+
+
+
+test('prepared exact search refines page bounds only for competitive horizontal plans', async () => {
+  const refined = [], completed = []
+  const result = await selectBestWidth(() => { throw new Error('Unexpected eager measurement') }, {
+    prune: true, candidatePolicy: exactScoreWidthPolicy,
+    prepareCandidate: async width => ({
+      rowCount: 100,
+      horizontalLowerBound: width === 624 ? .5 : 3,
+      lowerBound: () => { refined.push(width); return width === 624 ? .6 : 3 },
+      complete: async () => {
+        completed.push(width)
+        return { width, pageCount: 1, totalCost: width === 624 ? .6 : 3, outside: [], overlaps: [] }
+      },
+    }),
+  })
+  assert.equal(result.best.width, 624)
+  assert.deepEqual(refined, [624])
+  assert.deepEqual(completed, [624])
+  assert.equal(result.renderCache.refinedWidths, 1)
+  assert.deepEqual(result.renderCache.estimatedSkippedWidths, [])
+})
+
+
+test('a failed page-bound refinement falls back to the exact candidate', async () => {
+  const result = await selectBestWidth(() => { throw new Error('Unexpected eager measurement') }, {
+    prune: true, candidatePolicy: exactScoreWidthPolicy,
+    prepareCandidate: async width => ({
+      rowCount: 100, horizontalLowerBound: width === 624 ? .5 : 3,
+      lowerBound: () => { throw new Error('Unavailable page bound') },
+      complete: async () => ({ width, pageCount: 1, totalCost: width === 624 ? .6 : 3, outside: [], overlaps: [] }),
+    }),
+  })
+  assert.equal(result.best.width, 624)
+  assert.deepEqual(result.renderCache.estimatedSkippedWidths, [])
 })

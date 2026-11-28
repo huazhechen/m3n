@@ -30,10 +30,18 @@ export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 
 export class WidthSearchPruned extends Error { timings?: Record<string, number | Record<string, number>> }
 export function widthQualityUpperBound(width: number, numbered?: boolean): number
 export function widthCannotWin(width: number, best: Pick<WidthMeasurement, "width" | "totalCost" | "pageCount" | "qualityScore" | "lineDensityVariation" | "lastLineSlack" | "lineStretchPenalty"> | null, minimumPageCount?:number): boolean
-export function probeWidthCandidates(measure: (width: number, best: WidthMeasurement | null, candidatePolicy?:ScoreWidthCandidatePolicy) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; candidatePolicy?:ScoreWidthCandidatePolicy; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
+export type PreparedWidthCandidate = {
+  rowCount?: number
+  horizontalLowerBound?: number
+  lowerBound: () => number
+  complete: (policy: ScoreWidthCandidatePolicy) => WidthMeasurement | Promise<WidthMeasurement>
+  dispose?: () => void
+}
+export type PrepareWidthCandidate = (width: number, policy: ScoreWidthCandidatePolicy) => PreparedWidthCandidate | Promise<PreparedWidthCandidate>
+export function probeWidthCandidates(measure: (width: number, best: WidthMeasurement | null, candidatePolicy?:ScoreWidthCandidatePolicy) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; candidatePolicy?:ScoreWidthCandidatePolicy; prepareCandidate?: PrepareWidthCandidate; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{
   candidates: WidthMeasurement[]
   renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[]; estimatedSkippedWidths:number[]; tierRechecks:number }
 }>
 
-export function selectBestWidth(measure: (width: number, best: WidthMeasurement | null, candidatePolicy?:ScoreWidthCandidatePolicy) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; candidatePolicy?:ScoreWidthCandidatePolicy; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[]; estimatedSkippedWidths:number[]; tierRechecks:number } }>
+export function selectBestWidth(measure: (width: number, best: WidthMeasurement | null, candidatePolicy?:ScoreWidthCandidatePolicy) => Promise<WidthMeasurement>, options?: { signal?: AbortSignal; prune?: boolean; candidatePolicy?:ScoreWidthCandidatePolicy; prepareCandidate?: PrepareWidthCandidate; verify?: (width: number, measurement: WidthMeasurement) => Promise<Partial<WidthMeasurement>> }): Promise<{ candidates: WidthMeasurement[]; best: WidthMeasurement; renderCache: { strategy: string; requests: number; uniqueWidths: number; hits: number; verifiedWidths: number; skippedWidths: number[]; estimatedSkippedWidths:number[]; tierRechecks:number } }>
 export function verifyEstimatedWidthCandidates(candidates: WidthMeasurement[], measure: (width:number)=>WidthMeasurement|Promise<WidthMeasurement>, options?:{signal?:AbortSignal;verifyWidestWhenMultipage?:boolean}):Promise<{best:WidthMeasurement;requests:number;ms:number;verifiedCandidates:WidthMeasurement[];failures:{width:number;error:string}[]}>

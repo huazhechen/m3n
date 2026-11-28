@@ -436,17 +436,10 @@ function finishStaffSystem(node: XmlNode, geometry: SvgGeometry, byClass: (name:
     ink: { left: 0, right: 0, top: 0, bottom: 0 }, core,
     section: Boolean(byClass('reh').length), staffSpacing, hasLyrics: byClass('verse').some(verse => verse.children.length > 0) }
   const materialize = () => {
-    const partition = geometry.partitionWithoutClasses(node, ['mNum', 'staff-clef'])
+    const partition = geometry.partitionScaledWithoutClasses(node, ['mNum', 'staff-clef'], scale)
     // The shared paginator already sees ordinary music ink. Only symbols
     // excluded from row spacing need the separate page-boundary channel.
-    const pieces: Ink[] = [], spacingPieces: Ink[] = [], boundaryPieces: Ink[] = []
-    let spacingIndex = 0
-    for (const p of partition.all) {
-      const scaled = { left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale }
-      pieces.push(scaled)
-      if (p === partition.without[spacingIndex]) { spacingPieces.push(scaled); spacingIndex++ }
-      else boundaryPieces.push(scaled)
-    }
+    const pieces = partition.all, spacingPieces = partition.without, boundaryPieces = partition.boundary
     const edgePieces = ['staff-clef'].filter(kind => byClass(kind).length).flatMap(kind =>
       (() => { const selection = selected(node, child => hasClass(child, kind)); return selection ? geometry.pieces(selection) : [] })()
         .map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale, gap: attachmentGap })))

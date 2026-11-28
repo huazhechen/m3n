@@ -8,7 +8,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v88-exact`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v90-exact`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 function spacingLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -43,7 +43,9 @@ export function chooseBestWidth(candidates) {
 }
 
 /** Cover every 6px interval; explicit estimate policies also record lossy prunes. */
-export async function probeWidthCandidates(measure, { verify, signal, prune = false, candidatePolicy } = {}) {
+export async function probeWidthCandidates(measure, { verify, signal, prune = false, candidatePolicy, prepareCandidate } = {}) {
+  if (prepareCandidate && prune && !verify && candidatePolicy === exactScoreWidthPolicy)
+    return probePreparedWidths(prepareCandidate, { signal, candidatePolicy })
   const candidates = []
   const skippedWidths = []
   const estimatedSkippedWidths = []
@@ -120,6 +122,85 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
   return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
     uniqueWidths: requests-tierRechecks, tierRechecks, hits: 0, verifiedWidths, skippedWidths, estimatedSkippedWidths } }
   } finally { if(!candidatePolicy && singleTier)globalThis.__m3nExperimentalSingleTier=singleTier }
+}
+
+/** Both adapters expose exact horizontal plans and safe combined lower costs.
+ * Heuristics choose order only; every omitted width needs its own proof. */
+async function probePreparedWidths(prepare, { signal, candidatePolicy }) {
+  const pending = [], candidates = [], skippedWidths = []
+  let best = null, requests = 0
+  const bound = () => best ? { width: best.width, quality: numberedLayoutScore(best) } : undefined
+  const cannotWin = item => {
+    if (!best || !Number.isFinite(item.lower)) return false
+    const scale = Math.max(1, Math.abs(item.lower), 1 / numberedLayoutScore(best))
+    const optimistic = 1 / (1 + item.lower - 64 * Number.EPSILON * scale)
+    return optimistic < numberedLayoutScore(best)
+      || optimistic === numberedLayoutScore(best) && item.width >= best.width
+  }
+  const complete = async item => {
+      signal?.throwIfAborted()
+      if (cannotWin(item) || widthCannotWin(item.width, best)) { skippedWidths.push(item.width); return }
+      requests++
+      try {
+        const incumbent = bound()
+        const result = { width: item.width, ...await item.plan.complete(incumbent ? { ...candidatePolicy, widthBound: incumbent } : candidatePolicy) }
+        signal?.throwIfAborted()
+        candidates.push(result)
+        if (safe(result) && (!best || compareWidthMeasurements(result, best) < 0)) best = result
+      } catch (error) {
+        signal?.throwIfAborted()
+        if (error instanceof WidthSearchPruned) skippedWidths.push(item.width)
+        else candidates.push({ width: item.width, error: error.message })
+      }
+    }
+  try {
+    for (let width = widthMinimum; width <= widthMaximum; width += widthStep / 4) {
+      signal?.throwIfAborted()
+      if (widthCannotWin(width, best)) { skippedWidths.push(width); continue }
+      let plan, item
+      try {
+        plan = await prepare(width, candidatePolicy)
+        const refined = plan.horizontalLowerBound === undefined
+        const lower = refined ? plan.lowerBound() : plan.horizontalLowerBound
+        item = { width, plan, lower, refined, completed: false }
+        pending.push(item)
+      } catch (error) {
+        plan?.dispose?.()
+        signal?.throwIfAborted()
+        candidates.push({ width, error: error.message })
+        continue
+      }
+      // Short plans establish an incumbent immediately; longer scores use
+      // the best-first queue. Priority never justifies an omission.
+      if (width === widthMinimum && plan.rowCount <= 12) {
+        await complete(item)
+        item.completed = true
+      }
+    }
+    // Lower bounds provide a cheap priority, but need not predict the winner.
+    const queue = pending.filter(item => !item.completed)
+    while (queue.length) {
+      signal?.throwIfAborted()
+      queue.sort((a, b) => a.lower - b.lower || a.width - b.width)
+      const item = queue.shift()
+      if (!cannotWin(item) && !widthCannotWin(item.width, best) && !item.refined) {
+        try { item.lower = item.plan.lowerBound() }
+        catch (error) {
+          signal?.throwIfAborted()
+          // A failed bound is not proof that the exact layout is invalid.
+          await complete(item)
+          continue
+        }
+        item.refined = true
+        queue.push(item)
+        continue
+      }
+      await complete(item)
+    }
+    return { candidates, renderCache: { strategy: widthSearchStrategy, requests,
+      uniqueWidths: requests, tierRechecks: 0, hits: 0, verifiedWidths: 0, skippedWidths,
+      estimatedSkippedWidths: [], preparedWidths: pending.length, refinedWidths: pending.filter(item => item.refined).length, preparationPilotRows: 12 } }
+  } finally { for (const item of pending) item.plan.dispose?.() }
 }
 
 /** Run the common discrete width search and reject a score with no safe candidate. */

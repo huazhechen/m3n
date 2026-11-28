@@ -2,13 +2,33 @@ import { withScoreWidthCandidatePolicy } from './layout/width-candidate-policy.j
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
-import { layoutNativeScore } from './native-layout.js'
+import { layoutNativeScore, measureNativeLayout, prepareNativeMeasurement, NativeLayoutTask } from './native-layout.js'
+import { NumberedTextMeasurementCache } from './native-measure.js'
 import { nativeLayoutQuality } from './native-quality.js'
 import { scorePageCost } from './layout/quality.js'
 import { renderNativePages } from './native-svg.js'
 
 const source = readFileSync(new URL('../../../src/scores/bai_hua_lin_01.m3n', import.meta.url), 'utf8')
 const options = { width: 564, paged: true, pageMargin: 0 }
+
+it.each(['bai_hua_lin_01', 'ai_ru_chao_shui_01', 'yue_ding_01'])('completes interleaved exact width plans for %s with independent geometry and safe lower costs', file => {
+  const document = parseM3NDocument(readFileSync(new URL(`../../../src/scores/${file}.m3n`, import.meta.url), 'utf8')), layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
+  const plans = [528, 606, 624, 720].map(width => ({ width,
+    plan: prepareNativeMeasurement(document, { ...options, width, layoutTask, textMeasurementCache }) }))
+  try {
+    for (const { width, plan } of plans.reverse()) {
+      const lower = plan.lowerBound()
+      const expected = measureNativeLayout(document, { ...options, width })
+      const actual = plan.complete()
+      expect(actual.quality).toEqual(expected.quality)
+      expect(actual.pageCount).toBe(expected.pageCount)
+      expect(actual.systemCount).toBe(expected.systemCount)
+      expect(lower).toBeLessThanOrEqual(actual.quality.totalCost + scorePageCost(actual.pageCount) + 1e-8)
+      expect(actual.pagination({ pageHeight: 1000, margin: actual.margin, gap: 18, maxGap: 30 }))
+        .toEqual(expected.pagination({ pageHeight: 1000, margin: expected.margin, gap: 18, maxGap: 30 }))
+    }
+  } finally { for (const { plan } of plans) plan.dispose() }
+})
 
 it('compares complete White Birch paper and spacing costs and preserves the selected geometry', () => {
   const document = parseM3NDocument(source), before = structuredClone(document)

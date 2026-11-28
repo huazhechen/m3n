@@ -332,6 +332,26 @@ export class SvgGeometry {
     this.collect(node, identity, { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false }, undefined, all, { result: without, omit: omitClasses(classes) }, false)
     return { all, without }
   }
+  /** Emit final scaled boxes directly. Each occurrence owns its output box,
+   * even when included and excluded nodes borrow the same immutable ink. */
+  partitionScaledWithoutClasses(node: XmlNode, classes: readonly string[], scale: number): { all: Ink[]; without: Ink[]; boundary: Ink[] } {
+    const all: Ink[] = [], without: Ink[] = [], boundary: Ink[] = []
+    const output: InkSink = { push: box => {
+      const scaled = { left: box.left * scale, right: box.right * scale,
+        top: box.top * scale, bottom: box.bottom * scale }
+      all.push(scaled)
+    } }
+    // collect emits to the main sink before the filtered sink for each box.
+    const filtered: InkSink = { push: () => { without.push(all[all.length - 1]!) } }
+    this.collect(node, identity, { size: scoreLayoutConfig.staff.text / scoreLayoutConfig.staff.engine.scale, bold: false, italic: false },
+      undefined, output, { result: filtered, omit: omitClasses(classes) })
+    let index = 0
+    for (const box of all) {
+      if (box === without[index]) index++
+      else boundary.push(box)
+    }
+    return { all, without, boundary }
+  }
   pieces(
     node: XmlNode,
     parent: Matrix = identity,
@@ -367,7 +387,7 @@ export class SvgGeometry {
       return !intersects(compiled.classes, filter.classNames)
   }
   private collect(node: XmlNode, parent: Matrix, inherited: { size: number; bold: boolean; italic: boolean },
-    omit: OmitNode | undefined, result: InkSink, secondary?: { result: Ink[]; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
+    omit: OmitNode | undefined, result: InkSink, secondary?: { result: InkSink; omit: OmitNode }, borrow = this.borrowImmutableInk): void {
     const compiled = this.staticPieces.get(node)
     if (compiled && compiled.transform === (node.attributes.transform ?? '') && this.unaffected(compiled, omit) && this.unaffected(compiled, secondary?.omit)) {
       if (borrow && parent !== identity) {

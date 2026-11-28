@@ -1,7 +1,7 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffResources, prepareStaffScore, prepareStaffMeasurementTask } from '@m3n/score-renderer/staff'
-import { measureStaffWidth } from './lib/staff-width-measurement.mjs'
+import { measureStaffWidth, prepareStaffWidth } from './lib/staff-width-measurement.mjs'
 import { probeWidthCandidates, selectBestWidth, optimizedScoreWidthPolicy, chooseBestWidth, numberedLayoutScore, verifyEstimatedWidthCandidates } from './scorebook-width.mjs'
 
 export async function prepare() {
@@ -22,7 +22,8 @@ export async function search(source, { auditLayout = false, prune = !auditLayout
   const result = await select((width, best, candidatePolicy) => {
     if (globalThis.__m3nTraceWidths) console.log('width-start '+width)
     return measureStaffWidth(score, width, {}, undefined, { auditLayout, task, candidatePolicy, minimumQuality: prune && !auditLayout && best ? numberedLayoutScore(best) : undefined, maximumPageCount: best?.pageCount })
-  }, { prune: prune && !auditLayout, candidatePolicy:globalThis.__m3nProductionWidthPolicy ? optimizedScoreWidthPolicy : undefined })
+  }, { prune: prune && !auditLayout, candidatePolicy:globalThis.__m3nProductionWidthPolicy ? optimizedScoreWidthPolicy : undefined,
+    prepareCandidate: globalThis.__m3nPreparedWidthSearch ? (width, candidatePolicy) => prepareStaffWidth(score, width, {}, undefined, { task, candidatePolicy }) : undefined })
   if (globalThis.__m3nExperimentalRowReuse) {
     const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling
     globalThis.__m3nExperimentalRowReuse = false

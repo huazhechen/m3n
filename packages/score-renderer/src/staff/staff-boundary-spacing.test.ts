@@ -40,12 +40,13 @@ it('does not create samples for invisible exterior edges', () => {
   expect(data.weight).toBeCloseTo(3)
 })
 
-it('preserves 75:25 note-pair direction while sharing the numbered beam coefficient', () => {
+it('preserves 75:25 note-pair direction without an extra beam discount', () => {
   const m = model('(1 2) 3 4 |')
   const head = staffGlyphMetrics('noteheadBlack'), unit = staffMusicSize() / 4 * scoreLayoutConfig.staff.spacingIncrementSpaces
   const weight = (m.metrics.columns[1]!.naturalAdvance - head.right + head.left) / unit
-  expect(weight).toBeCloseTo(Math.sqrt(.5) ** .75, 8)
-  expect(scoreLayoutConfig.staff.groupSpacingRatio).toBe(scoreLayoutConfig.numbered.groupSpacingRatio)
+  expect(weight).toBeCloseTo(.5 ** .75, 8)
+  expect(scoreLayoutConfig.staff.groupSpacingRatio).toBe(1)
+  expect(scoreLayoutConfig.numbered.groupSpacingRatio).toBe(.75)
 })
 
 it('reuses one immutable interval chain without retaining width-specific positions or gaps', () => {

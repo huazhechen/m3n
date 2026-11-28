@@ -12,7 +12,27 @@ import { inspectScorePages } from './score-geometry.mjs'
 export function measureNumberedWidth(documentScore,width,options={}) {
   return withScoreWidthCandidatePolicy(options.candidatePolicy,()=>measureNumberedWidthScoped(documentScore,width,options))
 }
-function measureNumberedWidthScoped(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, detailedTimings = auditLayout, minimumQuality, maximumPageCount } = {}) {
+/** Exact horizontal preflight; completion reuses the prepared plans. */
+export function prepareNumberedWidth(documentScore, width, options = {}) {
+  const settings = { ...options.settings, width, pageMargin: options.settings?.pageMargin ?? 0 }
+  const deferred = withScoreWidthCandidatePolicy(options.candidatePolicy, () => PreparedNumberedNotationScore.prepareMeasurement(documentScore, settings))
+  return {
+    rowCount: deferred.rowCount,
+    horizontalLowerBound: deferred.horizontalLowerBound,
+    lowerBound: () => withScoreWidthCandidatePolicy(options.candidatePolicy, deferred.lowerBound),
+    dispose: deferred.dispose,
+    complete: candidatePolicy => withScoreWidthCandidatePolicy(candidatePolicy, () => {
+      try {
+        const preparedCandidate = deferred.complete()
+        return measureNumberedWidthScoped(documentScore, width, { ...options, preparedCandidate }).candidate
+      } catch (error) {
+        if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') throw new WidthSearchPruned()
+        throw error
+      }
+    }),
+  }
+}
+function measureNumberedWidthScoped(documentScore, width, { settings = {}, host, afterMount, paged = true, signal, auditLayout = false, detailedTimings = auditLayout, minimumQuality, maximumPageCount, preparedCandidate } = {}) {
   signal?.throwIfAborted()
   const started = performance.now(), timings = {}
   let prepared
@@ -21,9 +41,9 @@ function measureNumberedWidthScoped(documentScore, width, { settings = {}, host,
     const qualityBound = auditLayout || settings.numericLayout === false && maximumPageCount > 1 ? undefined : minimumQuality
     const pageBound = auditLayout ? undefined : maximumPageCount
     const layoutTimings = detailedTimings ? timings : undefined
-    prepared = auditLayout
+    prepared = preparedCandidate ?? (auditLayout
       ? new PreparedNumberedNotationScore(documentScore, options, layoutTimings, qualityBound, pageBound)
-      : PreparedNumberedNotationScore.measure(documentScore, options, layoutTimings, qualityBound, pageBound)
+      : PreparedNumberedNotationScore.measure(documentScore, options, layoutTimings, qualityBound, pageBound))
   }
   catch (error) {
     if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') {

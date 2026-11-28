@@ -380,11 +380,6 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     onset: entry.item.children ? entry.item.onset + i * entry.item.beats / entry.notes.length : entry.item.onset,
     duration: entry.item.children ? entry.item.beats / entry.notes.length : entry.item.beats }))))
   const onsets = [...new Set(timed.map(({ onset }) => Math.round(onset * 1e8) / 1e8))].sort((a, b) => a - b)
-  const beamFor = new Map<PreparedNote, object>()
-  for (const beam of beams) {
-    const flat = entries[beam.lane]!.flatMap(entry => entry.notes)
-    for (const index of beam.indices) beamFor.set(flat[index]!, beam)
-  }
   const columns = onsets.map((onset, onsetIndex) => {
     const notes = timed.filter(value => Math.abs(value.onset - onset) < 1e-7)
     const column = { left: 0, after: 0, lyricLeft: 0, lyricAfter: 0, rhythmLeft: 0, rhythmAfter: 0, naturalAdvance: 0, structural: false, lyricRows: [] as Array<{ lane: string; left: number; after: number }> }
@@ -426,15 +421,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     const duration = (onsets[onsetIndex + 1] ?? end) - onset
     const nextOnset = onsets[onsetIndex + 1]
     const nextDuration = nextOnset === undefined ? undefined : (onsets[onsetIndex + 2] ?? end) - nextOnset
-    const nextNotes = timed.filter(value => Math.abs(value.onset - (nextOnset ?? Infinity)) < 1e-7)
-    // Shared time columns stay aligned. Tighten only if every attacking
-    // voice continues into the next column through its own common beam.
-    const grouped = notes.length > 0 && notes.every(value => {
-      const next = nextNotes.find(other => other.laneIndex === value.laneIndex)
-      if (!next) return false
-      return beamFor.has(value.note) && beamFor.get(value.note) === beamFor.get(next.note)
-    })
-    const weight = scoreRhythmicGapWeight(duration, nextDuration, grouped ? style.groupSpacingRatio : 1)
+    const weight = scoreRhythmicGapWeight(duration, nextDuration, style.groupSpacingRatio, .75, style.rhythmicWeight)
     column.naturalAdvance = ordinaryHead.right - ordinaryHead.left
       + weight * staffMusicSize() / 4 * style.spacingIncrementSpaces
     column.rhythmLeft = (ordinaryHead.right - ordinaryHead.left) / 2

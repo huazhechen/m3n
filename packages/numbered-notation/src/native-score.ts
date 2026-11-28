@@ -2,7 +2,7 @@ import { scoreVerticalSpacing } from './layout/policy.js'
 import { nativeLayoutQuality } from './native-quality.js'
 import { nativeSvgNumber } from './native-svg-number.js'
 import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } from '@m3n/notation'
-import { layoutNativeScore, measureNativeLayout, nativeContinuousPagination, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
+import { layoutNativeScore, measureNativeLayout, prepareNativeMeasurement, nativeContinuousPagination, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { fitSharedScorePage } from './layout/pagination.js'
 import { nativeHeaderGap } from './native-style.js'
@@ -45,15 +45,20 @@ export class PreparedNumberedNotationScore {
   static measure(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?: number) {
     return new PreparedNumberedNotationScore(document, options, timings, minimumQuality, maximumPageCount, true)
   }
+  static prepareMeasurement(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>) {
+    const prepared = prepareNativeMeasurement(document, { numericLayout: true, ...options, paged: true }, timings)
+    return { lowerBound: prepared.lowerBound, horizontalLowerBound: prepared.horizontalLowerBound, rowCount: prepared.rowCount, dispose: prepared.dispose,
+      complete: () => new PreparedNumberedNotationScore(document, options, timings, undefined, undefined, true, prepared.complete()) }
+  }
   readonly pageCount: number
   readonly systemCount: number
   readonly quality: ReturnType<typeof numberedLayoutQuality>
   readonly width: number
   readonly minimumCoreGap: number
-  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?:number, measurementOnly = false) {
+  constructor(document: ScoreDocument, options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, timings?: Record<string, number>, minimumQuality?: number, maximumPageCount?:number, measurementOnly = false, preparedMeasurement?: ReturnType<typeof measureNativeLayout>) {
     this.document = document; this.options = { ...options }
     if (measurementOnly && options.numericLayout !== false) {
-      const result = this.measurement = measureNativeLayout(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
+      const result = this.measurement = preparedMeasurement ?? measureNativeLayout(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
       this.pageCount = result.pageCount; this.systemCount = result.systemCount; this.quality = result.quality; this.width = result.width
       this.minimumCoreGap = scoreVerticalSpacing().minimum
       return

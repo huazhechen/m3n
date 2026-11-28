@@ -15,6 +15,18 @@ import { createStaffMeasureMinimum, planStaffLines, prepareStaffLineGraph } from
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
 
+it('prepares exact staff plans before engraving and preserves full geometry under delayed completion', async () => {
+  const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/bai_hua_lin_01.m3n'), 'utf8')).score
+  const render = await prepareStaffScore(score, { width: 606 })
+  const lower = render.prepareMeasurement().lowerBound
+  const expected = await prepareStaffScore(score, { width: 606 })
+  const info = render.measurementInfo(), reference = expected.measurementInfo()
+  expect(info).toEqual(reference)
+  expect(lower).toBeLessThanOrEqual(info.quality.totalCost + scorePageCost(info.pageCount) + 1e-8)
+  expect(render.layoutInfo()).toEqual(expected.layoutInfo())
+  expect(render(true).map(svg => svg.outerHTML)).toEqual(expected(true).map(svg => svg.outerHTML))
+})
+
 describe('staff page packing', () => {
   it('keeps cross-row relations when outside rows supply topology without spacing', () => {
     const score = analyzeM3N('{4/4}\nN: (1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e) |||').score
