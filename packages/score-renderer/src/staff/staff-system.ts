@@ -8,7 +8,7 @@ import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffNavigationGlyph } f
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
-import { arrangeStaffSystem, placeStaffTuplets } from './system-layout.js'
+import { arrangeStaffSystem, placeStaffTuplets, type StaffSystem } from './system-layout.js'
 import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
 
 const style = scoreLayoutConfig.staff
@@ -69,7 +69,48 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly) {
+  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly): StaffSystem[] {
+  const systems = engraveStaffSystemsAtDirections(document, lines, width, measureText, spacing, measureNumbers,
+    tempoScale, preparation, selectedLine, endpointLine, numericOnly, deferPieces)
+  if (!style.reuseBeamOuterSpace) return systems
+  for (const [resultIndex, initial] of systems.entries()) {
+    const index = selectedLine ?? resultIndex, line = lines[index]!
+    let best = initial
+    const originalHeight = initial.ink.bottom - initial.ink.top
+    const lyricsByLane = ['melody', 'bass'].map(lane => line.measures.some(member =>
+      member.measure[lane as 'melody' | 'bass'].some(entry => (entry.children ?? [entry])
+        .some(note => note.lyrics.some(lyric => lyric.kind !== 'placeholder')))))
+    let choices = new Map<string, number>()
+    for (const [measureIndex, member] of line.measures.entries()) {
+      const prepared = preparation.measure(member.measure, measureIndex === 0, document.hasBass, measureText)
+      for (const beam of prepared.beams) {
+        if (!beam.flexible) continue
+        const note = prepared.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+        const trialChoices = new Map(choices).set(note.item.id, -note.direction)
+        const trialPreparation = createStaffPreparation(document, trialChoices)
+        const plans = relationPlans.get(preparation)
+        if (plans) relationPlans.set(trialPreparation, plans)
+        const trial = engraveStaffSystemsAtDirections(document, lines, width, measureText, spacing, measureNumbers,
+          tempoScale, trialPreparation, index, endpointLine, numericOnly, deferPieces)[0]!
+        // Compare complete, fully arranged ink, including lyrics and slurs.
+        // Near ties prefer upward stems beside lyrics, within the original
+        // row height ceiling. Musical size and attachment gaps never shrink.
+        const height = trial.ink.bottom - trial.ink.top
+        const difference = height - (best.ink.bottom - best.ink.top)
+        const near = lyricsByLane[beam.lane] && Math.abs(difference) <= style.beamDirectionNearHeight / STAFF_SCALE
+        if (near ? -note.direction === 1 && height <= originalHeight + 1e-7 : difference < -1e-7) {
+          best = trial; choices = trialChoices
+        }
+      }
+    }
+    best.node.attributes['data-m3n-beam-flips'] = String(choices.size)
+    systems[resultIndex] = best
+  }
+  return systems
+}
+
+function engraveStaffSystemsAtDirections(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
+  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly): StaffSystem[] {
   const scale = STAFF_SCALE, rawWidth = width / scale, attachmentGap = preparation.attachmentGap
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs

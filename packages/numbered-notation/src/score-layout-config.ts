@@ -95,6 +95,8 @@ const staff = {
   // Compatibility for consumers adjusting the music em: S remains the source.
   set music(value: number) { this.space = value / 4 },
   graceRatio: .6,
+  reuseBeamOuterSpace: true,
+  get beamDirectionNearHeight(): number { return this.space / 8 },
   stemDefaultSpaces: 3.5,
   stemCompactMinimumSpaces: 3,
   slurMaximumEndpointSlope: .25,

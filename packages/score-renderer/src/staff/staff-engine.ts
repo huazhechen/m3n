@@ -185,9 +185,9 @@ export type PreparedNote = {
   graces: Array<{ note: PreparedNote; x: number; slash: boolean; group: number }>; graceWidth: number
 }
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
-export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
+export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[]; flexible?: boolean }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
-export function createStaffPreparation(document?: StaffDocument) {
+export function createStaffPreparation(document?: StaffDocument, beamDirections: ReadonlyMap<string, number> = new Map()) {
   const attachmentGap = scoreAttachmentGap('staff')
   const incomingTies = new Set<string>()
   for (const lane of ['melody', 'bass'] as const) {
@@ -206,7 +206,7 @@ export function createStaffPreparation(document?: StaffDocument) {
       if (!variants) { variants = new Map(); measures.set(measure, variants) }
       const key = `${first}:${hasBass}`
       let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE); variants.set(key, prepared) }
+      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, beamDirections); variants.set(key, prepared) }
       return prepared
     },
   }
@@ -285,7 +285,7 @@ function beamGroups(count: number, unit: number) {
   if (count > 3 && count % 3 === 0) return Array.from({ length: count / 3 }, () => 12 / unit)
   return Array.from({ length: Math.ceil(count * 4 / unit) }, () => 1)
 }
-function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>, attachmentGap: number): PreparedMeasure {
+function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText, incomingTies: ReadonlySet<string>, attachmentGap: number, beamDirections: ReadonlyMap<string, number>): PreparedMeasure {
   const signatures: Signature[] = [], beams: PreparedMeasure['beams'] = []
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
@@ -343,10 +343,21 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       bucket = next; previousKey = entry.item.key
     }
     flush()
-    // A beam group has one stem direction, independent of candidate width.
+    const tupletNotes = new Set(laneEntries.filter(entry => entry.item.children).flatMap(entry => entry.notes))
+    // Fixed preparation keeps conventional directions; eligible plain groups
+    // can be tried at their actual row width without changing horizontal inputs.
     for (const beam of beams.filter(beam => beam.lane === lane)) {
       const notes = beam.indices.map(i => flat[i]!), ys = notes.flatMap(note => note.heads.map(head => head.y))
-      const direction = ys.reduce((sum, y) => sum + y, 0) / ys.length > (staffMusicSize() * 1.5) ? 1 : -1
+      const space = staffMusicSize() / 4, middle = 6 * space
+      const mean = ys.reduce((sum, y) => sum + y, 0) / ys.length
+      // Alternate directions must preserve all horizontal inputs. Chords,
+      // grace groups, articulation marks and tie ports keep their fixed choice.
+      beam.flexible = notes.every(note => !tupletNotes.has(note) && note.heads.length === 1 && !note.graces.length && !note.item.event.tie
+        && !incomingTies.has(note.item.id) && !note.item.event.postfixes.length)
+        && Math.min(...ys) >= 4 * space && Math.max(...ys) <= 8 * space
+        && Math.abs(mean - middle) <= space
+        && Math.abs((Math.min(...ys) + Math.max(...ys)) / 2 - middle) <= space
+      const direction = (beam.flexible ? beamDirections.get(notes[0]!.item.id) : undefined) ?? (mean > middle ? 1 : -1)
       for (const note of notes) {
         if (note.direction === direction) continue
         const oldLeft = Math.max(0, -Math.min(...note.heads.map(h => h.x)))
