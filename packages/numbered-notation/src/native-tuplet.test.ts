@@ -45,6 +45,32 @@ describe('native tuplet brackets', () => {
     expect(high.geometry).toEqual(plain.geometry)
   })
 
+  it.each([true, false])('lowers brackets when octave dots clear the label, numeric=%s', numericLayout => {
+    const make = (music: string) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: ${music} |||`), {
+      ...options, numericLayout, textMeasurer: measurer,
+    })
+    const side = brackets(make('([1e 2 3e:2]) ([4 5 6:2]) 7 1'))
+    const middle = brackets(make('([1e 2e 3e:2]) ([4 5 6:2]) 7 1'))
+    expect(side[0]!.geometry.baseline).toBeGreaterThan(middle[0]!.geometry.baseline)
+    expect(side[0]!.geometry.baseline).toBeCloseTo(side[1]!.geometry.baseline)
+    expect(middle[0]!.geometry.baseline).toBeCloseTo(middle[1]!.geometry.baseline)
+    let nearest = Infinity
+    for (const { system, relation } of side) {
+      const placed = system.relationLayout!.get(relation)!
+      for (const mark of placed.pieces ?? nativeSvgPieces(placed.svg, measurer)) {
+        for (const glyph of system.measures.flatMap(m => m.columns.flatMap(c => c.glyphs))) {
+          for (const ink of glyph.musicInk ?? []) {
+            if (glyph.x + ink.right <= mark.left || glyph.x + ink.left >= mark.right) continue
+            const clearance = ink.top - mark.bottom
+            expect(clearance).toBeGreaterThanOrEqual(24 * .14 - 1e-7)
+            nearest = Math.min(nearest, clearance)
+          }
+        }
+      }
+    }
+    expect(nearest).toBeCloseTo(24 * .14)
+  })
+
   it.each([320, 600, 768])('aligns final adjacent brackets after clearing an incoming tie at %spx', width => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: 5d~ (([5d 7d 2:2])) (([4 5 7:2])) ((2e. (1e) 7. (6))) (5 4) |'), { width, paged: false })
     for (const system of score.systems) {

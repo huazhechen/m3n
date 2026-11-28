@@ -63,11 +63,11 @@ function calculateTupletGeometry(relation: NativeRelation, system: NativeSystem,
     ...glyph.controls.flatMap(placedNativeControlInk),
   ])
   const y = Math.min(...peers.map(peer => {
-    const covered = glyphs.slice(glyphs.indexOf(peer.first), glyphs.indexOf(peer.last) + 1)
     const { text, pieces } = shapes.get(peer)!
-    // The sounding heads establish the bracket level. Side ink only raises
-    // a primitive whose horizontal footprint actually crosses it.
-    let level = -Math.max(0, ...covered.map(glyph => glyph.tieTop ?? glyph.top)) - gap - Math.max(hook, text.h / 2)
+    // Keep the complete mark above the note baseline, then fit each painted
+    // piece to the music beneath it. An octave dot under a horizontal stroke
+    // must not also reserve the deeper label's height across the whole group.
+    let level = -gap - Math.max(hook, text.h / 2)
     for (const ink of obstacles) for (const mark of pieces) {
       if (ink.right <= mark.left || ink.left >= mark.right) continue
       level = Math.min(level, ink.top - gap - mark.bottom)
