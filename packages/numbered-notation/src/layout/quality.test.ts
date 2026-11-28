@@ -10,7 +10,7 @@ it('derives staff comfort from its highest minimum-gap tier', () => {
   for (const gap of [18, 22.5, 27]) {
     expect(scoreNumberedSpacing([gap], 18, 6, [gap], staff.horizontalComfort).spacingCost).toBe(0)
   }
-  expect(scoreNumberedSpacing([6], 18, 6, [6], staff.horizontalComfort).spacingCrampedCost).toBe(4)
+  expect(scoreNumberedSpacing([6], 18, 6, [6], staff.horizontalComfort).spacingCrampedCost).toBeCloseTo(4 / 9)
   expect(scoreNumberedSpacing([30], 18, 6, [30], staff.horizontalComfort).spacingExpandedCost).toBeCloseTo((30 / 27 - 1) ** 2)
   expect(scoreNumberedSpacing([12]).spacingCrampedCost).toBeGreaterThan(0)
 })
