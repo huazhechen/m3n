@@ -15,8 +15,10 @@ export function measureNumberedWidth(documentScore,width,options={}) {
 /** Exact horizontal preflight; completion reuses the prepared plans. */
 export function prepareNumberedWidth(documentScore, width, options = {}) {
   const settings = { ...options.settings, width, pageMargin: options.settings?.pageMargin ?? 0 }
-  const deferred = withScoreWidthCandidatePolicy(options.candidatePolicy, () => PreparedNumberedNotationScore.prepareMeasurement(documentScore, settings))
+  const timings = options.detailedTimings ? {} : undefined
+  const deferred = withScoreWidthCandidatePolicy(options.candidatePolicy, () => PreparedNumberedNotationScore.prepareMeasurement(documentScore, settings, timings))
   return {
+    timings,
     rowCount: deferred.rowCount,
     horizontalLowerBound: deferred.horizontalLowerBound,
     lowerBound: () => withScoreWidthCandidatePolicy(options.candidatePolicy, deferred.lowerBound),

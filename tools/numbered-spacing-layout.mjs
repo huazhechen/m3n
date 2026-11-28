@@ -39,7 +39,10 @@ export async function search(source, auditLayout = false, prune = false, pageCon
       return measured.candidate
     } catch (error) { accumulate(error.timings); throw error }
   }, { prune: prune && !auditLayout, candidatePolicy:globalThis.__m3nProductionWidthPolicy ? optimizedScoreWidthPolicy : undefined,
-    prepareCandidate: globalThis.__m3nPreparedWidthSearch ? (width, candidatePolicy) => prepareNumberedWidth(score, width, { settings, candidatePolicy }) : undefined })
+    prepareCandidate: globalThis.__m3nPreparedWidthSearch ? (width, candidatePolicy) => {
+      const prepared = prepareNumberedWidth(score, width, { settings, candidatePolicy, detailedTimings })
+      return { ...prepared, dispose: () => { try { prepared.dispose() } finally { accumulate(prepared.timings) } } }
+    } : undefined })
   let exactWinner
   if (globalThis.__m3nExperimentalRowReuse) {
     const fastCeiling = globalThis.__m3nExperimentalGreedyCeiling
