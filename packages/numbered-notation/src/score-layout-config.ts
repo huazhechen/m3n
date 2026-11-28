@@ -125,7 +125,7 @@ const staff = {
   get rowStartClearance(): number { return this.space },
   minimumNoteGap: .8,
   noteGapCandidates: [.8, 1.6, 2.4] as readonly number[],
-  get horizontalComfort(): { minimum: number; maximum: number } { return { minimum: 1.6 * this.space, maximum: 3.2 * this.space } },
+  get horizontalComfort(): { minimum: number; maximum: number } { const minimum = this.noteGapCandidates.at(-1)! * this.space; return { minimum, maximum: 1.5 * minimum } },
   get verticalSpacing(): { minimum: number; comfortable: number; maximum: number } { return { minimum: 2 * this.space, comfortable: 3 * this.space, maximum: 4 * this.space } },
   get tupletFontSize(): number { return numbered.tupletFontSize },
   get tupletHookLength(): number { return numbered.tupletHookLength },
