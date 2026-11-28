@@ -28,7 +28,7 @@ it('uses the actual trimmed inline heading displacement for proof spans', () => 
   }
 })
 
-it.each(['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01', 'flower_dance_01'])('each directional constraint belongs to exact row ink: %s', name => {
+it.each(['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01', 'flower_dance_01', 'hei_se_you_mo_01', 'ai_ru_chao_shui_01', 'hei_se_you_mo_01', 'ai_ru_chao_shui_01'])('each directional constraint belongs to exact row ink: %s', name => {
   const source = readFileSync(new URL(`../../../../src/scores/${name}.m3n`, import.meta.url), 'utf8')
   const doc = projectStaffDocument(analyzeM3N(source).score)
   expect(doc.hasBass).toBe(false)
@@ -132,4 +132,51 @@ it.each([
           && (field === 'top' ? ink.top <= piece.top + 1e-8 : ink.bottom >= piece.bottom - 1e-8))).toBe(true)
     })
   } finally { scoreLayoutConfig.staff.reuseBeamOuterSpace = previous }
+})
+
+
+it('bounds sparse lyric rows by local music without retaining their initial baselines', () => {
+  let height: number | undefined
+  for (const initialY of [-1000, 0, 1000]) {
+    const make = () => element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+      element('g', { class: 'staff', 'data-staff': 'melody' }, [
+        element('rect', { class: 'staff-line', width: '1000', height: '30' }),
+        element('rect', { x: '10', y: '40', width: '50', height: '6' }),
+        element('rect', { x: '800', y: '500', width: '10', height: '5' }),
+        ...[['first-v2', 10, 15, '春'], ['other-v2', 30, 20, '夏'], ['last-v4', 15, 10, '秋'], ['empty-v1', 0, 40, ' \u200B\u2800']].map(([id, x, size, value]) =>
+          element('g', { class: 'verse', id: String(id) }, [element('text', {
+            x: String(x), y: String(initialY), 'font-size': String(size),
+          }, [String(value)])])),
+      ]),
+    ])])
+    const node = make(), bound = staffSystemLowerBound(node, measure, 600, new Set(), 12)
+    const exactNode = make()
+    const exact = arrangeStaffSystem(exactNode, new SvgGeometry(exactNode, measure, true), 600, new Set(), false, false, 12)
+    const lower = bound.lowerBoundGeometry!
+    expect(lower.bottom).toBeLessThanOrEqual(exact.ink.bottom + 1e-8)
+    // The isolated low note affects the total row height, but must not put
+    // every lyric at y=500. Their local baseline follows the nearby music.
+    const lyrics = lower.bottomInk.filter(piece => piece.left > 0 && piece.left < 20 && piece.bottom > 30 && piece.bottom < 200)
+    expect(lyrics.length).toBeGreaterThan(1)
+    for (const piece of lower.bottomInk) expect(exact.spacingPieces.some(actual => actual.left <= piece.left + 1e-8
+      && actual.right >= piece.right - 1e-8 && actual.bottom >= piece.bottom - 1e-8)).toBe(true)
+    height ??= bound.invariantHeightLowerBound
+    expect(bound.invariantHeightLowerBound).toBeCloseTo(height, 8)
+    expect(bound.invariantHeightLowerBound).toBeLessThanOrEqual(exact.ink.bottom - exact.ink.top + 1e-8)
+  }
+})
+
+
+it('does not create a lyric row from cached text on an empty verse container', () => {
+  const make = (cached: boolean) => element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+    element('g', { class: 'staff' }, [
+      element('rect', { class: 'staff-line', width: '1000', height: '30' }),
+      { ...element('g', { class: 'verse', id: 'empty-v1' }), ...(cached ? { textValue: 'cached' } : {}) },
+      element('g', { class: 'verse', id: 'visible-v2' }, [element('text', { x: '10', 'font-size': '20' }, ['春'])]),
+    ]),
+  ])])
+  const actualNode = make(true), actual = arrangeStaffSystem(actualNode, new SvgGeometry(actualNode, measure, true), 600, new Set())
+  const bound = staffSystemLowerBound(make(true), measure, 600, new Set(), 12)
+  expect(bound).toEqual(staffSystemLowerBound(make(false), measure, 600, new Set(), 12))
+  expect(bound.lowerBoundGeometry!.bottom).toBeLessThanOrEqual(actual.ink.bottom + 1e-8)
 })

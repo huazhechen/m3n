@@ -3,7 +3,7 @@ import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumC
 import { SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
-  SvgGeometry, InkRangeIndex,
+  SvgGeometry, InkRangeIndex, inkBottomAlongX,
   findAll,
   nodes,
   hasClass,
@@ -206,8 +206,7 @@ export function arrangeStaffSystem(
     // A clef tail or isolated low note outside the lyric columns must not
     // lower the whole verse. Staff rules preserve the common reading baseline.
     const rules = staffs.flatMap(staff => findAll(staff, child => hasClass(child, 'staff-line')).flatMap(rule => geometry.pieces(rule)))
-    const musicBottom = Math.max(...rules.map(piece => piece.bottom),
-      ...music.filter(piece => lyricPieces.some(lyric => overlapsX(piece, lyric, gap / 2))).map(piece => piece.bottom))
+    const musicBottom = inkBottomAlongX(music, lyricPieces, gap / 2, Math.max(...rules.map(piece => piece.bottom)))
     let bottom = Number.isFinite(musicBottom) ? musicBottom : union(music).bottom
     for (const row of [...rows.keys()].sort((a, b) => a - b)) {
       const members = rows.get(row)!,

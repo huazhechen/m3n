@@ -1,7 +1,7 @@
 import { scoreLayoutConfig, type ScorePageBlock } from '@m3n/numbered-notation/layout'
 import { staffDecorationClasses, staffAttachmentGap, staffInlineHeadingInset } from './system-layout.js'
 import { STAFF_SCALE } from './line-layout.js'
-import { SvgGeometry, findAll, hasClass, nodes, moveInk, overlapsX, union, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
+import { SvgGeometry, findAll, hasClass, nodes, moveInk, overlapsX, union, textContent, inkBottomAlongX, type Ink, type MeasureText, type XmlNode } from './layout-svg.js'
 
 const omitted = [...staffDecorationClasses, 'verse', 'slur', 'tie', 'staff-clef']
 const eligible = ['dir', 'harm', 'fing', 'dynam', 'tempo', 'repeatMark', 'octave']
@@ -34,6 +34,37 @@ export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, w
     return positioned(p)
   }).filter(p => p.right > p.left)
   const topInk = [...fixed], bottomInk = [...fixed]
+  // Lyrics are packed below local music before attachments move. Their
+  // horizontal spans and row heights do not depend on beam directions. An
+  // invariant music subset therefore gives a lower baseline for every row.
+  // Only bottoms are constraints: exact music may move the lyrics down.
+  const staves = findAll(node, n => hasClass(n, 'staff'))
+  if (!staves.some(staff => staff.attributes['data-staff'] === 'bass')
+    && nodes(node).filter(n => hasClass(n, 'measure')).every(m => nodes(m).filter(n => hasClass(n, 'staff')).length <= 1)) {
+    const rows = new Map<number, Ink[]>()
+    for (const staff of staves) for (const verse of findAll(staff, n => hasClass(n, 'verse') && n.children.length > 0)) {
+      if (!textContent(verse).replace(/[\s\u200B\u2800]/g, '')) continue
+      const row = Number(/-v(\d+)/.exec(verse.attributes.id ?? '')?.[1] ?? 1)
+      let pieces = rows.get(row)
+      if (!pieces) { pieces = []; rows.set(row, pieces) }
+      pieces.push(...geometry.pieces(verse))
+    }
+    if (rows.size) {
+      const lyrics = [...rows.values()].flat()
+      const bottom = inkBottomAlongX(music, lyrics, attachmentGap / scale / 2, Math.max(...rules.map(piece => piece.bottom)))
+      let baseline = Number.isFinite(bottom) ? bottom : union(music).bottom
+      for (const row of [...rows.keys()].sort((a, b) => a - b)) {
+        const pieces = rows.get(row)!, bounds = union(pieces)
+        const dy = baseline + style.lyricGap / scale - bounds.top
+        for (const piece of pieces) {
+          const moved = moveInk(piece, 0, dy), bound = positioned(moved)
+          rawBottom = Math.max(rawBottom, moved.bottom * scale)
+          if (bound.right > bound.left) bottomInk.push(bound)
+        }
+        baseline = bounds.bottom + dy
+      }
+    }
+  }
   for (const attachment of findAll(node, n => eligible.some(kind => hasClass(n, kind)))) {
     const ink = geometry.ink(attachment)
     if (ink.right <= ink.left || ink.bottom <= ink.top || ink.right - ink.left > (width - style.attachmentWrapInset) / scale) continue

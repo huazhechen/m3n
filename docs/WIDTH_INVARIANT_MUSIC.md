@@ -59,3 +59,6 @@
 全库累计减少约4.8%，基本功减少约21.5%；不能用基本功的收益率代表全库。简谱复测37623.3ms，12首超过600ms，前次36440.7ms／11首超时；简谱算法未在本轮改变，没有测出简谱提速。两种谱式各117首的选宽、页数和行数与v105一致，五线谱249、简谱341个共同完成候选的全部评分在1e-8内一致。
 
 最终五线谱报告 `.tmp/lossless-v2/v109-final-all-staff.json`，对照 `v109-staff-comparison.json`；简谱 `v108-all-numbered.json`，对照 `v108-numbered-comparison.json`。过程验证 `v108-verification.log`、`v109-verification.log`。所有数据仍未满足全库双谱式单线程600ms目标。
+
+
+后续补齐歌词的单向下沿界限，并把精确布局与下界的局部基线查询归一；证明、试算退出条件及对照见[歌词下界](WIDTH_LYRIC_BOUNDS.md)。

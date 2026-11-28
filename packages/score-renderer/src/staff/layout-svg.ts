@@ -101,6 +101,21 @@ export class InkRangeIndex {
     let right = -Infinity
     for (const item of this.sorted) { right = Math.max(right, item.box.right); this.maximum.push(right) }
   }
+  /** Existence query avoids result arrays and source-order sorting. */
+  overlaps(left: number, right: number, gap = 0): boolean {
+    let low = 0, high = this.count
+    while (low < high) {
+      const mid = (low + high) >>> 1
+      if (this.maximum[mid]! + gap <= left) low = mid + 1
+      else high = mid
+    }
+    if (low < this.count && this.sorted[low]!.box.left < right + gap) return true
+    for (let index = this.count; index < this.pieces.length; index++) {
+      const box = this.pieces[index]!
+      if (box.left < right + gap && box.right + gap > left) return true
+    }
+    return false
+  }
   query(left: number, right: number, gap = 0): Ink[] {
     let low = 0, high = this.count
     while (low < high) { const mid = (low + high) >>> 1; if (this.maximum[mid]! + gap <= left) low = mid + 1; else high = mid }
@@ -118,6 +133,19 @@ export class InkRangeIndex {
     }
     return result
   }
+}
+/** Exact local lyric baseline, also valid for an invariant music subset.
+ * Small sets avoid index construction; larger sets use strict interval queries.
+ * Music below the known maximum cannot change the result and needs no query. */
+export function inkBottomAlongX(music: readonly Ink[], spans: readonly Ink[], gap: number, initial = -Infinity): number {
+  const index = spans.length >= 8 ? new InkRangeIndex(spans) : undefined
+  let bottom = initial
+  for (const piece of music) {
+    if (piece.bottom < bottom) continue
+    if (index ? index.overlaps(piece.left, piece.right, gap) : spans.some(span => overlapsX(piece, span, gap)))
+      bottom = Math.max(bottom, piece.bottom)
+  }
+  return bottom
 }
 export function translate(node: XmlNode, x: number, y: number) {
   node.attributes.transform = `translate(${x} ${y}) ${node.attributes.transform ?? ''}`

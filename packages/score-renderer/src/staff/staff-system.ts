@@ -99,6 +99,10 @@ function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocume
         // win. An invariant music subset can prove that improvement impossible.
         if (!lyricsByLane[beam.lane] && minimumHeight >= best.ink.bottom - best.ink.top - 1e-7) continue
         const note = prepared.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+        // Beside lyrics, a downward trial cannot win a near tie. It must
+        // improve by more than both the near-tie window and strict epsilon.
+        if (lyricsByLane[beam.lane] && note.direction === 1
+          && minimumHeight >= best.ink.bottom - best.ink.top - Math.max(1e-7, style.beamDirectionNearHeight / STAFF_SCALE)) continue
         const trialChoices = new Map(choices).set(note.item.id, -note.direction)
         const trialPreparation = preparation.withBeamDirections(trialChoices, document)
         const plans = relationPlans.get(preparation)

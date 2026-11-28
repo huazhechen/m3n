@@ -34,6 +34,7 @@ it.each([
   '{2/4}\nN: 1ee ((3 2e 2e 2e)) |',
   '{2/4}\nN: 1d ((5 2e 5 5)) |',
   '{3/4}\nN: 1ee ((7 1e 7 1e)) 1d |\nL: 啊 啊 啊 啊 啊 啊',
+  '{7/4}\nN: 1ee ' + Array(5).fill('((6 7 6 7))').join(' ') + ' 1d |\nL: ' + '啊 '.repeat(22),
 ])('certified direction rejection has the same SVG and geometry as all trials: %s', source => {
   const previous = scoreLayoutConfig.staff.reuseBeamOuterSpace
   scoreLayoutConfig.staff.reuseBeamOuterSpace = true
@@ -54,7 +55,40 @@ it.each([
         expect(actual.map(({ node: _, ...row }) => row)).toEqual(expected.map(({ node: _, ...row }) => row))
         expect(calls).toBeLessThanOrEqual(trials.mock.calls.length)
         if (source === '{3/4}\nN: 1ee ((7 1e 7 1e)) 1d |') expect(calls).toBeLessThan(trials.mock.calls.length)
+        if (source.startsWith('{7/4}')) expect(calls).toBeLessThan(trials.mock.calls.length)
       } finally { trials.mockRestore() }
+    }
+  } finally { scoreLayoutConfig.staff.reuseBeamOuterSpace = previous }
+})
+
+
+it('keeps lyric baseline bounds below every flexible beam direction combination', () => {
+  const previous = scoreLayoutConfig.staff.reuseBeamOuterSpace
+  scoreLayoutConfig.staff.reuseBeamOuterSpace = true
+  try {
+    const source = '{7/4}\nN: 1ee ' + Array(5).fill('((6 7 6 7))').join(' ') + ' 1d |\nL: ' + Array(22).fill('啊').join(' ')
+    const document = projectStaffDocument(analyzeM3N(source).score), measure = textMeasurer()
+    const preparation = createStaffPreparation(document), minimum = createStaffMeasureMinimum(false, measure, preparation)
+    const lines = planStaffLines(document, 1200, false, measure, .8, minimum)
+    expect(lines).toHaveLength(1)
+    const pending = prepareStaffSystems(document, lines, 1200, measure, .8, false, 1, preparation)[0]!
+    const bound = pending.lowerBound.lowerBoundGeometry!
+    const base = preparation.measure(document.measures[0]!, true, false, measure)
+    const groups = base.beams.filter(beam => beam.flexible).map(beam => {
+      const note = base.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+      return { id: note.item.id, direction: note.direction }
+    })
+    expect(groups).toHaveLength(5)
+    // Evaluate each specified direction directly, without the optimizer
+    // subsequently changing it to another member of this set.
+    scoreLayoutConfig.staff.reuseBeamOuterSpace = false
+    for (let mask = 0; mask < 32; mask++) {
+      const choices = new Map(groups.filter((_, index) => mask & (1 << index)).map(group => [group.id, -group.direction]))
+      const actual = engraveStaffSystems(document, lines, 1200, measure, .8, false, 1,
+        preparation.withBeamDirections(choices, document), undefined, undefined, true, false)[0]!
+      expect(bound.bottom).toBeLessThanOrEqual(actual.ink.bottom + 1e-8)
+      for (const piece of bound.bottomInk) expect(actual.spacingPieces.some(ink => ink.left <= piece.left + 1e-8
+        && ink.right >= piece.right - 1e-8 && ink.bottom >= piece.bottom - 1e-8), `mask ${mask}`).toBe(true)
     }
   } finally { scoreLayoutConfig.staff.reuseBeamOuterSpace = previous }
 })

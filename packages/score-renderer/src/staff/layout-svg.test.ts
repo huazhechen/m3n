@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { element, hasClass, SvgGeometry, InkRangeIndex, textMeasurer, translate, xml, type XmlNode } from './layout-svg.js'
+import { element, hasClass, SvgGeometry, InkRangeIndex, inkBottomAlongX, textMeasurer, translate, xml, type XmlNode } from './layout-svg.js'
 
 describe('staff geometry traversal', () => {
   it('keeps cached leaf text exact through edits, inherited styles, transforms and nested spans', () => {
@@ -161,7 +161,9 @@ it('queries immutable and appended ink in its original order including zero-widt
     pieces.push({ left: step * 3, right: step * 3 + step % 5, top: 0, bottom: 1 })
     for (const gap of [0, .25, 3]) {
       const left = step * 5, right = left + step % 7
-      expect(index.query(left, right, gap)).toEqual(pieces.filter(p => p.right + gap > left && p.left < right + gap))
+      const expected = pieces.filter(p => p.right + gap > left && p.left < right + gap)
+      expect(index.query(left, right, gap)).toEqual(expected)
+      expect(index.overlaps(left, right, gap)).toBe(expected.length > 0)
     }
   }
 })
@@ -286,4 +288,24 @@ it('uses numeric music class summaries without materializing wrappers for unrela
   expect(materialized).toBeGreaterThan(0)
   expect(geometry.without(root, n => n.attributes.id === 'virtual-note')).toEqual(all.slice(1))
   expect(geometry.withoutClasses(root, ['ornament'])).toEqual([all[0], all[2]])
+})
+
+
+it('local baseline queries equal exhaustive pair scans at strict edges and across index thresholds', () => {
+  const spans = Array.from({ length: 32 }, (_, i) => ({ left: i * 3, right: i * 3 + i % 5, top: 0, bottom: 1 }))
+  const music = Array.from({ length: 500 }, (_, i) => ({ left: i % 100, right: i % 100 + i % 7, top: -10, bottom: i % 17 - 8 }))
+  for (const count of [0, 1, 7, 8, 9, 32]) for (const gap of [-.25, 0, .25, 3]) for (const initial of [-Infinity, -0, 0, 5, Infinity]) {
+    const anchors = spans.slice(0, count)
+    const expected = Math.max(initial, ...music.filter(piece => anchors.some(span => piece.right + gap > span.left && span.right + gap > piece.left)).map(piece => piece.bottom))
+    expect(inkBottomAlongX(music, anchors, gap, initial)).toBe(expected)
+    expect(inkBottomAlongX([...music].reverse(), anchors, gap, initial)).toBe(expected)
+  }
+})
+
+
+it('existence queries preserve strict touching edges and empty horizontal gaps', () => {
+  const pieces = [{ left: 0, right: 1, top: 0, bottom: 1 }, { left: 4, right: 4, top: 0, bottom: 1 }, { left: 9, right: 10, top: 0, bottom: 1 }]
+  const index = new InkRangeIndex(pieces)
+  for (let left = -1; left <= 11; left += .25) for (const width of [0, .25, 1, 10]) for (const gap of [-.25, 0, .25, 1])
+    expect(index.overlaps(left, left + width, gap)).toBe(pieces.some(piece => piece.right + gap > left && piece.left < left + width + gap))
 })
