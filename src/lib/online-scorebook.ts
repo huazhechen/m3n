@@ -9,7 +9,7 @@ import { loadPresetScore, presetScores, preparePresetScores } from './samples'
 import { prepareScorebookRenderer, type PreparedBookScore, type ScorebookDisplaySettings, type ScorebookCacheStats } from './scorebook-renderer'
 import { readNotationMode, readRendererSetting } from './renderer-settings'
 import { selectBestWidth, widthCandidates } from '../../tools/scorebook-width.mjs'
-import { optimizeScorebook, refineSharedWidths, sharedScoreGap, type PackingEntry } from '../../tools/scorebook-packing.mjs'
+import { optimizeScorebook, refineSharedWidths, type PackingEntry } from '../../tools/scorebook-packing.mjs'
 import { buildVersion } from './build-version'
 import { scorebookFrontPages } from './scorebook-front'
 
@@ -199,7 +199,7 @@ export async function buildOnlineScorebook(signal: AbortSignal, onProgress: (pro
       await pause()
       const start = music.length
       if (members.length > 1) {
-        const rendered = await renderer.shared(members.map(entry => entry.prepared.get(group.width)!), group.width, sharedScoreGap)
+        const rendered = await renderer.shared(members.map(entry => entry.prepared.get(group.width)!), group.width)
         const safety = auditLayout ? inspectScoreMarkup(rendered.markup) : { outside: [], overlaps: [] }
         if (safety.outside.length || safety.overlaps.length) throw new Error(`合页实绘未通过边界或碰撞检查：${members.map(entry => entry.title).join(' / ')}`)
         const svg = page(rendered.markup)

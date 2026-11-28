@@ -24,7 +24,7 @@ describe('nested arc clearance', () => {
       const x = left + (right - left) * i / 2000
       gap = Math.min(gap, nativeArcSlice(b.commands, x)!.top + by - nativeArcSlice(a.commands, x)!.bottom - ay)
     }
-    expect(gap).toBeCloseTo(nativeStyle.music * nativeStyle.coreGapEm * .12, 3)
+    expect(gap).toBeCloseTo(nativeStyle.music / 12, 3)
   })
 })
 

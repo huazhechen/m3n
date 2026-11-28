@@ -7,6 +7,7 @@ export type WidthMeasurement = {
   rows: number
   outside: unknown[]
   overlaps: unknown[]
+  minimumRowGap?: number
   naturalHeight?: number
   lineDensityVariation?: number
   meanLineDensity?: number

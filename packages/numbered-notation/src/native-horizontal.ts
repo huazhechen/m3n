@@ -7,7 +7,7 @@ import { cacheScoreMinimumSpacing, solveScoreMinimumSpacing, type SpacingCell } 
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
-  const size = nativeStyle.music * 1.25, thin = size * 0.065, thick = thin * 2.6, gap = thin * 1.8, radius = thin * 0.8
+  const size = nativeStyle.music * 1.25, thin = nativeStyle.music / 12, thick = thin * 2.5, gap = thin * 1.8, radius = thin * 0.8
   const leftDots = kind === 'rptend' || kind === 'rptboth', rightDots = kind === 'rptstart' || kind === 'rptboth'
   const widths = kind === 'rptboth' ? [thin, thick, thin] : kind === 'dbl' ? [thin, thin] : kind === 'end' || leftDots ? [thin, thick] : rightDots ? [thick, thin] : [thin]
   const prefix = leftDots ? radius * (kind === 'rptboth' ? 2 : 3) + gap : 0

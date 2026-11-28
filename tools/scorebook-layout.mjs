@@ -67,12 +67,12 @@ export function auditWidth(source, width, paged = true, coreGap, host = document
   return measure(source, width, paged, coreGap, host, true)
 }
 
-export async function sharedA4Page(sources, width, gap = 22, host = document.querySelector('#scratch'), auditLayout = false) {
+export async function sharedA4Page(sources, width, host = document.querySelector('#scratch'), auditLayout = false) {
   if (sources.length < 2) throw new Error('A shared page needs at least two scores')
   const pxPerMm = 96 / 25.4, scale = 186 / width
   const documents = sources.map(source => parseM3NDocument(source))
   for (const document of documents) await prepareNumberedNotationFonts(document)
-  const fitted = renderSharedNumberedNotationScores(documents, { width, pageMargin: 0, textMeasurementCache }, gap)
+  const fitted = renderSharedNumberedNotationScores(documents, { width, pageMargin: 0, textMeasurementCache })
   host.innerHTML = fitted.markup.join('')
   const pages = [...host.querySelectorAll(':scope > svg')]
   const safety = auditLayout ? inspectScorePages(pages) : { outside: [], overlaps: [] }

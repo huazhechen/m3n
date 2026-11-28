@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@m3n/notation'
-import { scoreVerticalSpacing, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { fitSharedScorePage, scoreVerticalSpacing, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
@@ -110,8 +110,8 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       }
       return { candidate, prepared: deferredStaffScore(staff, document, task, width, settings, signal, take, cacheStats) }
     },
-    async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
-      if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
+    async shared(scores: PreparedBookScore[], width: number) {
+      if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!))
       const minimum = scoreVerticalSpacing('staff').minimum
       const capacity = a4SourcePageHeight(width)
       // Row engraving does not depend on the shared page's vertical gap.
@@ -121,22 +121,14 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
         const input = score.staff!
         return take(input.document, width) ?? staff.prepareStaffScore(input.document, { ...settings, width, coreGap: minimum, interactive: false }, signal, input.task)
       }))
-      const height = (gap: number) => pages.reduce((sum, render) => sum + render.continuousHeight(gap), scoreGap * (pages.length - 1))
       const started = performance.now()
-      if (height(minimum) > capacity) throw new Error('五线谱合页内容超出页面。')
+      const fitted = fitSharedScorePage(pages.map(render=>gap=>render.continuousHeight(gap)),capacity,scoreVerticalSpacing('staff'))
       cacheStats.finalLayoutMs += performance.now() - started
-      let lower = minimum, upper = scoreVerticalSpacing('staff').maximum
-      for (let i = 0; i < 8 && upper - lower > .1; i++) {
-        await (globalThis.scheduler?.postTask?.(() => {}) ?? new Promise(resolve => setTimeout(resolve, 0)))
-        signal.throwIfAborted()
-        const gap = i === 0 ? upper : (lower + upper) / 2
-        if (height(gap) <= capacity) { lower = gap; if (gap === upper) break }
-        else upper = gap
-      }
       const drawing = performance.now()
-      const markup = pages.map(render => render(false, lower)[0]!)
+      const markup = pages.map(render => render(false, fitted.coreGap)[0]!)
       cacheStats.finalSvgMs += performance.now() - drawing
-      return { markup, scoreGap: scoreGap + Math.max(0, capacity - height(lower)) / pages.length }
+      return { ...fitted, markup }
+
     },
   }
 }

@@ -1,5 +1,5 @@
 import { renderNativePages } from './native-svg.js'
-import { nativeCoreGap } from './native-style.js'
+import { scoreVerticalSpacing } from './layout/policy.js'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -47,7 +47,7 @@ it.each([{fixedDo:false,width:480,file:'valsentino_01.m3n'}, {fixedDo:true,width
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}
   const automatic = layoutNativeScore(document,settings,timings)
   const reference = layoutNativeScore(document, {
-    ...settings, coreGap:nativeCoreGap(), minimumNoteGap:automatic.options.minimumNoteGap, lineDensityTarget:automatic.options.lineDensityTarget,
+    ...settings, coreGap:scoreVerticalSpacing().minimum, minimumNoteGap:automatic.options.minimumNoteGap, lineDensityTarget:automatic.options.lineDensityTarget,
   })
   repaginateNativeLayout(reference,true)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(reference))

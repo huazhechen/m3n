@@ -5,7 +5,10 @@ import { nativeHeaderGap } from './native-style.js'
 import type { NativeLayout, NativePage } from './native-layout-model.js'
 
 export function positionNativeLayout(layout: NativeLayout, pagination: ReturnType<typeof paginateScoreBlocks>) {
-  const { options, systems, headerBlocks, verticalBlocks } = layout
+  const { options, systems, verticalBlocks } = layout
+  const header = layout.headerAtGap(pagination.coreGaps?.[0] ?? scoreVerticalSpacing().minimum)
+  const headerBlocks = header.blocks
+  layout.headerHeight = header.height
   if (options.paged) layout.verticalCost = pagination.verticalCost ?? 0
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [], coreGap: pagination.coreGaps?.[index] }))
   for (const [index, block] of headerBlocks.entries()) {
@@ -27,7 +30,7 @@ export function positionNativeLayout(layout: NativeLayout, pagination: ReturnTyp
 }
 
 export function nativeContinuousPagination(layout: NativeLayout, coreGap: number) {
-  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, vertical: scoreVerticalSpacing(), headerGap: nativeHeaderGap() })
+  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, vertical: scoreVerticalSpacing(), headerGap: nativeHeaderGap(coreGap), headerGapRatio: 2 / 3 })
 }
 
 /** Change page membership and vertical spacing without repeating horizontal layout. */
@@ -36,7 +39,7 @@ export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, cor
   const gap = coreGap ?? vertical!.minimum
   const pagination = layout.pagination({
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, vertical, headerGap: nativeHeaderGap(), maxGap: coreGap ?? (paged ? vertical!.maximum : gap),
+    margin: layout.margin, gap, vertical, headerGap: nativeHeaderGap(gap), headerGapRatio: 2 / 3, maxGap: coreGap ?? (paged ? vertical!.maximum : gap),
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

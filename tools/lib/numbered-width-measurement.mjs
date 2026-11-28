@@ -39,7 +39,7 @@ function measureNumberedWidthScoped(documentScore, width, { settings = {}, host,
   timings.layoutMs = performance.now() - started
   const quality = prepared.quality
   if (!auditLayout) {
-    const candidate = { width, pageCount: paged ? prepared.pageCount : 1, rows: prepared.systemCount,
+    const candidate = { width, minimumRowGap: prepared.minimumCoreGap, pageCount: paged ? prepared.pageCount : 1, rows: prepared.systemCount,
       outside: [], overlaps: [], lineDensityVariation: quality.lineDensityVariation,
       meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingMeanUnevenCost: quality.spacingMeanUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingExpandedCost: quality.spacingExpandedCost, spacingCost: quality.spacingCost,
       lineStretchCost: quality.lineStretchCost, lineUniformityCost: quality.lineUniformityCost,

@@ -4,7 +4,7 @@ import { lyricSpacing } from './lyric-spacing.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeStyle } from './native-style.js'
 import { nativeLyricInk } from './native-lyrics.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import type { NativeTempoGeometry } from './native-tempo.js'
@@ -210,7 +210,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const musicKey=!glyphGraces.length && !event.postfixes.includes('arp') ? `${noteKey}:${JSON.stringify(innerMarks)}` : undefined
           const musicTemplate=musicKey===undefined ? undefined : musicTemplates.get(musicKey)
           glyph.markLayout = musicTemplate ? musicTemplate.marks.map(mark=>({...mark}))
-            : nativeGlyphMarkStack(glyph, innerMarks, painter.measurer, nativeCoreGap(), metrics.top).items
+            : nativeGlyphMarkStack(glyph, innerMarks, painter.measurer, metrics.top).items
           // Local marks remain centered on their host, so reserve their full
           // width before wrapping instead of shifting them outside relations.
           glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))

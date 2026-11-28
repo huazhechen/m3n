@@ -34,19 +34,19 @@ describe('prepared export layouts', () => {
     const documents = [3, 4].map(rows => parseM3NDocument('{4/4}\nN: ' + '1 2 3 4 |{br} '.repeat(rows)))
     const options = { width: 640, pageMargin: 0 }
     const prepared = documents.map(document => new PreparedNumberedNotationScore(document, options))
-    expect(renderSharedPreparedNumberedNotationScores(prepared, 32)).toEqual(renderSharedNumberedNotationScores(documents, options, 32))
+    expect(renderSharedPreparedNumberedNotationScores(prepared)).toEqual(renderSharedNumberedNotationScores(documents, options))
     prepared.forEach((score, index) => expect(score.renderPaged()).toEqual(NativeNumberedNotationScore.create(documents[index]!).render({ ...options, paged: true })))
     expect(() => renderSharedPreparedNumberedNotationScores([prepared[0]!, new PreparedNumberedNotationScore(documents[0]!, { ...options, width: 540 })])).toThrow('相同版宽')
     expect(() => renderSharedPreparedNumberedNotationScores(Array(20).fill(prepared[0]))).toThrow('最小核心行距')
   })
-  it.each([2, 3])('distributes spare space equally after each of %i whole scores after row gaps reach the 1.6em ceiling', count => {
+  it.each([2, 3])('keeps one N and exactly 1.2N between %i scores, leaving excess space at the page tail', count => {
     const documents = Array.from({ length: count }, (_, index) => parseM3NDocument(`{title=曲目${index}}{4/4}\nN: 1 2 3 4 |||`))
     const options = { width: 640, pageMargin: 0 }
     const scores = documents.map(document => new PreparedNumberedNotationScore(document, options))
-    const result = renderSharedPreparedNumberedNotationScores(scores, 32)
-    expect(result.coreGap).toBeCloseTo(38.4)
-    expect(result.scoreGap).toBeGreaterThan(32)
-    expect(result.trailingGap).toBeCloseTo(result.scoreGap - 32, 8)
+    const result = renderSharedPreparedNumberedNotationScores(scores)
+    expect(result.coreGap).toBeCloseTo(36)
+    expect(result.scoreGap).toBeCloseTo(1.2 * result.coreGap)
+    expect(result.trailingGap).toBeGreaterThan(0)
     const heights = scores.map(score => score.continuousHeight(result.coreGap))
     expect(heights.reduce((a, b) => a + b, 0) + result.scoreGap * (count - 1) + result.trailingGap).toBeCloseTo(Math.floor(640 * 273 / 186), 8)
     expect(result.usedHeight).toBe(Math.floor(640 * 273 / 186))

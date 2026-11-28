@@ -43,10 +43,10 @@ describe('measured native volta fragments', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: ||: 1 2 3 4 |\n---V1,V3\nN: 1 2 3 4 :||{x4}{br}\n---V2,V4\nN: 1 2 3 4 |||'), { width: 800, paged: false, textMeasurer: measurer, measureNumbers })
     const system = score.systems[0]!, count = system.decorationLayout!.find(decoration => decoration.svg.includes('repeat-count'))!
     const countInk = nativeSvgInk(count.svg, measurer)
-    expect(count.svg).toContain('font-size="13"')
+    expect(count.svg).toContain('font-size="14.4"')
     expect(count.svg).toContain('text-anchor="middle"')
     const first = system.voltas![0]!, firstInk = nativeSvgInk(first.svg, measurer)
-    expect(firstInk.bottom).toBeLessThanOrEqual(countInk.top - 2.016 + .001)
+    expect(firstInk.bottom).toBeLessThanOrEqual(countInk.top - 2 + .001)
     if (measureNumbers) {
       const number = system.decorationLayout!.find(decoration => decoration.svg.includes('>2</text>'))!
       const bar = nativeMeasureBarPositions(system.measures, system.measures.length - 1).at(-1)!
@@ -74,7 +74,7 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
     expect(checked).toBeGreaterThan(0)
   })
 
-  it('keeps the ending hook at the core-derived clearance above the bar and raises it for high notes', () => {
+  it('keeps the ending hook at the ordinary attachment clearance above the bar and raises it for high notes', () => {
     const gap = (note: string) => {
       const score = layout(`${note} 2 3 4`), system = score.systems[0]!
       const fragment = system.voltas![0]!
@@ -82,9 +82,9 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
       const bar = nativeMeasureBarPositions(system.measures, index).at(-1)!
       return nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top - nativeSvgInk(fragment.svg, measurer).bottom
     }
-    expect(gap('1')).toBeCloseTo(2.016, 4)
-    expect(gap('1ee')).toBeCloseTo(2.016, 4)
-    expect(gap('1eeeeee')).toBeGreaterThan(2.016)
+    expect(gap('1')).toBeCloseTo(2, 4)
+    expect(gap('1ee')).toBeCloseTo(2, 4)
+    expect(gap('1eeeeee')).toBeGreaterThan(2)
   })
 
   it('clears the preceding bar even when a wrapped opening hook is offset to its right', () => {
@@ -95,7 +95,7 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
     const bar = nativeMeasureBarPositions(system.measures, index - 1).at(-1)!
     const hook = nativeSvgPieces(fragment.svg, measurer)[1]!
     const barTop = nativeSvgInk(nativeBarSvg(bar.kind, bar.x, 0, measurer), measurer).top
-    expect(barTop - hook.bottom).toBeGreaterThanOrEqual(2.016 - .001)
+    expect(barTop - hook.bottom).toBeGreaterThanOrEqual(2 - .001)
   })
 
   it('shows one label and two hooks across forced system breaks', () => {
@@ -145,7 +145,7 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
     expect(meter.x! + meter.width).toBeLessThan(fragment.left)
     const musicTop = Math.max(...glyphs.map(glyph => glyph.musicTop!))
     expect(meter.top).toBeGreaterThan(musicTop)
-    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeCloseTo(-musicTop - 2.016, 4)
+    expect(nativeSvgInk(fragment.svg, measurer).bottom).toBeCloseTo(-musicTop - 2, 4)
   })
 
   it('still clears the painted meter when it lies inside the ending span', () => {
@@ -157,7 +157,7 @@ N: 1 2 3 4 |||`), { width: 640, paged, measureNumbers: true, textMeasurer: measu
     expect(meter.x! + meter.width).toBeLessThan(fragment.right)
     for (const mark of nativeSvgPieces(fragment.svg, measurer)) for (const obstacle of placedNativeControlInk(meter)) {
       if (mark.right <= obstacle.left || mark.left >= obstacle.right) continue
-      expect(mark.bottom).toBeLessThanOrEqual(obstacle.top - 2.016 + .001)
+      expect(mark.bottom).toBeLessThanOrEqual(obstacle.top - 2 + .001)
     }
   })
 })

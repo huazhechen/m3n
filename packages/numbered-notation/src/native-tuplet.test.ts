@@ -5,7 +5,7 @@ import { DefaultTextMeasurer } from './native-measure.js'
 import { nativeTupletGeometry } from './native-tuplet.js'
 import { nativeRibbonRange } from './native-curve.js'
 import { nativeSvgPieces } from './native-ink.js'
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const measurer = new DefaultTextMeasurer()
@@ -62,13 +62,13 @@ describe('native tuplet brackets', () => {
           for (const ink of glyph.musicInk ?? []) {
             if (glyph.x + ink.right <= mark.left || glyph.x + ink.left >= mark.right) continue
             const clearance = ink.top - mark.bottom
-            expect(clearance).toBeGreaterThanOrEqual(24 * .14 - 1e-7)
+            expect(clearance).toBeGreaterThanOrEqual(24 / 12 - 1e-7)
             nearest = Math.min(nearest, clearance)
           }
         }
       }
     }
-    expect(nearest).toBeCloseTo(24 * .14)
+    expect(nearest).toBeCloseTo(24 / 12)
   })
 
   it.each([320, 600, 768])('aligns final adjacent brackets after clearing an incoming tie at %spx', width => {
@@ -138,7 +138,7 @@ describe('native tuplet brackets', () => {
     const placed = system.relationLayout!.get(bracket)!
     for (const piece of placed.pieces ?? nativeSvgPieces(placed.svg,measurer)) {
       const edge = nativeRibbonRange(arc,piece.left,piece.right)
-      if (edge) expect(piece.top - edge.bottom).toBeGreaterThanOrEqual(nativeCoreGap() * .12 - .005)
+      if (edge) expect(piece.top - edge.bottom).toBeGreaterThanOrEqual(nativeAttachmentGap() - .005)
     }
   })
 
@@ -160,7 +160,7 @@ describe('native tuplet brackets', () => {
     const moved = nativeTupletGeometry(relation, system, measurer)
     const metrics = measurer.measureText('3', { fontSize: moved.fontSize, fontFamily: 'Barlow Semi Condensed' })
     const bottom = moved.baseline - metrics.baseline + (metrics.inkBottom ?? metrics.h)
-    expect(-80 - bottom).toBeCloseTo(24 * .14)
+    expect(-80 - bottom).toBeCloseTo(24 / 12)
   })
 
   it('draws separated strokes without painting a white mask over other content', () => {

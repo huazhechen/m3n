@@ -3,7 +3,7 @@ import { describe,expect,it } from 'vitest';
 import { nativeLanePieces } from '../native-lanes.js';
 import { layoutNativeScore, repaginateNativeLayout } from '../native-layout.js';
 import { nativeSystemCore } from '../native-core.js';
-import { paginateScoreBlocks, prepareScorePagination } from './pagination.js';
+import { paginateScoreBlocks, prepareScorePagination, fitSharedScorePage } from './pagination.js';
 import type { ScoreInk, ScorePageBlock } from './geometry.js';
 const options = { pageHeight: 400, margin: 20, gap: 10 };
 describe('native measured-block pagination', () => {
@@ -28,7 +28,7 @@ describe('native measured-block pagination', () => {
         expect(() => paginateScoreBlocks([{ height: 361 }], options)).toThrow('单个谱行');
     });
 });
-it('fits paged core gaps while keeping continuous core gaps at the 0.8em minimum', () => {
+it('fits paged core gaps while keeping continuous core gaps at the 0.75em minimum', () => {
     const document = parseM3NDocument('{4/4}\nN: ' + Array.from({ length: 30 }, () => '1 2 3 4 |').join(' '));
     const options = { width: 320, paged: true };
     const natural = layoutNativeScore(document, options);
@@ -42,11 +42,11 @@ it('fits paged core gaps while keeping continuous core gaps at the 0.8em minimum
     };
     expect(step(natural)).toBeGreaterThanOrEqual(natural.pages[0]!.coreGap! - 1e-6);
     for (const page of natural.pages) {
-        expect(page.coreGap).toBeGreaterThanOrEqual(19.2);
-        expect(page.coreGap).toBeLessThanOrEqual(38.4 + 1e-6);
+        expect(page.coreGap).toBeGreaterThanOrEqual(18);
+        expect(page.coreGap).toBeLessThanOrEqual(36 + 1e-6);
     }
-    expect(continuous.pages[0]!.coreGap).toBeCloseTo(19.2);
-    expect(step(continuous)).toBeCloseTo(20.4);
+    expect(continuous.pages[0]!.coreGap).toBeCloseTo(18);
+    expect(step(continuous)).toBeCloseTo(19.8);
     for (const width of [320, 600, 800, 1000]) {
         const paged = layoutNativeScore(document, { width, paged: true });
         const continuous = layoutNativeScore(document, { width, paged: false });
@@ -84,20 +84,20 @@ it('uses the same row parameter after lyric and non-lyric rows, including repagi
     const gaps = () => layout.systems.slice(1).map((system, index) =>
         nativeSystemCore(system, layout.measurer)!.top - nativeSystemCore(layout.systems[index]!, layout.measurer)!.bottom);
     expect(layout.systems).toHaveLength(3);
-    expect(gaps()[0]).toBeCloseTo(19.2);
-    expect(gaps()[1]).toBeCloseTo(20.4);
+    expect(gaps()[0]).toBeCloseTo(18);
+    expect(gaps()[1]).toBeCloseTo(19.8);
     repaginateNativeLayout(layout, true);
     // A roomy page can still stretch both gaps to the configured ceiling.
-    expect(gaps()[0]).toBeCloseTo(38.4);
-    expect(gaps()[1]).toBeCloseTo(38.4);
+    expect(gaps()[0]).toBeCloseTo(36);
+    expect(gaps()[1]).toBeCloseTo(36);
     repaginateNativeLayout(layout, false);
-    expect(gaps()[0]).toBeCloseTo(19.2);
-    expect(gaps()[1]).toBeCloseTo(20.4);
+    expect(gaps()[0]).toBeCloseTo(18);
+    expect(gaps()[1]).toBeCloseTo(19.8);
 });
 
 
 
-it('fits lyric gaps between 0.8em and the unchanged maximum while preserving collision clearance', () => {
+it('fits lyric gaps between 0.75em and the unchanged maximum while preserving collision clearance', () => {
     const block = { height: 20, baseline: 0, core: { top: 0, bottom: 20 }, coreGapScale: 2 / 3,
         ink: [{ left: 0, right: 10, top: 0, bottom: 20 }] };
     const result = paginateScoreBlocks([block, block, block], { pageHeight: 110, margin: 0, gap: 28.8, maxGap: 31.68, elastic: true });
@@ -233,3 +233,31 @@ it('preserves exhaustive remote collisions with fixed clearances on both rows', 
         result.positions.forEach((position, index) => expect(position.top + blocks[index]!.baseline!).toBeCloseTo(baselines[index]!, 9));
     }
 });
+
+
+it('fits dynamic header geometry and its outside gap using the same N', () => {
+  const header = (n: number) => ({height:10+n,ink:[{left:0,right:100,top:0,bottom:10+n}]})
+  const row = {height:20,core:{top:0,bottom:20},ink:[{left:0,right:100,top:0,bottom:20}]}
+  const result = prepareScorePagination([{...header(18),atRowGap:header},row])({pageHeight:80,margin:0,gap:18,vertical:{minimum:18,comfortable:27,maximum:36},headerGapRatio:2/3})
+  // 10+N header, 2N/3 outside clearance and a 20px music row exactly fill 80px.
+  expect(result.heights).toHaveLength(1)
+  expect(result.coreGaps[0]).toBeCloseTo(30,5)
+  expect(result.positions[1]!.top+20).toBeCloseTo(80,5)
+})
+
+it('treats a header taller than the page at high N as an infeasible probe', () => {
+  const header=(n:number)=>({height:3*n,ink:[{left:0,right:10,top:0,bottom:3*n}]})
+  const result=prepareScorePagination([{...header(18),atRowGap:header}])({pageHeight:75,margin:0,gap:18,vertical:{minimum:18,comfortable:27,maximum:36},headerGapRatio:2/3})
+  expect(result.heights).toHaveLength(1)
+  expect(result.coreGaps[0]).toBeCloseTo(25,5)
+})
+
+it.each([24,26])('fits a shared page with one N across every member at music size %s', music => {
+  const spacing={minimum:music*.75,comfortable:music*1.125,maximum:music*1.5}
+  const heights=[(n:number)=>40+2*n,(n:number)=>70+n]
+  const result=fitSharedScorePage(heights,220,spacing)
+  expect(result.coreGap).toBeCloseTo(110/4.2,5)
+  expect(result.scoreGap).toBeCloseTo(result.coreGap*1.2)
+  expect(heights.reduce((sum,height)=>sum+height(result.coreGap),result.scoreGap)).toBeLessThanOrEqual(220)
+  expect(heights.reduce((sum,height)=>sum+height(result.coreGap+.001),(result.coreGap+.001)*1.2)).toBeGreaterThan(220)
+})

@@ -1,6 +1,6 @@
 import { isNativeMeasureNumber } from './native-system-labels.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
-import { nativeAttachmentGap, nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeAttachmentGap, nativeStyle } from './native-style.js'
 import { nativeMusicAxis } from './native-axis.js'
 import { nativeHairpinSegments } from './native-hairpin.js'
 import { nativeBarInk, nativeBarPieces, nativeLaneBarPositions } from './native-bars.js'
@@ -133,7 +133,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
             .flatMap(label => nativeSvgPieces(label.svg, measurer))
             .filter(label => label.right > peerInk.left && label.left < peerInk.right)
           dy = Math.min(dy, ...[...peerBlockers, ...peerLabels]
-            .map(b => b.top - nativeAttachmentGap(system.coreGap) - peerInk.bottom))
+            .map(b => b.top - nativeAttachmentGap() - peerInk.bottom))
         }
       }
       const hairpin = relation.kind === 'cresc' || relation.kind === 'decres'
@@ -144,7 +144,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           if (bounds.right > ink.left && bounds.left < ink.right) blockers.push(bounds)
         }
       }
-      dy = Math.min(dy, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-nativeAttachmentGap(system.coreGap)-ink.bottom))
+      dy = Math.min(dy, ...blockers.map(b => hairpin ? b.top-nativeStyle.music*.5 : b.top-nativeAttachmentGap()-ink.bottom))
     }
     if (isArc) {
       const arc = initialArc!
@@ -164,7 +164,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
         if (placed.arc) {
           // A shared endpoint alone is adjacency, not an outer musical layer.
           if (compare(peer.last, relation.first) <= 0 || compare(peer.first, relation.last) >= 0) continue
-          lift = Math.max(lift, nativeRibbonClearance(arc, placed.arc, (system.coreGap ?? nativeCoreGap()) * .12, nativeStyle.music * 1e-6))
+          lift = Math.max(lift, nativeRibbonClearance(arc, placed.arc, nativeAttachmentGap(), nativeStyle.music * 1e-6))
         } else {
           // A rhythm numeral is higher than its bracket arms. Keep each
           // primitive's own footprint instead of spreading the numeral's
@@ -172,7 +172,7 @@ export function placeNativeRelation(relation: NativeRelation, system: NativeSyst
           for (const piece of placed.pieces ?? nativeSvgPieces(placed.svg, measurer)) {
             if (piece.right <= arc.left || piece.left >= arc.right) continue
             const edge = nativeRibbonRange(arc, piece.left, piece.right)
-            if (edge) lift = Math.max(lift, edge.bottom - piece.top + (system.coreGap ?? nativeCoreGap()) * .12)
+            if (edge) lift = Math.max(lift, edge.bottom - piece.top + nativeAttachmentGap())
           }
         }
       }

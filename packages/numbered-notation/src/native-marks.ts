@@ -1,4 +1,4 @@
-import { nativeAttachmentGap, nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 import { DefaultTextMeasurer, type TextMeasurer } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
 import type { NativeGlyph } from './native-model.js'
@@ -19,7 +19,7 @@ export function nativeMarkInk(name: string, measurer: TextMeasurer): NativeInk {
 /** Single-note marks sit inside relations, with articulations nearest the note.
  * Dynamics and expression text remain outside the enclosing relations.
  * Placement and SVG use the very same shapes, including italic text metrics. */
-export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer(), coreGap = nativeCoreGap(), bodyPieces?: readonly NativeInk[]) {
+export function nativeMarkStack(names: readonly string[], bodyTop: number, measurer: TextMeasurer = new DefaultTextMeasurer(), bodyPieces?: readonly NativeInk[]) {
   const ordered = [...names].sort((a, b) => nativeMarkRank(a) - nativeMarkRank(b))
   let top = bodyTop
   const items: NativeMarkPlacement[] = ordered.map((name, index) => {
@@ -32,7 +32,7 @@ export function nativeMarkStack(names: readonly string[], bodyTop: number, measu
       const overlapping = bodyPieces.filter(piece => piece.left < ink.right && piece.right > ink.left)
       if (overlapping.length) top = Math.max(...overlapping.map(piece => -piece.top))
     } else top = Math.max(top, bodyTop)
-    const y = -top - nativeAttachmentGap(coreGap) - ink.bottom
+    const y = -top - nativeAttachmentGap() - ink.bottom
     top = height - (y + ink.bottom)
     return { name, top: -top, height, y, left: ink.left, right: ink.right }
   })
@@ -40,7 +40,7 @@ export function nativeMarkStack(names: readonly string[], bodyTop: number, measu
 }
 
 /** Preserve actual chord offsets when measuring the centered staccato column. */
-export function nativeGlyphMarkStack(glyph: NativeGlyph, names: readonly string[], measurer: TextMeasurer, coreGap = nativeCoreGap(), bodyTop = nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, measurer).top) {
+export function nativeGlyphMarkStack(glyph: NativeGlyph, names: readonly string[], measurer: TextMeasurer, bodyTop = nativeNoteMetrics(glyph.pitches, glyph.writtenBeats, glyph.sustain, measurer).top) {
   const pieces = names.includes('tip') ? nativeBodyPieces({ ...glyph, x: 0, y: 0 }, measurer) : undefined
-  return nativeMarkStack(names, bodyTop, measurer, coreGap, pieces)
+  return nativeMarkStack(names, bodyTop, measurer, pieces)
 }

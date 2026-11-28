@@ -4,7 +4,8 @@
  * Music-attached geometry is derived from the core font em at its use sites.
  */
 // 共用歌词字号与横向留白；纵向净空直接引用各谱式的附件净空。
-const lyrics = { fontSize: 16, horizontalPadding: 1, preferredExtraGap: 2 } as const
+const numberedMusic = 24
+const lyrics = { fontSize: numberedMusic * 2 / 3, horizontalPadding: numberedMusic / 24, preferredExtraGap: numberedMusic / 12 } as const
 
 const fontFamilies = {
   latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',
@@ -18,47 +19,43 @@ const fonts = {
   measurementSize: 1000,
 } as const
 
-const numberedMusic = 24
-const numberedCoreGapEm = 1.2
-// 曲间最小留白为默认核心间距的1.25倍（当前36px）。
-const sharedScoreGapCoreRatio = 1.25
-const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRatio
-
-const typography = { title: 32, subtitle: 16, credit: 14, text: 16, annotation: 14,
-  navigation: 16, fine: 16.8, measureNumber: 10, fingering: 12, expression: 13, voltaLabel: 14.4, repeatCount: 13 }
+// All numbered typography is derived from its music em. Staff shares text sizes.
+const sharedScoreGapRowRatio = 1.2
+const sharedScoreGap = numberedMusic * .75 * sharedScoreGapRowRatio
+const typography = { title: numberedMusic * 4 / 3, subtitle: numberedMusic * 2 / 3,
+  credit: numberedMusic * .6, text: numberedMusic * 2 / 3, annotation: numberedMusic * .6,
+  navigation: numberedMusic * 2 / 3, fine: numberedMusic * 2 / 3,
+  measureNumber: numberedMusic / 2, fingering: numberedMusic / 2, expression: numberedMusic / 2,
+  voltaLabel: numberedMusic * .6, repeatCount: numberedMusic * .6 }
 
 // 行内净空按各谱式音乐字号除以下列系数，不随档位或行距变化。
-const page = { collisionGapRatio: 0.5, attachmentGapDivisor: 12, annotationGapDivisor: 6, chordGapDivisor: 4 } as const
+const page = { collisionGapRatio: 0.5, attachmentGapDivisor: 12, lyricGapDivisor: 8, annotationGapDivisor: 6, chordGapDivisor: 6 } as const
 
 const numbered = {
   ...typography,
-  // 独立文字字号（px）；音符附属字形在实现中按 music 的 em 比例计算。
+  // 文字字号随音乐字号定义；音符附属字形在使用处按 em 比例计算。
   music: numberedMusic,
   // 正圆直径：八度点0.15em、时值附点0.18em；倚音同比缩放。
   octaveDotRadiusEm: .075,
   durationDotRadiusEm: .09,
   accidentalScale: 1.15,
-  // 固定行内雕版基准，以 music 为1em；与自动行间距独立。
-  coreGapEm: numberedCoreGapEm, // 固定的行内雕版基准。
-  minimumRowGapEm: .8,
+  minimumRowGapEm: .75,
   lyric: lyrics.fontSize,
-  grace: 13,
 
-  // 外层表情与导航文字保持独立字号。
-  // 紧／松两档最小净空；时值与组内比例由横向引擎换算。
-  minimumNoteGap: 8,
-  noteGapCandidates: [8, 12, 16] as readonly number[],
-  // 文字换行行高独立于音乐字号和核心间距。
-  titleLineHeight: 36,
-  subtitleLineHeight: 18,
+    // 三档最小净空；时值与组内比例由横向引擎换算。
+  minimumNoteGap: numberedMusic / 3,
+  noteGapCandidates: [numberedMusic / 3, numberedMusic / 2, numberedMusic * 2 / 3] as readonly number[],
+  // 标题换行行高随对应文字字号。
+  titleLineHeight: typography.title * 9 / 8,
+  subtitleLineHeight: typography.subtitle * 9 / 8,
 
   // 行内横向间距（px）。
-  headingBarGap: 2,
-  signatureItemGap: 16,
-  inlineSectionGap: 12,
+  headingBarGap: numberedMusic / 12,
+  signatureItemGap: numberedMusic * 2 / 3,
+  inlineSectionGap: numberedMusic / 2,
   // 小节号只参与页面边界留白，不参与元素碰撞；隐藏时仍计入边界。
-  measureNumberBarGap: 2,
-  measureNumberPadding: 2,
+  measureNumberBarGap: numberedMusic / 12,
+  measureNumberPadding: numberedMusic / 12,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
   groupSpacingRatio: 0.75,
   // Compatibility alias; the shared page policy owns this value.
@@ -66,12 +63,12 @@ const numbered = {
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
   defaultPageMargin: 32, minimumWidth: 320, minimumContentWidth: 40,
   // Hinting and raster coverage can extend past the mathematical outline.
-  // Keep their fixed frame allowance separate from the glyph design metrics.
-  designInkEdgeGuard: 2,
-  headerWrapInset: 2,
-  frameStroke: 1,
-  navigationGap: 4.4,
-  openingBarFallbackInset: 2, closingBarFallbackInset: 3,
+  // Frame allowance scales with M while remaining separate from outline metrics.
+  designInkEdgeGuard: numberedMusic / 12,
+  headerWrapInset: numberedMusic / 12,
+  frameStroke: numberedMusic / 24,
+  navigationGap: numberedMusic * .18,
+  openingBarFallbackInset: numberedMusic / 12, closingBarFallbackInset: numberedMusic / 8,
   sharedScoreGap,
 }
 
@@ -84,8 +81,7 @@ const staff = {
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
   music: 26, // 四个6.5px谱间。
-  minimumRowGapEm: .8,
-  coreGapSpaces: 4, // 固定行内雕版基准，随谱间缩放。
+  minimumRowGapEm: .75,
   // 既有五线谱独立几何以28px（四个7px谱间）为设计基准。
   get musicSizeRatio(): number { return this.music / 28 },
   spacingIncrementSpaces: 1.2,
@@ -141,7 +137,7 @@ const staff = {
 const imageExport = { footerMinimumFontSize: 12, footerFontSizeWidthRatio: 0.02, marginRatio: 0.06, footerMarginRatio: 1.55 } as const
 const rendering = { offscreenPosition: -20000, auditOffscreenPosition: -100000, previewPageGap: 16 } as const
 const scorebook = {
-  sharedScoreGapCoreRatio, sharedScoreGap,
+  sharedScoreGapRowRatio, sharedScoreGap,
   contentsLeaderSpaceEm: .35, contentsLeaderMinimumEm: 1,
   coverTitle: 40, coverWebsite: 18, contentsTitle: 30, sectionTitle: 16, entryTitle: 16, pageNumber: 14,
   coverTitleY: 350, coverWebsiteY: 410, contentsLeft: 40, contentsTop: 65,

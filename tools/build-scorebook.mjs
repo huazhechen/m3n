@@ -105,8 +105,8 @@ try {
   if (!probeOnly) for (const group of optimizedPacking.groups) {
     const entries = records.slice(group.start, group.end), start = music.length
     if (entries.length > 1) {
-      const rendered = await page.evaluate(({ sources, width, gap, auditLayout }) => window.scorebook.sharedA4Page(sources, width, gap, undefined, auditLayout),
-        { sources: entries.map(entry => sources.get(entry.id)), width: group.width, gap: sharedScoreGap, auditLayout })
+      const rendered = await page.evaluate(({ sources, width, auditLayout }) => window.scorebook.sharedA4Page(sources, width, undefined, auditLayout),
+        { sources: entries.map(entry => sources.get(entry.id)), width: group.width, auditLayout })
       music.push({ kind: 'music', ids: entries.map(entry => entry.id), svg: pageSvg(rendered.markup) })
       musicGroups.push({ musicStart: start, width: group.width, usedHeight: rendered.usedHeight, coreGap: rendered.coreGap, scoreGap: rendered.scoreGap, trailingGap: rendered.trailingGap,
         items: entries.map((entry, index) => ({ id: entry.id, top: rendered.items[index].top, height: rendered.items[index].sourceHeight })) })

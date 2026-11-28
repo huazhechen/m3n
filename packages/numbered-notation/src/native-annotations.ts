@@ -9,6 +9,8 @@ import type { NativeArc } from './native-arc.js'
 import type { NativeInk } from './native-ink.js'
 import { nativeRibbonRange } from './native-curve.js'
 
+const annotationSize = (kind: NativeAnnotation['kind']) => kind === 'expression' ? nativeStyle.expression : nativeStyle.annotation
+
 export type NativeRegion = { lane: string; left: number; right: number; top: number; arc?: NativeArc; headingClearance?: number }
 export function nativeRegionTop(region: NativeRegion, left: number, right: number) {
   return region.arc ? -(nativeRibbonRange(region.arc, left, right)?.top ?? -region.top) : region.top
@@ -17,14 +19,14 @@ export function nativeRegionTop(region: NativeRegion, left: number, right: numbe
 /** Final annotation primitives, shared by painting and inter-lane clearance. */
 export function nativeAnnotationSvg(annotation: NativeAnnotation, y: number, painter: NativeSymbols, meta: Record<string, string | number | undefined> = {}): string {
   const { text, x, textX, baseline, width, height, top, kind } = annotation, framed = kind === 'section'
-  const label = painter.text(text, textX, y + baseline, nativeStyle.annotation, SCORE_TEXT_FONT, { 'font-weight': framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT, ...meta, 'data-m3n-role': 'annotation' })
+  const label = painter.text(text, textX, y + baseline, annotationSize(kind), SCORE_TEXT_FONT, { 'font-weight': framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT, ...meta, 'data-m3n-role': 'annotation' })
   return framed ? `<g data-m3n-role="annotation-frame"><rect${attrs({ x: x - width / 2 + nativeStyle.frameStroke / 2, y: y - top + nativeStyle.frameStroke / 2, width: width - nativeStyle.frameStroke, height: height - nativeStyle.frameStroke, stroke: '#000', 'stroke-width': nativeStyle.frameStroke, fill: 'none' })}/>${label}</g>` : label
 }
 
 /** Direct geometry for the same text/frame used by nativeAnnotationSvg. */
 export function nativeAnnotationPieces(annotation: NativeAnnotation, measurer: TextMeasurer): NativeInk[] {
   const framed = annotation.kind === 'section'
-  const metrics = measurer.measureText(annotation.text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT,
+  const metrics = measurer.measureText(annotation.text, { fontSize: annotationSize(annotation.kind), fontFamily: SCORE_TEXT_FONT,
     fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT, fontStyle: 'normal' })
   const text = { left: annotation.textX + (metrics.inkLeft ?? 0), right: annotation.textX + (metrics.inkRight ?? metrics.w),
     top: annotation.baseline - metrics.baseline, bottom: annotation.baseline - metrics.baseline + (metrics.inkBottom ?? metrics.h) }
@@ -49,11 +51,11 @@ export function placeNativeAnnotations(system: NativeSystem, regions: NativeRegi
       if (!rawText || !glyph.annotations.includes(rawText)) continue
       const text = kind === 'expression' && glyph.tempoAnnotation ? `${rawText} (${glyph.tempoAnnotation})` : rawText
       const framed = kind === 'section', padding = framed ? nativeStyle.annotation * 0.25 : 0
-      const metrics = measurer.measureText(text, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT })
+      const metrics = measurer.measureText(text, { fontSize: annotationSize(kind), fontFamily: SCORE_TEXT_FONT, fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT })
       const inkLeft = framed ? Math.min(0, metrics.inkLeft ?? 0) : metrics.inkLeft ?? 0
       const inkRight = framed ? Math.max(metrics.w, metrics.inkRight ?? metrics.w) : metrics.inkRight ?? metrics.w
       const w = inkRight - inkLeft + 2 * padding, h = metrics.h + 2 * padding
-      const first = measurer.measureText([...text][0]!, { fontSize: nativeStyle.annotation, fontFamily: SCORE_TEXT_FONT, fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT })
+      const first = measurer.measureText([...text][0]!, { fontSize: annotationSize(kind), fontFamily: SCORE_TEXT_FONT, fontWeight: framed ? scoreLayoutConfig.fonts.boldWeight : SCORE_TEXT_WEIGHT })
       // Keep the first-character anchor, but only painted text or a visible
       // frame can touch a margin or require clearance over nearby music.
       const left = framed ? margin : Math.max(margin, Math.min(glyph.x - first.w / 2 + inkLeft, width - margin - w))

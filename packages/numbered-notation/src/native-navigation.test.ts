@@ -126,11 +126,11 @@ describe('measured navigation geometry', () => {
     it('reserves the complete Segno outline and centers its anchor and ink', () => {
         const control = measureNativeControl('segno', '', measurer);
         const ink = nativeSvgInk(new NativeSymbols(measurer).control(control), measurer);
-        expect(control.width).toBeCloseTo(13.3374045801, 5);
+        expect(control.width).toBeCloseTo(12.503816794015, 5);
         expect(ink.left).toBeCloseTo(0, 5);
         expect(ink.right).toBeCloseTo(control.width, 5);
         expect(control.anchor).toBeCloseTo(control.width / 2, 5);
-        expect(ink.bottom - ink.top).toBeCloseTo(19.2, 5);
+        expect(ink.bottom - ink.top).toBeCloseTo(18, 5);
         expect((ink.top + ink.bottom) / 2).toBeCloseTo(-8, 4);
     });
     it.each([320,800])('measures Coda onset and To Coda exit without colliding with notes at %spx', width => {

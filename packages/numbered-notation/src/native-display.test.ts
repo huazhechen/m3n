@@ -90,7 +90,7 @@ describe('native display options',()=>{
     expect(shifted.querySelectorAll('[data-m3n-role="pitch-range"] text[data-m3n-symbol="♯"]')).toHaveLength(1)
   })
   it('paginates measured itinerary rows when the complete header exceeds a narrow page',()=>{
-    const document = parseM3NDocument('{title=长演奏顺序}{origin=乐曲来源}{composer=作曲者}{lyricist=作词者}{key=Bb}{4/4}{60qpm}{order=Intro,A,B,A@C,B@C,Bridge,B@F,Coda,Intro,A,B,A@C,B@C,Bridge,B@F,Coda}\n===Intro\nN: 1 2 3 4 ||\n===A\nN: 1 2 3 4 ||\n===B\nN: 1 2 3 4 ||\n===Bridge\nN: 1 2 3 4 ||\n===Coda\nN: 1 2 3 4 |||')
+    const document = parseM3NDocument('{title=长演奏顺序}{origin=乐曲来源}{composer=作曲者}{lyricist=作词者}{key=Bb}{4/4}{60qpm}{order=Intro,A,B,A@C,B@C,Bridge,B@F,Coda,Intro,A,B,A@C,B@C,Bridge,B@F,Coda,Intro,A,B,A@C,B@C,Bridge,B@F,Coda}\n===Intro\nN: 1 2 3 4 ||\n===A\nN: 1 2 3 4 ||\n===B\nN: 1 2 3 4 ||\n===Bridge\nN: 1 2 3 4 ||\n===Coda\nN: 1 2 3 4 |||')
     const geometry = nativeHeaderGeometry(document,320,32,new DefaultTextMeasurer())
     expect(geometry.height-24).toBeGreaterThan(Math.floor(320*277/190)-64)
     const paged = NativeNumberedNotationScore.create(document).render({width:320,paged:true})

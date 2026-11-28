@@ -209,7 +209,7 @@ describe('staff layout contract', () => {
         core: { ...ink, bottom: 0 }, section: false, staffSpacing: 0, hasLyrics }
     }
     const lyrics = make(40, true), plain = make(40, false), next = make(20, false)
-    expect(systemDistance(lyrics, next, 28.8)).toBeCloseTo(49.6)
+    expect(systemDistance(lyrics, next, 28.8)).toBeCloseTo(49)
     expect(systemDistance(plain, next, 28.8)).toBeCloseTo(54.4)
     expect(systemDistance(lyrics, next, 31.68, 28.8, 31.68)).toBeCloseTo(55.84)
   })

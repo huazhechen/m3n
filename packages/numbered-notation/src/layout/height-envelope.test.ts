@@ -16,7 +16,7 @@ it('merges asymmetric cores about their shared music centre, preserving total in
 it('keeps the opening expression below the actual header after precise element placement', async () => {
   const { readFileSync } = await import('node:fs')
   const { nativeSvgPieces } = await import('../native-ink.js')
-  const { nativeCoreGap } = await import('../native-style.js')
+  const { nativeHeaderGap } = await import('../native-style.js')
   const document = parseM3NDocument(readFileSync(new URL('../../../../src/scores/ai_de_li_zan_01.m3n', import.meta.url), 'utf8'))
   for (const width of [528, 552, 648]) {
     const layout = layoutNativeScore(document, { width, paged: true, pageMargin: 0 })
@@ -27,7 +27,7 @@ it('keeps the opening expression below the actual header after precise element p
     const lane = system.lanes.find(lane => lane.id === glyph.lane)!
     const expressionTop = system.top + lane.y - expression.top
     const headerBottom = Math.max(...nativeSvgPieces(layout.pages[0]!.header!, layout.measurer).map(piece => piece.bottom))
-    expect(expressionTop - headerBottom).toBeGreaterThanOrEqual(nativeCoreGap() * .8 - 1e-6)
+    expect(expressionTop - headerBottom).toBeGreaterThanOrEqual(nativeHeaderGap() - 1e-6)
   }
 })
 

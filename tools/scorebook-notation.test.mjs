@@ -135,7 +135,7 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
       try { await api.sharedA4Page(Array(20).fill(sources[0]), width) } catch { overflowRejected = true }
       return { identical: svgs.map((svg, index) => visualMarkup(svg.innerHTML) === visualMarkup(originals[index])),
         widths: svgs.map(svg => svg.viewBox.baseVal.width), items: packed.items.map(({ top, sourceHeight, placement }) => ({ top, sourceHeight, placement })),
-        scoreGap: packed.scoreGap, trailingGap: packed.trailingGap, usedHeight: packed.usedHeight, measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
+        coreGap: packed.coreGap, scoreGap: packed.scoreGap, trailingGap: packed.trailingGap, usedHeight: packed.usedHeight, measuredHeight: summary.naturalHeight, overflowRejected, links: compact.links }
     })
     assert.deepEqual(shared.identical, [true, true], 'Sharing changes only outer SVG placement')
     assert.deepEqual(shared.widths, [720, 720])
@@ -143,10 +143,9 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     assert.equal(shared.items[1].top, shared.items[0].sourceHeight + shared.scoreGap)
     assert.equal(shared.items[0].placement.width, shared.items[1].placement.width)
     assert(shared.items[1].placement.y + shared.items[1].placement.height <= 285)
-    assert(shared.scoreGap > 22)
+    assert(Math.abs(shared.scoreGap - 1.2 * shared.coreGap) < 1e-8)
     assert(Math.abs(shared.usedHeight - Math.floor(720 * 273 / 186)) < 1e-8)
     assert(shared.trailingGap > 0)
-    assert(Math.abs(shared.trailingGap - (shared.scoreGap - 22)) < 1e-8)
     const last = shared.items.at(-1)
     assert(Math.abs(last.top + last.sourceHeight + shared.trailingGap - shared.usedHeight) < 1e-8)
     assert(shared.overflowRejected)

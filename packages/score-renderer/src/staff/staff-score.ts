@@ -1,4 +1,4 @@
-import { scoreWidthPolicyState, compareScoreSpacingTrials, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreCoreGap, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreWidthPolicyState, compareScoreSpacingTrials, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -33,7 +33,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const width = settings.width ?? DEFAULT_PREFERRED_WIDTH
   const vertical = scoreVerticalSpacing('staff')
   const minimumGap = vertical.minimum
-  const headerGap = scoreHeaderGap(scoreCoreGap('staff'))
+  const headerGap = scoreHeaderGap(minimumGap)
   const outputGap = settings.coreGap ?? minimumGap
   const margin = settings.pageMargin ?? 0
   const validate = (w: number) => {

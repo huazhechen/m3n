@@ -57,7 +57,7 @@ describe('native annotations', () => {
     const measurer = new DefaultTextMeasurer()
     const score = layout(`1 {${kind}=G7}2 3 4`, { textMeasurer: measurer })
     const item = annotations(score)[0]!, host = score.projection.glyphs[1]!
-    const first = measurer.measureText('G', { fontSize: 14, fontFamily: SCORE_TEXT_FONT })
+    const first = measurer.measureText('G', { fontSize: 14.4, fontFamily: SCORE_TEXT_FONT })
     expect(item.textX + first.w / 2).toBeCloseTo(host.x, 6)
     expect(item.x).toBeGreaterThan(host.x)
   })
@@ -89,8 +89,8 @@ describe('native annotations', () => {
     const item = annotations(score).find(item => item.kind === 'section')!
     const svg = nativeAnnotationSvg(item, 0, new NativeSymbols(measurer))
     const ink = nativeSvgInk(svg.match(/<text[\s\S]*?<\/text>/)![0], measurer)
-    expect(ink.left - item.x + item.width / 2).toBeCloseTo(3.5, 4)
-    expect(item.x + item.width / 2 - ink.right).toBeCloseTo(3.5, 4)
+    expect(ink.left - item.x + item.width / 2).toBeCloseTo(3.6, 4)
+    expect(item.x + item.width / 2 - ink.right).toBeCloseTo(3.6, 4)
   })
   it('leaves note spacing, wrapping and arc geometry unchanged', () => {
     const bare = layout('{lg}1 2{/} 3 4')
@@ -122,7 +122,7 @@ describe('native annotations', () => {
     expect([chord!.kind, text!.kind, section!.kind]).toEqual(['chord', 'text', 'section'])
     expect(text!.top - text!.height).toBeGreaterThanOrEqual(chord!.top + 4 - 1e-8)
     expect(section!.top - section!.height).toBeGreaterThanOrEqual(text!.top + 4 - 1e-8)
-    expect(section!.x - section!.width / 2).toBe(32)
+    expect(section!.x - section!.width / 2).toBeCloseTo(32)
     expect(score.systems[0]!.lanes[0]!.top).toBe(section!.top)
   })
 

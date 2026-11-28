@@ -1,25 +1,18 @@
 import { scoreLayoutConfig } from '../score-layout-config.js'
 
-/** Fixed internal engraving baseline; independent of elastic row spacing. */
-export function scoreCoreGap(notation: 'numbered' | 'staff' = 'numbered'): number {
-  const base = notation === 'staff'
-    ? scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.coreGapSpaces
-    : scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.coreGapEm
-  return base
-}
 /** Local clearance follows music size, independent of page stretching. */
 export const scoreAttachmentGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
   scoreLayoutConfig[notation].music / scoreLayoutConfig.page.attachmentGapDivisor
 
-/** Header spacing uses the fixed engraving baseline and never stretches per page. */
-export const scoreHeaderGap = (minimum: number): number => minimum * .8
+/** Header block clearance is four H, with H = N / 6. */
+export const scoreHeaderGap = (rowGap: number): number => rowGap * 2 / 3
 /** Inline section starts replace the ordinary core gap; no additive spacer. */
 export const scoreSectionCoreGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
   scoreLayoutConfig[notation].music * 1.5
 
 export const scoreMaximumCoreGap = (minimum: number): number => minimum * 1.1
 export const scoreLyricGapScale = (minimum: number): number => minimum > 0
-  ? Math.min(1, scoreLayoutConfig.numbered.music * .8 / minimum) : 1
+  ? Math.min(1, scoreVerticalSpacing().minimum / minimum) : 1
 
 /** Lyrics start closer, but share the ordinary page stretch ceiling. */
 export function interpolateScoreCoreGap(minimum: number, maximum: number, current: number, scale = 1): number {
@@ -29,7 +22,7 @@ export function interpolateScoreCoreGap(minimum: number, maximum: number, curren
 }
 
 /** Navigation symbols share actual ink height across notation engines. */
-export const scoreNavigationGlyphHeight = (): number => scoreLayoutConfig.numbered.music * .8
+export const scoreNavigationGlyphHeight = (): number => scoreLayoutConfig.numbered.music * .75
 
 /** Actual ink heights for decorations with matching glyph semantics. */
 const attachmentRatios: Readonly<Record<string, number>> = { str: .25, breath: .4, fermata: .3, tr: .5, prall: .275, hold: .05, brk: .3 }

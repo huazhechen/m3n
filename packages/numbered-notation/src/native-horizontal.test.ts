@@ -34,10 +34,10 @@ describe('native spacing and measured note envelopes', () => {
     });
     it('matches all four note centres and the flush final bar of an unadorned system', () => {
         const result = layout('{4/4}\nN: 1 2 3 4 |||', 800, narrowSpacing);
-        const expected = [38.084020441228695, 219.4515204412287, 400.8190204412287, 582.1865204412287];
+        const expected = [38.084020441228695, 219.4340204412287, 400.78402044122873, 582.1340204412287];
         result.projection.glyphs.forEach((glyph, index) => expect(glyph.x).toBeCloseTo(expected[index]!, 6));
-        expect(result.projection.measures[0]!.barX).toBeCloseTo(762.735, 6);
-        expect(result.projection.glyphs[0]!.y).toBeCloseTo(107, 6);
+        expect(result.projection.measures[0]!.barX).toBeCloseTo(762.7, 6);
+        expect(result.projection.glyphs[0]!.y).toBeCloseTo(95.96, 6);
     });
     it('reserves dots for dotted values and gives a plain eighth no phantom dot space', () => {
         const result = layout('{4/4}\nN: (1 2) 3. (4) 5 |||');
@@ -56,15 +56,15 @@ describe('native spacing and measured note envelopes', () => {
         const bass = result.projection.glyphs.find(glyph => glyph.staff === 'bass')!;
         bass.pitchOffsets!.forEach((offset, index) => expect(offset).toBeCloseTo([0, -28.56, -57.12][index]!, 6));
         const lanes = result.systems[0]!.lanes;
-        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(104.28, 6);
+        expect(lanes[1]!.y - lanes[0]!.y).toBeCloseTo(102.12, 6);
     });
     it('weights cross-system tie coverage without cumulative row padding', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [43.30200703, 39.6, 39.6].entries())
+        for (const [index, gap] of [42.7260037051, 39, 39].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(317.52965175, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(299.4334009944, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -79,7 +79,7 @@ describe('native spacing and measured note envelopes', () => {
         const boundary = result.projection.measures[8]!;
         expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(82.28674971797398, 5);
         const opening = result.projection.measures[9]!;
-        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(133.63525620634573, 5);
+        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(133.92525620634603, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {

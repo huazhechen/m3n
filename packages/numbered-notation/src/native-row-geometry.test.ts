@@ -77,12 +77,12 @@ it('keeps row-cache output identical to uncached geometry evaluation', async () 
     const block=cached.verticalBlocks[cached.headerBlocks.length+index]!
     expect(block.resolvedInk).toBe(true)
     for(const horizontal of [undefined,{minimumNoteGap:8,width:768}]) {
-    const lower=nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!,horizontal)
+    const lower=nativeRowCoreLowerBound(row.measures,cached.measurer,horizontal)
     if(horizontal) {
       const context={...horizontal}
       cacheNativeHorizontal(context,templates)
       nativeHorizontalSpacing(row.measures,context)
-      expect(nativeRowCoreLowerBound(row.measures,cached.measurer,row.coreGap!,{...horizontal},templates)).toEqual(lower)
+      expect(nativeRowCoreLowerBound(row.measures,cached.measurer,{...horizontal},templates)).toEqual(lower)
     }
     expect(lower.core!.bottom).toBeLessThanOrEqual(block.core!.bottom-block.baseline!+1e-5)
     expect(lower.core!.top).toBeGreaterThanOrEqual(block.core!.top-block.baseline!-1e-5)

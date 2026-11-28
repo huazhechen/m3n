@@ -45,25 +45,25 @@ describe('native lyric and music lower envelopes', () => {
     const bodyBottom = numeral.inkBottom! - numeral.baseline
     expect(first.bodyBottom).toBeCloseTo(7.8)
     expect(first.lyricBottom).toBeCloseTo(bodyBottom)
-    expect(first.bottom).toBeCloseTo(bodyBottom + 2 + lyricMetrics.inkBottom!)
+    expect(first.bottom).toBeCloseTo(bodyBottom + 3 + lyricMetrics.inkBottom!)
     const svg = NativeNumberedNotationScore.create(document).render(options).join('')
     const root = new DOMParser().parseFromString(svg, 'text/html')
     const lyric = root.querySelector('[data-m3n-role="lyric"]')!
-    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 2 + lyricMetrics.baseline, 4)
+    expect(Number(lyric.getAttribute('y')) - first.y).toBeCloseTo(bodyBottom + 3 + lyricMetrics.baseline, 4)
     const firstCore = nativeSystemCore(score.systems[0]!, score.measurer)!
     const secondCore = nativeSystemCore(score.systems[1]!, score.measurer)!
     expect(firstCore.bottom).toBeCloseTo(first.y + first.bottom)
-    // The lyric gap starts at 0.8em; the high note's full ink can still
+    // The lyric gap starts at 0.75em; the high note's full ink can still
     // require slightly more space than its weighted core boundary.
-    expect(secondCore.top - firstCore.bottom).toBeGreaterThanOrEqual(19.2 - 1e-6)
+    expect(secondCore.top - firstCore.bottom).toBeGreaterThanOrEqual(18 - 1e-6)
     expect(secondCore.top - firstCore.bottom).toBeLessThan(28.8)
   })
 
   it('uses beam and low-octave geometry when that body extends farther', () => {
     const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: (1d 2) 3 4 5 |||\nL: 春天在哪里'), options)
     const lane = score.systems[0]!.lanes[0]!
-    expect(lane.lyricBottom).toBeCloseTo(9.72)
-    expect(lane.bodyBottom).toBeCloseTo(9.72)
+    expect(lane.lyricBottom).toBeCloseTo(9.6)
+    expect(lane.bodyBottom).toBeCloseTo(9.6)
   })
 
   it('puts a lyric underline below the actual descenders, with measured clearance', () => {
@@ -139,13 +139,13 @@ describe('native lyric and music lower envelopes', () => {
     for (const beats of [1, 0.5, 0.25]) {
       const metrics = nativeNoteMetrics([pitch], beats, false, measurer)
       let svg = painter.pitch(pitch, 0, 0, 24, metrics.beamCount)
-      for (let beam = 0; beam < metrics.beamCount; beam++) svg += line(-6, 3.54 + beam * 3.36, 7, 3.54 + beam * 3.36, 1.32)
+      for (let beam = 0; beam < metrics.beamCount; beam++) svg += line(-6, 3.48 + beam * 3.36, 7, 3.48 + beam * 3.36, 1.2)
       expect(metrics.bottom).toBeCloseTo(nativeSvgInk(svg, measurer).bottom, 8)
     }
     // A short real digit must not inherit the fallback font's nominal descent.
     const shortInk = { measureText: () => ({ w: 11, h: 15, baseline: 15 }) }
-    expect(nativeNoteMetrics([pitch], 0.5, false, shortInk).bottom).toBeCloseTo(4.2)
-    expect(nativeNoteMetrics([pitch], 0.25, false, shortInk).bottom).toBeCloseTo(7.56)
+    expect(nativeNoteMetrics([pitch], 0.5, false, shortInk).bottom).toBeCloseTo(4.08)
+    expect(nativeNoteMetrics([pitch], 0.25, false, shortInk).bottom).toBeCloseTo(7.44)
     const chord = nativeNoteMetrics([pitch, pitch], 0.5, false)
     const numeral = measurer.measureText('0', { fontSize: 24 })
     expect(chord.offsets[0]).toBe(0)

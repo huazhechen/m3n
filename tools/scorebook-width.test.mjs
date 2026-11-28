@@ -199,12 +199,12 @@ test('fixed-order pagination balances the whole chapter instead of leaving a sho
 })
 
 test('inter-work whitespace is a hard capacity constraint at actual candidate widths', () => {
-  assert.equal(sharedScoreGap, 36)
+  assert.ok(Math.abs(sharedScoreGap - 21.6) < 1e-9)
   const entries = ['A', 'B'].map(title => entry(title, [candidate(576, 455), candidate(600, 455), candidate(720, 515)]))
   // No shared grid width fits, even if the solo-only 720px width fits.
   assert.equal(packScorebook(entries).length, 2)
   for (const work of entries) work.candidates[1] = candidate(600, 450)
-  assert.equal(packScorebook(entries).length, 2) // 936px exceeds the 600px capacity.
+  assert.equal(packScorebook(entries).length, 2) // 921.6px exceeds the 600px capacity.
 })
 
 test('joint width and chapter set partitioning matches exhaustive permutation search', () => {

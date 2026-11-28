@@ -6,6 +6,8 @@ export type ScoreInk = { left: number; right: number; top: number; bottom: numbe
  */
 export type ScorePageBlock = {
   height: number
+  /** Adapter-resolved header geometry; musical rows remain immutable. */
+  atRowGap?: (gap: number) => ScorePageBlock
   baseline?: number
   core?: { top: number; bottom: number }
   coreGapBefore?: number

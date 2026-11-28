@@ -10,7 +10,7 @@ import { cacheNativeArcObstacles, releaseNativeArcObstacles } from './native-arc
 import { intersectNativeRowBounds } from './native-row-bound.js'
 import { captureNativeRowHorizontal, restoreNativeRowHorizontal, captureNativeRow, restoreNativeRow, restoreNativeRowRelations } from './native-row-cache.js'
 import { nativeRowGeometry, nativeRowCoreLowerBound } from './native-row-geometry.js'
-import { scoreLyricGapScale, scoreVerticalSpacing, scoreFixedVerticalSpacing } from './layout/policy.js'
+import { scoreVerticalSpacing, scoreFixedVerticalSpacing } from './layout/policy.js'
 import { SCORE_NUMBER_FONT } from './font-family.js'
 import { scoreNumberedFontCost } from './layout/quality.js'
 import { nativeLayoutQuality } from './native-quality.js'
@@ -19,7 +19,7 @@ import { hasPassKeys } from '@m3n/notation'
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
 import { keyedDisplayPerformance } from './display-performance.js'
 import { nativeBarInk, nativeLaneBarPositions } from './native-bars.js'
-import { nativeCoreGap, nativeHeaderGap, nativeStyle } from './native-style.js'
+import { nativeHeaderGap, nativeStyle } from './native-style.js'
 import { isNativeMeasureNumber, placeNativeNavigation, placeNativeBarLabels } from './native-system-labels.js'
 import { placeNativeVoltas } from './native-volta-layout.js'
 import { cacheNativeLyricHeights, releaseNativeLyricHeights, type NativeLyricHeightCache, placeNativeLyrics } from './native-lyrics.js'
@@ -290,11 +290,19 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const available = options.width - 2 * margin
   const headerStarted = timings ? performance.now() : 0
   if (preparation) preparation.commonHeader ??= new Map()
-  const headerKey=`geometry:${minimumNoteGap}:${nativeCoreGap()}`
+  const headerKey=`geometry:${minimumNoteGap}:${scoreVerticalSpacing().minimum}`
   let header=preparation?.header.get(headerKey) as ReturnType<typeof nativeHeaderGeometry>|undefined
   if(!header){header=nativeHeaderGeometry(headerDocument, options.width, margin, measurer, nativeHeaderGap(), options, preparation?.header, preparation?.commonHeader);preparation?.header.set(headerKey,header)}
   recordPart('headerGeometryMs', headerStarted)
   const headerHeight = header.height
+  const headerAtGap = (gap: number) => nativeHeaderGeometry(headerDocument, options.width, margin, measurer,
+    nativeHeaderGap(gap), options, preparation?.header, preparation?.commonHeader)
+  let resolvedHeaderGap: number | undefined
+  let resolvedHeader: ReturnType<typeof nativeHeaderGeometry>
+  const resolvedHeaderAt = (gap: number) => {
+    if (resolvedHeaderGap !== gap) { resolvedHeader = headerAtGap(gap); resolvedHeaderGap = gap }
+    return resolvedHeader
+  }
   record('projectionMs')
   // These minima depend on immutable music, gap and equal-measure settings,
   // never on page width. Keep an unplaced measured projection for each gap;
@@ -373,7 +381,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const systems: NativeSystem[] = lines.map(({ measures, density }, index) => {
     const spacing = onlyRow === undefined ? rhythmicGapFor(measures) : undefined
     return { horizontalDensity: density, unitRhythmicGap: spacing?.gap, rhythmicGaps: spacing?.gaps,
-      coreGap: nativeCoreGap(), index, numericGeometry: options.numericLayout, measures, lanes: [],
+      index, numericGeometry: options.numericLayout, measures, lanes: [],
       top: 0, bottom: 0, page: 0, volta: measures.some(measure => measure.source.ending), relations: [] }
   })
   record('horizontalQualityMs')
@@ -536,7 +544,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     if(preparation)preparation.fixedCoreBounds ??= new Map()
     let block=key===undefined ? undefined : preparation?.fixedCoreBounds?.get(key)
     if(!block) {
-      block=nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(),{...options,width:maximumWidth},templates)
+      block=nativeRowCoreLowerBound(measures,measurer,{...options,width:maximumWidth},templates)
       if(key!==undefined)preparation?.fixedCoreBounds?.set(key,block)
     }
     return block
@@ -545,13 +553,13 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const resultSystems = measurement ? measuredSystems.map(system => ({ ...system,
       measures: system.measures.map(measure => ({ ...measure })) })) : measuredSystems
     const layout: NativeLayout = { document, headerDocument, projection, systems:resultSystems, pages: [], relations, options, measurer, headerHeight, margin,
-      pagination: prepareScorePagination(blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerBlocks: onlyRow===undefined ? header.blocks : [] }
+      pagination: prepareScorePagination(blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerAtGap, headerBlocks: onlyRow===undefined ? header.blocks : [] }
     if(onlyRow!==undefined)return layout
     const vertical = options.coreGap === undefined ? scoreVerticalSpacing() : scoreFixedVerticalSpacing(options.coreGap)
     const gap = options.coreGap ?? vertical!.minimum
     const pageFitStarted = timings ? performance.now() : 0
     const pagination = layout.pagination({ pageHeight: options.paged ? Math.floor(options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-      margin, gap, vertical, pageCeiling, headerGap: nativeHeaderGap(), maxGap: options.coreGap ?? (options.paged ? vertical!.maximum : gap) })
+      margin, gap, vertical, pageCeiling, headerGap: nativeHeaderGap(), headerGapRatio: 2 / 3, maxGap: options.coreGap ?? (options.paged ? vertical!.maximum : gap) })
     // Internal numeric trials need only page membership. The public entry point
     // fits the winner's vertical spacing and publishes coordinates exactly once.
     if(options.numericLayout) { layout.verticalCost = pagination.verticalCost ?? 0; layout.pages=pagination.heights.map((height,index)=>({index,width:options.width,height,systems:[],coreGap:pagination.coreGaps?.[index]})) }
@@ -663,7 +671,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       const measures=plannedFragments.slice(start,end)
       bound = measurement && (scoreWidthPolicyState()).__m3nExperimentalRowReuse
         ? fixedCoreLowerBound(start,end)
-        : nativeRowCoreLowerBound(measures,measurer,nativeCoreGap(),{...options,width:available-arcLeading(measures)},templates)
+        : nativeRowCoreLowerBound(measures,measurer,{...options,width:available-arcLeading(measures)},templates)
       foundationBounds.set(key,bound)
     }
     return bound
@@ -767,13 +775,14 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     nativeRowIdentity(system.measures), system.arcContinuationLeft, dependencies.get(system),
     system.measures.map(measure => [measure.start, measure.end, measure.columns.map(column => column.x)]),
   ])) : undefined
-  const headerBlocks = rowCache?.headers ?? header.blocks.map(block => ({ height: block.height, ink: nativeSvgPieces(block.svg, measurer) }))
+  const headerBlocks = rowCache?.headers ?? header.blocks.map((block,index) => ({ height: block.height, ink: nativeSvgPieces(block.svg, measurer),
+    atRowGap: (gap: number) => { const resolved = resolvedHeaderAt(gap).blocks[index]!; return {height:resolved.height,ink:nativeSvgPieces(resolved.svg,measurer)} } }))
   if (rowCache) rowCache.headers = headerBlocks
 
   if (onlyRow===undefined && pageLimit !== undefined && rowKeys && rowKeys.every(key => rowCache!.blocks.has(key))) {
     const cachedBlocks = [...headerBlocks, ...rowKeys.map(key => rowCache!.blocks.get(key)!)]
     const pagination = prepareScorePagination(cachedBlocks, { immutableBlocks: true })({ pageHeight: Math.floor(options.width * A4_CONTENT_ASPECT_RATIO),
-      margin, gap: options.coreGap ?? nativeCoreGap(), headerGap: nativeHeaderGap() })
+      margin, gap: options.coreGap ?? scoreVerticalSpacing().minimum, headerGap: nativeHeaderGap() })
     if (timings) timings.pageBoundCachedPaginationChecks = (timings.pageBoundCachedPaginationChecks ?? 0) + 1
     if (pagination.heights.length > pageLimit) {
       if (timings) timings.pageBoundCachedRejections = (timings.pageBoundCachedRejections ?? 0) + 1
@@ -893,7 +902,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       const x = Math.max(margin - ink.left, Math.min(glyph.x, options.width - margin - ink.right))
       const left = x + ink.left, right = x + ink.right
       const top = Math.max(0, ...regions.filter(r => r.lane === glyph.lane && r.right >= left && r.left <= right).map(r => nativeRegionTop(r, left, right)))
-      const mark = nativeMarkStack([name], top, measurer, system.coreGap).items[0]!
+      const mark = nativeMarkStack([name], top, measurer).items[0]!
       mark.x = x - glyph.x
       mark.left += mark.x; mark.right += mark.x
       glyph.markLayout ??= []; glyph.markLayout.push(mark)
@@ -931,7 +940,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   const blocks = [...(onlyRow===undefined ? headerBlocks : []), ...measuredSystems.map(system => {
     if (options.numericLayout) {
       if (reused.has(system)) return rowCache!.blocks.get(rowKeys![system.index]!)!
-      const block = nativeRowGeometry(system, measurer, margin, nativeCoreGap())
+      const block = nativeRowGeometry(system, measurer, margin)
       if (proxyRows && !proxyRows.has(proxyKeys![system.index]!)) proxyRows.set(proxyKeys![system.index]!, {
         left:system.measures[0]!.start,right:system.measures.at(-1)!.end,block })
       if (rowKeys) {
@@ -977,8 +986,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
         const y = system.lanes.find(lane => lane.id === decoration.lane)!.y
         return nativeSvgPieces(decoration.svg, measurer).map(piece => ({ ...piece, top: piece.top + y, bottom: piece.bottom + y }))
       })
-    const hasLyrics = system.lanes.some(lane => lane.rows.length > 0)
-    const coreGapScale = hasLyrics ? scoreLyricGapScale(nativeCoreGap()) : 1
+    const coreGapScale = 1
     const block = { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, coreGapBefore: system.measures[0]?.coreGapBefore }
     if (rowKeys) rowCache!.blocks.set(rowKeys[system.index]!, block)
     return block

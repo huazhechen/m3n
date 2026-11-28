@@ -10,7 +10,7 @@ import { nativeInnerMark } from './native-marks.js'
 import { placedNativeControlInk } from './native-controls.js'
 import { nativeAnnotationPieces } from './native-annotations.js'
 import { nativeRibbonRange } from './native-curve.js'
-import { nativeCoreGap } from './native-style.js'
+import { scoreVerticalSpacing } from './layout/policy.js'
 
 /** Final painted primitives in each lane's baseline coordinates. Keep separate
  * objects separate: a remote verse or the empty span between parentheses must
@@ -79,7 +79,7 @@ export function nativeLanePieces(system: NativeSystem, measurer: TextMeasurer, c
 export function placeNativeLanes(system: NativeSystem): number {
   let bottom = 0
   for (const [index, lane] of system.lanes.entries()) {
-    lane.y = bottom + (index ? ((system.coreGap ?? nativeCoreGap()) * .7) : 0) + lane.top
+    lane.y = bottom + (index ? scoreVerticalSpacing().minimum : 0) + lane.top
     bottom = lane.y + lane.bottom
   }
   return bottom

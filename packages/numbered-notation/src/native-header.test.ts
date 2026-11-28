@@ -22,10 +22,10 @@ describe('header text blocks in the native implementation', () => {
 
     it('keeps the configured title gap to side information and the smaller gap to a subtitle', () => {
         const withoutSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(17.28, 8);
+        expect(withoutSubtitle.sidesTop - withoutSubtitle.titleBottom).toBeCloseTo(12, 8);
         const withSubtitle = nativeHeaderGeometry(parseM3NDocument('{title=标题}{subtitle=副标题}{4/4}\nN: 1 2 3 4 |||'), 800, 32, measurer);
-        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(17.28, 8);
-        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(8.64, 8);
+        expect(withSubtitle.sidesTop - withSubtitle.titleBottom).toBeCloseTo(12, 8);
+        expect(withSubtitle.subtitleTop - withSubtitle.titleBottom).toBeCloseTo(6, 8);
     });
 
     it('accounts for measured order rows and configured gaps exactly once', () => {
@@ -94,7 +94,7 @@ describe('header text blocks in the native implementation', () => {
         expect(item.x + item.width - ink.right).toBeCloseTo(3.5, 4);
     });
 });
-it('places each right credit row with the shared core-derived ink clearance', () => {
+it('places each right credit row with the N/6 ink clearance', () => {
     const doc = { ...parseM3NDocument('{4/4}\nN: 1 2 3 4 |||'), lyricist: '甲', composer: '乙', origin: '来源' };
     const varied = { measureText(text: string, style: {
             fontSize: number;
@@ -110,7 +110,7 @@ it('places each right credit row with the shared core-derived ink clearance', ()
     });
     expect(credits).toHaveLength(3);
     for (let i = 1; i < credits.length; i++)
-        expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(5.76, 4);
+        expect(credits[i]!.top - credits[i - 1]!.bottom).toBeCloseTo(3, 4);
 });
 it('aligns range numerals and separator to the measured music axis', () => {
     const doc = parseM3NDocument('{4/4}\nN: 1 2 3 5 |||');
@@ -157,5 +157,5 @@ it('uses independent 36px title and 18px subtitle baseline advances', () => {
         expect(rows).toHaveLength(2);
         expect(Number(rows[1]!.getAttribute('y')) - Number(rows[0]!.getAttribute('y'))).toBeCloseTo(advance);
     }
-    expect(header.subtitleTop - header.titleBottom).toBeCloseTo(8.64);
+    expect(header.subtitleTop - header.titleBottom).toBeCloseTo(6);
 });

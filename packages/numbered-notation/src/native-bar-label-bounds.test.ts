@@ -79,7 +79,7 @@ it.each([false, true].flatMap(paged =>
   const visible = layoutNativeScore(document, { ...options, measureNumbers: true })
   const geometry = (layout: typeof hidden) => ({
     pages: layout.pages.map(page => [page.height, page.coreGap]),
-    blocks: layout.verticalBlocks,
+    blocks: layout.verticalBlocks.map(({atRowGap: _resolve, ...geometry})=>geometry),
     systems: layout.systems.map(system => [system.page, system.top, system.bottom, ...system.lanes.map(lane => lane.y)]),
     notes: layout.projection.glyphs.map(glyph => [glyph.x, glyph.y]),
   })

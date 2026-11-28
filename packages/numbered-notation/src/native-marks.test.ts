@@ -13,8 +13,8 @@ import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
 describe('native articulation occupancy', () => {
-  it.each([19.2, 28.8, 38.4])('keeps attachment stacking fixed at core gap %s', coreGap => {
-    const stack = nativeMarkStack(['tip', 'tr'], 20, undefined, coreGap)
+  it('uses the ordinary attachment clearance for stacked marks', () => {
+    const stack = nativeMarkStack(['tip', 'tr'], 20)
     let bottom = -20
     for (const mark of stack.items) {
       expect(bottom - mark.top - mark.height).toBeCloseTo(2)
@@ -45,8 +45,8 @@ describe('native articulation occupancy', () => {
   it('clears unusually wide accidental ink when it overlaps the staccato column', () => {
     const body = [{ left: -5, right: 5, top: -19.2, bottom: 0 }]
     const side = { left: -20, right: -10, top: -40, bottom: -10 }
-    const separate = nativeMarkStack(['tip'], 40, undefined, undefined, [...body, side])
-    const overlapping = nativeMarkStack(['tip'], 40, undefined, undefined,
+    const separate = nativeMarkStack(['tip'], 40, undefined, [...body, side])
+    const overlapping = nativeMarkStack(['tip'], 40, undefined,
       [...body, { ...side, right: 1 }])
     expect(separate.items[0]!.top).toBeCloseTo(-28.4)
     expect(overlapping.items[0]!.top).toBeCloseTo(-49.2)
@@ -110,8 +110,8 @@ describe('native articulation occupancy', () => {
     for (let index = 1; index < score.systems.length; index++) {
       const upper = nativeSystemCore(score.systems[index - 1]!, score.measurer)!
       const lower = nativeSystemCore(score.systems[index]!, score.measurer)!
-      expect(lower.top - upper.bottom).toBeGreaterThanOrEqual(19.2 - 1e-6)
-      expect(lower.top - upper.bottom).toBeLessThanOrEqual(20.4 + 1e-6)
+      expect(lower.top - upper.bottom).toBeGreaterThanOrEqual(18 - 1e-6)
+      expect(lower.top - upper.bottom).toBeLessThanOrEqual(19.8 + 1e-6)
     }
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(28.4)
   })

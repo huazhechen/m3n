@@ -39,8 +39,8 @@ function calculateTupletGeometry(relation: NativeRelation, system: NativeSystem,
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     .filter(glyph => glyph.lane === relation.first.lane)
   const peers = nativeTupletPeers(relation, system)
-  const size = nativeStyle.music, fontSize = (nativeStyle.music * .7), hook = size * 0.18, gap = size * 0.14
-  const stroke = Math.max((nativeStyle.music * .04), size * 0.055), halfStroke = stroke / 2
+  const size = nativeStyle.music, fontSize = (nativeStyle.music * .7), hook = size * 0.18, gap = size / 12
+  const stroke = size / 20, halfStroke = stroke / 2
   const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT }).w / 2
   const shape = (peer: NativeRelation) => {
     const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: SCORE_NUMBER_FONT, textAlign: 'center' })

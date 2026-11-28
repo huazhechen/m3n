@@ -8,7 +8,7 @@ export function nativeNoteBody(measurer: TextMeasurer, size = nativeStyle.music)
   const create = () => {
   const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
   const top = -zero.baseline, bottom = (zero.inkBottom ?? zero.h) - zero.baseline
-  const beamStroke = size * .055, beamStep = size * .14
+  const beamStroke = size / 20, beamStep = size * .14
   const beamY = (index: number) => bottom + size * .12 + beamStroke / 2 + index * beamStep
   return { top, bottom, width: zero.w, dotY: zero.h * .64 - zero.baseline,
     beamStroke, beamY,

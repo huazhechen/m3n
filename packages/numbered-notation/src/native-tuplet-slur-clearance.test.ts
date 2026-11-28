@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeRibbonRange } from './native-curve.js'
 import { nativeSvgPieces } from './native-ink.js'
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 
 it.each([528,600,768].flatMap(width => [false,true].map(numericLayout => ({width,numericLayout}))))(
   'packs 小夜曲 slurs around individual tuplet pieces at $width, numeric=$numericLayout', ({width,numericLayout}) => {
@@ -22,7 +22,7 @@ it.each([528,600,768].flatMap(width => [false,true].map(numericLayout => ({width
         const edge=nativeRibbonRange(placed.arc,piece.left,piece.right)
         if (edge) minimum=Math.min(minimum,piece.top-edge.bottom)
       }
-      const expected=(system.coreGap ?? nativeCoreGap())*.12
+      const expected=nativeAttachmentGap()
       expect(minimum).toBeGreaterThanOrEqual(expected - .005)
       // Tight placement must also be achieved; collision-only assertions
       // would let the old whole-tuplet rectangle's excess lift pass.

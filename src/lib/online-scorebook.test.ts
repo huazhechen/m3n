@@ -69,7 +69,7 @@ describe('online scorebook with per-run layout reuse', () => {
     expect(mocks.prepared.mock.calls[0][0]).toBe(mocks.prepared.mock.calls[1][0])
     expect(new Set(mocks.prepared.mock.calls.map(([, options]) => options.textMeasurementCache)).size).toBe(1)
     expect(new Set(mocks.prepared.mock.calls.filter(([, options]) => options.layoutTask).map(([, options]) => options.layoutTask)).size).toBe(4)
-    expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 528 }), expect.objectContaining({ title: 'second', width: 528 })], 36)
+    expect(mocks.shared).toHaveBeenCalledWith([expect.objectContaining({ title: 'first', width: 528 }), expect.objectContaining({ title: 'second', width: 528 })])
     expect(result.scoreCount).toBe(2)
     expect(result.measurementTimings.scores).toHaveLength(2)
     expect(result.measurementTimings.scores.every(score => score.candidates.length === 17)).toBe(true)
@@ -126,7 +126,7 @@ describe('online scorebook with per-run layout reuse', () => {
     layouts()
     mocks.quality.mockImplementation((_doc, { width }) => ({ pageCount: 1, lineDensityVariation: width === 600 ? 0 : 1, lastLineSlack: 0 }))
     await buildOnlineScorebook(new AbortController().signal, () => {})
-    expect(mocks.shared).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({ width: 600 })]), 36)
+    expect(mocks.shared).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({ width: 600 })]))
     mocks.plan.entries[0].sharePage = false
     mocks.solo.mockClear()
     await buildOnlineScorebook(new AbortController().signal, () => {})
@@ -142,7 +142,7 @@ describe('online scorebook with per-run layout reuse', () => {
     const result = await buildOnlineScorebook(new AbortController().signal, () => {})
     expect(mocks.shared).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ title: 'first', width: 606 }), expect.objectContaining({ title: 'second', width: 606 }),
-    ]), 36)
+    ]))
     const requests = result.measurementTimings.scores.flatMap(score => score.candidates.map(candidate => `${score.file}:${candidate.width}`))
     expect(new Set(requests).size).toBe(requests.length)
     mocks.plan.entries[0].sharePage = false

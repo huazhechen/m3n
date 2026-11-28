@@ -21,7 +21,7 @@ it.each(['dynam', 'hairpin'])('places a %s by local ink rather than its arbitrar
   expect((far.top - 80.5) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
 })
 
-it.each([['dir', 6], ['harm', 4], ['fing', 12]] as const)('anchors upper %s to local music without preserving a fixed head offset', (cls, divisor) => {
+it.each([['dir', 6], ['harm', 6], ['fing', 12]] as const)('anchors upper %s to local music without preserving a fixed head offset', (cls, divisor) => {
   const place = (y: number, distantTop: number) => {
     const rules = [40, 50, 60, 70, 80].map(y => element('path', { class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1' }))
     const attachment = element('g', { class: cls }, [element('rect', { x: '100', y: String(y), width: '20', height: '12' })])

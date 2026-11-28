@@ -95,7 +95,7 @@ describe('relation and ending clearance', () => {
       if (left > right) continue
       for (let i = 0; i <= 100; i++) {
         const edge = nativeArcSlice(arc.commands, left + (right - left) * i / 100)!
-        expect(edge.top - mark.bottom).toBeGreaterThanOrEqual(2.016 - .0001)
+        expect(edge.top - mark.bottom).toBeGreaterThanOrEqual(2 - .0001)
         intersections++
       }
     }

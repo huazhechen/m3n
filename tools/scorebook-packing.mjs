@@ -1,7 +1,7 @@
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { chooseBestWidth, numberedLayoutScore, widthMinimum } from './scorebook-width.mjs'
 
-// Keep at least 1.25 default core gaps between scores (currently 36 logical px); never compress this to fit more works.
+// Admission is measured at minimum N; final rendering fits one N for the group.
 export const sharedScoreGap = scoreLayoutConfig.scorebook.sharedScoreGap
 export const sharedPreferredWidth = widthMinimum
 export const sharedWidthMaximum = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.sharedMaximumMultiple
@@ -38,7 +38,7 @@ function sharedOptions(entries, members) {
   return sharedWidthCandidates.flatMap(width => {
     const candidates = members.map(index => candidateAt(entries[index], width))
     if (candidates.some(candidate => !candidate || !safe(candidate) || candidate.pageCount !== 1 || !Number.isFinite(candidate.naturalHeight))) return []
-    const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, sharedScoreGap * (members.length - 1))
+    const usedHeight = candidates.reduce((sum, candidate) => sum + candidate.naturalHeight, Math.max(...candidates.map(candidate=>candidate.minimumRowGap ?? scoreLayoutConfig.numbered.music*scoreLayoutConfig.numbered.minimumRowGapEm)) * scoreLayoutConfig.scorebook.sharedScoreGapRowRatio * (members.length - 1))
     if (usedHeight > capacity(width) + .001) return []
     return [{ members, width, pageCount: 1, fill: usedHeight / capacity(width),
       readingCost: candidates.reduce((sum, candidate) => sum + readingCost(candidate), 0) / candidates.length }]
@@ -78,7 +78,7 @@ export async function refineSharedWidths(entries, measure, { signal, prune = fal
           if (other === index) return false
           const candidate = candidateAt(entries[other], width)
           return !candidate || (safe(candidate) && candidate.pageCount === 1 && Number.isFinite(candidate.naturalHeight)
-            && candidate.naturalHeight + sharedScoreGap <= capacity(width) + .001)
+            && candidate.naturalHeight + (candidate.minimumRowGap ?? scoreLayoutConfig.numbered.music*scoreLayoutConfig.numbered.minimumRowGapEm) * scoreLayoutConfig.scorebook.sharedScoreGapRowRatio <= capacity(width) + .001)
         })) continue
       }
       let candidate

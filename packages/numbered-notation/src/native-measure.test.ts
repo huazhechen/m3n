@@ -93,8 +93,8 @@ describe('native logical advance and painted ink', () => {
     const svg = new NativeSymbols(measurer).control(control)
     const text = /<text[^>]*x="([^"]+)"/.exec(svg)!
     const x = Number(text[1])
-    expect(x - 3).toBeCloseTo(3.5, 4)
-    expect(control.width - x - 13).toBeCloseTo(3.5, 4)
+    expect(x - 3).toBeCloseTo(3.6, 4)
+    expect(control.width - x - 13).toBeCloseTo(3.6, 4)
   })
 })
 
