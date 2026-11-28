@@ -18,8 +18,8 @@ const clearance = (measure: ReturnType<typeof project>, index: number) => {
 describe('minimum-only 8px clearance', () => {
   it.each([
     ['1 2', 8],
-    ['(1 2)', 8 * Math.sqrt(.5) / 2],
-    ['((1 2))', 2],
+    ['(1 2)', 8 * Math.sqrt(.5) * .75],
+    ['((1 2))', 3],
   ])('retains rhythm and grouping for %s without compression', (notes, minimum) => {
     const measure = project(notes), options = { minimumNoteGap: 8 }
     const spacing = nativeHorizontalSpacing([measure], options)
@@ -41,7 +41,7 @@ describe('shared directional group boundary clearance', () => {
     placeNativeHorizontal([measure], options, 0, measure.minimum)
     const boundary = notes.startsWith('([') ? 2 : 3
     expect(clearance(measure, boundary)).toBeCloseTo(9 * Math.sqrt(measure.columns[boundary]!.glyphs[0]!.beats), 8)
-    expect(clearance(measure, 0)).toBeLessThan(3)
+    expect(clearance(measure, 0)).toBeLessThan(clearance(measure, boundary))
   })
 
   it('uses directional pair minima for unequal-duration independent attacks', () => {
@@ -51,14 +51,14 @@ describe('shared directional group boundary clearance', () => {
     expect(clearance(measure, 0)).toBeCloseTo(9 * scoreRhythmicGapWeight(1.5, .5), 8)
   })
 
-  it('keeps group-internal justification growth at half the group-boundary growth', () => {
+  it('keeps group-internal justification growth at three quarters of the group-boundary growth', () => {
     const measure = project('([123:2]) ([234:2]) ([345:2]) ([456:2])')
     const gaps = (width: number) => {
       placeNativeHorizontal([measure], options, 0, width)
       return [clearance(measure, 0), clearance(measure, 2)]
     }
     const small = gaps(500), large = gaps(700)
-    expect((large[0]! - small[0]!) / (large[1]! - small[1]!)).toBeCloseTo(.5, 8)
+    expect((large[0]! - small[0]!) / (large[1]! - small[1]!)).toBeCloseTo(.75, 8)
   })
 
   it('allocates surplus using square-root durations even when attack minima are equal', () => {

@@ -28,9 +28,9 @@ describe('sustain group spacing', () => {
     const groupedMinimum = pair.minimum
     dash.sustain = false
     measureNativeHorizontal([pair], options)
-    // Identical ink, different grouping: only the common pair's 0.5
+    // Identical ink, different grouping: only the common pair's 0.75
     // multiplier changes, including for dotted head durations.
-    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1) * .5, 8)
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1) * .25, 8)
   })
 
   it.each([
@@ -45,7 +45,7 @@ describe('sustain group spacing', () => {
     expect(glyphs.slice(headIndex + 2).map(glyph => [glyph.beats, glyph.sustain])).toEqual([[1, true], [1, true]])
   })
 
-  it('gives head/dash and dash/dash gaps half the justification surplus of a new attack', () => {
+  it('gives head/dash and dash/dash gaps three quarters of the justification surplus of a new attack', () => {
     const { measures } = project('{5/4}\nN: 1^. 2^ |||')
     const measure = { ...measures[0]!, lastFragment: false }
     const positions = (width: number) => {
@@ -54,9 +54,9 @@ describe('sustain group spacing', () => {
     }
     const small = positions(300), large = positions(500)
     const growth = (index: number) => large[index + 1]! - large[index]! - small[index + 1]! + small[index]!
-    expect(growth(0) / growth(2)).toBeCloseTo(.5, 8)
-    expect(growth(1) / growth(2)).toBeCloseTo(.5, 8)
-    expect(growth(3) / growth(2)).toBeCloseTo(.5, 8)
+    expect(growth(0) / growth(2)).toBeCloseTo(.75, 8)
+    expect(growth(1) / growth(2)).toBeCloseTo(.75, 8)
+    expect(growth(3) / growth(2)).toBeCloseTo(.75, 8)
   })
 
   it('keeps barlines as group boundaries even if the next bar starts with a dash', () => {

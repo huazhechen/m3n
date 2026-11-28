@@ -19,10 +19,10 @@ it.each([0, 1, 2, 3, 4])('retains the 2px floor after rhythmic and beam scaling 
         const [first, second] = projection.glyphs;
         return second!.x - first!.x - first!.right - second!.left;
     };
-    const expected = 9 * Math.sqrt(2 ** -level) * (level ? .5 : 1);
+    const expected = 9 * Math.sqrt(2 ** -level) * (level ? .75 : 1);
     // The native iterative solver retains its existing subpixel tolerance.
     expect(gap(2)).toBeCloseTo(Math.max(expected, 2), 1);
-    if (level >= 3)
+    if (expected < 2)
         expect(gap(2)).toBeGreaterThan(gap(0));
 });
 it('validates floor overrides at public and layout entry points', () => {

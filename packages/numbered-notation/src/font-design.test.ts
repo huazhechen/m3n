@@ -4,6 +4,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { fontDesignMeasurer, prepareFontDesigns, designTextStyle } from './font-design.js'
 import { NumberedTextMeasurementCache } from './native-measure.js'
 import { NativeSymbols } from './native-symbols.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeSvgInk } from './native-ink.js'
 import { SCORE_LATIN_FONT, SCORE_TEXT_FONT, SCORE_MUSIC_FONT, SCORE_CJK_FONT } from './font-family.js'
 import { parseM3NDocument } from '@m3n/notation'
@@ -107,12 +108,19 @@ it('resolves local hairpin geometry before falling back to partition enumeration
   // Keep the original 19.2px regression fixture independent of source leading edits.
   const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
   const document = parseM3NDocument(source.replace(/\{leading=[^}]+\}/, `{leading=${2 / 3}}`))
-  const timings: Record<string, number> = {}
-  const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
-  expect(layout.pages.length).toBe(3)
-  expect(layout.systems.length).toBe(40)
-  expect(timings.numericEndingBoundsMs).toBeGreaterThan(0)
-  expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
+  // Preserve the spacing fixture that exercises local ending-bound search.
+  const groupRatio = scoreLayoutConfig.numbered.groupSpacingRatio
+  try {
+    scoreLayoutConfig.numbered.groupSpacingRatio = .5
+    const timings: Record<string, number> = {}
+    const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
+    expect(layout.pages.length).toBe(3)
+    expect(layout.systems.length).toBe(40)
+    expect(timings.numericEndingBoundsMs).toBeGreaterThan(0)
+    expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
+  } finally {
+    scoreLayoutConfig.numbered.groupSpacingRatio = groupRatio
+  }
 }, 30000)
 
 it('uses the painted number and white frame as numeric row-edge geometry, including page-edge clamps', async () => {

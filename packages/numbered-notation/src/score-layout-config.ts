@@ -59,7 +59,7 @@ const numbered = {
   measureNumberBarGap: 2,
   measureNumberPadding: 2,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
-  groupSpacingRatio: 0.5,
+  groupSpacingRatio: 0.75,
   // Compatibility alias; the shared page policy owns this value.
   collisionGapRatio: page.collisionGapRatio,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
