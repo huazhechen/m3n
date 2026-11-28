@@ -6,6 +6,10 @@ export type ScoreInk = { left: number; right: number; top: number; bottom: numbe
  */
 export type ScorePageBlock = {
   height: number
+  /** Optimistic pagination only: actual tops are <= these top constraints;
+   * actual bottoms are >= the bottom constraints. Each horizontal span must
+   * be contained in the corresponding actual ink span. */
+  lowerBoundGeometry?: { top: number; bottom: number; topInk: readonly ScoreInk[]; bottomInk: readonly ScoreInk[] }
   /** Adapter-resolved header geometry; musical rows remain immutable. */
   atRowGap?: (gap: number) => ScorePageBlock
   baseline?: number

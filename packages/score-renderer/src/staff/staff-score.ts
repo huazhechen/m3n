@@ -13,7 +13,7 @@ import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-
 export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 import { staffGlyphMetrics } from './staff-music-font.js'
 import { staffMusicCentre, staffHeaderBlock, staffRowBlock, paginateStaffBlocks, staffPagesFromPlacement } from './staff-row-pagination.js'
-import { engraveStaffSystems } from './staff-system.js'
+import { engraveStaffSystems, prepareStaffSystems, type PreparedStaffSystem } from './staff-system.js'
 import { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from '@m3n/numbered-notation/layout'
 
 const ns = 'http://www.w3.org/2000/svg'
@@ -189,9 +189,32 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }
       })
       const rowCache = new Map<string, StaffSystem>()
+      const stagedRows = new Map<string, PreparedStaffSystem>()
+      const rowKey = (start: number, end: number, target?: number) => `${start}:${end}:${target ?? availableAt(candidateWidth) / STAFF_SCALE}`
+      const endpointFor = (start: number, end: number) => (id: string) => {
+        const index = eventMeasures.get(id)
+        return index === undefined ? undefined : index < start ? -1 : index >= end ? 1 : 0
+      }
+      const prepareRow = (start: number, end: number, target?: number) => {
+        const key = rowKey(start, end, target)
+        let staged = stagedRows.get(key)
+        if (!staged) {
+          const line = graph.makeLines([end], false, start, false)[0]!
+          if (target !== undefined) line.target = target
+          staged = prepareStaffSystems(projected, [line], musicWidth, measure, spacing, Boolean(settings.measureNumbers), tempoScale,
+            measurements.preparation, endpointFor(start,end))[0]!
+          stagedRows.set(key, staged)
+        }
+        return staged
+      }
       const rowFor = (start: number, end: number, target?: number) => {
-        const key = `${start}:${end}:${target ?? availableAt(candidateWidth) / STAFF_SCALE}`
+        const key = rowKey(start,end,target)
         let system = rowCache.get(key)
+        if (!system && stagedRows.has(key)) {
+          system = stagedRows.get(key)!.complete()
+          rowCache.set(key, system)
+          stagedRows.delete(key)
+        }
         if (!system) {
           const line = graph.makeLines([end], false, start, false)[0]!
           if (target !== undefined) line.target = target
@@ -237,6 +260,26 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         const limit = Math.min(localCeiling ?? Infinity, globalCeiling ?? Infinity)
         const ceiling = Number.isFinite(limit) ? limit : undefined
         if (ceiling === 0) return { ends, pages: Infinity, verticalCost: Infinity }
+        // Optional proof work pays off for long plans. Short plans are cheaper
+        // to finish directly; bypassing this check never omits exact candidates.
+        if (ceiling !== undefined && lines.length >= 16 && !projected.hasBass) {
+          try {
+            let start = 0
+            const lowerBlocks = [staffHeaderBlock(header), ...ends.map((end, index) => {
+              const first = start; start = end
+              return () => prepareRow(first, end, lines[index]!.target).lowerBound
+            })]
+            const pages = scoreCorePageLowerBound(lowerBlocks, {
+              pageHeight: height, margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, vertical, headerGap,
+              directional: true, pageCeiling: ceiling,
+            })
+            if (pages > ceiling) return { ends, pages: Infinity, verticalCost: Infinity }
+          } catch {
+            // Failure to establish a bound is not a certificate of rejection.
+            // Complete exact rows, retaining any successfully prepared prefix.
+            signal?.throwIfAborted()
+          }
+        }
         let start = 0
         const blocks = [staffHeaderBlock(header), ...ends.map((end, index) => {
           const first = start; start = end

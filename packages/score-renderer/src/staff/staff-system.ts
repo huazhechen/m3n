@@ -1,3 +1,6 @@
+import type { StaffSystem } from './system-layout.js'
+import { staffSystemLowerBound } from './staff-system-lower-bound.js'
+import type { ScorePageBlock } from '@m3n/numbered-notation/layout'
 import { staffTempoBeat } from './staff-tempo.js'
 import { staffSlur } from './staff-slur.js'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
@@ -69,7 +72,19 @@ function verseAttributes(child: StaffEvent, lyric: StaffEvent['lyrics'][number],
 }
 
 export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale = 1,
-  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly) {
+  preparation: StaffPreparation = createStaffPreparation(document), selectedLine?: number, endpointLine?: (id: string) => number | undefined, numericOnly = false, deferPieces = numericOnly): StaffSystem[] {
+  return buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,selectedLine,endpointLine,numericOnly,deferPieces,false) as StaffSystem[]
+}
+export type PreparedStaffSystem = { lowerBound: ScorePageBlock; complete: () => StaffSystem }
+/** Prepare music once. Exact completion resumes the same row and preserves
+ * the original relation and attachment pipeline. */
+export function prepareStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number,
+  measureNumbers: boolean, tempoScale: number, preparation: StaffPreparation, endpointLine?: (id: string) => number | undefined): PreparedStaffSystem[] {
+  if(document.hasBass)throw new Error('Directional staff bounds currently require a single staff')
+  return buildStaffSystems(document,lines,width,measureText,spacing,measureNumbers,tempoScale,preparation,undefined,endpointLine,true,false,true) as PreparedStaffSystem[]
+}
+function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: number, measureText: MeasureText, spacing: number, measureNumbers: boolean, tempoScale: number,
+  preparation: StaffPreparation, selectedLine: number|undefined, endpointLine: ((id: string) => number | undefined)|undefined, numericOnly: boolean, deferPieces: boolean, lowerOnly: boolean) {
   const scale = STAFF_SCALE, rawWidth = width / scale, attachmentGap = preparation.attachmentGap
   const text = (value: string, x: number, y: number, size: number, cls: string, attrs: Record<string, string> = {}) => {
     const { 'data-m3n-staff': lane, ...textAttrs } = attrs
@@ -135,7 +150,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
       const total = line.target - inset
       let x = 0
       for (const [index, member] of line.measures.entries()) {
-        const model = (numericOnly ? borrowStaffMeasure : createStaffMeasure)(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
+        const model = (numericOnly && !lowerOnly ? borrowStaffMeasure : createStaffMeasure)(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
         const target = document.score.equalMeasures ? (total - (line.measures[0]!.head - inset)) / line.measures.length + (index ? 0 : member.head - inset) : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
@@ -242,119 +257,129 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         if (measureNumbers && !member.measure.source.interlude && index === line.measures.length - 1) measureNode.children.push(text(String(member.measure.number), x + target, y1 - engine.measureNumberOffset, style.measureNumber, 'mNum', { 'text-anchor': 'end' }))
         x += target
       }
-      // Add word connectors before vertical verse packing, so the text and
-      // its hyphen move together and share measurement/painting geometry.
-      for (const [index, anchor] of lyricAnchors.entries()) {
-        if (!hasLyricHyphen(anchor.lyric)) continue
-        const next = lyricAnchors.slice(index + 1).find(other => other.lane === anchor.lane && other.lyric.verseIndex === anchor.lyric.verseIndex)
-        const edge = next && connectsLyricWord(anchor.lyric, next.lyric) ? next.left : undefined
-        const h = lyricHyphenGeometry(anchor.right, anchor.y, lyricSpacing.fontSize / scale, edge)
-        anchor.verse.children.push(element('line', { class: 'lyric-hyphen', x1: String(h.left), x2: String(h.right),
-          y1: String(h.y), y2: String(h.y), stroke: '#000', 'stroke-width': String(h.stroke), 'stroke-linecap': 'round' }))
-      }
       function addNavigation(nav: string, x: number, y: number, parent: XmlNode) {
         const glyph = nav === 'segno' || nav === 'coda' ? [staffNavigationGlyph(nav, x, y)] : []
         parent.children.push(element('g', { class: 'repeatMark' }, glyph.length ? glyph : nodes(text(({ tocoda: 'To Coda', fine: 'Fine.', ds: 'D.S.', dc: 'D.C.' } as Record<string, string>)[nav] ?? nav, x, y, nav === 'fine' ? style.fine : style.navigation, 'repeat-mark-text'))))
-      }
-      if (document.hasBass) {
-        const first = models[0]!
-        const top = first.staves[0]!.y + staffMusicSize(), bottom = first.staves[1]!.y + (staffMusicSize() * 2)
-        const brace = [staffGlyph('brace', 0, 0, style.music / scale)]
-        brace[0]!.attributes.transform = `translate(${(staffMusicSize() / 4 * -1.2)} ${bottom}) scale(2.8 ${(bottom - top) / (staffMusicSize() / 4 * 4)})`
-        node.children.push(element('g', { class: 'grpSym' }, brace))
-      }
-      // Endings retain their range identity over system and page boundaries.
-      let index = 0
-      while (index < line.measures.length) {
-        const member = line.measures[index]!, ending = member.measure.source.ending
-        if (!ending) { index++; continue }
-        const start = index
-        while (index < line.measures.length && line.measures[index]!.measure.source.ending === ending) index++
-        const left = start === 0 ? models[start]!.staves[0]!.noteStartX : models[start]!.staves[0]!.x + engine.endingBarInset, right = models[index - 1]!.staves[0]!.x + models[index - 1]!.staves[0]!.width - engine.endingBarInset
-        const originalId = member.measure.id.replace(/-fragment-\d+$/, '')
-        const range = endingRanges.get(originalId)!
-        const first = range.start === originalId && (!member.measure.fragment || member.measure.id.endsWith('-fragment-1'))
-        const cls = `ending voltaBracket id-m3n-ending-${range.index}`
-        const hookTop = staffMusicSize() / 4 * .5
-        const labelInk = measureText(`${ending}.`, style.voltaLabel / scale)
-        const hookLength = (labelInk.ascent + labelInk.descent) * shared.voltaHookRatio
-        node.children.push(element('g', { class: cls }, [
-          ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${(hookTop + hookLength)} V${hookTop}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' })] : []),
-          element('path', { d: `M${left} ${hookTop} H${right}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
-          element('path', { d: `M${right} ${hookTop} V${(hookTop + hookLength)}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
-          ...nodes(text(first ? `${ending}.` : '', left + shared.voltaTextInset / scale, hookTop + (hookLength - labelInk.ascent - labelInk.descent) / 2 + labelInk.ascent, style.voltaLabel, 'ending')),
-        ]))
-      }
-      const tieGeometry = new SvgGeometry(node, measureText, true)
-      const localTies = ties.filter(tie => anchors.has(tie.start.id) || anchors.has(tie.end.id))
-      const tieSignatures = localTies.length ? ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
-        .flatMap(staff => findAll(staff, n => hasClass(n, 'staff-signature') || hasClass(n, 'inline-signature'))
-          .flatMap(signature => tieGeometry.pieces(signature)))) : []
-      const barJoins = localTies.length ? findAll(node, n => hasClass(n, 'staff-bar'))
-        .flatMap(bar => findAll(bar, n => Boolean(n.attributes['data-m3n-join'])))
-        .map(rule => rule.attributes['data-m3n-join']!).join(' ') : ''
-      for (const tie of localTies) {
-        const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
-        if (!first && !last) continue
-        const a = first?.last, b = last?.first
-        const staff = first?.staff ?? last!.staff
-        staff.children.push(element('g', { class: 'tie', 'data-m3n-join': barJoins }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX,
-          line.target - inset - engine.endingBarInset, tieSignatures[staff.attributes['data-staff'] === 'bass' ? 1 : 0])))
-      }
-      const slurMusic: Array<Ink[] | undefined> = []
-      // Place inner bows first so enclosing bows clear existing relation ink.
-      const span = ({ start, end }: typeof intervals[number]) =>
-        (anchors.get(end.id)?.last.headRight ?? line.target - inset - engine.endingBarInset)
-        - (anchors.get(start.id)?.first.headLeft ?? models[0]!.start + staffMusicSize() / 4 * 0.2)
-      const orderedIntervals = intervals.filter(({ start, end }) => {
-        const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
-        return !(lineIndex < from || lineIndex > to)
-      }).sort((a, b) =>
-        a.interval.kind === 'lg' && b.interval.kind === 'lg' ? span(a) - span(b)
-          : Number(b.interval.kind === 'lg') - Number(a.interval.kind === 'lg'))
-      const tupletsPlaced = orderedIntervals.some(({ interval }) => interval.kind === 'lg')
-      if (tupletsPlaced) placeStaffTuplets(node, tieGeometry, undefined, attachmentGap)
-      for (const { interval, start, end } of orderedIntervals) {
-        const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
-        if (lineIndex < from || lineIndex > to) continue
-        const a = anchors.get(start.id), b = anchors.get(end.id)
-        const lane = interval.staff === 'bass' ? 1 : 0
-        const left = a?.first.headLeft ?? models[0]!.start + (staffMusicSize() / 4 * 0.2)
-        const right = b?.last.headRight ?? (line.target - inset - engine.endingBarInset)
-        const yTop = (models[0]!.staves[lane]?.y ?? 0) + staffMusicSize()
-        const low = (models[0]!.staves[lane]?.y ?? 0) + (staffMusicSize() * 2)
-        if (interval.kind === 'lg') {
-          const music = slurMusic[lane] ??= tieGeometry.pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
-            const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
-            return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
-          })))
-          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left), attachmentGap)
-          slur.attributes['data-m3n-staff'] = String(lane)
-          node.children.push(slur)
-          music.push(...tieGeometry.pieces(slur))
-        } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
-          if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam', { 'data-m3n-staff': String(lane) }))
-          else {
-            const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc'
-            const endX = Math.max(left + (staffMusicSize() / 4 * 0.4), b?.last.durationEndX ?? right)
-            const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
-            parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (shared.hairpinHalfOpening / scale)} L${left} ${y} L${endX} ${y + (shared.hairpinHalfOpening / scale)}` : `M${left} ${y - (shared.hairpinHalfOpening / scale)} L${endX} ${y} L${left} ${y + (shared.hairpinHalfOpening / scale)}`, stroke: '#000', 'stroke-width': String(shared.hairpinStroke / scale), fill: 'none' })]))
-          }
-        } else if (interval.kind === '8va' || interval.kind === '8vb') {
-          const y = interval.kind === '8va' ? yTop - engine.octaveAboveGap : low + engine.octaveBelowGap
-          node.children.push(element('g', { class: 'octave', 'data-m3n-staff': String(lane), 'data-m3n-below': String(interval.kind === '8vb') }, [
-            ...(a ? nodes(text(interval.kind, left, y, style.octave, 'octave')) : []),
-            element('path', { d: `M${left + (a ? engine.octaveTextWidth : 0)} ${y - (staffMusicSize() / 4 * 0.4)} H${right} v${(interval.kind === '8va' ? 1 : -1) * (staffMusicSize() / 4 * 0.8)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), 'stroke-dasharray': `${(staffMusicSize() / 4 * 0.4)} ${(staffMusicSize() / 4 * 0.3)}`, fill: 'none' }),
-          ]))
-        } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - engine.expressionTopGap, style.expression, 'dir', { 'font-style': 'italic' }))
       }
       const headings = new Set(line.measures.filter(m => {
         const e = m.measure.melody[0]?.event
         return e?.sectionLabelBreakAfter || (e?.sectionLabel && measureText(e.sectionLabel, style.annotation, true).width + style.sectionLabelInset > width / 2)
       }).map(m => m.id))
-      const geometry = tieGeometry
-      const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced, attachmentGap)
-      system.coreGapBefore = models[0]?.measure.coreGapBefore
+      // Suspended rows outlive the engine's borrowed placement workspace.
+      // Their models above therefore own their anchors until completion.
+      let completed: StaffSystem | undefined
+      const complete = (): StaffSystem => {
+        if (completed) return completed
+        // Add word connectors before vertical verse packing, so the text and
+        // its hyphen move together and share measurement/painting geometry.
+        for (const [index, anchor] of lyricAnchors.entries()) {
+          if (!hasLyricHyphen(anchor.lyric)) continue
+          const next = lyricAnchors.slice(index + 1).find(other => other.lane === anchor.lane && other.lyric.verseIndex === anchor.lyric.verseIndex)
+          const edge = next && connectsLyricWord(anchor.lyric, next.lyric) ? next.left : undefined
+          const h = lyricHyphenGeometry(anchor.right, anchor.y, lyricSpacing.fontSize / scale, edge)
+          anchor.verse.children.push(element('line', { class: 'lyric-hyphen', x1: String(h.left), x2: String(h.right),
+            y1: String(h.y), y2: String(h.y), stroke: '#000', 'stroke-width': String(h.stroke), 'stroke-linecap': 'round' }))
+        }
+        if (document.hasBass) {
+          const first = models[0]!
+          const top = first.staves[0]!.y + staffMusicSize(), bottom = first.staves[1]!.y + (staffMusicSize() * 2)
+          const brace = [staffGlyph('brace', 0, 0, style.music / scale)]
+          brace[0]!.attributes.transform = `translate(${(staffMusicSize() / 4 * -1.2)} ${bottom}) scale(2.8 ${(bottom - top) / (staffMusicSize() / 4 * 4)})`
+          node.children.push(element('g', { class: 'grpSym' }, brace))
+        }
+        // Endings retain their range identity over system and page boundaries.
+        let index = 0
+        while (index < line.measures.length) {
+          const member = line.measures[index]!, ending = member.measure.source.ending
+          if (!ending) { index++; continue }
+          const start = index
+          while (index < line.measures.length && line.measures[index]!.measure.source.ending === ending) index++
+          const left = start === 0 ? models[start]!.staves[0]!.noteStartX : models[start]!.staves[0]!.x + engine.endingBarInset, right = models[index - 1]!.staves[0]!.x + models[index - 1]!.staves[0]!.width - engine.endingBarInset
+          const originalId = member.measure.id.replace(/-fragment-\d+$/, '')
+          const range = endingRanges.get(originalId)!
+          const first = range.start === originalId && (!member.measure.fragment || member.measure.id.endsWith('-fragment-1'))
+          const cls = `ending voltaBracket id-m3n-ending-${range.index}`
+          const hookTop = staffMusicSize() / 4 * .5
+          const labelInk = measureText(`${ending}.`, style.voltaLabel / scale)
+          const hookLength = (labelInk.ascent + labelInk.descent) * shared.voltaHookRatio
+          node.children.push(element('g', { class: cls }, [
+            ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${(hookTop + hookLength)} V${hookTop}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' })] : []),
+            element('path', { d: `M${left} ${hookTop} H${right}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
+            element('path', { d: `M${right} ${hookTop} V${(hookTop + hookLength)}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
+            ...nodes(text(first ? `${ending}.` : '', left + shared.voltaTextInset / scale, hookTop + (hookLength - labelInk.ascent - labelInk.descent) / 2 + labelInk.ascent, style.voltaLabel, 'ending')),
+          ]))
+        }
+        const tieGeometry = new SvgGeometry(node, measureText, true)
+        const localTies = ties.filter(tie => anchors.has(tie.start.id) || anchors.has(tie.end.id))
+        const tieSignatures = localTies.length ? ['melody', 'bass'].map(lane => findAll(node, n => hasClass(n, 'staff') && n.attributes['data-staff'] === lane)
+          .flatMap(staff => findAll(staff, n => hasClass(n, 'staff-signature') || hasClass(n, 'inline-signature'))
+            .flatMap(signature => tieGeometry.pieces(signature)))) : []
+        const barJoins = localTies.length ? findAll(node, n => hasClass(n, 'staff-bar'))
+          .flatMap(bar => findAll(bar, n => Boolean(n.attributes['data-m3n-join'])))
+          .map(rule => rule.attributes['data-m3n-join']!).join(' ') : ''
+        for (const tie of localTies) {
+          const first = anchors.get(tie.start.id), last = anchors.get(tie.end.id)
+          if (!first && !last) continue
+          const a = first?.last, b = last?.first
+          const staff = first?.staff ?? last!.staff
+          staff.children.push(element('g', { class: 'tie', 'data-m3n-join': barJoins }, drawStaffTie(a, b, models[0]!.staves[0]!.noteStartX,
+            line.target - inset - engine.endingBarInset, tieSignatures[staff.attributes['data-staff'] === 'bass' ? 1 : 0])))
+        }
+        const slurMusic: Array<Ink[] | undefined> = []
+        // Place inner bows first so enclosing bows clear existing relation ink.
+        const span = ({ start, end }: typeof intervals[number]) =>
+          (anchors.get(end.id)?.last.headRight ?? line.target - inset - engine.endingBarInset)
+          - (anchors.get(start.id)?.first.headLeft ?? models[0]!.start + staffMusicSize() / 4 * 0.2)
+        const orderedIntervals = intervals.filter(({ start, end }) => {
+          const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
+          return !(lineIndex < from || lineIndex > to)
+        }).sort((a, b) =>
+          a.interval.kind === 'lg' && b.interval.kind === 'lg' ? span(a) - span(b)
+            : Number(b.interval.kind === 'lg') - Number(a.interval.kind === 'lg'))
+        const tupletsPlaced = orderedIntervals.some(({ interval }) => interval.kind === 'lg')
+        if (tupletsPlaced) placeStaffTuplets(node, tieGeometry, undefined, attachmentGap)
+        for (const { interval, start, end } of orderedIntervals) {
+          const from = lineOf.get(start.id)!, to = lineOf.get(end.id)!
+          if (lineIndex < from || lineIndex > to) continue
+          const a = anchors.get(start.id), b = anchors.get(end.id)
+          const lane = interval.staff === 'bass' ? 1 : 0
+          const left = a?.first.headLeft ?? models[0]!.start + (staffMusicSize() / 4 * 0.2)
+          const right = b?.last.headRight ?? (line.target - inset - engine.endingBarInset)
+          const yTop = (models[0]!.staves[lane]?.y ?? 0) + staffMusicSize()
+          const low = (models[0]!.staves[lane]?.y ?? 0) + (staffMusicSize() * 2)
+          if (interval.kind === 'lg') {
+            const music = slurMusic[lane] ??= tieGeometry.pieces(element('g', {}, nodes(node).filter(n => hasClass(n, 'measure')).flatMap(m => {
+              const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
+              return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
+            })))
+            const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left), attachmentGap)
+            slur.attributes['data-m3n-staff'] = String(lane)
+            node.children.push(slur)
+            music.push(...tieGeometry.pieces(slur))
+          } else if (interval.kind === 'cresc' || interval.kind === 'decres') {
+            if (interval.display === 'text') node.children.push(text(interval.kind === 'cresc' ? 'cresc.' : 'dim.', left, low + engine.expressionBottomGap, style.expression, 'dynam', { 'data-m3n-staff': String(lane) }))
+            else {
+              const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc'
+              const endX = Math.max(left + (staffMusicSize() / 4 * 0.4), b?.last.durationEndX ?? right)
+              const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
+              parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (shared.hairpinHalfOpening / scale)} L${left} ${y} L${endX} ${y + (shared.hairpinHalfOpening / scale)}` : `M${left} ${y - (shared.hairpinHalfOpening / scale)} L${endX} ${y} L${left} ${y + (shared.hairpinHalfOpening / scale)}`, stroke: '#000', 'stroke-width': String(shared.hairpinStroke / scale), fill: 'none' })]))
+            }
+          } else if (interval.kind === '8va' || interval.kind === '8vb') {
+            const y = interval.kind === '8va' ? yTop - engine.octaveAboveGap : low + engine.octaveBelowGap
+            node.children.push(element('g', { class: 'octave', 'data-m3n-staff': String(lane), 'data-m3n-below': String(interval.kind === '8vb') }, [
+              ...(a ? nodes(text(interval.kind, left, y, style.octave, 'octave')) : []),
+              element('path', { d: `M${left + (a ? engine.octaveTextWidth : 0)} ${y - (staffMusicSize() / 4 * 0.4)} H${right} v${(interval.kind === '8va' ? 1 : -1) * (staffMusicSize() / 4 * 0.8)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), 'stroke-dasharray': `${(staffMusicSize() / 4 * 0.4)} ${(staffMusicSize() / 4 * 0.3)}`, fill: 'none' }),
+            ]))
+          } else if ((interval.kind === 'rit' || interval.kind === 'accel') && a) node.children.push(text(`${interval.kind}.`, left, yTop - engine.expressionTopGap, style.expression, 'dir', { 'font-style': 'italic' }))
+        }
+        const geometry = tieGeometry
+        const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced, attachmentGap)
+        system.coreGapBefore = models[0]?.measure.coreGapBefore
+        completed = system
+        return system
+      }
+      if(lowerOnly)return {lowerBound:staffSystemLowerBound(node,measureText,width,headings,attachmentGap),complete}
+      const system = complete()
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system
     }

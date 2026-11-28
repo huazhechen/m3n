@@ -14,6 +14,23 @@ import { projectStaffDocument } from './staff-document.js'
 import { createStaffMeasureMinimum, planStaffLines, prepareStaffLineGraph } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { textMeasurer, xml } from './layout-svg.js'
+import * as staffBounds from './staff-system-lower-bound.js'
+
+it('completes the exact long plan when optional attachment bounds cannot be prepared', async () => {
+  const source = '{4/4}\nN: ' + Array.from({ length: 18 }, () => '{text=direction} 1 2 3 4 ||{br}').join(' ')
+  const score = analyzeM3N(source).score
+  const baseline = await prepareStaffScore(score, { width: 564 })
+  const expected = baseline.measurementInfo()
+  expect(expected.rows).toBeGreaterThanOrEqual(16)
+  const quality = 1 / (1 + expected.quality.totalCost + scorePageCost(baseline.pageCount(true)))
+  const spy = vi.spyOn(staffBounds, 'staffSystemLowerBound').mockImplementation(() => { throw new Error('Optional bound unavailable') })
+  try {
+    const actual = await prepareStaffScore(score, { width: 564 })
+    expect(withScoreWidthCandidatePolicy({ widthBound: { width: 570, quality } }, () => actual.measurementInfo())).toEqual(expected)
+    expect(spy).toHaveBeenCalled()
+    expect(actual(true).map(svg => svg.outerHTML)).toEqual(baseline(true).map(svg => svg.outerHTML))
+  } finally { spy.mockRestore() }
+})
 
 it('prepares exact staff plans before engraving and preserves full geometry under delayed completion', async () => {
   const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/bai_hua_lin_01.m3n'), 'utf8')).score

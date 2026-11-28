@@ -4,23 +4,44 @@ import { scorePageGeometry, type ScorePageGeometry } from './page-geometry.js'
 import type { ScorePageBlock } from './geometry.js'
 import type { ScoreLineCandidate } from './line-breaking.js'
 
-/** Optimistic pagination of a fixed plan. Keep core clearance and page edges,
- * omit every painted-ink collision. Every actual page is feasible in this
- * model; taking the longest fitting prefix therefore cannot use more pages. */
-export function scoreCorePageLowerBound(blocks:readonly ScorePageBlock[],options:{pageHeight:number;margin:number;gap:number;vertical?:ScoreVerticalSpacing;headerGap:number}):number {
+/** Optimistic pagination of a fixed plan. Optional one-sided ink constraints
+ * strengthen the ordinary core/edge floor without requiring exact placement.
+ * Every actual page is feasible here; longest fitting prefixes cannot need
+ * more pages than the exact plan. */
+export function scoreCorePageLowerBound(sources: readonly (ScorePageBlock | (() => ScorePageBlock))[], options: {
+  pageHeight: number; margin: number; gap: number; vertical?: ScoreVerticalSpacing; headerGap: number
+  directional?: boolean; pageCeiling?: number
+}): number {
   const {pageHeight,margin,gap,headerGap}=options
-  let page=1,baseline=0,previous:{bottom:number;music:boolean;scale:number}|undefined
-  for(const block of blocks) {
+  type Prior = { bottom: number; music: boolean; scale: number; bottomInk?: ScorePageGeometry['ink'] }
+  let page=1,baseline=0,previous:Prior|undefined
+  for(const source of sources) {
+    const block=typeof source==='function' ? source() : source
     const axis=block.baseline ?? 0,pieces=[...(block.ink ?? []),...(block.boundaryInk ?? [])]
-    const top=Math.min(0,...pieces.map(piece=>piece.top-axis)),bottom=Math.max(0,...pieces.map(piece=>piece.bottom-axis))
+    const directional=options.directional ? block.lowerBoundGeometry : undefined
+    const top=directional ? directional.top-axis : Math.min(0,...pieces.map(piece=>piece.top-axis))
+    const bottom=directional ? directional.bottom-axis : Math.max(0,...pieces.map(piece=>piece.bottom-axis))
     if(bottom-top>pageHeight-2*margin+1e-6)return Infinity
     const coreTop=block.core ? block.core.top-axis : top,coreBottom=block.core ? block.core.bottom-axis : bottom
     const first=margin-top
-    const next=previous ? Math.max(first,baseline+previous.bottom-coreTop+(previous.music && block.core ? (options.vertical ? gap : block.coreGapBefore ?? gap*previous.scale) : headerGap))+(block.gapBefore ?? 0) : first
+    const music=Boolean(block.core)
+    const localGap=options.vertical ? gap : block.coreGapBefore ?? gap*(previous?.scale ?? 1)
+    let next=previous ? Math.max(first,baseline+previous.bottom-coreTop+(previous.music && music ? localGap : headerGap))+(block.gapBefore ?? 0) : first
+    let bottomInk: ScorePageGeometry['ink']|undefined
+    if(options.directional && (directional || block.resolvedInk)) {
+      const normalize=(ink:readonly ScorePageGeometry['ink'][number][])=>ink.map(piece=>axis===0 ? piece : ({...piece,top:piece.top-axis,bottom:piece.bottom-axis})).sort((a,b)=>a.left-b.left)
+      const topInk=normalize(directional?.topInk ?? block.ink ?? [])
+      bottomInk=directional?.bottomInk===directional?.topInk ? topInk : normalize(directional?.bottomInk ?? block.ink ?? [])
+      if(previous?.bottomInk) {
+        const pair=scorePageCollision({ink:previous.bottomInk},{ink:topInk})
+        next=Math.max(next,Math.max(first,baseline+scorePageDistance(pair,localGap,-Infinity))+(block.gapBefore ?? 0))
+      }
+    }
     if(previous && next+bottom>pageHeight-margin+1e-6){page++;baseline=first}else baseline=next
-    previous={bottom:coreBottom,music:Boolean(block.core),scale:block.coreGapScale ?? 1}
+    if(options.pageCeiling!==undefined && page>options.pageCeiling)return page
+    previous={bottom:coreBottom,music,scale:block.coreGapScale ?? 1,bottomInk}
   }
-  return blocks.length ? page : 0
+  return sources.length ? page : 0
 }
 
 type Box = ScorePageGeometry

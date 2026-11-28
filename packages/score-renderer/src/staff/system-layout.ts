@@ -20,12 +20,22 @@ import { STAFF_SCALE } from './line-layout.js'
 
 export type StaffSystem = { materializeInk?: () => void; node: XmlNode; pieces: Ink[]; spacingPieces: Ink[]; boundaryPieces?: Ink[]; edgePieces: Array<Ink & { gap: number }>; ink: Ink; core: Ink; section: boolean; staffSpacing: number; hasLyrics?: boolean; coreGapBefore?: number }
 const style = scoreLayoutConfig.staff
-const decorations = [
+export const staffDecorationClasses = [
   'reh', 'dir', 'harm', 'dynam', 'tempo', 'fing', 'ending', 'hairpin', 'octave', 'mNum',
   'fermata', 'breath', 'trill', 'mordent', 'repeatMark', 'm3n-tuplet-label', 'm3n-hairpin-row', 'm3n-ending-row',
 ]
+const decorations = staffDecorationClasses
 const decorationClass = new RegExp(`(?:^|\\s)(?:${decorations.join('|')})(?:\\s|$)`)
 const isDecoration = (node: XmlNode) => Boolean(node.attributes.class && decorationClass.test(node.attributes.class))
+/** Shared by exact placement and its one-sided proof geometry. */
+export function staffAttachmentGap(attachment: XmlNode, attachmentGap: number): number {
+  return (hasClass(attachment, 'harm') ? style.chordGap
+    : ['reh', 'dir'].some(kind => hasClass(attachment, kind)) ? style.annotationGap : attachmentGap) / STAFF_SCALE
+}
+export function staffInlineHeadingInset(label: XmlNode, geometry: SvgGeometry): number {
+  const content = textContent(label).replace(/[\t\r\n]/g, '').trim()
+  return (geometry.measure(content, scoreLayoutConfig.staff.annotation, true).width + style.sectionLabelInset) / STAFF_SCALE
+}
 /** Keep ancestor transforms when measuring only selected attachments. */
 function selected(node: XmlNode, keep: (node: XmlNode) => boolean): XmlNode | undefined {
   if (keep(node)) return node
@@ -337,8 +347,7 @@ export function arrangeStaffSystem(
     let dy = 0
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
-    const localGap = hasClass(attachment, 'harm') ? style.chordGap / scale
-      : ['reh', 'dir'].some(kind => hasClass(attachment, kind)) ? style.annotationGap / scale : gap
+    const localGap = staffAttachmentGap(attachment, attachmentGap)
     const attachmentLane = attachment.attributes['data-m3n-staff']
     const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
     const localUpperText = lanes === 1 && ['dir', 'harm', 'fing'].some(kind => hasClass(attachment, kind))
@@ -406,10 +415,7 @@ export function arrangeStaffSystem(
   if (inlineHeading) {
     const label = inlineHeading,
       ink = geometry.ink(label)
-    const content = textContent(label)
-      .replace(/[\t\r\n]/g, '')
-      .trim()
-    const inset = (geometry.measure(content, scoreLayoutConfig.staff.annotation, true).width + style.sectionLabelInset) / scale
+    const inset = staffInlineHeadingInset(label, geometry)
     const staff = measures[0] && nodes(measures[0]).find((n) => hasClass(n, 'staff'))
     const lines = staff ? nodes(staff).filter((n) => hasClass(n, 'staff-line')) : []
     const center = lines.length

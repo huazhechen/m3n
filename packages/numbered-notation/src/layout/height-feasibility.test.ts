@@ -4,6 +4,30 @@ import { scoreEnvelopeBlock } from './height-envelope.js'
 import { prepareScorePagination, type ScorePageBlock } from './pagination.js'
 import type { ScoreLineCandidate } from './line-breaking.js'
 
+it('directional channels stay optimistic when upper and lower attachments move independently', () => {
+  let seed = 853
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32)
+  for (let trial = 0; trial < 200; trial++) {
+    const actual: ScorePageBlock[] = [], bounds: ScorePageBlock[] = []
+    for (let row = 0; row < 15; row++) {
+      const fixed = { left: 0, right: 100, top: -10, bottom: 10 }
+      const upper = { left: random() * 80, right: 110, top: -20 - random() * 30, bottom: -16 }
+      const lower = { left: random() * 80, right: 110, top: 16, bottom: 20 + random() * 30 }
+      const up = random() * 70, down = random() * 70
+      const ink = [fixed, { ...upper, top: upper.top - up, bottom: upper.bottom - up }, { ...lower, top: lower.top + down, bottom: lower.bottom + down }]
+      actual.push({ height: 100, core: fixed, ink, resolvedInk: true })
+      bounds.push({ height: 100, core: fixed, lowerBoundGeometry: {
+        top: upper.top, bottom: lower.bottom, topInk: [fixed, upper], bottomInk: [fixed, lower],
+      } })
+    }
+    const options = { pageHeight: 300 + random() * 300, margin: 10, gap: 24, headerGap: 16 }
+    const pages = prepareScorePagination(actual, {})(options).heights.length
+    expect(scoreCorePageLowerBound(bounds, { ...options, directional: true })).toBeLessThanOrEqual(pages)
+    const lazy = bounds.map(block => () => block)
+    expect(scoreCorePageLowerBound(lazy, { ...options, directional: true, pageCeiling: 1 })).toBeLessThanOrEqual(pages)
+  }
+})
+
 it('matches exhaustive full-width primitive pagination including headers, lyrics, fixed gaps and asymmetric cores', () => {
   let seed = 37
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32 }
