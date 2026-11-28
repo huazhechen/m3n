@@ -76,9 +76,11 @@ if (mode === 'tools') {
   }
   const playwright = args => run(process.execPath,
     [fileURLToPath(import.meta.resolve('@playwright/test/cli')), 'test', ...args], env)
-  // Release native font caches after each small scenario group.
-  for (const file of readdirSync(resolve(root, 'tests/e2e')).filter(file => file.endsWith('.spec.ts')).sort()) {
-    playwright([`tests/e2e/${file}`, '--workers=1'])
+  // Bound native font caches without restarting Chromium and the static
+  // preview for every tiny file. Each batch still uses fresh test contexts.
+  const files = readdirSync(resolve(root, 'tests/e2e')).filter(file => file.endsWith('.spec.ts')).sort()
+  for (let index = 0; index < files.length; index += 3) {
+    playwright([...files.slice(index, index + 3).map(file => `tests/e2e/${file}`), '--workers=1'])
   }
 } else if (mode === 'integration') {
   const port = process.env.M3N_E2E_PORT ?? '4173'

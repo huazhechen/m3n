@@ -1,4 +1,5 @@
 import { densityLimits, densityRegressionFailures } from './lib/density-regression.mjs'
+import { browserTestFontAssets } from './lib/browser-test-font-assets.mjs'
 import { browserPages } from './lib/browser-pages.mjs'
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
@@ -20,11 +21,14 @@ if (regression && (['scores', 'widths', 'staff-sizes', 'core-gap'].some(name => 
   throw new Error('--regression uses fixed fixtures and widths and full ink audits')
 }
 const origin = 'http://notation-density.local'
+// Keep the same font bytes and fallback behavior, but serve them as binary
+// assets instead of parsing the full CJK font as JavaScript in every page.
+const fonts = browserTestFontAssets(root, undefined, { origin, allowFullCjk: true })
 if (process.argv.includes('--bundle-only')) {
   const { build } = await import('vite')
-  await build({ configFile: false, logLevel: 'error', base: '/',
+  await build({ plugins: [fonts.plugin], configFile: false, logLevel: 'error', base: '/',
     define: { 'import.meta.url': JSON.stringify(`${origin}/bundle.js`) },
-    build: { outDir: join(output, 'bundle'), emptyOutDir: true, minify: false,
+    build: { outDir: join(output, 'bundle'), emptyOutDir: true, minify: true,
       lib: { entry: join(root, 'tools/notation-density-layout.mjs'), name: 'notationDensity', formats: ['iife'], fileName: () => 'bundle.js' } } })
 } else {
   mkdirSync(output, { recursive: true })
@@ -67,9 +71,12 @@ if (process.argv.includes('--bundle-only')) {
         overlaps: entries.reduce((sum, entry) => sum + entry.numbered.overlaps.length + entry.staff.overlaps.length, 0) }, entries }, null, 2) + '\n')
   }
   for await (const { input: { file, path: inputPath, limit, width: fixedWidth }, page } of browserPages(inputs)) {
-      await page.route(`${origin}/**`, route => new URL(route.request().url()).pathname === '/'
-        ? route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none"><body></body></html>' })
-        : route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript' }))
+      await page.route(`${origin}/**`, async route => {
+        if (await fonts.fulfill(route)) return
+        if (new URL(route.request().url()).pathname === '/') {
+          await route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none"><body></body></html>' })
+        } else await route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript' })
+      })
       await page.goto(origin)
       await page.addScriptTag({ url: `${origin}/bundle.js` })
       const source = readFileSync(inputPath, 'utf8')

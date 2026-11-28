@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "npm run build:packages && vite",
-    "build:packages": "npm run build -w @m3n/notation && npm run build -w @m3n/numbered-notation && npm run build -w @m3n/score-renderer",
+    "build:packages": "node tools/build-packages.mjs",
     "build": "npm run build:packages && tsc -b && node tools/build-web.mjs",
     "lint": "oxlint",
     "test:packages": "npm run test -w @m3n/notation && npm run test -w @m3n/numbered-notation && npm run test -w @m3n/score-renderer",
