@@ -25,3 +25,7 @@ Chromium／WebKit桌面与平板共20例全部候选评分及数值几何一致�
 | 突然好想你 | 702px | 1 | 11 |
 
 首轮报告位于`.tmp/staff-piecewise/design/report.json`及`density/report.json`；后续部署与全量统计单独执行，最新全库结果见[双谱式对比](CURRENT_NOTATION_PAGE_COMPARISON.md)。
+
+## 部署与全量统计
+
+代码版本`e1a4`已部署并通过实际页面验证。两种谱式各重新统计117首：简谱125页、1173行，平均宽度560.92px；五线谱129页、1029行，平均宽度569.28px。相较修改前，简谱全部选宽、页数和行数不变；五线谱逐曲页数不变，总行数减少22行，平均选宽减少1.38px。完整明细及验证边界见[双谱式对比](CURRENT_NOTATION_PAGE_COMPARISON.md)。
