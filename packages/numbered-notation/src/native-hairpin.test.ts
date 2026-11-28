@@ -22,20 +22,29 @@ it('shares endpoint indexing across wedges without changing segment geometry', (
   expect(nativeHairpinSegments(relations[0]!, layout.systems)).toEqual(expected[0])
 })
 
-it.each([320,600,800,1000])('continues hairpin opening through systems in continuous and paged layouts at width %s', width => {
-  for (const paged of [false,true]) for (const kind of ['cresc','decres'] as const) {
-    const layout = layoutNativeScore(parseM3NDocument(`{2/4}\nN: {${kind}}1 2 | {br}3 4 | {br}5 6{/} |||`),{width,paged})
-    const relation = layout.relations.find(r => r.kind === kind)!
-    const segments = nativeHairpinSegments(relation,layout.systems)
+// Both wedge directions share one engraving for progress, painted bounds and
+// SVG checks. Keep zero-margin and the historical 540/560px boundary inputs.
+it.each([
+  { width: 320, paged: false }, { width: 320, paged: true },
+  { width: 540, paged: false }, { width: 560, paged: true },
+  { width: 640, paged: false }, { width: 1000, paged: true },
+])('continues hairpins with safe painted bounds at $width, paged=$paged', ({ width, paged }) => {
+  for (const kind of ['cresc', 'decres'] as const) {
+    const layout = layoutNativeScore(parseM3NDocument(`{2/4}\nN: {${kind}}1 2 | {br}3 4 | {br}5 6{/} |||`), { width, paged, pageMargin: 0 })
+    const relation = layout.relations.find(relation => relation.kind === kind)!
+    const segments = nativeHairpinSegments(relation, layout.systems)
     expect(segments).toHaveLength(3)
-    segments.slice(1).forEach((segment,i) => expect(segment.startHalf).toBeCloseTo(segments[i]!.endHalf,9))
-    expect(segments[0]!.startHalf).toBeCloseTo(kind==='cresc'?0:nativeStyle.music*.2,9)
-    expect(segments.at(-1)!.endHalf).toBeCloseTo(kind==='cresc'?nativeStyle.music*.2:0,9)
-    for (const segment of segments) {
+    expect(segments[0]!.startHalf).toBeCloseTo(kind === 'cresc' ? 0 : nativeStyle.music * .2, 9)
+    expect(segments.at(-1)!.endHalf).toBeCloseTo(kind === 'cresc' ? nativeStyle.music * .2 : 0, 9)
+    for (const [index, segment] of segments.entries()) {
       expect(segment.right).toBeGreaterThan(segment.left)
-      expect(kind==='cresc'?segment.endHalf-segment.startHalf:segment.startHalf-segment.endHalf).toBeGreaterThan(0)
+      expect(kind === 'cresc' ? segment.endHalf - segment.startHalf : segment.startHalf - segment.endHalf).toBeGreaterThan(0)
+      if (index) expect(segment.startHalf).toBeCloseTo(segments[index - 1]!.endHalf, 9)
+      const ink = nativeSvgInk(segment.system.relationLayout!.get(relation)!.svg, layout.measurer)
+      expect(ink.left).toBeGreaterThanOrEqual(-1e-6)
+      expect(ink.right).toBeLessThanOrEqual(width + 1e-6)
     }
-    const root = new DOMParser().parseFromString(renderNativePages(layout).join(''),'text/html')
+    const root = new DOMParser().parseFromString(renderNativePages(layout).join(''), 'text/html')
     const groups = [...root.querySelectorAll(`g[data-m3n-relation="${kind}"]`)]
     expect(groups).toHaveLength(3)
     const middle = [...groups[1]!.querySelectorAll('line')]
@@ -73,20 +82,4 @@ it('keeps adjacent independent hairpins separate', () => {
   expect(ranges).toHaveLength(2)
   expect(ranges[0]!.right).toBeLessThan(ranges[1]!.left)
   expect(ranges.every(range => range.startHalf===0)).toBe(true)
-})
-
-it.each([320,540,560,640])('keeps cross-row hairpin strokes inside a zero-margin canvas at width %s', width => {
-  for (const paged of [false,true]) for (const kind of ['cresc','decres'] as const) {
-    const source = `{2/4}\nN: {${kind}}1 2 | {br}3 4 | {br}5 6{/} |||`
-    const layout = layoutNativeScore(parseM3NDocument(source),{width,paged,pageMargin:0})
-    const relation = layout.relations.find(r => r.kind===kind)!
-    const segments = nativeHairpinSegments(relation,layout.systems)
-    expect(segments).toHaveLength(3)
-    for (const [index,segment] of segments.entries()) {
-      const ink = nativeSvgInk(segment.system.relationLayout!.get(relation)!.svg,layout.measurer)
-      expect(ink.left).toBeGreaterThanOrEqual(-1e-6)
-      expect(ink.right).toBeLessThanOrEqual(width+1e-6)
-      if (index) expect(segment.startHalf).toBeCloseTo(segments[index-1]!.endHalf,9)
-    }
-  }
 })

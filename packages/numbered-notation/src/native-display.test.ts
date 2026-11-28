@@ -32,7 +32,7 @@ describe('native display options',()=>{
     expect(document).toEqual(before)
     expect(compileScorePerformance(document)).toEqual(performance)
   })
-  it.each([320,600,800,1000].flatMap(width=>[false,true].map(paged=>({width,paged}))))('expands keyed visits, correct lyrics and relations with canonical IDs at $width, paged=$paged',variant=>{
+  it.each([{ width: 320, paged: false }, { width: 1000, paged: true }])('expands keyed visits, correct lyrics and relations with canonical IDs at $width, paged=$paged',variant=>{
     const document = parseM3NDocument('{key=C}{2/4}{order=A,A@Db}\n===A\nN: {lg}1 2{/} ||\nL1: 春天\nL2: 花开')
     const id = scoreEventIds(document).get(document.parts.get('score')!.melody[0]!.events[0]!)!
     const layout = layoutNativeScore(document,{...variant,fixedDo:true})

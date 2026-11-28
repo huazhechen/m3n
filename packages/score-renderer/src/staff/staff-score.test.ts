@@ -42,9 +42,11 @@ describe('staff page packing', () => {
     }
   })
   it('reuses engraving across gap fits with the same geometry and SVG as fresh layouts', async () => {
-    const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+    // Long-score width retention is covered below. This small polyphonic
+    // fixture isolates gap reuse, lyrics and a relation spanning both rows.
+    const score = analyzeM3N('{4/4}\nN: {lg}1 2 3 4 | 5 6 7 1e |{br} 2e 3e 4e 5e | 6e 7e 1ee 2ee{/} |||\nB: 1d^ 5d^ | 5d^ 1^ | 1d^ 5d^ | 5d^ 1^ |\nL: 春夏秋冬山川天地春夏秋冬山川天地').score
     const shared = await prepareStaffScore(score, { width: 550, coreGap: 20 })
-    shared.measurementInfo()
+    expect(shared.measurementInfo().rows).toBeGreaterThan(1)
     shared.pageCount(true)
     shared.continuousHeight()
     for (const gap of [20, 48, 32, 20]) {

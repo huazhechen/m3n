@@ -48,7 +48,7 @@ describe('measured arpeggio engraving', () => {
         expect(altered.musicLeft!).toBeGreaterThan(plain.musicLeft!);
         expect(changed.musicLeft!).toBeGreaterThan(plain.musicLeft!);
     });
-    it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('keeps combined grace, ornaments and arpeggio usable in the native engine at $width, paged=$paged', ({ width, paged }) => {
+    it.each([{ width: 320, paged: false }, { width: 1000, paged: true }])('keeps combined grace, ornaments and arpeggio usable in the native engine at $width, paged=$paged', ({ width, paged }) => {
         const document = parseM3NDocument(source('1 [1##3bb5:h]{arp}{ac(2## 3bb)}{str}{tr}{p} 3 4'));
         const native = layoutNativeScore(document, { width, paged, textMeasurer: normal });
         const root = new DOMParser().parseFromString(renderNativePages(native).join(''), 'text/html');

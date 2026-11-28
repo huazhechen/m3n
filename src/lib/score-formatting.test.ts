@@ -1,8 +1,25 @@
+import { readFileSync } from 'node:fs'
 import type { ScoreMeasure } from '@m3n/notation'
 import { formatM3N, normalizeSectionBarlines, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { describe, expect, it } from 'vitest'
 
-const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
+// Syntax edge cases live in notation/m3n-format and formatting/stages.
+// Keep distinct real arrangements here; corpus validity/content and both
+// notation projections have their own complete-library contracts.
+const cases = ([
+  ['ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'long exercises and explicit breaks'],
+  ['badinerie_bwv1067_01.m3n', 'dense rhythms'],
+  ['dan_huang_guan_bo_er_ka_01.m3n', 'tuplet expressions'],
+  ['flower_dance_01.m3n', 'instrumental navigation'],
+  ['mozart_k545_01.m3n', 'long classical arrangement'],
+  ['turkish_march_01.m3n', 'repeats and inline controls'],
+  ['ming_tian_hui_geng_hao_01.m3n', 'repeated verses'],
+  ['liang_liang_01.m3n', 'lyrics and tied events'],
+  ['guo_huo_01.m3n', 'lyric alignment'],
+  ['qiu_ying_01.m3n', 'lyric phrasing'],
+  ['you_raise_me_up_01.m3n', 'English lyrics and repeated transposed visits'],
+  ['valsentino_01.m3n', 'chromatic instrumental music'],
+] as const).map(([file, feature]) => ({ file, feature, source: readFileSync(new URL(`../scores/${file}`, import.meta.url), 'utf8') }))
 
 /** Preserve every engraved event, including separate tied notes and rests. */
 function musicalMeaning(source: string) {
@@ -32,8 +49,8 @@ function musicalMeaning(source: string) {
   }
 }
 
-describe('score formatting corpus', () => {
-  it.each(Object.entries(sources))('preserves music, lyrics, validity and stability: %s', (_, source) => {
+describe('representative score formatting integration', () => {
+  it.each(cases)('preserves music, lyrics, validity and stability: $file ($feature)', ({ source }) => {
     const formatted = formatM3N(source)
     expect(validateM3NDiagnostics(formatted).map(({ code, message }) => ({ code, message })))
       .toEqual(validateM3NDiagnostics(source).map(({ code, message }) => ({ code, message })))

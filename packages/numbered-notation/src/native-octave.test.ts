@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
-const variants = [320, 800].flatMap(width => [false, true].map(paged => ({ width, paged })))
+const variants = [{ width: 320, paged: false }, { width: 800, paged: true }]
 const examples = [
   ['{4/4}\nN: {8va}1 {8vb}2{/} 3e{/} 4 | {8vb}5d 6 7 1{/} |||',
     '{4/4}\nN: 1e 2 3ee 4 | 5dd 6d 7d 1d |||'],

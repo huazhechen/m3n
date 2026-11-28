@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
+import { nativeStyle } from './native-style.js'
 import { nativeArcSlice } from './native-curve.js'
 import { nativeTiePortTop } from './native-note-metrics.js'
 import { cacheNativeArcObstacles, releaseNativeArcObstacles, nativeArcGeometry, nativeArcPath } from './native-arc.js'
@@ -9,6 +10,24 @@ import { DefaultTextMeasurer } from './native-measure.js'
 
 const options = { width: 800, paged: false }
 describe('native musical arc geometry', () => {
+  it.each([{ width: 320, paged: false }, { width: 1000, paged: true }])('uses independent phrase heights at $width, paged=$paged', ({ width, paged }) => {
+    const layout = layoutNativeScore(parseM3NDocument('{5/4}\nN: {lg}(1 2){/} {lg}3 (4 5) 6 7{/} |||'), { width, paged })
+    let checked = 0
+    for (const system of layout.systems) for (const relation of system.relations) {
+      if (relation.kind !== 'slur') continue
+      const members = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
+      if (!members.includes(relation.first) || !members.includes(relation.last)) continue
+      const ratio = Math.min(1, Math.abs(relation.last.x - relation.first.x) / (nativeStyle.music * 2.3))
+      expect(nativeArcGeometry(relation, system).height).toBeCloseTo(nativeStyle.music * .5 * ratio * (2 - ratio), 8)
+      checked++
+    }
+    expect(checked).toBeGreaterThan(0)
+    if (width === 320) {
+      const system = layout.systems[0]!, [short, long] = system.relations.filter(relation => relation.kind === 'slur')
+      expect(nativeArcGeometry(short!, system).height).toBeLessThan(nativeArcGeometry(long!, system).height)
+    }
+  })
+
   it.each([
     '{lg}1 2{/} {lg}3 4{/} | {br} {lg}5 6{/} {lg}7 1e{/} |',
     '(1~ 1) (2~ 2) 3 4 | {br} (5~ 5) (6~ 6) 7 1e |',

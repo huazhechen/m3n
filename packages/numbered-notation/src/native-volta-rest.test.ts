@@ -4,7 +4,12 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 
-it.each([320, 800].flatMap(width => [false, true].flatMap(paged => [3, 123456789].flatMap(count => ['', '{6/8}'].map(control => ({ width, paged, count, control }))))))(
+// Cover every pair of width, mode, count size and onset control without
+// repeating all 16 combinations. Number shape and control both occur in each mode.
+const cases = [320, 800].flatMap(width => [false, true].flatMap(paged =>
+  [3, 123456789].map(count => ({ width, paged, count,
+    control: paged === (count === 3) ? '{6/8}' : '' }))))
+it.each(cases)(
   'starts a new ending over its multi-rest cap at $width, paged=$paged, count=$count, control=$control',
   ({ width, paged, count, control }) => {
     const source = `{4/4}\nN: ||: 1 2 3 4 |{br}\n---V1\nN: ${control}{rest=${count}} :||\n---V2\nN: {4/4}1 2 3 4 |||`
