@@ -13,12 +13,12 @@ const painter = new NativeMusicPainter(measurer)
 const layoutRest = (count: number, width = 800) => layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1 2 3 4 | {rest=${count}} | 4 3 2 1 |||`), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9 })
 
 describe('native multi-measure rests', () => {
-  it('paints a beam with two caps and a full-size count, and reserves its actual ink', () => {
+  it('paints a beam with two caps and a smaller count, and reserves its actual ink', () => {
     const layout = layoutRest(12), glyph = layout.projection.glyphs.find(g => g.multiRest)!
     const svg = painter.music(glyph)
     const root = new DOMParser().parseFromString(`<svg>${svg}</svg>`, 'image/svg+xml')
     expect(root.querySelectorAll('line')).toHaveLength(3)
-    expect([...root.querySelectorAll('text')].map(t => [t.textContent,t.getAttribute('font-size')])).toEqual([['12',String(nativeStyle.music)]])
+    expect([...root.querySelectorAll('text')].map(t => [t.textContent,t.getAttribute('font-size')])).toEqual([['12',String(nativeStyle.music * 0.75)]])
     const ink = nativeSvgInk(svg, measurer)
     expect(glyph.musicLeft).toBeGreaterThanOrEqual(glyph.x - ink.left - 0.001)
     expect(glyph.musicRight).toBeGreaterThanOrEqual(ink.right - glyph.x)

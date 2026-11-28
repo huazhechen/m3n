@@ -72,16 +72,16 @@ export class NativeMusicPainter extends NativeSymbols {
 
   music(glyph: NativeGlyph, claimedBeams?: ReadonlySet<number>, coreOnly = false): string {
     if (glyph.multiRest) {
-      const size = nativeStyle.music, text = glyph.interlude ? '' : String(glyph.multiRest)
+      const size = nativeStyle.music, countSize = size * 0.75, text = glyph.interlude ? '' : String(glyph.multiRest)
       const font = SCORE_NUMBER_FONT
-      const metrics = this.measurer.measureText(text, { fontSize: size, fontFamily: font })
+      const metrics = this.measurer.measureText(text, { fontSize: countSize, fontFamily: font })
       const width = Math.max(size * 2, metrics.w + size * 0.5), left = glyph.x - size * 0.4, right = left + width
-      const axis = glyph.y + nativeMusicAxis(this.measurer), stroke = size * 0.12, halfCap = (size * 0.65 - stroke) / 2
+      const axis = glyph.y + nativeMusicAxis(this.measurer), stroke = size * 0.075, halfCap = (size * 0.65 - stroke) / 2
       return `<g data-m3n-role="${glyph.interlude ? 'interlude' : 'multi-rest'}">`
         + line(left + stroke, axis, right - stroke, axis, stroke * 2)
         + line(left + stroke / 2, axis - halfCap, left + stroke / 2, axis + halfCap, stroke)
         + line(right - stroke / 2, axis - halfCap, right - stroke / 2, axis + halfCap, stroke)
-        + (text ? this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, size, font, { 'text-anchor': 'middle' }) : '') + '</g>'
+        + (text ? this.text(text, left + width / 2, axis - (metrics.inkBottom ?? metrics.h) - size * 0.175 + metrics.baseline, countSize, font, { 'text-anchor': 'middle' }) : '') + '</g>'
     }
     let music = this.body(glyph, claimedBeams)
     if (coreOnly) return music
