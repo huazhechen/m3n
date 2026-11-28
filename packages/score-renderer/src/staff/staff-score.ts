@@ -312,6 +312,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
               'font-weight': String(scoreLayoutConfig.fonts.textWeight),
               color: '#000',
               'data-notation': 'staff',
+              ...(measure.designMetrics ? { 'data-m3n-metrics': 'font-design' } : {}),
               'data-m3n-note-spacing': String(result.spacing),
               'data-m3n-core-gap': String(page.gap),
             },
