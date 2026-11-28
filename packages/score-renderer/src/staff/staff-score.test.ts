@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
@@ -63,7 +64,7 @@ describe('staff page packing', () => {
   })
 
   it('compares both minimum tiers using the same physical spacing objective', async () => {
-    const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+    const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/mo_li_hua_01.m3n'), 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
     expect(info.pageCount).toBe(1)
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
@@ -120,7 +121,7 @@ describe('staff page packing', () => {
   })
 
   it('caches candidate layouts without mutating input or changing pagination geometry', async () => {
-    const source = readFileSync(`../../src/scores/turkish_march_01.m3n`, 'utf8')
+    const source = readFileSync(resolve(import.meta.dirname, `../../../../src/scores/turkish_march_01.m3n`), 'utf8')
     const score = analyzeM3N(source).score
     const before = structuredClone(score)
     const prepared = await prepareStaffScore(score, { width: 550 })
@@ -141,7 +142,7 @@ describe('staff page packing', () => {
 })
 
 it('screens horizontal quality without changing a completed staff layout', async () => {
-  const score = analyzeM3N(readFileSync('../../src/scores/mo_li_hua_01.m3n', 'utf8')).score
+  const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/mo_li_hua_01.m3n'), 'utf8')).score
   for (const width of [528, 624, 768]) {
     const render = await prepareStaffScore(score, { width })
     expect(render.canExceedQuality(0)).toBe(true)
@@ -154,7 +155,7 @@ it('screens horizontal quality without changing a completed staff layout', async
   }
 })
 it.each(['yan_hua_yi_leng_01', 'qing_niao_01'])('avoids an isolated final system in %s at fixed width', async name => {
-  const score = analyzeM3N(readFileSync(`../../src/scores/${name}.m3n`, 'utf8')).score
+  const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, `../../../../src/scores/${name}.m3n`), 'utf8')).score
   const before = structuredClone(score)
   const prepared = await prepareStaffScore(score, { width: 640 })
   const info = prepared.layoutInfo()

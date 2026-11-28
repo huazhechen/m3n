@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [scoreCatalogPlugin()],
   test: {
     ...testSettings,
-    include: ['src/**/*.test.ts', 'worker/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'worker/**/*.test.ts', 'packages/*/src/**/*.test.ts'],
+    testTimeout: 30000,
   },
 })

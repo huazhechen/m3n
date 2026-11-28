@@ -40,7 +40,7 @@ describe('staff rhythm engraving', () => {
     }
   })
   it('keeps a start repeat clear of the first note, including after a row signature', () => {
-    const score = projectStaffDocument(analyzeM3N(readFileSync(resolve('../../src/scores/butter_fly_01.m3n'), 'utf8')).score)
+    const score = projectStaffDocument(analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/butter_fly_01.m3n'), 'utf8')).score)
     for (const first of [false, true]) {
       const result = createStaffMeasure(score.measures[1]!, first, false, measureText, .25)
       const drawing = drawStaffMeasure(result, result.minimum, 0), geometry = new SvgGeometry(drawing, measureText)
@@ -239,7 +239,7 @@ it('aligns pickup beaming with the end of the bar while the complementary final 
 })
 
 it('keeps measure 32 of Do-Re-Mi clear of its ending repeat at compact and stretched widths', () => {
-  const source = readFileSync(resolve(process.cwd(), '../../src/scores/duo_lai_mi_01.m3n'), 'utf8')
+  const source = readFileSync(resolve(import.meta.dirname, '../../../../src/scores/duo_lai_mi_01.m3n'), 'utf8')
   const measure = projectStaffDocument(analyzeM3N(source).score).measures[31]!
   expect(measure.source.right).toBe('rptend')
   for (const first of [false, true]) for (const extra of [0, 80]) {

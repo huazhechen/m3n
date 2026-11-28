@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { analyzeM3N } from '@m3n/notation'
 import { projectStaffDocument } from './staff-document.js'
 import { findAll, hasClass, textMeasurer } from './layout-svg.js'
@@ -10,7 +11,7 @@ import { engraveStaffSystems } from './staff-system.js'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 it('starts each repeated ending number anew in The Second Waltz', () => {
-  const score = analyzeM3N(readFileSync('../../src/scores/second_waltz_01.m3n', 'utf8')).score
+  const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/second_waltz_01.m3n'), 'utf8')).score
   const document = projectStaffDocument(score), measure = textMeasurer()
   for (const width of [480, 640, 720]) {
     const lines = planStaffLines(document, width, false, measure, 0.25)

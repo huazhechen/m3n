@@ -7,7 +7,7 @@ import { NumberedNotationScore } from './index.js';
 const sources = [
     '{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e) | 1^^ |||\nB: 1d^^ | 5d^^ | 1d^^ |',
     ...['guo_huo_01.m3n']
-        .map(file => readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')),
+        .map(file => readFileSync(resolve(import.meta.dirname, '../../../src/scores', file), 'utf8')),
 ];
 // Isolate horizontal label placement from adaptive page-capacity selection.
 it.each(sources.map((source, index) => ({ source, index })))('keeps fixed-spacing automatic rows when numbering case $index', ({ source }) => {

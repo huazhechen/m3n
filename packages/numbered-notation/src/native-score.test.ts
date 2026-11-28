@@ -130,7 +130,7 @@ it('accepts complementary pickups at repeats without hiding invalid meter', () =
   })
 
 it('reflows Qiu Ying independently of font size while retaining event identities', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/qiu_ying_01.m3n'), 'utf8')
+    const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/qiu_ying_01.m3n'), 'utf8')
     const settings = { width: 590, pageMargin: 8, coreGap: 18, minimumNoteGap: 15 }
     const normal = render(source, settings)
     const reflowed = render(source, { ...settings, wrapWidthRatio: 0.8 })
@@ -176,7 +176,7 @@ it.each([22, 31])('applies a larger minimum clearance at %spx without changing e
   })
 
 it('packs Liang Liang into eight complete systems using minimum spacing', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
+    const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/liang_liang_01.m3n'), 'utf8')
     const tight = render(source, { width: 704, pageMargin: 8, coreGap: 22, minimumNoteGap: 4.4 })
     const systems = [...tight.root.querySelectorAll('g.system')]
     const firstMeasures = [...new Set([...systems[0]!.querySelectorAll('g.note[data-m3n-measure]')].map(node => node.getAttribute('data-m3n-measure')))]
@@ -197,7 +197,7 @@ it('packs Liang Liang into eight complete systems using minimum spacing', () => 
   })
 
 it('expands the first verse and repeats the remaining verses and chorus three times in Tomorrow Will Be Better', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
+    const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/ming_tian_hui_geng_hao_01.m3n'), 'utf8')
     const { document, root, score } = render(source, { width: 786, pageMargin: 8, coreGap: 18 })
     const measures = [...document.parts.values()][0]!.melody.filter(measure => measure.events.length)
     const passes = measurePlaybackPasses(measures)

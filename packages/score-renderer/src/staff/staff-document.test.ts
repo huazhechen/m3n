@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { analyzeM3N, deriveScoreInteraction } from '@m3n/notation'
 import { readFileSync, readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { projectStaffDocument, staffKey } from './staff-document.js'
 
 describe('direct staff display projection', () => {
@@ -45,8 +46,8 @@ describe('direct staff display projection', () => {
     expect(staffKey('Ddor')).toBe('C')
   })
   it('projects the whole library and independent works without losing events', () => {
-    for (const scope of ['scores', 'works', 'examples']) for (const file of readdirSync(`../../src/${scope}`).filter(f => f.endsWith('.m3n'))) {
-      const score = analyzeM3N(readFileSync(`../../src/${scope}/${file}`, 'utf8')).score
+    for (const scope of ['scores', 'works', 'examples']) for (const file of readdirSync(resolve(import.meta.dirname, `../../../../src/${scope}`)).filter(f => f.endsWith('.m3n'))) {
+      const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, `../../../../src/${scope}/${file}`), 'utf8')).score
       const before = structuredClone(score)
       const document = projectStaffDocument(score)
       expect(document.measures.length, file).toBeGreaterThan(0)

@@ -8,7 +8,7 @@ import { nativeStyle } from './native-style.js';
 const variants = [{ width: 320, paged: false }, { width: 1000, paged: true }];
 describe('tuplet expressions remain outside rhythm brackets in the native renderer', () => {
     it.each(variants)('orders every Clarinet Polka tuplet dynamic at width $width, paged=$paged', options => {
-        const source = readFileSync(resolve('../../src/scores/dan_huang_guan_bo_er_ka_01.m3n'), 'utf8');
+        const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/dan_huang_guan_bo_er_ka_01.m3n'), 'utf8');
         const document = parseM3NDocument(source);
         const native = layoutNativeScore(document, options);
         let checked = 0;

@@ -4,6 +4,7 @@ import { staffMusicSize } from './staff-music-font.js'
 import { describe, expect, it, vi } from 'vitest'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { analyzeM3N, scoreEventIds } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument, splitStaffMeasure } from './staff-document.js'
@@ -259,7 +260,7 @@ describe('staff layout contract', () => {
       expect(overlapsX(a, b) && a.top < b.bottom && b.top < a.bottom).toBe(false)
   })
   it('keeps transformed ending strokes in ordinary collision ink', () => {
-    const score = analyzeM3N(readFileSync('../../src/scores/zhi_ai_li_si_01.m3n', 'utf8')).score
+    const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/zhi_ai_li_si_01.m3n'), 'utf8')).score
     const document = projectStaffDocument(score), measure = textMeasurer()
     const lines = planStaffLines(document, 640, false, measure, 0.25)
     const systems = engraveStaffSystems(document, lines, 640, measure, 0.25, false)
@@ -275,7 +276,7 @@ describe('staff layout contract', () => {
     expect(system.edgePieces.every(piece => piece.gap === scoreLayoutConfig.staff.music * .1)).toBe(true)
   })
   it('keeps half the local lyric core gap between Ai Ru Chao Shui lyrics and the next row ending strokes', async () => {
-    const score = analyzeM3N(readFileSync('../../src/scores/ai_ru_chao_shui_01.m3n', 'utf8')).score
+    const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/ai_ru_chao_shui_01.m3n'), 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 720 })).layoutInfo()
     const document = projectStaffDocument(score), measure = textMeasurer()
     const graph = prepareStaffLineGraph(document, 718, false, measure, info.spacing)
@@ -334,7 +335,7 @@ describe('staff layout contract', () => {
     expect(document.measures.map(m => m.number)).toEqual([1, 5])
   })
   it('reserves the multi-rest bar after the opening signatures in Second Waltz', () => {
-    const score = analyzeM3N(readFileSync('../../src/scores/second_waltz_01.m3n', 'utf8')).score
+    const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/second_waltz_01.m3n'), 'utf8')).score
     const document = projectStaffDocument(score), measure = textMeasurer()
     for (const width of [320, 545, 550, 555, 720]) {
       const lines = planStaffLines(document, width, false, measure, 0.25)
@@ -427,7 +428,7 @@ describe('staff layout contract', () => {
     expect(() => render(true)).toThrow('单个五线谱谱行')
   })
   it('replans final line-context widths instead of overflowing Flower Dance', async () => {
-    const source = readFileSync(`../../src/scores/flower_dance_01.m3n`, 'utf8')
+    const source = readFileSync(resolve(import.meta.dirname, `../../../../src/scores/flower_dance_01.m3n`), 'utf8')
     const render = await prepare(source, 700)
     for (const page of render.layoutInfo().pages)
       for (const system of page.systems) expect(system.ink.right).toBeLessThanOrEqual(701)

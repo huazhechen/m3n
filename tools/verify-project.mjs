@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 const root = resolve(import.meta.dirname, '..')
 const browserTests = ['native-ink-collisions', 'online-scorebook-parity', 'scorebook-notation', 'scorebook-pdf']
 const mode = process.argv[2] ?? 'full'
-if (!['full', 'ci', 'tools', 'browser', 'e2e', 'integration', 'non-e2e'].includes(mode)) throw new Error(`Unknown verification mode: ${mode}`)
+if (!['full', 'ci', 'tools', 'browser', 'e2e', 'integration', 'non-e2e', 'offline'].includes(mode)) throw new Error(`Unknown verification mode: ${mode}`)
 
 const target = ['full', 'integration'].includes(mode) ? 240 : 120
 const started = performance.now()
@@ -52,7 +52,13 @@ function integrationChecks() {
   run(process.execPath, ['tools/compare-notation-density.mjs', '--regression'])
 }
 
-if (mode === 'tools') {
+if (mode === 'offline') {
+  npm('build:packages')
+  // One Vite graph and one worker pool for all packages and the application.
+  run(process.execPath, ['node_modules/vitest/vitest.mjs', 'run'])
+  run(process.execPath, [import.meta.filename, 'tools'])
+  nodeTests(['tools/builtin-pdf-font.test.mjs'])
+} else if (mode === 'tools') {
   // Discover offline tool regressions automatically. Browser and PDF-font
   // checks have separate serial stages so they cannot overlap generation.
   nodeTests(readdirSync(resolve(root, 'tools')).filter(file => /\.test\.(mjs|mts)$/.test(file)
