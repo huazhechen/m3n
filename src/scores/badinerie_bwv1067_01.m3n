@@ -3,7 +3,7 @@
 {composer=巴赫} {arranger=Vojtěch Pospíchal}
 {key=Bm} {2/4} {120qpm}
 // 按Flutetunes独奏谱校对完整主旋律，跨音区取主奏线；不录入伴奏和钢琴指法。
-N: ||: (6e{tip} (1ee 6e)) |
+N: (6e{tip} (1ee 6e)) |
 ---
 N: (3e{tip} (6e 3e)) (1e{tip} (3e 1e)) |
 ---

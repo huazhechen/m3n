@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from './m3n-direct.js'
 import { formatM3N, normalizeSectionBarlines } from './m3n-format.js'
 import { validateM3NDiagnostics } from './m3n-validate.js'
+import { compileScorePerformance } from './performance.js'
 
 describe('formatM3N', () => {
   it('formats the current phrase structure without rewriting music atoms', () => {
@@ -234,6 +235,37 @@ it('preserves timing and reaches a stable spelling across varied nested rhythms'
   }
 })
 
+
+describe('redundant opening repeat', () => {
+  it.each([
+    'N: ||: 1 2 | 3 4 :|||',
+    'N: {p}||: 1 2 | 3 4 :|||{x3}',
+    'N: ||: 1 2 |\n---V1\nN: 3 4 :||\n---V2\nN: 5 6 |||',
+    'N: ||: 1 2 :||\n---\nN: ||: 3 4 :|||',
+  ])('removes only the redundant start and preserves playback: %s', body => {
+    const source = `{2/4}\n${body}\n`
+    const expected = source.replace(/\|\|: ?/, '')
+    expect(normalizeSectionBarlines(source)).toBe(expected)
+    const formatted = formatM3N(source)
+    expect(validateM3NDiagnostics(formatted)).toEqual([])
+    const before = compileScorePerformance(parseM3NDocument(source))
+    const after = compileScorePerformance(parseM3NDocument(formatted))
+    expect(after.beats).toBe(before.beats)
+    expect(after.notes).toEqual(before.notes)
+    expect(formatM3N(formatted)).toBe(formatted)
+  })
+
+  it.each([
+    '{2/4}{order=A,A}\n===A\nN: ||: 1 2 :|||',
+    '{2/4}\nN: 0^ | ||: 1 2 :|||',
+    '{2/4}\nN: {rest=4} ||: 1 2 :|||',
+    '{2/4}\nN: 1 2 | ||: 3 4 :|||',
+    '{2/4}\nN: ||: 1 2 |||',
+  ])('preserves required or unmatched repeat openings: %s', source => {
+    expect(normalizeSectionBarlines(source)).toBe(source)
+    expect(formatM3N(source)).toContain('||:')
+  })
+})
 
 describe('ordinary phrase double barlines', () => {
   it('normalizes internal phrase endings and synchronized bass/chord rows only', () => {

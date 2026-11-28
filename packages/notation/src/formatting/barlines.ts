@@ -11,6 +11,17 @@ export function normalizeSectionBarlines(source: string) {
   const instrumental = (offset: number) => score.intervals.some(interval => interval.kind === 'inst' && interval.staff === 'melody' &&
     interval.start !== undefined && interval.end !== undefined && interval.start <= offset && offset < interval.end)
   const edits: SourceEdit[] = []
+  // Without an explicit order, a closing repeat already returns to score start.
+  // Keep paired section repeats and repeats after any leading music or rests.
+  const measures = [...score.parts.values()].flatMap(part => part.melody)
+    .filter(measure => measure.events.length || measure.multiRest || measure.interlude)
+  if (!score.order?.length && measures[0]?.left === 'rptstart') {
+    const end = measures.findIndex(measure => measure.right === 'rptend')
+    if (end >= 0 && !measures.slice(1, end + 1).some(measure => measure.left === 'rptstart')) {
+      const opening = melody.flatMap(({ row }) => row.tokens).find(token => token.kind === 'bar' && token.raw === '||:')
+      if (opening) edits.push({ start: opening.start, end: opening.end + (source.slice(opening.end).match(/^[ \t]*/)?.[0].length ?? 0), value: '' })
+    }
+  }
   for (let index = 0; index < melody.length - 1; index++) {
     const current = melody[index]!, next = melody[index + 1]!
     const tokens = current.row.tokens.filter(token => token.kind !== 'space' && token.kind !== 'comment')

@@ -47,7 +47,7 @@ describe('three scores transcribed from the November 26 uploads', () => {
     expect(notes(2)).toEqual([['b:4:', 1], ['f:4:s', .25], ['b:4:', .25], ['d:5:', .25], ['b:4:', .25]])
     expect(notes(18)).toEqual([['c:5:s', .5], ['f:5:s', .25], ['c:5:s', .25], ['a:4:', .5], ['c:5:s', .25], ['a:4:', .25]])
     expect(notes(19)).toEqual([['f:4:s', 1], ['c:5:n', .5], ['b:4:', .5]])
-    expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(2)
+    expect(bars.flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])).toEqual([17])
     expect(bars.flatMap(bar => bar.events).every(event => event.pitches.length === 1)).toBe(true)
   })
 

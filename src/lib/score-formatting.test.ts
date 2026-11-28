@@ -50,6 +50,14 @@ function musicalMeaning(source: string) {
 }
 
 describe('representative score formatting integration', () => {
+  it.each(['turkish_march_01.m3n', 'second_waltz_01.m3n'])('retains the required opening repeat in %s', file => {
+    const source = readFileSync(new URL(`../scores/${file}`, import.meta.url), 'utf8')
+    const repeatStarts = (text: string) => [...parseM3NDocument(text).parts.values()]
+      .flatMap(part => part.melody).flatMap((bar, index) => bar.left === 'rptstart' ? [index] : [])
+    const before = repeatStarts(source)
+    expect(before.length).toBeGreaterThan(0)
+    expect(repeatStarts(formatM3N(source))).toEqual(before)
+  })
   it.each(cases)('preserves music, lyrics, validity and stability: $file ($feature)', ({ source }) => {
     const formatted = formatM3N(source)
     expect(validateM3NDiagnostics(formatted).map(({ code, message }) => ({ code, message })))
