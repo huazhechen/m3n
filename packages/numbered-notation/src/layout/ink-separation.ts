@@ -1,5 +1,7 @@
 import type { ScoreInk } from './geometry.js'
 
+const fullSpanExtrema = new WeakMap<readonly ScoreInk[], { top: number; bottom: number; finite: boolean }>()
+
 type HorizontalProxy = { source: readonly ScoreInk[]; left:number; nextLeft:number; scale:number; dy:number }
 let hasHorizontalProxies = false
 const horizontalProxies = new WeakMap<readonly ScoreInk[],HorizontalProxy>()
@@ -46,8 +48,23 @@ export function sortedScoreInkSeparation(upper: readonly ScoreInk[], lower: read
   if (upper.length === 1 || lower.length === 1) {
     const singleUpper = upper.length === 1, fixed = singleUpper ? upper[0]! : lower[0]!
     if (fixed.right <= fixed.left) return -Infinity
+    const moving = singleUpper ? lower : upper
+    if (fixed.left === -Infinity && fixed.right === Infinity && Number.isFinite(singleUpper ? fixed.bottom : fixed.top) && contours.has(moving)) {
+      let bounds = fullSpanExtrema.get(moving)
+      if (!bounds) {
+        let top = Infinity, bottom = -Infinity, finite = true
+        for (const piece of moving) {
+          if (piece.left >= Infinity) break
+          if (piece.right <= piece.left || piece.right <= -Infinity) continue
+          top = Math.min(top, piece.top); bottom = Math.max(bottom, piece.bottom)
+          finite &&= Number.isFinite(piece.top) && Number.isFinite(piece.bottom)
+        }
+        bounds = { top, bottom, finite }; fullSpanExtrema.set(moving, bounds)
+      }
+      if (bounds.finite) return singleUpper ? fixed.bottom - bounds.top : bounds.bottom - fixed.top
+    }
     let distance = -Infinity
-    for (const piece of singleUpper ? lower : upper) {
+    for (const piece of moving) {
       if (piece.left >= fixed.right) break
       if (piece.right <= piece.left || piece.right <= fixed.left) continue
       distance = Math.max(distance, singleUpper ? fixed.bottom - piece.top : piece.bottom - fixed.top)

@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, cacheScoreMinimumSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode, SvgGeometry } from './layout-svg.js'
@@ -67,6 +67,9 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number) {
     before.afterStretch = weight; after.beforeStretch = weight
     intervals.push({ start: i - 1, end: i, left: right.left, right: left.right, weight })
   }
+  // This chain belongs to immutable prepared metrics and one spacing tier.
+  // Reuse the shared exact hard-spacing preparation across candidate widths.
+  cacheScoreMinimumSpacing(columns)
   const solution = solveScoreSpacing(columns)
   const result = { columns, notes, intervals, minimumWidth: solution.minimumWidth, stretchWeight: solution.stretchWeight }
   variants.set(spacing, result)

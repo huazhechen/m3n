@@ -47,3 +47,15 @@ it('preserves 75:25 note-pair direction while sharing the numbered beam coeffici
   expect(weight).toBeCloseTo(Math.sqrt(.5) ** .75, 8)
   expect(scoreLayoutConfig.staff.groupSpacingRatio).toBe(scoreLayoutConfig.numbered.groupSpacingRatio)
 })
+
+it('reuses one immutable interval chain without retaining width-specific positions or gaps', () => {
+  for (const music of ['1# (2 3) 4 |', '([123:2]) 4^ |', '1^ 2^ :|', '1 2 3 4 ||'])
+    for (const first of [false, true]) for (const tier of scoreLayoutConfig.staff.noteGapCandidates) {
+      const shared = model(music, first, tier)
+      for (const extra of [0, 31.125, 199.25, 12.5, 0, 400]) {
+        const fresh = model(music, first, tier)
+        expect(staffSpacingPositions(shared.prepared, tier, extra)).toEqual(staffSpacingPositions(fresh.prepared, tier, extra))
+        expect(staffRhythmicSpacing(shared.prepared, tier, extra)).toEqual(staffRhythmicSpacing(fresh.prepared, tier, extra))
+      }
+    }
+})

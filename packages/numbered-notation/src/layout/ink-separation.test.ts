@@ -82,3 +82,25 @@ it('matches exhaustive single-interval queries with finite and unbounded spans',
     compare(single, row); compare(row, single); compare(single, single)
   }
 })
+
+it('reuses immutable row extrema for changing full-span headers with exact single-sweep parity', () => {
+  const row = [
+    { left: -Infinity, right: -2, top: -0, bottom: 12.125 },
+    { left: -1, right: 3, top: -17.375, bottom: 0 },
+    { left: 0, right: 0, top: -1000, bottom: 1000 },
+    { left: 4, right: Infinity, top: 0, bottom: 22.5 },
+    { left: Infinity, right: Infinity, top: -2000, bottom: 2000 },
+  ]
+  cacheScoreInkSeparation(row)
+  for (const offset of [0, 17.25, -3.125, 1e100, 0]) {
+    const header = [{ left: -Infinity, right: Infinity, top: offset - 12, bottom: offset }]
+    expect(sortedScoreInkSeparation(header, row)).toBe(exhaustive(header, row))
+    expect(sortedScoreInkSeparation(row, header)).toBe(exhaustive(row, header))
+  }
+  for (const top of [-Infinity, Infinity, NaN]) {
+    const unusual = [{ left: 0, right: 2, top, bottom: 5 }, { left: 1, right: 3, top: -1, bottom: 7 }]
+    cacheScoreInkSeparation(unusual)
+    const header = [{ left: -Infinity, right: Infinity, top: 0, bottom: 12 }]
+    expect(sortedScoreInkSeparation(header, unusual)).toBe(exhaustive(header, unusual))
+  }
+})

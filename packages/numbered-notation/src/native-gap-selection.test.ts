@@ -88,3 +88,16 @@ it('returns complete exact geometry or rejects the entire width under a combined
     expect(error).toHaveProperty('code', 'M3N_WIDTH_QUALITY_PRUNED')
   }
 })
+
+it('preserves exact quality and SVG when fixed plans omit their unused row snapshots', () => {
+  for (const score of [source, ...['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01'].map(file =>
+    readFileSync(new URL(`../../../src/scores/${file}.m3n`, import.meta.url), 'utf8'))]) {
+    const document = parseM3NDocument(score), settings = { ...options, width: 606 }
+    const direct = layoutNativeScore(document, settings)
+    // Full rendering always uses exact geometry. This scope retains the old
+    // snapshot path without enabling estimated numeric measurement.
+    const cached = withScoreWidthCandidatePolicy({rowReuse:true}, () => layoutNativeScore(document, settings))
+    expect(nativeLayoutQuality(direct)).toEqual(nativeLayoutQuality(cached))
+    expect(renderNativePages(direct)).toEqual(renderNativePages(cached))
+  }
+})

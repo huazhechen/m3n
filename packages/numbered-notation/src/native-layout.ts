@@ -164,7 +164,9 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
     let candidate: NativeLayout
     try {
       if (timings) timings.completedLayoutTrials = (timings.completedLayoutTrials ?? 0) + 1
-      candidate = trial.complete({blocks: new Map()}, ceiling)
+      // One fixed break plan consumes its exact rows once. Snapshot caches
+      // are only useful to the explicit surrogate/reuse experiment.
+      candidate = trial.complete(scoreWidthPolicyState().__m3nExperimentalRowReuse ? {blocks: new Map()} : undefined, ceiling)
     }
     catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'M3N_PAGE_BOUND_REJECTED') {
