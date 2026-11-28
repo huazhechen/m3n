@@ -672,8 +672,14 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false, ou
         const center = y + (metrics.top + metrics.bottom) / 2
         const rule = staffMusicSize() + Math.round((center - staffMusicSize()) / unit) * unit
         const radius = (metrics.bottom - metrics.top) / 2
-        // Keep the dot in an open space, including near ledger lines.
-        if (Math.abs(center - rule) < radius + unit * .15)
+        // Outside the five staff lines, only painted ledger segments can
+        // move the dot. The staff grid alone is not an obstacle.
+        const left = s.x + metrics.left, right = s.x + metrics.right
+        const paintedRule = rule >= staffMusicSize() && rule <= staffMusicSize() * 2
+          || fixed.ledgers.some(ledger => Math.abs(ledger.y - rule) < unit * 1e-7
+            && Math.min(...ledger.xs) - unit * .3 < right
+            && Math.max(...ledger.xs) + fixed.glyph.right + unit * .3 > left)
+        if (paintedRule && Math.abs(center - rule) < radius + unit * .15)
           y += rule + (below ? unit / 2 : -unit / 2) - center
       }
       drawing.glyph(name, note.x + s.x, staveY + y, s.size ?? size)
