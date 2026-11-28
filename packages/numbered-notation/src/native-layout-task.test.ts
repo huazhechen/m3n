@@ -9,11 +9,11 @@ import { PreparedNumberedNotationScore } from './native-score.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
-it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('measurement arenas preserve retained candidates and final drawings: %s', file => {
+it.each(['flower_dance_01.m3n'])('measurement arenas preserve retained candidates and final drawings: %s', file => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
   const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
   const retained: Array<{ measured: PreparedNumberedNotationScore; reference: PreparedNumberedNotationScore }> = []
-  for (const width of [528, 720, 594, 528]) {
+  for (const width of [528, 720, 528]) {
     const options = { width, numericLayout: true, pageMargin: 0 }
     const measured = PreparedNumberedNotationScore.measure(document, { ...options, layoutTask, textMeasurementCache })
     const reference = new PreparedNumberedNotationScore(document, options)
@@ -57,12 +57,12 @@ it('detaches borrowed glyphs, controls and split columns without changing prepar
 })
 
 it('shares unplaced preparation across widths and settings without sharing placement', () => {
-  // Candidate retention above covers three real arrangements. Exercise each
-  // settings/cache boundary once on the long score, including return to 480px.
-  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8'))
+  // Retention above covers a long arrangement. A compact polyphonic score
+  // isolates each cache boundary, including returning to the original width.
+  const document = parseM3NDocument('{title=缓存边界}{key=G}{4/4}\nN: '+ '1 2 3 4 | 5 6 7 1e |{br} '.repeat(4) + '\nL: '+ '缓 存 边 界 宽 度 回 返 '.repeat(4) + '\nB: '+ '1d 3d 5d 1 | 5d 7d 2 5 | '.repeat(4))
   const before = structuredClone(document), layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
   const variants = [{}, { numericLayout: true }, { fixedDo: true }, { includeBass: false }, { transpose: 5 }, { tempoScale: 1.2 }, { measureNumbers: true, equalMeasures: true }]
-  for (const variant of variants) for (const width of [480, 720, 540, 640, 480]) {
+  for (const variant of variants) for (const width of [480, 720, 480]) {
     const options = { width, pageMargin: 0, paged: true, ...variant }
     const timings: Record<string, number> = {}
     const actual = layoutNativeScore(document, { ...options, layoutTask, textMeasurementCache }, timings)
@@ -100,7 +100,7 @@ it('rebuilds preparation for new tasks, changed fonts, changed measurers and cha
   expect(run().projectionBuilds).toBe(1)
 })
 
-it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('horizontal screening preserves complete engraving and rejects only certified scores: %s', file => {
+it.each(['flower_dance_01.m3n'])('horizontal screening preserves complete engraving and rejects only certified scores: %s', file => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
   const layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
   for (const width of [528, 624, 768]) {

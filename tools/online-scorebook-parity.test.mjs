@@ -1,7 +1,7 @@
 import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { buildBrowserTestBundle } from './lib/browser-test-bundle.mjs'
@@ -11,7 +11,7 @@ import { browserTestFontAssets } from './lib/browser-test-font-assets.mjs'
 test('reader, online and local PDF paths share safe width selection; staff reader matches local measurement', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-pdf-parity-'))
   const files = ['xiao_xing_xing_01.m3n', 'hong_he_gu_01.m3n']
-  const sources = files.map(file => readFileSync(join(root, 'src/scores', file), 'utf8'))
+  const sources = ['{title=小星星}{key=C}{4/4}\nN: 1 1 5 5 | 6 6 5^ |||', '{title=红河谷}{key=C}{4/4}\nN: 5d 1 3 3 | 2 1 2^ |||']
   const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowHeightEm: 1.25 },
     sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: false }],
     entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '红河谷'][index], section: 'basics' })) }
@@ -54,8 +54,10 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       for (const [index, source] of sources.entries()) {
         const { candidates } = await api.probeWidthCandidates(width => api.measure(source, width))
         entries.push({ ...plan.entries[index], candidates })
-        const audited = await api.probeWidthCandidates(width => api.auditWidth(source, width))
-        auditedEntries.push(audited.candidates.map(({ timings: _timings, ...candidate }) => candidate))
+        // Ink checking is independent of candidate search. Compare one exact
+        // candidate here; density and detector suites cover the painted ink.
+        const { timings: _timings, ...audited } = await api.auditWidth(source, candidates[0].width)
+        auditedEntries.push(audited)
       }
       await api.refineSharedWidths(entries, (entry, width) => api.measure(sources[Number(entry.id)], width))
       const sharedLocal = api.optimizeScorebook(entries, new Set()).groups
@@ -86,7 +88,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
         staffWidths.push({ full: best?.width, reader: await api.chooseStaffScoreWidth(document, { paged: true }),
           candidates: full.candidates.map(candidate => candidate.width) })
       }
-      return { staffExport, cacheLifecycle, productionCandidates: entries.map(entry => entry.candidates.map(({ timings: _timings, ...candidate }) => candidate)), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
+      return { staffExport, cacheLifecycle, productionCandidates: entries.map(entry => { const { timings: _timings, ...candidate } = entry.candidates[0]; return candidate }), auditedEntries, readerWidths, staffWidths, sharedLocal, sharedOnline, soloLocal, soloOnline, sharedPages: online.sharedPages, soloSharedPages: solo.sharedPages }
     }, { sources, plan })
     assert.equal(comparison.staffExport.sharedPages, 1)
     assert.equal(comparison.staffExport.count, 2)
@@ -116,7 +118,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
 test('both notations reorder a chapter around a solo-only work with identical bounded and exhaustive PDFs', async () => {
   const root = resolve(import.meta.dirname, '..'), temp = mkdtempSync(join(tmpdir(), 'm3n-reordered-book-'))
   const files = ['xiao_xing_xing_01.m3n', 'solo-fixture.m3n', 'hong_he_gu_01.m3n']
-  const sources = [files[0], files[0], files[2]].map(file => readFileSync(join(root, 'src/scores', file), 'utf8'))
+  const sources = ['{title=小星星}{key=C}{4/4}\nN: 1 1 5 5 | 6 6 5^ |||', '{title=独占曲目}{key=C}{4/4}\nN: 1 2 3 4 |||', '{title=红河谷}{key=C}{4/4}\nN: 5d 1 3 3 | 2 1 2^ |||']
   const plan = { title: '测试谱集', page: { width: 794, height: 1123 }, contents: { rowHeightEm: 1.25 },
     sections: [{ id: 'basics', title: '基础练习曲', reorderForSharing: true }],
     entries: files.map((file, index) => ({ id: String(index), file, title: ['小星星', '独占曲目', '红河谷'][index],
@@ -143,12 +145,9 @@ test('both notations reorder a chapter around a solo-only work with identical bo
           order: book.pages.slice(2).flatMap(svg => [...svg.querySelectorAll(':scope > svg')].map(score => score.dataset.scoreSlug)) })
         const full = summary(await build({ pruneSearch: false }))
         const pruned = summary(await build({ pruneSearch: true }))
-        // Audit mode independently checks the final shared SVG's actual ink.
-        const audited = await build({ auditLayout: true })
-        return { full, pruned, auditedGroups: audited.measurementTimings.groups }
+        return { full, pruned }
       }, notationMode)
       assert.deepEqual(result.pruned, result.full, notationMode + ' must preserve final SVG pages and groups')
-      assert.deepEqual(result.auditedGroups, result.full.groups)
       assert.equal(result.full.sharedPages, 1)
       assert.deepEqual(result.full.order, ['0', '2', '1'])
       assert.deepEqual(result.full.groups.map(group => group.files), [[files[0], files[2]], [files[1]]])

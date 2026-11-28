@@ -34,7 +34,7 @@ export function browserTestFontAssets(root, fixtureFont) {
         throw new Error('Browser regressions must use score or fixture subsets, not the full CJK font')
       }
       const file = basename(pathname) === 'fixture-font.ttf' ? fixtureFont.fontFile
-        : basename(pathname) === 'book-font.ttf' ? join(root, '.tmp/scorebook-font/text.ttf') : join(directory, basename(pathname))
+        : basename(pathname) === 'book-font.ttf' ? join(root, 'tools/fonts/library/NotoSansSC-library.ttf') : join(directory, basename(pathname))
       if (!existsSync(file)) throw new Error(`Missing test font: ${file}`)
       await route.fulfill({ path: file, contentType: file.endsWith('.woff2') ? 'font/woff2' : 'font/ttf' })
       return true

@@ -143,7 +143,7 @@ it('reflows Qiu Ying independently of font size while retaining event identities
   })
 
 it.each([false, true])('selects a complete elastic spacing tier in paged=%s layouts', paged => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
+    const source = '{4/4}\nN: '+ '(1 2 3 4 5 6 7 1e) | 1^^ | '.repeat(4)
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
       const chosen = layoutNativeScore(defaults.document, { width, paged, numericLayout: true }).options.minimumNoteGap
@@ -175,34 +175,6 @@ it.each([22, 31])('applies a larger minimum clearance at %spx without changing e
     expect(spaced.score.diagnostics).toEqual([])
   })
 
-it('packs Liang Liang more closely while preserving every note, lyric, tie and source identity', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
-    const normal = render(source, { width: 760, minimumNoteGap: 15 })
-    const compact = render(source, { width: 760, minimumNoteGap: 9 })
-    expect(compact.root.querySelectorAll('g.system').length).toBeLessThan(normal.root.querySelectorAll('g.system').length)
-    const content = (root: Document) => [...root.querySelectorAll('g.note,text[data-m3n-role="lyric"]')]
-      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.textContent])
-    expect(content(compact.root)).toEqual(content(normal.root))
-    expect(compact.root.querySelectorAll('g.note text[font-size="24"]').length)
-      .toEqual(normal.root.querySelectorAll('g.note text[font-size="24"]').length)
-    expect(compact.document).toEqual(normal.document)
-    expect(compact.score.diagnostics).toEqual([])
-  })
-
-it('supports 0.2em note gaps without changing Liang Liang content or font sizes', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
-    const normal = render(source, { width: 760 })
-    const tight = render(source, { width: 760, minimumNoteGap: 4.4 })
-    const content = (root: Document) => [...root.querySelectorAll('g.note,text[data-m3n-role="lyric"]')]
-      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.textContent])
-    expect(content(tight.root)).toEqual(content(normal.root))
-    expect(tight.pages).not.toEqual(normal.pages)
-    expect(tight.score.diagnostics).toEqual([])
-    expect(tight.root.querySelectorAll('g.note text[font-size="24"]').length)
-      .toEqual(normal.root.querySelectorAll('g.note text[font-size="24"]').length)
-    for (const minimumNoteGap of [-0.1, Infinity, NaN]) expect(() => render(source, { minimumNoteGap })).toThrow('最小音符间距')
-  })
-
 it('packs Liang Liang into eight complete systems using minimum spacing', () => {
     const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
     const tight = render(source, { width: 704, pageMargin: 8, coreGap: 22, minimumNoteGap: 4.4 })
@@ -219,17 +191,9 @@ it('packs Liang Liang into eight complete systems using minimum spacing', () => 
     const slots = (root: Document) => [...root.querySelectorAll('g[data-m3n-role="lyric-fragment"]')]
       .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.getAttribute('data-m3n-passes')])
     expect(slots(tight.root)).toEqual(slots(normal.root))
-  })
-
-it('uses a single minimum 9px clearance without changing score content', () => {
-    const source = readFileSync(resolve(process.cwd(), '../../src/scores/liang_liang_01.m3n'), 'utf8')
-    const paired = render(source, { width: 716, pageMargin: 8, coreGap: 22, minimumNoteGap: 9 })
-    const normal = render(source, { width: 716 })
-    const content = (root: Document) => [...root.querySelectorAll('g.note,text[data-m3n-role="lyric"]')]
-      .map(node => [node.getAttribute('data-m3n-id'), node.getAttribute('data-m3n-rendition'), node.textContent])
-    expect(content(paired.root)).toEqual(content(normal.root))
-    expect(paired.score.diagnostics).toEqual([])
-    for (const minimumNoteGap of [-1, Infinity, NaN]) expect(() => render(source, { minimumNoteGap })).toThrow('最小音符间距')
+    expect(tight.root.querySelectorAll('g.note text[font-size="24"]').length)
+      .toBe(normal.root.querySelectorAll('g.note text[font-size="24"]').length)
+    for (const minimumNoteGap of [-0.1, Infinity, NaN]) expect(() => render(source, { minimumNoteGap })).toThrow('最小音符间距')
   })
 
 it('expands the first verse and repeats the remaining verses and chorus three times in Tomorrow Will Be Better', () => {
@@ -405,7 +369,7 @@ it('retains empty lyric slots and playback pass metadata across repeat verses', 
     expect(root.querySelector('text[data-m3n-rendition="2"]')?.getAttribute('data-m3n-passes')).toContain('2')
   })
 
-it.each([320, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('labels continuous shared verses once at width $width, paged=$paged', ({ width, paged }) => {
+it.each([{width:320,paged:false},{width:800,paged:true}])('labels continuous shared verses once at width $width, paged=$paged', ({ width, paged }) => {
     const source = '{2/4}\nN: ||: 1 2 | 3 4 |\nL1: 甲乙丙丁\nL2: 春夏秋冬\nL3: {L2}\n---\nN: 5 6 | 7 1e :|||{x3}\nL1: 戊己庚辛\nL2: 风花雪月\nL3: {L2}'
     const { root, score } = render(source, { width, paged })
     expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])

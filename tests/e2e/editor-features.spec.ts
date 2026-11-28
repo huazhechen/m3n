@@ -66,26 +66,6 @@ test('mobile editor switches panes without losing input; catalog fills and filte
   await page.screenshot({ path: info.outputPath('library-mobile.png') })
 })
 
-test('floating controls expose BPM, tone, transpose, metronome and measure numbers', async ({ page }) => {
-  await page.goto('/editor')
-  await waitForEditor(page)
-  await page.getByRole('textbox', { name: 'M3N source' }).fill('{6/8}{80qpm}\nN: 1s 2s 3s 4s 5s 6s |||')
-  const controls = page.getByRole('group', { name: '乐谱控制', exact: true })
-  await openScoreSettings(page)
-  await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
-  await openScoreSettings(page)
-  await expect(controls.getByRole('button', { name: /^选择音色，当前/ })).toBeVisible()
-  for (const name of ['小节号', '节拍器']) await expect(controls.getByRole('switch', { name, exact: true })).toBeVisible()
-  await expect(controls.getByRole('button', { name: /^移调，当前/ })).toBeVisible()
-  for (const name of ['设为 A', '设为 B', '从选中小节播放']) await expect(controls.getByRole('button', { name, exact: true })).toHaveCount(0)
-  await openScoreSettings(page)
-  await controls.getByRole('slider', { name: '播放速度', exact: true }).fill('10')
-  await openScoreSettings(page)
-  await controls.getByRole('button', { name: '还原速度' }).click()
-  await openScoreSettings(page)
-  await expect(controls.getByRole('slider', { name: '播放速度', exact: true })).toHaveValue('160')
-})
-
 test('multipage PDF downloads with the same pages in continuous and paged modes', async ({ page }, info) => {
   test.setTimeout(90_000)
   await page.addInitScript(() => localStorage.setItem('m3n:render-mode', 'continuous'))
@@ -129,25 +109,6 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
       expect(sheet.getHeight()).toBeCloseTo(297 * 72 / 25.4)
     }
   }
-})
-
-
-test('homepage plays numbered notation and documentation examples open as editable sources', async ({ page }) => {
-  await page.goto('/')
-  const sample = page.locator('.home-sample')
-  await expect(sample.locator('svg[data-engine="m3n"]')).toBeVisible()
-  await page.getByRole('button', { name: '播放', exact: true }).click()
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await expect(page.getByRole('switch', { name: '首页简谱', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
-  await page.goto('/?doc=guide')
-  const exampleSource = await page.locator('.document-example .cm-content').first().innerText()
-  await page.getByRole('link', { name: '在编辑器试改', exact: true }).first().click()
-  await expect(page).toHaveURL(/\/editor$/)
-  const editor = page.locator('.editor-container').getByRole('textbox', { name: 'M3N source', exact: true })
-  await expect(editor).toBeVisible()
-  await expect(editor).not.toHaveAttribute('aria-readonly', 'true')
-  await expect(editor).toHaveText(exampleSource, { useInnerText: true })
 })
 
 

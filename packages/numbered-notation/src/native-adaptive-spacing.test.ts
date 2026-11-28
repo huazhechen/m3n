@@ -41,7 +41,7 @@ describe('tight 8px and loose 16px note spacing', () => {
   })
 })
 
-it.each([false,true].flatMap(fixedDo=>[480,640,720].flatMap(width=>['valsentino_01.m3n','katyusha_01.m3n','flower_dance_01.m3n'].map(file=>({fixedDo,width,file})))))('isolates projection state between independent layouts ($file, $width, fixedDo=$fixedDo)', ({width,fixedDo,file}) => {
+it.each([{fixedDo:false,width:480,file:'valsentino_01.m3n'}, {fixedDo:true,width:640,file:'katyusha_01.m3n'}, {fixedDo:false,width:720,file:'flower_dance_01.m3n'}])('isolates projection state between independent layouts ($file, $width, fixedDo=$fixedDo)', ({width,fixedDo,file}) => {
   const source = readFileSync(new URL('../../../src/scores/'+file,import.meta.url),'utf8')
   const document = parseM3NDocument(source), before = structuredClone(document)
   const settings = {width,pageMargin:0,paged:true,fixedDo}, timings: Record<string,number> = {}

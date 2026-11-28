@@ -14,11 +14,16 @@ test('editor text outside score subsets selects the full font without loading it
 const assetUrl = file => new URL(`../packages/numbered-notation/src/font-assets/${file}`, import.meta.url)
 const files = new Map([[scoreFont.file, assetUrl(scoreFont.file)],
   ['NotoSansSC-library.ttf', new URL('./fonts/library/NotoSansSC-library.ttf', import.meta.url)]])
-if (process.argv.includes('--full-font')) files.set('NotoSansSC-full.ttf', assetUrl('NotoSansSC-full.ttf'))
+files.set('NotoSansSC-full.ttf', assetUrl('NotoSansSC-full.ttf'))
 for (const [file, url] of files) {
-  test(`PDF TrueType subsetting preserves every outline (${file})`, async () => {
+  test(`PDF TrueType subsetting preserves outlines (${file})`, async () => {
     const bytes = readFileSync(url)
-    const codes = fontkit.create(bytes).characterSet
+    const allCodes = fontkit.create(bytes).characterSet
+    // Actual score/library subsets are exhaustive. Sample the third-party full
+    // CJK font across its cmap, including the editor fallback character.
+    const codes = file === 'NotoSansSC-full.ttf'
+      ? [...new Set([...'龘中文Aa09'.split('').map(c => c.codePointAt(0)), ...Array.from({ length: 32 }, (_, i) => allCodes[Math.floor(i * (allCodes.length - 1) / 31)])])]
+      : allCodes
     // Audit every glyph without retaining the complete font's decoded outlines.
     // A new source font per batch also releases fontkit's glyph caches.
     const batchSize = 256

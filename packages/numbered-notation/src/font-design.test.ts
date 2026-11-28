@@ -18,10 +18,10 @@ const resources = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8'
 }))
 beforeAll(() => prepareFontDesigns(resources))
 
-it('measures Segno from the painted SMuFL glyph and renders Flower Dance with the real fonts', () => {
+it('measures and renders Segno with real design fonts', () => {
   const measurer = fontDesignMeasurer()!
   expect(measureNativeControl('segno', '𝄋', measurer).width).toBeGreaterThan(0)
-  const source = readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8')
+  const source = '{title=设计字体}{key=C}{4/4}\nN: {segno}1 2 3 4 |{br} 5 6 7 1e |||'
   const pages = NativeNumberedNotationScore.create(parseM3NDocument(source)).render({ width: 720, paged: true, textMeasurer: measurer })
   expect(pages.length).toBeGreaterThan(0)
 })

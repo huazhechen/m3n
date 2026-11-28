@@ -30,6 +30,8 @@ npm run deploy   # 构建并部署到 Cloudflare
 
 当前工作区由 Code Shell 托管于 `/score/`，构建时使用 `VITE_BASE_URL=/score/ VITE_SUBMIT_MODE=remote npm run build`；默认构建会覆盖托管目录并生成错误的资源路径。详见[托管说明](docs/HOSTING.md)。
 
+验证分为两个独立的120秒硬预算：`npm run check:non-e2e` 和 `npm run test:e2e`。`npm run check` 串行执行两段，E2E复用本轮包构建，重新生成隔离网页，任一段超时都会失败。覆盖与耗时说明见[门禁与测试去重](docs/VALIDATION_REFACTOR.md)。
+
 常用脚本：`npm run build`、`npm run test`、`npm run test:e2e`、`npm run lint`、`npm run typecheck:packages`、`npm run check:boundaries`。
 
 ### 本地乐谱与提交

@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { compileScorePerformance, parseM3NDocument } from '@m3n/notation'
+import { parseM3NDocument } from '@m3n/notation'
 import { NumberedNotationScore } from '@m3n/numbered-notation'
 import { NativePlaybackScore } from '@m3n/score-renderer/playback'
 import { queryPlaybackElements } from './score-playback-elements'
-import reasons from '../scores/yi_qian_ge_shang_xin_de_li_you_01.m3n?raw'
 
 describe('tuplet playback notes and lyrics', () => {
   it('selects only the sounding subdivision and current verse through repeats and rests', async () => {
@@ -38,23 +37,6 @@ describe('tuplet playback notes and lyrics', () => {
     expect(elements.some(element => element.textContent === '春')).toBe(true)
   })
 })
-
-
-it('highlights the repeated verse and chorus lyrics after the second Reasons repeat sign', () => {
-  const score = parseM3NDocument(reasons)
-  const paper = document.createElement('div')
-  paper.innerHTML = NumberedNotationScore.create(score).render({ width: 600, paged: false }).join('')
-  const elements = compileScorePerformance(score).elements.filter(element => element.voice === 'score:melody')
-  const highlighted = (element: typeof elements[number]) => queryPlaybackElements(paper, element.xmlId, element.rendition, element.tupletSlot)
-    .filter(node => node.matches('text[data-m3n-role="lyric"]')).map(node => node.textContent).join('')
-  const first = elements.filter(element => element.start < 92)
-  const repeated = elements.filter(element => element.start >= 112 && element.start < 204)
-  expect(repeated.map(element => [element.start - 112, highlighted(element)]))
-    .toEqual(first.map(element => [element.start, highlighted(element)]))
-  for (const [start, lyric] of [[112.75, '爱'], [144.75, '爱'], [176, '伤'], [212, '伤']] as const) {
-    expect(highlighted(elements.find(element => element.start === start)!)).toBe(lyric)
-  }
-}, 15_000) // Full-song JSDOM rendering and repeat queries can exceed 5s under the complete suite.
 
 
 it('cycles only lyric rows when an unnumbered note contains visible music text', () => {

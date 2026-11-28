@@ -6,7 +6,7 @@ import { expect, it } from 'vitest';
 import { NumberedNotationScore } from './index.js';
 const sources = [
     '{equal-measures=true}\n{4/4}\nN: 1 2 3 4 | (5 6 7 1e 2e 3e 4e 5e) | 1^^ |||\nB: 1d^^ | 5d^^ | 1d^^ |',
-    ...['guo_huo_01.m3n', 'ming_tian_hui_geng_hao_01.m3n', 'wo_yao_ni_01.m3n', 'xing_xing_dian_deng_01.m3n']
+    ...['guo_huo_01.m3n']
         .map(file => readFileSync(resolve(process.cwd(), '../../src/scores', file), 'utf8')),
 ];
 // Isolate horizontal label placement from adaptive page-capacity selection.

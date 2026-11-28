@@ -26,7 +26,7 @@ M3N → analyzeM3N → ScoreDocument
 ## 验证与维护
 
 - `npm run test:packages`：领域、简谱及播放器回归。
-- `node tools/verify-native-ink.mjs --collisions`：浏览器检查最终SVG的裁切、边界和碰撞。
+- `npm run test:native-ink`：共用CI门禁，验证检测器、双谱式代表输入的最终SVG裁切、边界和碰撞。
 - `node tools/verify-format-rendering.mjs`：检查格式化前后SVG一致。
 - `npm run test:e2e`：实际页面编辑、定位、播放、移调和分页。
 

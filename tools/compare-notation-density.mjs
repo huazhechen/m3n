@@ -17,7 +17,7 @@ if (coreGap !== undefined && (!Number.isFinite(coreGap) || coreGap < 0)) throw n
 
 if (regression && (['scores', 'widths', 'staff-sizes', 'core-gap'].some(name => argument(name))
     || process.argv.includes('--all') || process.argv.includes('--metrics-only') || autoStaffWidth)) {
-  throw new Error('--regression uses fixed fixtures, 640px and full ink audits')
+  throw new Error('--regression uses fixed fixtures and widths and full ink audits')
 }
 const origin = 'http://notation-density.local'
 if (process.argv.includes('--bundle-only')) {
@@ -33,12 +33,10 @@ if (process.argv.includes('--bundle-only')) {
   const files = (regression ? Object.keys(densityLimits).join(',') : argument('scores') ?? 'huan_le_song_01,mo_li_hua_01,ni_shi_wo_xin_ai_de_gu_niang_01,flower_dance_01').split(',')
   const sourceInputs = process.argv.includes('--all') ? ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(root, 'src', scope)).filter(file => file.endsWith('.m3n')).map(file => `${scope}/${file}`)) : files.map(file => `scores/${file}.m3n`)
   const inputs = sourceInputs.map(file => ({ file, path: join(root, 'src', file),
-    limit: densityLimits[file.slice(7, -4)] }))
-  if (regression) inputs.push({ file: 'scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n',
-    path: join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), width: 768,
-    limit: { ...densityLimits.ban_yin_jie_kou_qin_ji_ben_gong_01,
-      // The source explicitly ends the tremolo exercise after measure 26.
-      lineEnds: ['m3n-measure-1-26'] } })
+    limit: file.includes('ban_yin_jie_kou_qin_ji_ben_gong_01')
+      ? { ...densityLimits.ban_yin_jie_kou_qin_ji_ben_gong_01, lineEnds: ['m3n-measure-1-26'] }
+      : densityLimits[file.slice(7, -4)],
+    width: regression && file.includes('ban_yin_jie_kou_qin_ji_ben_gong_01') ? 768 : undefined }))
   if (regression) inputs.push({ file: 'fixtures/grand-staff-density.m3n',
     path: join(root, 'tools/fixtures/grand-staff-density.m3n'),
     limit: { staffHeight: 600, numberedHeight: 600, staffRows: 3, numberedRows: 3, heightRatio: 2 } })

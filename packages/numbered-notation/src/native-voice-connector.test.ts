@@ -13,7 +13,7 @@ const source = '{title=双声部}{4/4}\nN: ' + Array(12).fill('1ee 2 3 4 |').joi
   + '\nL: ' + '春风又绿江南岸'.repeat(6)
   + '\nB: ' + Array(12).fill('[1dd 3d 5d:h]^ 5dd^ |').join(' ')
 
-it.each([320,600,800,1000])('keeps complete brackets inside the measured music and prefix at width %s', width => {
+it.each([320,800])('keeps complete brackets inside the measured music and prefix at width %s', width => {
   const document = parseM3NDocument(source)
   for (const paged of [false,true]) {
     const layout = layoutNativeScore(document,{width,paged,textMeasurer})

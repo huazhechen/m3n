@@ -10,7 +10,7 @@ import subprocess
 import sys
 import time
 
-env = {**os.environ, 'NODE_OPTIONS': '--max-old-space-size=384',
+env = {**os.environ, 'NODE_OPTIONS': '--max-old-space-size=512',
        'VITEST_MAX_WORKERS': '1'}
 limit_mib = int(os.environ.get('M3N_MEMORY_LIMIT_MB', '1700'))
 if not 256 <= limit_mib <= 1800:

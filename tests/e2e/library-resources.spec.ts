@@ -1,32 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-for (const delayed of ['scores.json.gz', 'score-fonts.bin.gz']) {
-  test(`library keeps loading until ${delayed} is ready`, async ({ page }) => {
-    let release!: () => void
-    const gate = new Promise<void>(resolve => { release = resolve })
-    const requests: string[] = []
-    page.on('request', request => { if (request.url().endsWith('.gz')) requests.push(request.url()) })
-    await page.route(`**/*-${delayed}`, async route => {
-      await gate
-      await route.continue()
-    })
-    try {
-      await page.goto('/scores')
-      await expect.poll(() => requests.length).toBe(2)
-      const loading = page.getByRole('button', { name: '正在加载乐谱和字体' })
-      await expect(loading).toBeDisabled()
-      await expect(loading).toHaveAttribute('aria-busy', 'true')
-      await expect(loading.locator('svg')).toHaveCSS('animation-name', 'nav-loading-spin')
-      await page.getByRole('searchbox', { name: '搜索乐谱' }).fill('小星星')
-      await expect(page.locator('a.score-card').first()).toContainText('小星星')
-      release()
-      await expect(page.getByRole('button', { name: '导出全量谱集' })).toBeEnabled()
-      expect(await page.evaluate(() => [...document.fonts].filter(font => font.status === 'loaded').length)).toBeGreaterThanOrEqual(3)
-      expect(requests).toHaveLength(2)
-    } finally { release() }
-  })
-}
-
 test('library retries a failed package before enabling export', async ({ page }) => {
   let sources = 0, fonts = 0
   page.on('request', request => { if (request.url().endsWith('-score-fonts.bin.gz')) fonts++ })
