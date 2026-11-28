@@ -11,6 +11,20 @@ import { NativeNumberedNotationScore } from './native-score.js';
 const measurer = new DefaultTextMeasurer();
 const source = '{title=演奏顺序}{4/4}{order=A,B,C,B,D}\n===A\nN: 1 2 3 4 |\n===B\nN: 5 6 7 1e |\n===C\nN: 1 2 3 4 |\n===D\nN: 5 6 7 1e |||';
 describe('header text blocks in the native implementation', () => {
+    it('keeps prepared header ink identical to the painted primitives across gap probes', () => {
+        const document = parseM3NDocument(source.replace('{title=演奏顺序}', '{title=标题}{subtitle=副标题}{singer=歌手}{composer=作曲者}{arranger=改编者}'));
+        for (const width of [320, 528, 606, 720]) {
+            const preparation = new Map<string, unknown>();
+            for (const minimumNoteGap of [8, 12, 16]) {
+                for (const gap of [12, 12.0000001, 17.123456789, 24, 36, 63.9999999]) {
+                    const header = nativeHeaderGeometry(document, width, 32, measurer, gap, { minimumNoteGap }, preparation);
+                    expect(header).toEqual(nativeHeaderGeometry(document, width, 32, measurer, gap, { minimumNoteGap }));
+                    for (const block of header.blocks) expect(block.ink).toEqual(nativeSvgPieces(block.svg, measurer));
+                }
+            }
+        }
+    });
+
     const characters = { measureText(text: string) { return { w: [...text].length }; } };
     it('resets line width at explicit newlines and preserves requested blank lines', () => {
         expect(numberedHeadingLines('AB\nCD', 4, 1, characters)).toEqual(['AB', 'CD']);

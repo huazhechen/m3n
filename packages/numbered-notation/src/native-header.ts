@@ -4,7 +4,7 @@ import { nativeMusicAxis } from './native-axis.js'
 import { numberedHeaderContent } from './header-content.js'
 import { nativeHeaderGap, nativeStyle } from './native-style.js'
 import { NativeSymbols, attrs, n } from './native-symbols.js'
-import { nativeSvgInk, nativeSvgPieces } from './native-ink.js'
+import { nativeSvgInk, nativeSvgPieces, translateNativeInk, unionNativeInk } from './native-ink.js'
 import { measureNativeControl, measureNativeTempo } from './native-controls.js'
 import { nativeDisplayPitch } from './native-model.js'
 import { numberedPitchRange } from './pitch-range.js'
@@ -32,6 +32,10 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     if (commonPreparation.has(key)) return commonPreparation.get(key) as T
     const value = create(); commonPreparation.set(key, value); return value
   }
+  // Only immutable fragments are retained. Gap-dependent placement still uses
+  // the painter's rounded coordinates and the same nested translation order.
+  const pieces = (svg: string) => nativeSvgPieces(svg, measurer)
+  const shifted = (ink: ReturnType<typeof pieces>, y: number) => ink.map(box => translateNativeInk(box, 0, Number(n(y))))
   const available = width - 2 * margin
   const titleMeasurer: TextMeasurer = { measureText: (text, style) => measurer.measureText(text, { ...style, fontFamily: SCORE_TITLE_FONT, fontWeight: SCORE_TITLE_WEIGHT }) }
   const title = once('title',()=>wrapNativeText(document.title, available - nativeStyle.headerWrapInset, nativeStyle.title, titleMeasurer, SCORE_TITLE_WEIGHT))
@@ -57,11 +61,16 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   const titleHeight = titleBlock.height
   const creditBounds: { left: number; right: number; top: number; bottom: number }[] = []
   let creditBottom = 0
+  const creditPieces: ReturnType<typeof pieces> = []
   const creditSvg = headerContent.credits.map((text, index) => {
-    const raw = painter.text(text, width - margin, 0, nativeStyle.credit, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
-    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? h : 0) - ink.top
+    const { raw, ink, painted } = once(`credit:${index}`, () => {
+      const raw = painter.text(text, width - margin, 0, nativeStyle.credit, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
+      return { raw, ink: nativeSvgInk(raw, measurer), painted: pieces(raw) }
+    })
+    const y = creditBottom + (index ? h : 0) - ink.top
     creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
+    creditPieces.push(...shifted(painted, y))
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
   }).join('')
   const creditsHeight = creditBottom
@@ -73,46 +82,53 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     return signatures
   })
   let signatureX = margin
-  const signaturePieces = signatures.map(control => { const raw = painter.control(control, signatureX); signatureX += control.width + nativeStyle.signatureItemGap; return raw })
+  const signaturePieces = signatures.map(control => { const raw = once(`signature:${signatureX}`, () => painter.control(control, signatureX)); signatureX += control.width + nativeStyle.signatureItemGap; return raw })
+  const signaturePainted = signaturePieces.flatMap(piece => once(`signature-ink:${piece}`, () => pieces(piece)))
   const range = common('pitch-range', () => numberedPitchRange(document,options))
   if (range) {
-    const size = nativeStyle.text
-    const axis = nativeMusicAxis(measurer)
-    const pitchBaseline = axis - nativeMusicAxis(measurer, size)
-    const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,pitchBaseline,size)
-    const low = once('low-svg',()=>rawPitch(range[0])), high = once('high-svg',()=>rawPitch(range[1]))
-    const lowInk = once('low-ink',()=>nativeSvgInk(low,measurer)), highInk = once('high-ink',()=>nativeSvgInk(high,measurer))
-    const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
-    // Display-only notes reserve the measured numeral body, including its
-    // advance bearings; zero-duration cells use the minimum clearance.
-    const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
-    const gap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * 0.1
-    const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,SCORE_NUMBER_FONT)
-    const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
-    const label = '音域：'
-    const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
-    let rangeSvg = painter.text(label,0,axis + labelMetrics.baseline - labelMetrics.h / 2,size,SCORE_TEXT_FONT, { 'data-m3n-role': 'pitch-range-label' })
-    let x = Math.max(labelMetrics.w, labelMetrics.advance ?? 0)+gap-Math.min(lowInk.left, -zero.w / 2)
-    rangeSvg += place(low,x,'low')
-    x += Math.max(lowInk.right, zero.w / 2)+gap
-    rangeSvg += place(separator,x)
-    x += (separatorMetrics.advance ?? separatorMetrics.w)+gap-Math.min(highInk.left, -zero.w / 2)
-    rangeSvg += place(high,x,'high')
-    const rangeInk = nativeSvgInk(rangeSvg, measurer)
-    const wrap = signatureX + rangeInk.right > width - margin
-    const rangeX = wrap ? margin : signatureX
-    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + h - rangeInk.top : 0
+    const preparedRange = once(`range:${options.minimumNoteGap ?? nativeStyle.minimumNoteGap}`, () => {
+      const size = nativeStyle.text
+      const axis = nativeMusicAxis(measurer)
+      const pitchBaseline = axis - nativeMusicAxis(measurer, size)
+      const rawPitch = (value:string) => painter.pitch(nativeDisplayPitch(value),0,pitchBaseline,size)
+      const low = once('low-svg',()=>rawPitch(range[0])), high = once('high-svg',()=>rawPitch(range[1]))
+      const lowInk = once('low-ink',()=>nativeSvgInk(low,measurer)), highInk = once('high-ink',()=>nativeSvgInk(high,measurer))
+      const separatorMetrics = measurer.measureText('~', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
+      // Display-only notes reserve the measured numeral body, including its
+      // advance bearings; zero-duration cells use the minimum clearance.
+      const zero = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT })
+      const gap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * 0.1
+      const separator = painter.text('~',0,axis + separatorMetrics.baseline - separatorMetrics.h / 2,size,SCORE_NUMBER_FONT)
+      const place = (svg:string,x:number,role?:string) => `<g${role ? ` data-m3n-role="pitch-range-${role}"` : ''} transform="translate(${n(x)} 0)">${svg}</g>`
+      const label = '音域：'
+      const labelMetrics = measurer.measureText(label, { fontSize: size, fontFamily: SCORE_TEXT_FONT })
+      let rangeSvg = painter.text(label,0,axis + labelMetrics.baseline - labelMetrics.h / 2,size,SCORE_TEXT_FONT, { 'data-m3n-role': 'pitch-range-label' })
+      let x = Math.max(labelMetrics.w, labelMetrics.advance ?? 0)+gap-Math.min(lowInk.left, -zero.w / 2)
+      rangeSvg += place(low,x,'low')
+      x += Math.max(lowInk.right, zero.w / 2)+gap
+      rangeSvg += place(separator,x)
+      x += (separatorMetrics.advance ?? separatorMetrics.w)+gap-Math.min(highInk.left, -zero.w / 2)
+      rangeSvg += place(high,x,'high')
+      const rangeInk = nativeSvgInk(rangeSvg, measurer)
+      const wrap = signatureX + rangeInk.right > width - margin
+      const rangeX = wrap ? margin : signatureX
+      return { rangeSvg, rangeInk, rangeX, wrap, signatureBottom: nativeSvgInk(signaturePieces.join(''), measurer).bottom, painted: pieces(rangeSvg) }
+    })
+    const { rangeSvg, rangeInk, rangeX, wrap, signatureBottom, painted } = preparedRange
+    const rangeY = wrap ? signatureBottom + h - rangeInk.top : 0
     signaturePieces.push(`<g data-m3n-role="pitch-range" transform="translate(${n(rangeX)} ${n(rangeY)})">${rangeSvg}</g>`)
+    signaturePainted.push(...painted.map(box => translateNativeInk(box, Number(n(rangeX)), Number(n(rangeY)))))
   }
   const signatureSvg = signaturePieces.join('')
-  const signatureInk = nativeSvgInk(signatureSvg, measurer)
+  const signatureInk = signaturePainted.length ? unionNativeInk(signaturePainted) : { left: 0, right: 0, top: 0, bottom: 0 }
   const signaturesHeight = signatureInk.bottom - signatureInk.top
   const titleBottom = margin + titleHeight
   const sideTop = titleBottom + (titleHeight ? (4 * h) : 0)
   const subtitleTop = titleBottom + (titleHeight ? (2 * h) : 0)
   const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.subtitle, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'data-m3n-role': 'subtitle' })).join('')
-  const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
-  const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
+  const subtitlePieces = pieces(subtitleSvg)
+  const centerBounds = subtitlePieces.filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
+  const signatureBounds = signaturePainted.map(ink => ({
     ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
   }))
   type Bounds = { left: number; right: number; top: number; bottom: number }
@@ -157,11 +173,13 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     orderRows.push({ top, height, items }); orderBottom = top + height
   }
   const orderHeight = orderBottom - (sideTop + sidesHeight)
-  let svg = titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, SCORE_TITLE_FONT, { 'text-anchor': 'middle', 'font-weight': SCORE_TITLE_WEIGHT, 'font-synthesis': 'none', 'data-m3n-role': 'title' })).join('')
-    + subtitleSvg
+  const titleSvg = once('title-svg', () => titleRows.map(row => painter.text(row.text, width / 2, margin + row.baseline, nativeStyle.title, SCORE_TITLE_FONT, { 'text-anchor': 'middle', 'font-weight': SCORE_TITLE_WEIGHT, 'font-synthesis': 'none', 'data-m3n-role': 'title' })).join(''))
+  let svg = titleSvg + subtitleSvg
     + `<g transform="translate(0 ${n(creditsTop)})">${creditSvg}</g>`
     + `<g transform="translate(0 ${n(signaturesTop - signatureInk.top)})">${signatureSvg}</g>`
-  const blocks = [{height:sideTop+sidesHeight-margin,svg:`<g transform="translate(0 ${n(-margin)})">${svg}</g>`}]
+  const blocks = [{height:sideTop+sidesHeight-margin,svg:`<g transform="translate(0 ${n(-margin)})">${svg}</g>`,
+    ink: shifted([...once('title-ink', () => pieces(titleSvg)), ...subtitlePieces,
+      ...shifted(creditPieces, creditsTop), ...shifted(signaturePainted, signaturesTop - signatureInk.top)], -margin) }]
   let orderIndex = 0
   for (const row of orderRows) {
     let rowSvg = ''
@@ -175,7 +193,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
       if (item.framed) rowSvg += '</g>'
     }
     svg += rowSvg
-    blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`})
+    blocks.push({height:row.height,svg:`<g transform="translate(0 ${n(-row.top)})">${rowSvg}</g>`, ink: shifted(pieces(rowSvg), -row.top)})
   }
   return { svg, blocks, title, subtitle, titleTop: margin, titleBottom, sidesTop: sideTop, subtitleTop, signaturesTop, creditsTop, sidesBottom: sideTop + sidesHeight,
     orderRows, height: sideTop - margin + sidesHeight + minimumCoreGap + orderHeight }

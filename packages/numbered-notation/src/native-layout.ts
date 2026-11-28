@@ -566,7 +566,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   }
   return { get pageFloor(){return options.numericLayout ? minimumPages() : 1},
     canFitPageCeiling: options.numericLayout ? ceiling=>{
-      const headers=header.blocks.map(block=>({height:block.height,ink:nativeSvgPieces(block.svg,measurer)}))
+      const headers=header.blocks.map(block=>({height:block.height,ink:block.ink}))
       preparation ??= {header:new Map()}
       preparation.feasibilityWitnesses ??= new Map()
       let witnessCache=preparation.feasibilityWitnesses.get(horizontalKey)
@@ -688,7 +688,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       return saved ? {system,frame,key,saved} : undefined
     })
     if (compiled.every(row => row!==undefined)) {
-      const headers = rowCache?.headers ?? header.blocks.map(block => ({height:block.height,ink:nativeSvgPieces(block.svg,measurer)}))
+      const headers = rowCache?.headers ?? header.blocks.map(block => ({height:block.height,ink:block.ink}))
       if (rowCache) rowCache.headers=headers
       const blocks = compiled.map(({system,frame,key,saved}) => {
         const warp = <T extends NativeInk>(pieces:readonly T[]) => proxyScoreWidthInk(pieces,saved.left,saved.right,frame.x,frame.x+frame.width)
@@ -771,8 +771,8 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     nativeRowIdentity(system.measures), system.arcContinuationLeft, dependencies.get(system),
     system.measures.map(measure => [measure.start, measure.end, measure.columns.map(column => column.x)]),
   ])) : undefined
-  const headerBlocks = rowCache?.headers ?? header.blocks.map((block,index) => ({ height: block.height, ink: nativeSvgPieces(block.svg, measurer),
-    atRowGap: (gap: number) => { const resolved = resolvedHeaderAt(gap).blocks[index]!; return {height:resolved.height,ink:nativeSvgPieces(resolved.svg,measurer)} } }))
+  const headerBlocks = rowCache?.headers ?? header.blocks.map((block,index) => ({ height: block.height, ink: block.ink,
+    atRowGap: (gap: number) => { const resolved = resolvedHeaderAt(gap).blocks[index]!; return {height:resolved.height,ink:resolved.ink} } }))
   if (rowCache) rowCache.headers = headerBlocks
 
   if (onlyRow===undefined && pageLimit !== undefined && rowKeys && rowKeys.every(key => rowCache!.blocks.has(key))) {
