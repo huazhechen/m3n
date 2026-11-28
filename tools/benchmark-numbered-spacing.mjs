@@ -57,8 +57,11 @@ assert(Number.isInteger(warmupIterations) && warmupIterations >= 0 && warmupIter
 assert(!coldEachScore || !warmupIterations,'Cold-per-score audit cannot warm up scores')
 const numericLayout = process.argv.includes('--numeric-layout')
 const pageConstrainedBreaks = process.argv.includes('--page-bound')
+const diagnosticProfiles = ['cpu', 'heap'].filter(kind => argument(`${kind}-profile`))
 const checkpoint = process.argv.includes('--resume') && existsSync(output) ? JSON.parse(readFileSync(output, 'utf8')) : undefined
 if (checkpoint) {
+  assert.deepEqual(checkpoint.diagnosticProfiles ?? [], diagnosticProfiles, 'Cannot resume with different profiling')
+  assert.equal(checkpoint.profileScore, argument('profile-score'), 'Cannot resume with a different profiling score')
   assert.equal(Boolean(checkpoint.productionPolicy),productionPolicy,'Cannot resume with a different production policy')
   assert.equal(checkpoint.notation ?? 'numbered', staffMode ? 'staff' : 'numbered', 'Cannot resume with a different notation')
   assert.equal(Boolean(checkpoint.numericLayout), numericLayout, 'Cannot resume with a different geometry engine')
@@ -83,6 +86,8 @@ if (checkpoint) {
 }
 const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim()
 const report = { notation: staffMode ? 'staff' : 'numbered', sourceRoot, sourceRevision, rendererHash, auditLayout, prune, numericLayout, pageConstrainedBreaks, baselineRevision: baseline?.revision, complete: false, revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), entries: checkpoint?.entries ?? [] }
+if (diagnosticProfiles.length) report.diagnosticProfiles = diagnosticProfiles
+if (argument('profile-score')) report.profileScore = argument('profile-score')
 report.bundleFlags = bundleFlags
 report.detailedTimings = auditLayout || process.argv.includes('--detailed-timings')
 if (experimentalInkBin) report.experimentalInkBin = experimentalInkBin
@@ -156,15 +161,22 @@ try {
         if (typeof globalThis.gc === 'function') globalThis.gc()
       }, { source, prune, numericLayout, pageConstrainedBreaks })
     }
-    const profiling=Boolean(argument('cpu-profile')) && (!argument('profile-score') || file.includes(argument('profile-score')))
-    const profiler=profiling ? await page.context().newCDPSession(page) : undefined
-    if(profiler){await profiler.send('Profiler.enable');await profiler.send('Profiler.start')}
+    const profileSelected = !argument('profile-score') || file.includes(argument('profile-score'))
+    const cpuProfile = profileSelected && argument('cpu-profile'), heapProfile = profileSelected && argument('heap-profile')
+    const profiler = cpuProfile || heapProfile ? await page.context().newCDPSession(page) : undefined
+    if (cpuProfile) { await profiler.send('Profiler.enable'); await profiler.send('Profiler.start') }
+    if (heapProfile) await profiler.send('HeapProfiler.startSampling', { samplingInterval: 32768,
+      includeObjectsCollectedByMajorGC: true, includeObjectsCollectedByMinorGC: true })
     const result = await page.evaluate(({ source, audit, prune, numericLayout, pageConstrainedBreaks }) => m3n.search(source, audit, prune, pageConstrainedBreaks, numericLayout), { source, audit: auditLayout, prune, numericLayout, pageConstrainedBreaks })
-    if(profiler) {
-      const {profile}=await profiler.send('Profiler.stop')
-      writeFileSync(resolve(argument('cpu-profile')),JSON.stringify(profile))
-      await profiler.detach()
+    if (cpuProfile) {
+      const { profile } = await profiler.send('Profiler.stop')
+      writeFileSync(resolve(cpuProfile), JSON.stringify(profile))
     }
+    if (heapProfile) {
+      const { profile } = await profiler.send('HeapProfiler.stopSampling')
+      writeFileSync(resolve(heapProfile), JSON.stringify(profile))
+    }
+    await profiler?.detach()
     const previous = baseline?.entries.find(entry => entry.file === file)
     if (baseline) assert(previous && previous.sourceHash === sourceHash, `Baseline/source mismatch: ${file}`)
     const entry = { file, sourceHash, ...result, ...(coldEachScore ? {fontPreparationMs:latestFontPreparationMs} : {}), ...(previous ? { widthDelta: result.width - previous.width, pageDelta: result.pages - previous.pages } : {}) }
