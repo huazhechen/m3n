@@ -3,11 +3,46 @@ import { describe, expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { NativeNumberedNotationScore } from './native-score.js'
-import { nativeHorizontalSpacing } from './native-horizontal.js'
+import { nativeBarMetrics, nativeHorizontalSpacing, nativeRhythmicSpacing, placeNativeHorizontal } from './native-horizontal.js'
+import { projectNativeScore } from './native-model.js'
+import { DefaultTextMeasurer } from './native-measure.js'
 
 const changes = '{key=C} {4/4} {90qpm}\nN: 1 2 3 4 | {key=G} {3/4} {120qpm} 5 6 7 |||'
 
 describe('native inline control occupancy', () => {
+  it('uses one zero-duration weight around inline key, meter and tempo changes', () => {
+    for (const minimumNoteGap of [8, 12, 16]) {
+      const projection = projectNativeScore(parseM3NDocument('{key=C}{4/4}{90qpm}\nN: (1 2) {key=G} {3/4} {120qpm} ((3 4)) |||'), { textMeasurer: new DefaultTextMeasurer() })
+      const options = { minimumNoteGap }
+      const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth
+      const gaps = (width: number) => {
+        placeNativeHorizontal(projection.measures, options, 0, width)
+        const at = projection.glyphs.findIndex(glyph => glyph.controls.length)
+        const note = projection.glyphs[at]!, previous = projection.glyphs[at - 1]!
+        const controls = note.controls
+        return [controls[0]!.x! - previous.x - previous.musicRight!,
+          ...controls.slice(1).map((control, index) => control.x! - controls[index]!.x! - controls[index]!.width),
+          note.x - note.musicLeft! - controls.at(-1)!.x! - controls.at(-1)!.width]
+      }
+      const compact = gaps(minimum), expanded = gaps(minimum + 240)
+      expect(compact).toHaveLength(4)
+      compact.forEach(gap => expect(gap).toBeCloseTo(minimumNoteGap, 8))
+      expanded.forEach((gap, index) => expect(gap - compact[index]!).toBeCloseTo(expanded[0]! - compact[0]!, 8))
+      nativeRhythmicSpacing(projection.measures, options, minimum).gaps.forEach(gap => expect(gap).toBeCloseTo(minimumNoteGap, 8))
+    }
+  })
+
+  it.each(['dc', 'ds'])('uses the same zero-duration clearance before and after %s', name => {
+    for (const minimumNoteGap of [8, 12, 16]) {
+      const projection = projectNativeScore(parseM3NDocument(`{4/4}\nN: 1^^ {${name}} |||`), { textMeasurer: new DefaultTextMeasurer() })
+      const options = { minimumNoteGap }
+      const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth
+      placeNativeHorizontal(projection.measures, options, 0, minimum)
+      const measure = projection.measures[0]!, note = measure.columns.at(-1)!.glyphs[0]!, mark = measure.navigation![0]!
+      expect(mark.x! - note.x - note.musicRight!).toBeCloseTo(minimumNoteGap, 8)
+      expect(measure.barX! - nativeBarMetrics('end').anchor - mark.x! - mark.width).toBeCloseTo(minimumNoteGap, 8)
+    }
+  })
   it.each([320, 800])('reserves separate control columns before their note at %spx', width => {
     const layout = layoutNativeScore(parseM3NDocument(changes), { width, paged: false })
     const first = layout.projection.glyphs.find(glyph => glyph.controls.length)!

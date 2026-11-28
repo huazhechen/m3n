@@ -54,7 +54,7 @@ describe('measured navigation geometry', () => {
             expect(gap).toBeGreaterThanOrEqual(6.6 - 1e-6);
         }
     });
-    it.each(['segno', 'coda'] as const)('gives %s quarter-note clearance on both sides before justification', name => {
+    it.each(['segno', 'coda'] as const)('keeps %s quarter-note weight with compact clearance next to the bar', name => {
         for (const minimumNoteGap of [9, 15]) {
             const projection = projectNativeScore(parseM3NDocument(`{1/4}\nN: ||: {${name}}((1 2 3 4)) |||`), {textMeasurer:measurer});
             const options = {minimumNoteGap};
@@ -65,9 +65,8 @@ describe('measured navigation geometry', () => {
             const bar = nativeBarMetrics('rptstart');
             const barRight = measure.openingBarX! + bar.width - bar.anchor;
             expect(control.x! - barRight).toBeCloseTo(minimumNoteGap, 8);
-            // The structural symbol is a quarter; the following sixteenth
-            // contributes half of the logarithmic pair weight.
-            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap * .25 ** .25, 8);
+            // Zero-time symbols ignore the following sixteenth's duration.
+            expect(note.x - note.musicLeft! - control.x! - control.width).toBeCloseTo(minimumNoteGap, 8);
         }
     });
     it.each([false, true])('keeps Segno attached to the preceding bar under justification (equalMeasures=%s)', equalMeasures => {

@@ -35,6 +35,25 @@ describe('minimum-only 8px clearance', () => {
 })
 
 describe('balanced group boundary clearance', () => {
+  it.each(['(1 2) | ((3 4)) |||', '1^^ | 2^^ |||'])('keeps both barline sides independent of adjacent durations: %s', notes => {
+    for (const minimumNoteGap of [8, 12, 16]) {
+      const projection = projectNativeScore(parseM3NDocument(`{4/4}\nN: ${notes}`), { textMeasurer: new DefaultTextMeasurer() })
+      const options = { minimumNoteGap }
+      const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth
+      const gaps = (width: number) => {
+        placeNativeHorizontal(projection.measures, options, 0, width)
+        const [left, right] = projection.measures
+        const last = left!.columns.at(-1)!.glyphs[0]!, first = right!.columns[0]!.glyphs[0]!
+        const bar = nativeBarMetrics('single'), x = left!.barX!
+        return [x - bar.anchor - last.x - last.musicRight!, first.x - first.musicLeft! - x - (bar.width - bar.anchor)]
+      }
+      const compact = gaps(minimum), expanded = gaps(minimum + 240)
+      compact.forEach(gap => expect(gap).toBeCloseTo(minimumNoteGap, 8))
+      expect(expanded[0]).toBeGreaterThan(compact[0]!)
+      expect(expanded[0]! - compact[0]!).toBeCloseTo(expanded[1]! - compact[1]!, 8)
+    }
+  })
+
   it.each(['([123:2]) ([234:2]) ([345:2]) ([456:2])', '((1234)) ((2345)) ((3456)) ((4567))'])('scales ungrouped short-note clearance by duration: %s', notes => {
     const measure = project(notes)
     measureNativeHorizontal([measure], options)
@@ -87,7 +106,7 @@ describe('balanced group boundary clearance', () => {
     decorated.forEach((gap, index) => expect(gap).toBeCloseTo(plain[index]!, 8))
   })
 
-  it('gives a zero-time bar the same minimum clearance and stretch as a quarter note', () => {
+  it('gives zero-time bars quarter-note clearance and stretch', () => {
     const { measures } = projectNativeScore(parseM3NDocument('{4/4}\nN: 1 2 3 4 | 5 6 7 1e |||'), { textMeasurer: new DefaultTextMeasurer() })
     measureNativeHorizontal(measures, options)
     const gaps = (width: number) => {
@@ -99,7 +118,7 @@ describe('balanced group boundary clearance', () => {
     expect(minimum[0]).toBeCloseTo(9, 8)
     expect(minimum[1]).toBeCloseTo(9, 8)
     const small = gaps(700), large = gaps(900)
-    expect(large[1]! - small[1]!).toBeCloseTo(large[0]! - small[0]!, 8)
+    expect(large[1]! - small[1]!).toBeCloseTo((large[0]! - small[0]!), 8)
     expect(measures[0]!.beats).toBe(4)
   })
 })

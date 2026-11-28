@@ -68,3 +68,8 @@ export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = sco
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost,
     spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
 }
+
+/** Diminishing marginal paper cost, normalized to the first extra page. */
+export function scorePageCost(pages: number) {
+  return scoreLayoutConfig.pageWidth.extraPageCost * Math.max(0, Math.sqrt(pages) - 1) / (Math.SQRT2 - 1)
+}

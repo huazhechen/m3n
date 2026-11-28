@@ -1,6 +1,6 @@
 export const densityLimits = {
   badinerie_bwv1067_01: { staffHeight: 800, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.61 },
-  guo_huo_01: { staffHeight: 1130, staffRows: 11, numberedHeight: 760, numberedRows: 9, heightRatio: 1.57 },
+  guo_huo_01: { staffHeight: 1130, staffRows: 11, numberedHeight: 760, numberedRows: 10, heightRatio: 1.57 },
   // Ordinary phrase separators permit automatic reflow; constrain density, not one historical break plan.
   ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5 },
   ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.49 },

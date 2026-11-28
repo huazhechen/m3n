@@ -125,7 +125,7 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
   if (timings) timings.taskPreparationMs = (timings.taskPreparationMs ?? 0) + performance.now() - taskPreparationStarted
   try {
   // Both tiers receive complete horizontal plans; page bounds can skip engraving.
-  // Paper use wins before physical spacing cost; continuous and paged modes agree.
+  // Paper and spacing costs are combined; continuous and paged modes agree.
   const gaps = supplied.minimumNoteGap === undefined ? nativeStyle.noteGapCandidates : [supplied.minimumNoteGap]
   const trials = gaps.map(minimumNoteGap => {
     const lineDensityTarget = supplied.lineDensityTarget ?? (supplied.minimumNoteGap === undefined
@@ -154,14 +154,10 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
   let selected: NativeLayout | undefined, selectedCost = Infinity
   let oversized: { error: Error; minimumNoteGap: number } | undefined
   for (const { minimumNoteGap, trial } of trials) {
-    if(selected && trial.pageFloor>selected.pages.length) {
-      if(timings)timings.pageFloorTierPrunes=(timings.pageFloorTierPrunes ?? 0)+1
-      continue
-    }
     let candidate: NativeLayout
     try {
       if (timings) timings.completedLayoutTrials = (timings.completedLayoutTrials ?? 0) + 1
-      candidate = trial.complete({blocks: new Map()}, selected?.pages.length)
+      candidate = trial.complete({blocks: new Map()})
     }
     catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'M3N_PAGE_BOUND_REJECTED') {
@@ -174,7 +170,7 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
       throw error
     }
     // Stretch magnitude shapes each tier's DP partition, but final ranking
-    // uses actual pages first, then common physical spacing cost.
+    // combines paper use with common physical spacing cost.
     const candidateQuality = nativeLayoutQuality(candidate)
     const candidateCost = candidateQuality.spacingCost + candidateQuality.overflowCost + candidateQuality.verticalCost
     if (!selected || compareScoreSpacingTrials(

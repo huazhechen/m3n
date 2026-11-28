@@ -46,7 +46,7 @@ test('a failed search preserves the engraving error for the reader', async () =>
   await assert.rejects(selectBestWidth(async () => { throw new Error('单个五线谱谱行超过页面高度。') }),
     /没有可用的排版候选。 单个五线谱谱行超过页面高度。/)
 })
-test('prefer fewer A4 pages, then the shared quality score, excluding unsafe renders', () => {
+test('minimize combined paper and reading cost, excluding unsafe renders', () => {
   const candidate = (width, pageCount, extra = {}) => ({ width, pageCount, outside: [], overlaps: [], ...extra })
   const chosen = candidate(700, 1, { qualityScore: .9 })
   assert.equal(chooseBestWidth([
@@ -457,9 +457,9 @@ test('lazy solo and shared searches preserve exhaustive packing across adversari
 })
 
 
-test('horizontal rejection uses the incumbent, preserves request counts and cancellation', async () => {
-  const result = await selectBestWidth(async (width, best) => {
-    if (best && width !== 534) throw new WidthSearchPruned()
+test('measurement rejection preserves request counts and cancellation', async () => {
+  const result = await selectBestWidth(async width => {
+    if (width !== 528 && width !== 534) throw new WidthSearchPruned()
     return candidate(width, 200, 1, { lineDensityVariation: .5 })
   }, { prune: true })
   assert.equal(result.best.width, 528)
@@ -472,7 +472,7 @@ test('horizontal rejection uses the incumbent, preserves request counts and canc
 })
 
 
-test('numbered additive cost ranks paper first and scans every 6px interval', async () => {
+test('numbered additive cost includes paper and scans every 6px interval', async () => {
   const measure = async width => ({ width, pageCount: width === 654 ? 1 : 2, rows: 9, outside: [], overlaps: [],
     totalCost: width === 654 ? .6 : 1 + (width / 528) ** 2 - 1 })
   const exhaustive = await selectBestWidth(measure)
@@ -484,7 +484,7 @@ test('numbered additive cost ranks paper first and scans every 6px interval', as
   assert.ok(pruned.renderCache.skippedWidths.length > 0)
 })
 
-test('numbered additive score compares cost only after page count', () => {
+test('numbered additive score includes paper cost and retains width tie breaking', () => {
   const candidate = (width, pageCount, totalCost) => ({ width, pageCount, totalCost, outside: [], overlaps: [] })
   assert.equal(chooseBestWidth([candidate(528, 1, .9), candidate(600, 4, .5)]).width, 528)
   assert.equal(chooseBestWidth([candidate(600, 4, .5), candidate(594, 4, .5)]).width, 594)
@@ -575,8 +575,9 @@ test('experimental multi-page verification checks a hidden endpoint page transit
     visited.push(width);return item(width,width===720 ? 1 : 2,width===720 ? 4 : .1)
   },{verifyWidestWhenMultipage:true})
   assert.deepEqual(visited,[720,534])
-  assert.equal(result.best.width,720)
-  assert.equal(result.best.pageCount,1)
+  // The cheaper two-page candidate still wins against an expensive single page.
+  assert.equal(result.best.width,534)
+  assert.equal(result.best.pageCount,2)
   const failed=await verifyEstimatedWidthCandidates([item(534,2,.1),item(720,2,4)],width=>{
     if(width===720)throw new Error('endpoint failed')
     return item(width,2,.1)
@@ -681,4 +682,16 @@ test('explicit short-score policies restore both tiers without changing other se
   assert.equal(visited[1].policy.singleTier,false)
   assert(visited.slice(1,-1).every(item=>item.policy.singleTier===false))
   assert.deepEqual(visited.at(-1).policy,{})
+})
+
+test('additional pages can win on total cost and are not capped by the incumbent', async () => {
+  const item = (width, pageCount, totalCost) => ({width,pageCount,totalCost,outside:[],overlaps:[]})
+  assert.equal(chooseBestWidth([item(720,1,2.1),item(552,2,0)]).width,552)
+  assert.equal(chooseBestWidth([item(720,1,1.9),item(552,2,0)]).width,720)
+  const {best}=await selectBestWidth((width, incumbent) => {
+    assert.equal(incumbent,null)
+    return width===552 ? item(width,2,0) : item(width,1,2.1)
+  },{prune:true})
+  assert.equal(best.width,552)
+  assert.equal(best.pageCount,2)
 })

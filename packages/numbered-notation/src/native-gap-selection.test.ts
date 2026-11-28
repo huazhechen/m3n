@@ -3,12 +3,13 @@ import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeLayoutQuality } from './native-quality.js'
+import { scorePageCost } from './layout/quality.js'
 import { renderNativePages } from './native-svg.js'
 
 const source = readFileSync(new URL('../../../src/scores/bai_hua_lin_01.m3n', import.meta.url), 'utf8')
 const options = { width: 564, paged: true, pageMargin: 0 }
 
-it('compares complete tight and loose White Birch page counts before cost and preserves the selected geometry', () => {
+it('compares complete White Birch paper and spacing costs and preserves the selected geometry', () => {
   const document = parseM3NDocument(source), before = structuredClone(document)
   const fixed = [8, 12, 16].map(minimumNoteGap => layoutNativeScore(document,
     {...options, minimumNoteGap, lineDensityTarget: minimumNoteGap === 16 ? .5 : 2/3}))
@@ -19,9 +20,8 @@ it('compares complete tight and loose White Birch page counts before cost and pr
   expect(timings.projectionReuses).toBeGreaterThanOrEqual(1)
   expect(timings.relationPlanReuses).toBeGreaterThanOrEqual(1)
   for (const candidate of fixed) {
-    expect(automatic.pages.length).toBeLessThanOrEqual(candidate.pages.length)
-    if (automatic.pages.length === candidate.pages.length)
-      expect(nativeLayoutQuality(automatic).totalCost).toBeLessThanOrEqual(nativeLayoutQuality(candidate).totalCost)
+    expect(nativeLayoutQuality(automatic).totalCost + scorePageCost(automatic.pages.length))
+      .toBeLessThanOrEqual(nativeLayoutQuality(candidate).totalCost + scorePageCost(candidate.pages.length))
   }
   const selected = fixed.find(candidate => candidate.options.minimumNoteGap === automatic.options.minimumNoteGap)!
   expect(renderNativePages(automatic)).toEqual(renderNativePages(selected))
@@ -45,7 +45,7 @@ it('keeps White Birch horizontal geometry identical in paged and continuous disp
   expect(timings.layoutTrials).toBeGreaterThanOrEqual(1)
 })
 
-it('rejects an extra-page loose tier before comparing physical spacing', () => {
+it('keeps the tight tier when the loose spacing benefit cannot offset an extra page', () => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/li_hua_you_kai_fang_01.m3n', import.meta.url), 'utf8'))
   const settings = { ...options, width: 528 }
   const tight = layoutNativeScore(document, { ...settings, minimumNoteGap: 8, lineDensityTarget: 2/3 })

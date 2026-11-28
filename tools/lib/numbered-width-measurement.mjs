@@ -70,7 +70,7 @@ function measureNumberedWidthScoped(documentScore, width, { settings = {}, host,
     timings.svgRenderMs = performance.now() - stage
     const mounted = mount(markup), pages = mounted.pages
     timings.svgMountMs = mounted.ms
-    const candidate = { width, timings, pageCount: pages.length,
+    const candidate = { width, minimumRowGap: prepared.minimumCoreGap, timings, pageCount: pages.length,
       rows: pages.reduce((sum, svg) => sum + svg.querySelectorAll('g.system').length, 0),
       ...inspectScorePages(pages, timings), lineDensityVariation: quality.lineDensityVariation,
       meanRhythmicGap: quality.meanRhythmicGap, spacingUnevenCost: quality.spacingUnevenCost, spacingMeanUnevenCost: quality.spacingMeanUnevenCost, spacingCrampedCost: quality.spacingCrampedCost, spacingExpandedCost: quality.spacingExpandedCost, spacingCost: quality.spacingCost,

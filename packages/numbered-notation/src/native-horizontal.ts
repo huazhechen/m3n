@@ -29,6 +29,7 @@ export function nativeBarMetrics(kind: string | undefined) {
 
 type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
+const zeroDurationGap = (options: HorizontalOptions) => (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * nativeStyle.zeroDurationGapRatio
 // A sustain dash keeps its musical duration and identity, but spaces as an eighth.
 const spacingDuration = (glyph?: NativeGlyph) => glyph?.multiRest ? 1 : glyph?.sustain ? .5 : glyph?.beats
 const horizontalContexts=new WeakMap<HorizontalOptions,WeakMap<NativeMeasure[],HorizontalItem[]>>()
@@ -135,7 +136,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const navigationMeasure = opening
       ? previous && nativeMeasureBars(surrounding, index - 1).closing === undefined ? previous : undefined
       : measure
-    const prefix = navigationMeasure?.navigation?.length ? nativeStyle.navigationGap + navigationMeasure.navigation.reduce((sum, mark) => sum + mark.width + nativeStyle.navigationGap, 0) : 0
+    const prefix = navigationMeasure?.navigation?.reduce((sum, mark) => sum + mark.width + zeroDurationGap(options), 0) ?? 0
     const laneSet = new Set<string>()
     for (const column of measure.columns) for (const glyph of column.glyphs) laneSet.add(glyph.lane)
     const lanes = [...laneSet]
@@ -148,8 +149,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const firstColumn = measure.columns[0]
     const controls = (column: NativeColumn, members: { control: NativeControl; lane: string }[]) => {
       if (!members.length) return
-      // Entry navigation consumes no musical time, but reserves quarter-note
-      // clearance on both sides, with the same elastic weight as a barline.
+      // Inline controls share the zero-duration clearance and stretch weight.
       const cells = members.map(({ control, lane }) => minimumCell(lane, control.anchor, control.width - control.anchor,
         control.kind === 'segno' || control.kind === 'coda' ? 1 : 0, (nativeStyle.music * .25), scale))
       items.push({ measure, controlColumn: column, controls: members.map(member => member.control), left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
@@ -188,8 +188,9 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     if (previous) {
       const grouped = previous.item.measure === item.measure && left && right
         && (sustain || nativeBeamCount(left, right))
-      const weight = scoreRhythmicGapWeight(spacingDuration(left), spacingDuration(right),
-        grouped ? nativeStyle.groupSpacingRatio : 1, .5)
+      const weight = previous.item.boundary || item.boundary || previous.item.controls || item.controls ? nativeStyle.zeroDurationGapRatio
+        : scoreRhythmicGapWeight(spacingDuration(left), spacingDuration(right),
+          grouped ? nativeStyle.groupSpacingRatio : 1, .5)
       const halfGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * weight / 2
       previous.cell.after = halfGap; cell.before = halfGap
       previous.cell.afterStretch = weight; cell.beforeStretch = weight
@@ -406,7 +407,7 @@ function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
   let weight = 0
   for (const [index, item] of items.entries()) for (const cell of item.cells) {
     if (cell.sparse) continue
-    if (!item.column && !item.boundary) { previous.delete(cell.lane); continue }
+    if (!item.column && !item.boundary && !item.controls) { previous.delete(cell.lane); continue }
     const glyph = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const left = glyph ? glyph.musicLeft ?? glyph.left : item.left
     const right = glyph ? glyph.musicRight ?? glyph.right : item.right
@@ -483,8 +484,8 @@ export function placeNativeHorizontal(measures: NativeMeasure[], options: Horizo
       if (item.opening) item.measure.openingBarX = position
       else item.measure.barX = position
       if (item.navigationMeasure) item.navigationMeasure.barX = position
-      let cursor = position - item.left + nativeStyle.navigationGap
-      for (const mark of item.navigationMeasure?.navigation ?? []) { mark.x = cursor; cursor += mark.width + nativeStyle.navigationGap }
+      let cursor = position - item.left
+      for (const mark of item.navigationMeasure?.navigation ?? []) { mark.x = cursor; cursor += mark.width + zeroDurationGap(options) }
     }
   })
   return glyphs

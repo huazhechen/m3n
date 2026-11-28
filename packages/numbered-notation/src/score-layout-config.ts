@@ -42,7 +42,7 @@ const numbered = {
   minimumRowGapEm: .75,
   lyric: lyrics.fontSize,
 
-    // 三档最小净空；时值与组内比例由横向引擎换算。
+  // 三档最小净空；时值与组内比例由横向引擎换算。
   minimumNoteGap: numberedMusic / 3,
   noteGapCandidates: [numberedMusic / 3, numberedMusic / 2, numberedMusic * 2 / 3] as readonly number[],
   // 标题换行行高随对应文字字号。
@@ -58,6 +58,8 @@ const numbered = {
   measureNumberPadding: numberedMusic / 12,
   // 无单位比例：拍组内部间距、相邻谱行碰撞净空。
   groupSpacingRatio: 0.75,
+  // 无时值元素两侧固定采用四分音符的此比例，不读取相邻音符时值。
+  zeroDurationGapRatio: 1,
   // Compatibility alias; the shared page policy owns this value.
   collisionGapRatio: page.collisionGapRatio,
   // 页面与文字的独立设计 px；音符内部几何不另设配置。
@@ -67,7 +69,6 @@ const numbered = {
   designInkEdgeGuard: numberedMusic / 12,
   headerWrapInset: numberedMusic / 12,
   frameStroke: numberedMusic / 24,
-  navigationGap: numberedMusic * .18,
   openingBarFallbackInset: numberedMusic / 12, closingBarFallbackInset: numberedMusic / 8,
   sharedScoreGap,
 }
@@ -151,6 +152,7 @@ const pageWidth = {
   maximumMultiple: 30,
   sharedMaximumMultiple: 26,
   defaultMultiple: 30,
+  extraPageCost: 2,
   // 页面手动滑条范围，独立于自动搜索的九档。
   manualMinimumMultiple: 10,
   manualMaximumMultiple: 50,

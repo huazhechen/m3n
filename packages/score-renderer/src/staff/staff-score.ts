@@ -209,7 +209,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         signal?.throwIfAborted()
         const systems = systemsFor(ends)
         try {
-          const pages = paginateStaff(systems, height, header.height, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical, bestPageCount)
+          const pages = paginateStaff(systems, height, header.height, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical)
           return { ends, pages: pages.length, verticalCost: pages[0]?.verticalCost ?? 0, value: ends }
         }
         catch (error) {

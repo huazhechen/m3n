@@ -1,6 +1,6 @@
 import { optimizedScoreWidthPolicy, exactScoreWidthPolicy } from '@m3n/numbered-notation/layout'
 export { optimizedScoreWidthPolicy }
-import { scoreHorizontalQuality, scoreNumberedFontCost } from '@m3n/numbered-notation/layout-quality'
+import { scoreHorizontalQuality, scoreNumberedFontCost, scorePageCost } from '@m3n/numbered-notation/layout-quality'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
 const config = scoreLayoutConfig.pageWidth
@@ -8,22 +8,25 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v74`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v79`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
-export function numberedLayoutScore(candidate) {
+function spacingLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
   if (candidate.qualityScore !== undefined) return candidate.qualityScore
   const variation = candidate.lineDensityVariation ?? 0
   const slack = candidate.lastLineSlack ?? 0
   return scoreHorizontalQuality(candidate.width, { lineDensityVariation: variation, lastLineSlack: slack, lineStretchPenalty: candidate.lineStretchPenalty })
 }
-// Across widths, paper use is the primary objective in both notations.
-export const compareWidthMeasurements = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
+export function numberedLayoutScore(candidate) {
+  const spacingCost = candidate.totalCost ?? 1 / spacingLayoutScore(candidate) - 1
+  return 1 / (1 + spacingCost + scorePageCost(candidate.pageCount ?? 1))
+}
+// Both notations combine paper, spacing and font costs.
+export const compareWidthMeasurements = (a, b) => numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
 
 export class WidthSearchPruned extends Error {}
 
-// All horizontal costs are nonnegative. Once a one-page winner exists, font
-// loss alone certifies that a width cannot win. Multi-page winners cannot.
+// Nonnegative spacing and paper costs give a safe font-plus-page lower bound.
 export function widthQualityUpperBound(width, numbered) {
   const legacy = (widthMinimum / width) ** 2
   const additive = 1 / (1 + scoreNumberedFontCost(width))
@@ -31,12 +34,11 @@ export function widthQualityUpperBound(width, numbered) {
   return numbered === true ? additive : numbered === false ? legacy : Math.max(legacy, additive)
 }
 export function widthCannotWin(width, best, minimumPageCount = 1) {
-  return Boolean(best && best.pageCount === minimumPageCount && widthQualityUpperBound(width, best.totalCost !== undefined ? true : undefined) < numberedLayoutScore(best))
+  return Boolean(best && 1 / (1 / widthQualityUpperBound(width, best.totalCost !== undefined ? true : undefined) + scorePageCost(minimumPageCount)) < numberedLayoutScore(best))
 }
 
 export function chooseBestWidth(candidates) {
-  // First minimize paper use; then minimize physical spacing cost plus font loss
-  // for numbered notation. Width is the deterministic final tie breaker.
+  // Minimize the combined cost; width is the deterministic final tie breaker.
   return candidates.filter(c => safe(c)).sort(compareWidthMeasurements)[0] ?? null
 }
 
@@ -59,7 +61,8 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
       if(value!==measurementPolicy.singleTier)measurementPolicy={...candidatePolicy,singleTier:value}
     } else globalThis.__m3nExperimentalSingleTier=value
   }
-  const measureCandidate=(width,best)=>measure(width,best,measurementPolicy)
+  // Old incumbent page ceilings would incorrectly exclude affordable extra pages.
+  const measureCandidate=(width,_best)=>measure(width,null,measurementPolicy)
   const endpointFloor=candidatePolicy ? candidatePolicy.rowReuse && candidatePolicy.endpointFloor
     : globalThis.__m3nExperimentalRowReuse && globalThis.__m3nExperimentalEndpointFloor
   const probe = async width => {
@@ -161,7 +164,7 @@ export async function verifyEstimatedWidthCandidates(candidates, measure, { sign
     signal?.throwIfAborted()
     verifiedCandidates.push(exact)
     if (safe(exact) && (!best || compareWidthMeasurements(exact, best) < 0)) best = exact
-    if (candidate!==preflight && safe(exact) && exact.pageCount <= expectedPages) break
+    if (candidate!==preflight && safe(exact) && exact.pageCount <= candidate.pageCount) break
   }
   if (!best) throw new Error('没有通过精确复核的选宽候选。')
   return { best, requests, ms: performance.now() - started, verifiedCandidates, failures }

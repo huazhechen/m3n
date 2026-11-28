@@ -16,6 +16,23 @@ const measurer: TextMeasurer = { measureText(text, style) { return { w: style.fo
 const narrowSpacing = { minimumNoteGap: 6.6, minimumNoteGapFloor: 2.2 };
 const layout = (source: string, width = 800, spacing = {}) => layoutNativeScore(parseM3NDocument(source), { width, paged: false, textMeasurer: measurer, minimumNoteGap: 9, ...spacing });
 describe('native spacing and measured note envelopes', () => {
+    it.each(['1 2 | 3 4 |||', '||: 1 2 | 3 4 :||'])('uses barline weights for both clearance and stretch: %s', notes => {
+        const projection = projectNativeScore(parseM3NDocument(`{4/4}\nN: ${notes}`), { textMeasurer: measurer });
+        const options = { minimumNoteGap: 12 };
+        const minimum = nativeHorizontalSpacing(projection.measures, options).minimumWidth;
+        const expected = notes.startsWith('||:') ? [12, 12, 12, 12, 12, 12] : [12, 12, 12, 12, 12];
+        placeNativeHorizontal(projection.measures, options, 0, minimum);
+        const [left, right] = projection.measures;
+        const beforeBar = left!.barX! - nativeBarMetrics('single').anchor - left!.columns[1]!.glyphs[0]!.x - left!.columns[1]!.glyphs[0]!.musicRight!;
+        const afterBar = right!.columns[0]!.glyphs[0]!.x - right!.columns[0]!.glyphs[0]!.musicLeft! - left!.barX! - (nativeBarMetrics('single').width - nativeBarMetrics('single').anchor);
+        expect(beforeBar).toBeCloseTo(12, 8);
+        expect(afterBar).toBeCloseTo(12, 8);
+        expect(nativeRhythmicSpacing(projection.measures, options, minimum).gaps)
+            .toEqual(expected.map(() => expect.closeTo(12, 8)));
+        const weight = expected.reduce((sum, gap) => sum + gap / 12, 0);
+        expect(nativeRhythmicSpacing(projection.measures, options, minimum + weight * 20).gaps)
+            .toEqual(expected.map(() => expect.closeTo(32, 8)));
+    });
     it('reuses equal-cell solutions across widths without sharing placement targets', () => {
         const document = parseM3NDocument('{4/4}\nN: 1 2 3 4 | (5 6) 7 1 2 | 3 4 5 6 |||\nB: 1 - - - | 2 - - - | 3 - - - |||');
         const base = projectNativeScore(document, { textMeasurer: measurer });
@@ -62,9 +79,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(readFileSync(new URL('../../../src/scores/chong_er_fei_01.m3n', import.meta.url), 'utf8'), 600);
         const axes = result.systems.map(system => system.lanes[0]!.y);
         expect(axes).toHaveLength(4);
-        for (const [index, gap] of [42.7260037051, 39, 39].entries())
+        for (const [index, gap] of [43.4694545953, 39, 39].entries())
             expect(axes[index + 1]! - axes[index]!).toBeCloseTo(gap, 1);
-        expect(result.pages[0]!.height).toBeCloseTo(299.4334009944, 1);
+        expect(result.pages[0]!.height).toBeCloseTo(300.1475533297, 1);
     });
     it('counts the shared voice connector once when breaking 欢乐颂 at 600px', () => {
         const result = layout(readFileSync(new URL('../../../src/examples/huan_le_song.m3n', import.meta.url), 'utf8'), 600);
@@ -77,9 +94,9 @@ describe('native spacing and measured note envelopes', () => {
         const result = layout(source, 800, narrowSpacing);
         // The repeat opening is included once; sustain widths include both round caps.
         const boundary = result.projection.measures[8]!;
-        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(82.28674971797398, 5);
+        expect(boundary.minimumEnd! - boundary.minimumStart!).toBeCloseTo(83.3368333772994, 5);
         const opening = result.projection.measures[9]!;
-        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(133.92525620634603, 5);
+        expect(opening.minimumEnd! - opening.minimumStart!).toBeCloseTo(136.02542352499677, 5);
         expect(result.systems.map(system => system.measures.length)).toEqual([6, 5]);
     });
     it('balances dense bars and keeps equally scored short rows last in narrow 卡农', () => {
