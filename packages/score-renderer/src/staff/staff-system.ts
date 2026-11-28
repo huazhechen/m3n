@@ -1,4 +1,5 @@
 import type { StaffSystem } from './system-layout.js'
+import { staffInvariantMusicInk } from './staff-invariant-music.js'
 import { staffSystemLowerBound } from './staff-system-lower-bound.js'
 import type { ScorePageBlock } from '@m3n/numbered-notation/layout'
 import { staffTempoBeat } from './staff-tempo.js'
@@ -17,6 +18,7 @@ import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, typ
 const style = scoreLayoutConfig.staff
 const engine = style.engine
 const shared = scoreLayoutConfig.numbered
+const beamHeightBounds = new WeakMap<StaffSystem, number>()
 
 // Projection identity and this map both belong to one measurement task.
 const relationPlans = new WeakMap<StaffPreparation, WeakMap<StaffDocument, ReturnType<typeof prepareSystemRelations>>>()
@@ -87,11 +89,15 @@ function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocume
     const lyricsByLane = ['melody', 'bass'].map(lane => line.measures.some(member =>
       member.measure[lane as 'melody' | 'bass'].some(entry => (entry.children ?? [entry])
         .some(note => note.lyrics.some(lyric => lyric.kind !== 'placeholder')))))
+    const minimumHeight = beamHeightBounds.get(initial) ?? -Infinity
     let choices = new Map<string, number>()
     for (const [measureIndex, member] of line.measures.entries()) {
       const prepared = preparation.measure(member.measure, measureIndex === 0, document.hasBass, measureText)
       for (const beam of prepared.beams) {
         if (!beam.flexible) continue
+        // Without lyric-side preference, only a strict height improvement can
+        // win. An invariant music subset can prove that improvement impossible.
+        if (!lyricsByLane[beam.lane] && minimumHeight >= best.ink.bottom - best.ink.top - 1e-7) continue
         const note = prepared.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
         const trialChoices = new Map(choices).set(note.item.id, -note.direction)
         const trialPreparation = preparation.withBeamDirections(trialChoices, document)
@@ -190,6 +196,7 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
       }
       const node = element('g', { class: 'system' })
       const models: StaffMeasureLayout[] = []
+      const deferredMusic: Array<() => void> = []
       const lyricAnchors: Array<{ lyric: StaffEvent['lyrics'][number]; verse: XmlNode; lane: number; y: number; left: number; right: number }> = []
       const anchors = new Map<string, { first: StaffNoteAnchor; last: StaffNoteAnchor; item: StaffEvent; measure: XmlNode; staff: XmlNode }>()
       const inset = line.measures[0]!.inset
@@ -201,7 +208,7 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
           next?.source.left?.startsWith('rpt'))
-        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, numericOnly)
+        const measureNode = drawStaffMeasure(model, target, x, suppressEndRepeat, numericOnly, lowerOnly ? paint => deferredMusic.push(paint) : undefined)
         models.push(model)
         node.children.push(measureNode)
         const melodyEntries = model.entries[0] ?? []
@@ -313,9 +320,17 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
       }).map(m => m.id))
       // Suspended rows outlive the engine's borrowed placement workspace.
       // Their models above therefore own their anchors until completion.
+      const flexibleBeams = style.reuseBeamOuterSpace && models.some(model => model.prepared.beams.some(beam => beam.flexible))
+      let optimistic: ReturnType<typeof staffSystemLowerBound> | undefined
+      const lowerBound = () => optimistic ??= staffSystemLowerBound(node, measureText, width, headings, attachmentGap, flexibleBeams,
+        lowerOnly || flexibleBeams ? staffInvariantMusicInk(models) : undefined)
       let completed: StaffSystem | undefined
       const complete = (): StaffSystem => {
         if (completed) return completed
+        // A staged row already owns a safe height proof. Ordinary complete
+        // rows retain exhaustive trials without paying for another proof.
+        const beamBound = optimistic?.invariantHeightLowerBound
+        for (const paint of deferredMusic) paint()
         // Add word connectors before vertical verse packing, so the text and
         // its hyphen move together and share measurement/painting geometry.
         for (const [index, anchor] of lyricAnchors.entries()) {
@@ -424,10 +439,11 @@ function buildStaffSystems(document: StaffDocument, lines: StaffLine[], width: n
         const geometry = tieGeometry
         const system = arrangeStaffSystem(node, geometry, width, headings, deferPieces, tupletsPlaced, attachmentGap)
         system.coreGapBefore = models[0]?.measure.coreGapBefore
+        if (beamBound !== undefined) beamHeightBounds.set(system, beamBound)
         completed = system
         return system
       }
-      if(lowerOnly)return {lowerBound:staffSystemLowerBound(node,measureText,width,headings,attachmentGap,style.reuseBeamOuterSpace && models.some(model => model.prepared.beams.some(beam => beam.flexible))),complete}
+      if(lowerOnly)return {lowerBound:lowerBound(),complete}
       const system = complete()
       if (system.staffSpacing > 0.01) { bassY += system.staffSpacing + engine.bassAdjustmentGap; continue }
       return system

@@ -45,6 +45,8 @@ it.each(['ban_yin_jie_kou_qin_ji_ben_gong_01', 'meng_huan_qu_01', 'flower_dance_
     prepareStaffSystems(doc, otherLines, width + 137, measure, spacing + .17, false, 1, preparation)
     bounds.forEach((block, row) => {
       const exact = systems[row]!, lower = block.lowerBoundGeometry!
+      const scalar = (block as ReturnType<typeof staffSystemLowerBound>).invariantHeightLowerBound
+      expect(scalar, `height row ${row}`).toBeLessThanOrEqual(exact.ink.bottom - exact.ink.top + 1e-10)
       const resumed = staged[row]!.complete()
       expect(staged[row]!.complete()).toBe(resumed)
       expect(resumed.pieces).toEqual(exact.pieces)
@@ -83,13 +85,16 @@ it.each([false, true])('single-staff attachment bounds fit within exact geometry
 it.each([
   '{key=F}{3/4}\nN: {lg}([3 4 3:2]){/} 6. (3) | 1 2 3 | 4 5 6 |',
   '{4/4}\nN: 1 2 3 4 | 5 6 7 1\' | 1 2 3 4 | 5 6 7 1\' |',
+  '{4/4}\nN: {lg}1 2 3 4 | 5 6 7 1e | 2e 3e 4e 5e{/} |||\nL: 春夏秋冬山川天地春夏秋冬',
 ])('pre-avoidance bounds never require more pages than complete rows: %s', source => {
   const doc = projectStaffDocument(analyzeM3N(source).score)
   const preparation = createStaffPreparation(doc), minimum = createStaffMeasureMinimum(false, measure, preparation)
   for (const width of [180, 300, 600]) for (const spacing of [.6, 1.2, 1.8]) {
     const lines = planStaffLines(doc, width, false, measure, spacing, minimum)
-    const lower = prepareStaffSystems(doc, lines, width, measure, spacing, false, 1, preparation).map(row => row.lowerBound)
+    const pending = prepareStaffSystems(doc, lines, width, measure, spacing, false, 1, preparation)
+    const lower = pending.map(row => row.lowerBound)
     const systems = engraveStaffSystems(doc, lines, width, measure, spacing, false, 1, preparation, undefined, undefined, true, false)
+    expect(pending.map(row => xml(row.complete().node))).toEqual(systems.map(row => xml(row.node)))
     const actual = systems.map((row, index) => staffRowBlock(row, index, 24))
     for (const height of [250, 400, 800]) {
       const pages = paginateStaffBlocks(actual, height, 24, true, 24).heights.length

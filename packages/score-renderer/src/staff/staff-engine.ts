@@ -947,7 +947,7 @@ class StaffNumericMusicRun {
     return node
   }
 }
-export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false, numericOnly = false): XmlNode {
+export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: number, suppressEndRepeat = false, numericOnly = false, deferMusic?: (paint: () => void) => void): XmlNode {
   const { prepared } = model
   const extra = Math.max(0, width - model.minimum)
   const localPositions = staffSpacingPositions(prepared, model.spacing, extra)
@@ -984,39 +984,48 @@ export function drawStaffMeasure(model: StaffMeasureLayout, width: number, x: nu
     const leftBarX = x + (!model.joinedRepeat && model.measure.source.left?.startsWith('rpt') ? repeatBarOffset(prepared.signatures) : 0)
     staff.children.push(drawStaffBar(model.joinedRepeat ? 'rptboth' : model.measure.source.left, leftBarX, stave.y, true), drawStaffBar(suppressEndRepeat ? 'invis' : model.measure.source.right, x + width, stave.y),
       element('g', { class: 'staff-signature', id: `${model.measure.id}-signature-${lane}` }, drawSignature(prepared.signatures[lane]!, x, stave.y)))
-    let musicRun: StaffNumericMusicRun | undefined
-    const flushMusic = () => {
-      if (musicRun) { staff.children.push(musicRun.node()); musicRun = undefined }
-    }
-    for (const entry of model.entries[lane]!) {
-      if (numericOnly && entry.notes.every(supportsNumericNote)) {
-        musicRun ??= new StaffNumericMusicRun(stave.y)
-        musicRun.append(entry)
-        if (entry.item.children && entry.item.event.tuplet) {
-          flushMusic()
-          staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
+    const musicIndex = staff.children.length
+    const paintMusic = () => {
+      // Lyrics may have been added while a proof-only row was suspended.
+      // Original music precedes those mutable children in the final SVG.
+      const tail = staff.children.splice(musicIndex)
+      let musicRun: StaffNumericMusicRun | undefined
+      const flushMusic = () => {
+        if (musicRun) { staff.children.push(musicRun.node()); musicRun = undefined }
+      }
+      for (const entry of model.entries[lane]!) {
+        if (numericOnly && entry.notes.every(supportsNumericNote)) {
+          musicRun ??= new StaffNumericMusicRun(stave.y)
+          musicRun.append(entry)
+          if (entry.item.children && entry.item.event.tuplet) {
+            flushMusic()
+            staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
+          }
+          continue
         }
-        continue
+        flushMusic()
+        const event = element('g', staffEventAttributes(entry.item))
+        let preparedInk: Ink[] | undefined = numericOnly ? [] : undefined
+        for (const [i, note] of entry.notes.entries()) {
+          const music = drawNote(note, stave.y, numericOnly)
+          if (preparedInk) {
+            if (music.every(child => child.numericInk)) for (const child of music) preparedInk.push(...child.numericInk!)
+            else preparedInk = undefined
+          }
+          if (entry.item.children) event.children.push(element('g', { id: entry.item.children[i]!.id, class: entry.item.children[i]!.event.kind }, music))
+          else event.children.push(...music)
+        }
+        if (preparedInk) event.preparedMusicInk = { boxes: preparedInk,
+          classes: [entry.item.event.kind, ...(entry.item.children ?? []).map(child => child.event.kind)] }
+        staff.children.push(event)
+        if (entry.item.children && entry.item.event.tuplet) staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
       }
       flushMusic()
-      const event = element('g', staffEventAttributes(entry.item))
-      let preparedInk: Ink[] | undefined = numericOnly ? [] : undefined
-      for (const [i, note] of entry.notes.entries()) {
-        const music = drawNote(note, stave.y, numericOnly)
-        if (preparedInk) {
-          if (music.every(child => child.numericInk)) for (const child of music) preparedInk.push(...child.numericInk!)
-          else preparedInk = undefined
-        }
-        if (entry.item.children) event.children.push(element('g', { id: entry.item.children[i]!.id, class: entry.item.children[i]!.event.kind }, music))
-        else event.children.push(...music)
-      }
-      if (preparedInk) event.preparedMusicInk = { boxes: preparedInk,
-        classes: [entry.item.event.kind, ...(entry.item.children ?? []).map(child => child.event.kind)] }
-      staff.children.push(event)
-      if (entry.item.children && entry.item.event.tuplet) staff.children.push(drawTuplet(entry.notes, entry.item, stave.y, model.measureText))
+      for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly))
+      staff.children.push(...tail)
     }
-    flushMusic()
-    for (const beam of model.beams.filter(beam => beam.lane === lane)) staff.children.push(drawBeam(beam, numericOnly))
+    if (deferMusic) deferMusic(paintMusic)
+    else paintMusic()
     measureNode.children.push(staff)
   }
   return measureNode

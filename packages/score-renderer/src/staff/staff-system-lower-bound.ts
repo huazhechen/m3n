@@ -10,17 +10,17 @@ const eligible = ['dir', 'harm', 'fing', 'dynam', 'tempo', 'repeatMark', 'octave
  * up after anchoring to local music, a lower attachment only farther down.
  * Keep separate channels: its opposite edge is not a valid constraint.
  * This does not replace or approximate any geometry used by exact layout. */
-export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, width: number, sectionHeadings: Set<string>, attachmentGap: number, rulesOnly = false): ScorePageBlock {
+export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, width: number, sectionHeadings: Set<string>, attachmentGap: number, rulesOnly = false, fixedMusic?: Ink[]): ScorePageBlock & { invariantHeightLowerBound: number } {
   const scale = STAFF_SCALE, style = scoreLayoutConfig.staff
   const geometry = new SvgGeometry(node, measureText, true)
   const firstMeasure = nodes(node).find(n => hasClass(n, 'measure'))
   const inlineHeading = sectionHeadings.has(firstMeasure?.attributes.id ?? '') ? undefined : findAll(node, n => hasClass(n, 'reh'))[0]
   const inset = inlineHeading ? staffInlineHeadingInset(inlineHeading, geometry) : 0
   const rules = findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
-  // Flexible beam directions can move stems and their dependent ink. Staff
-  // rules and local text anchoring remain valid for every direction trial.
-  const music = rulesOnly ? rules : geometry.withoutClasses(node, omitted)
-  const staffMusic = rulesOnly ? rules : findAll(node, n => hasClass(n, 'staff')).flatMap(staff => geometry.withoutClasses(staff, omitted))
+  // A supplied invariant subset can retain heads and fixed stems even when
+  // legal direction trials move flexible stems and their dependent ink.
+  const music = fixedMusic ?? (rulesOnly ? rules : geometry.withoutClasses(node, omitted))
+  const staffMusic = fixedMusic ?? (rulesOnly ? rules : findAll(node, n => hasClass(n, 'staff')).flatMap(staff => geometry.withoutClasses(staff, omitted)))
   const core = union(rules.map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   // Relax only the proof geometry to cover composition roundoff; final layout
   // still uses the original operations and coordinates. Shrink x intervals so
@@ -28,7 +28,11 @@ export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, w
   const epsilon = 1e-7
   const positioned = (p: Ink): Ink => ({ left: (p.left + inset) * scale + epsilon, right: (p.right + inset) * scale - epsilon,
     top: p.top * scale + epsilon, bottom: p.bottom * scale - epsilon })
-  const fixed = music.map(positioned).filter(p => p.right > p.left)
+  let rawTop = core.top, rawBottom = core.bottom
+  const fixed = music.map(p => {
+    rawTop = Math.min(rawTop, p.top * scale); rawBottom = Math.max(rawBottom, p.bottom * scale)
+    return positioned(p)
+  }).filter(p => p.right > p.left)
   const topInk = [...fixed], bottomInk = [...fixed]
   for (const attachment of findAll(node, n => eligible.some(kind => hasClass(n, kind)))) {
     const ink = geometry.ink(attachment)
@@ -42,10 +46,17 @@ export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, w
     if (!local.length) continue
     const dy = below ? Math.max(...local.map(p => p.bottom)) + gap - ink.top : Math.min(...local.map(p => p.top)) - gap - ink.bottom
     for (const piece of geometry.pieces(attachment)) {
-      const bound = positioned(moveInk(piece, dx, dy))
+      const moved = moveInk(piece, dx, dy), bound = positioned(moved)
+      if (below) rawBottom = Math.max(rawBottom, moved.bottom * scale)
+      else rawTop = Math.min(rawTop, moved.top * scale)
       if (bound.right > bound.left) (below ? bottomInk : topInk).push(bound)
     }
   }
   const top = Math.min(core.top, ...topInk.map(p => p.top)), bottom = Math.max(core.bottom, ...bottomInk.map(p => p.bottom))
-  return { height: bottom - top, core, lowerBoundGeometry: { top, bottom, topInk, bottomInk } }
+  // Height comparisons accept improvements strictly greater than 1e-7px.
+  // Retain a separate scalar proof with a magnitude-dependent roundoff bound;
+  // the more relaxed collision channels above keep their existing tolerance.
+  const roundoff = 64 * Number.EPSILON * Math.max(1, Math.abs(rawTop), Math.abs(rawBottom))
+  return { height: bottom - top, core, lowerBoundGeometry: { top, bottom, topInk, bottomInk },
+    invariantHeightLowerBound: rawBottom - rawTop - roundoff }
 }
