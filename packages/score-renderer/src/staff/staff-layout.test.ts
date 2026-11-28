@@ -82,7 +82,7 @@ describe('staff layout contract', () => {
     const left = heads[0]!.left - staffMusicSize() / 4 * .05
     const right = closingBar.left - heads.at(-1)!.right
     expect(left).toBeCloseTo(right, 3)
-    expect(left).toBeGreaterThanOrEqual(9.9)
+    expect(left).toBeGreaterThanOrEqual(.25 * staffMusicSize() / 4 - 1e-7)
   })
 
   it('keeps text and numeric tempo in one movable group on the same line', () => {

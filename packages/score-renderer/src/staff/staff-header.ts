@@ -22,7 +22,7 @@ export function staffHeader(score: ScoreDocument, width: number, measure: Measur
     return value
   }
   const atRowGap = (gap: number) => layoutStaffHeader(score, width, cachedMeasure, transpose, gap)
-  return { ...atRowGap(scoreVerticalSpacing().minimum), atRowGap }
+  return { ...atRowGap(scoreVerticalSpacing('staff').minimum), atRowGap }
 }
 function layoutStaffHeader(score: ScoreDocument, width: number, measure: MeasureText, transpose: number, rowGap: number) {
   const h = rowGap / 6

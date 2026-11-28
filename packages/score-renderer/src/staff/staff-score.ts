@@ -53,7 +53,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
   const qualityFor = (candidateWidth: number, lines: StaffLine[], verticalCost = 0) => {
     const densities = lines.map(line => line.minimum * STAFF_SCALE / availableAt(candidateWidth))
     const spacing = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), staffSpace * looseTier!, staffSpace * tightTier!,
-      lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
+      lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]), scoreLayoutConfig.staff.horizontalComfort)
     const costs = scoreLayoutCosts(candidateWidth, densities)
     return { ...scoreLineQuality(densities, lines.length ? Math.max(0, 1 - lines.at(-1)!.target * STAFF_SCALE / availableAt(candidateWidth)) : 0),
       ...costs, ...spacing, verticalCost, totalCost: costs.fontSizeCost + costs.overflowCost + spacing.spacingCost + verticalCost }

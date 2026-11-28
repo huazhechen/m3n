@@ -64,24 +64,27 @@ describe('staff page packing', () => {
     }
   })
 
-  it('compares both minimum tiers using the same physical spacing objective', async () => {
+  it('compares all minimum tiers using the same physical spacing objective', async () => {
     const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/mo_li_hua_01.m3n'), 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
     expect(info.pageCount).toBe(1)
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
-      const graph = prepareStaffLineGraph(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
+      const graph = prepareStaffLineGraph(projectStaffDocument(score), 768 - scoreLayoutConfig.staff.singleGutter - scoreLayoutConfig.staff.rightGutter, false, textMeasurer(), spacing)
       const ends = planScoreTier(graph.candidates, spacing === scoreLayoutConfig.staff.noteGapCandidates.at(-1) ? .5 : 2/3)
       if (!ends) continue
       const lines = graph.makeLines(ends)
       const space = scoreLayoutConfig.staff.music / 4
       const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), space * scoreLayoutConfig.staff.noteGapCandidates.at(-1)!, space * scoreLayoutConfig.staff.noteGapCandidates[0]!,
-        lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
+        lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]), scoreLayoutConfig.staff.horizontalComfort)
       expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
     }
   })
 
   it('uses the loose tier when every candidate has the same physical spacing quality', async () => {
-    const render = await prepareStaffScore(analyzeM3N('{4/4}\nN: 1 2 3 4 |||').score, { width: 640 })
+    const score = analyzeM3N('{4/4}\nN: 1^^ |||').score
+    // No real interval: all tiers have exactly zero spacing cost.
+    for (const part of score.parts.values()) part.melody[0]!.right = 'invis'
+    const render = await prepareStaffScore(score, { width: 640 })
     const info = render.layoutInfo()
     expect(info.pageCount).toBe(1)
     expect(info.lines).toHaveLength(1)

@@ -9,10 +9,10 @@ it('preserves the configured staff space and physical print readability', () => 
   const widestAutomaticWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.maximumMultiple
   expect(staffHeight / 4 * A4_CONTENT_WIDTH_MM / widestAutomaticWidth).toBeGreaterThanOrEqual(1.6)
 })
-it('uses the shared M for both notation vertical comfort bounds', () => {
+it('uses notation-specific vertical bounds with shared comfort proportions', () => {
   for (const notation of ['numbered', 'staff'] as const) {
     const spacing = scoreVerticalSpacing(notation)
-    expect(spacing.minimum / scoreLayoutConfig.numbered.music).toBeCloseTo(.75)
+    expect(spacing.minimum).toBeCloseTo(notation === 'staff' ? 2 * scoreLayoutConfig.staff.space : .75 * scoreLayoutConfig.numbered.music)
     expect(spacing.comfortable).toBeCloseTo(spacing.minimum * 1.5)
     expect(spacing.maximum).toBeCloseTo(spacing.minimum * 2)
     expect(scoreVerticalCost(spacing.minimum, spacing)).toBeCloseTo(1)
@@ -39,14 +39,14 @@ it('supports equal duration shares for numbered spacing without changing staff d
 
 it('keeps shared gaps and type fixed when S changes, while staff geometry scales', () => {
   const staff = scoreLayoutConfig.staff, previous = staff.space
-  const shared = () => ({ vertical: scoreVerticalSpacing('staff'), attachment: staff.attachmentGap,
+  const shared = () => ({ vertical: scoreVerticalSpacing('numbered'), attachment: staff.attachmentGap,
     lyric: staff.lyricGap, annotation: staff.annotationGap, chord: staff.chordGap,
     title: staff.title, text: staff.text, tuplet: staff.tupletFontSize })
   try {
-    const before = shared(), bass = staff.engine.bassY
+    const before = shared(), bass = staff.engine.bassY, vertical = scoreVerticalSpacing('staff')
     staff.space *= 1.5
     expect(shared()).toEqual(before)
-    expect(scoreVerticalSpacing('staff')).toEqual(scoreVerticalSpacing('numbered'))
+    expect(scoreVerticalSpacing('staff')).toEqual({ minimum: vertical.minimum * 1.5, comfortable: vertical.comfortable * 1.5, maximum: vertical.maximum * 1.5 })
     expect(staff.engine.bassY).toBeCloseTo(bass * 1.5)
     expect(staff.music).toBeCloseTo(4 * staff.space)
   } finally { staff.space = previous }

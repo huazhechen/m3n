@@ -1,5 +1,5 @@
 import { planScoreLinesGlobally, type ScoreLineCandidate, lastLineWidth, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
-import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
+import { createStaffPreparation, staffMinimumAtSpacing, staffReadingSpacing, staffRhythmicSpacing, staffSpacingWeight, STAFF_SCALE, type StaffMeasureMetrics, type StaffPreparation } from './staff-engine.js'
 import { splitStaffMeasure, type StaffDocument, type StaffMeasure } from './staff-document.js'
 import type { MeasureText } from './layout-svg.js'
 
@@ -46,7 +46,7 @@ export function createStaffMeasureMinimum(hasBass: boolean, measureText: Measure
   minimum.weight = measure => {
     let weight = weights.get(measure)
     if (weight === undefined) {
-      weight = preparation.measure(measure, false, hasBass, measureText).weights.reduce((sum, weight) => sum + weight, 0) || 1
+      weight = staffSpacingWeight(preparation.measure(measure, false, hasBass, measureText)) || 1
       weights.set(measure, weight)
     }
     return weight

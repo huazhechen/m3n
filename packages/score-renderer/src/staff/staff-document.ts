@@ -18,6 +18,7 @@ export type StaffMeasure = {
   source: ScoreMeasure; key: string; previousKey: string
   beatOffset?: number
   meterCount: number; meterUnit: number; tempo: number; showTempo: boolean; showMeter: boolean
+  previousBar?: string
   joinsPreviousRepeat?: boolean
   force: boolean; section: boolean; coreGapBefore?: number; fragment: boolean; lastFragment: boolean
 }
@@ -159,6 +160,7 @@ export function projectStaffDocument(input: ScoreDocument, transpose = 0, includ
         force: (partIndex > 0 && index === 0) || previousBreak || Boolean(source.breakBefore || first?.sectionLabel),
         section: Boolean(first?.sectionLabel),
         coreGapBefore: index > 0 && source.events.some(event => event.sectionLabel && !event.sectionLabelBreakAfter) ? scoreSectionCoreGap('staff') : undefined,
+        previousBar: measures.at(-1)?.source.right,
         fragment: false, lastFragment: true,
       })
       number += (source.multiRest ?? 1) - 1
@@ -198,6 +200,7 @@ export function splitStaffMeasure(measure: StaffMeasure, maximumBeats: number): 
     force: i === 0 && measure.force, section: i === 0 && measure.section,
     coreGapBefore: i === 0 ? measure.coreGapBefore : undefined,
     joinsPreviousRepeat: i === 0 && measure.joinsPreviousRepeat,
+    previousBar: i === 0 ? measure.previousBar : 'invis',
     showTempo: i === 0 && measure.showTempo, showMeter: i === 0 && measure.showMeter,
     melody: measure.melody.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),
     bass: measure.bass.filter(e => e.onset >= start && e.onset < cuts[i + 1]!).map(e => ({ ...e, onset: e.onset - start })),

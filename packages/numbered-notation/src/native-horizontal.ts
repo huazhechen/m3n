@@ -1,3 +1,4 @@
+import { measureScoreRhythmicIntervals } from './layout/rhythmic-spacing.js'
 import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './layout/policy.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './layout/last-line-width.js'
@@ -388,13 +389,8 @@ export function nativeRhythmicSpacing(measures: NativeMeasure[], options: Horizo
   const items = itemsFor(measures, options, measures, true)
   const positions = options.equalMeasures ? equalMeasurePositions(items, width) : solveScoreSpacing(items, width, true).positions
   const analysis = rhythmicGapIntervals(items)
-  let clearance = 0
-  const gaps = analysis.intervals.map(interval => {
-    const value = Math.max(0, positions[interval.end]! - interval.left - positions[interval.start]! - interval.right)
-    clearance += value
-    return value / interval.weight
-  })
-  return { gap: analysis.weight > 0 ? clearance / analysis.weight : undefined, gaps }
+  const measured = measureScoreRhythmicIntervals(positions, analysis.intervals)
+  return { gap: measured.gap, gaps: measured.gaps }
 }
 
 type RhythmicGapIntervals={weight:number;intervals:{start:number;end:number;left:number;right:number;weight:number}[]}

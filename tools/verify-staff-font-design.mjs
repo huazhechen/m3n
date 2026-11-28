@@ -10,6 +10,7 @@ const output = resolve(argument('output') ?? '.tmp/staff-font-design')
 const origin = 'http://staff-font-design.local'
 mkdirSync(output, { recursive: true })
 writeFileSync(join(output, 'entry.ts'), `
+export { measure } from ${JSON.stringify(resolve('tools/staff-width-layout.mjs'))}
 export { initialize } from ${JSON.stringify(resolve('tools/numbered-spacing-layout.mjs'))}
 import { search, measure } from ${JSON.stringify(resolve('tools/staff-width-layout.mjs'))}
 import { analyzeM3N } from '@m3n/notation'
@@ -33,7 +34,7 @@ export async function parity(source) {
 `)
 execFileSync(process.execPath, ['tools/build-numbered-audit-bundle.mjs', output, '--external-fonts', '--minify'], { stdio: 'inherit' })
 const fonts = JSON.parse(readFileSync('tools/fonts/library/manifest.json', 'utf8')).fonts
-const fixtures = ['src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'src/scores/turkish_march_01.m3n', 'tools/fixtures/grand-staff-density.m3n']
+const fixtures = ['src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'src/scores/turkish_march_01.m3n', 'tools/fixtures/grand-staff-density.m3n', 'src/scores/hong_he_gu_01.m3n', 'src/scores/tu_ran_hao_xiang_ni_01.m3n']
 const report = { complete: false, entries: [] }
 const save = () => writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n')
 for (const engine of ['chromium', 'webkit']) {
