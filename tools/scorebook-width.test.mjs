@@ -653,7 +653,7 @@ test('endpoint page-floor pruning is explicit, separately counted and disabled d
 })
 
 test('explicit candidate policies are local to each search and exact-check the returned winner',async()=>{
-  const {optimizedScoreWidthPolicy}=await import('./scorebook-width.mjs')
+  const optimizedScoreWidthPolicy={rowReuse:true,singleTier:true,endpointFloor:true}
   const before=globalThis.__m3nExperimentalRowReuse
   const observed=[]
   const result=await selectBestWidth(async(width,best,policy)=>{
@@ -671,7 +671,7 @@ test('explicit candidate policies are local to each search and exact-check the r
 })
 
 test('explicit short-score policies restore both tiers without changing other searches',async()=>{
-  const {optimizedScoreWidthPolicy}=await import('./scorebook-width.mjs')
+  const optimizedScoreWidthPolicy={rowReuse:true,singleTier:true,endpointFloor:true}
   const visited=[]
   await selectBestWidth(async(width,best,policy)=>{
     visited.push({width,policy})
@@ -694,4 +694,22 @@ test('additional pages can win on total cost and are not capped by the incumbent
   },{prune:true})
   assert.equal(best.width,552)
   assert.equal(best.pageCount,2)
+})
+
+
+test('production candidates are exact and never repeat the winner measurement', async () => {
+  const { optimizedScoreWidthPolicy, exactScoreWidthPolicy } = await import('./scorebook-width.mjs')
+  assert.equal(optimizedScoreWidthPolicy, exactScoreWidthPolicy)
+  const widths = []
+  const result = await selectBestWidth(async (width, incumbent, policy) => {
+    assert.equal(policy, exactScoreWidthPolicy)
+    widths.push(width)
+    return { width, pageCount: 1, rows: 4, totalCost: 0, outside: [], overlaps: [] }
+  }, { prune: false, candidatePolicy: optimizedScoreWidthPolicy })
+  assert.equal(result.best.width, 528)
+  assert.equal(widths.length, 33)
+  assert.equal(new Set(widths).size, 33)
+  assert.deepEqual(result.renderCache.estimatedSkippedWidths, [])
+  assert.equal(result.renderCache.tierRechecks, 0)
+  assert.equal(result.renderCache.finalExactRequests, undefined)
 })

@@ -60,8 +60,8 @@ export async function search(source, auditLayout = false, prune = false, pageCon
     textMeasureCacheHits: detailedTimings ? timings.textMeasureCacheHits ?? 0 : undefined,
     searchMs, totalMs: performance.now() - started, width: best.width, pages: best.pageCount, rows: best.rows,
     meanRhythmicGap: best.meanRhythmicGap, spacingUnevenCost: best.spacingUnevenCost, spacingMeanUnevenCost: best.spacingMeanUnevenCost, spacingCrampedCost: best.spacingCrampedCost, spacingExpandedCost: best.spacingExpandedCost, spacingCost: best.spacingCost,
-    layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, totalCost: best.totalCost,
+    layoutCost: best.layoutCost, lineStretchCost: best.lineStretchCost, lineUniformityCost: best.lineUniformityCost, fontSizeCost: best.fontSizeCost, verticalCost: best.verticalCost, totalCost: best.totalCost,
     outside: best.outside, overlaps: best.overlaps,
     ...(result.verifiedCandidates ? { verifiedCandidates: result.verifiedCandidates, verificationFailures: result.verificationFailures } : {}),
-    candidates: result.candidates.map(({ width, pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error }) => ({ width, pages: pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, totalCost, error })) }
+    candidates: result.candidates.map(({ width, pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, verticalCost, totalCost, error }) => ({ width, pages: pageCount, rows, spacingCost, meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingCrampedCost, spacingExpandedCost, layoutCost, lineStretchCost, lineUniformityCost, fontSizeCost, verticalCost, totalCost, error })) }
 }

@@ -3,7 +3,7 @@ import { DEFAULT_SCORE_WIDTH, type NotationMode } from './renderer-settings'
 import { wrapScorePagesIntoSheets } from '@m3n/score-renderer/view'
 import { describeAccessibleScore } from './score-accessibility'
 import { attachScoreReading, preserveScoreReading } from './score-reading-dom'
-import { numberedLayoutScore, selectBestWidth, optimizedScoreWidthPolicy } from '../../tools/scorebook-width.mjs'
+import { numberedLayoutScore, selectBestWidth, exactScoreWidthPolicy } from '../../tools/scorebook-width.mjs'
 import type { NumberedTextMeasurementCache } from '@m3n/numbered-notation'
 
 export type RenderPhase = 'loading-library' | 'loading-staff' | 'loading-fonts' | 'layout'
@@ -49,7 +49,7 @@ export async function chooseNumberedScoreWidth(scoreDocument: ScoreDocument, set
     await yieldToBrowser()
     signal?.throwIfAborted()
     return measureNumberedWidth(scoreDocument, width, { settings: taskSettings, signal, candidatePolicy, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined }).candidate
-  }, { signal, prune: true, candidatePolicy:optimizedScoreWidthPolicy })
+  }, { signal, prune: true, candidatePolicy:exactScoreWidthPolicy })
   return best.width
 }
 
@@ -61,7 +61,7 @@ export async function chooseStaffScoreWidth(scoreDocument: ScoreDocument, settin
     await yieldToBrowser()
     signal?.throwIfAborted()
     return measureStaffWidth(scoreDocument, width, settings, signal, { task, candidatePolicy, maximumPageCount: best?.pageCount, minimumQuality: best ? numberedLayoutScore(best) : undefined })
-  }, { signal, prune: true, candidatePolicy:optimizedScoreWidthPolicy })
+  }, { signal, prune: true, candidatePolicy:exactScoreWidthPolicy })
   return best.width
 }
 

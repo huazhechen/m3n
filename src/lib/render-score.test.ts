@@ -199,6 +199,7 @@ describe('staff automatic width range', () => {
   })
 
   it('finds a staff break outside the best coarse neighbourhood on the full grid', async () => {
+    staffPageCount.mockReset()
     staffPageCount.mockReturnValue(2)
     staffLayoutInfo.mockImplementation(width => ({ availableWidth: width,
       totalCost: width === 660 ? 2.1 : width === 696 ? 3.1 : 5,
@@ -207,7 +208,7 @@ describe('staff automatic width range', () => {
     const visited=staffPageCount.mock.calls.map(([,width])=>width)
     expect(visited).toContain(660)
     expect(visited).toContain(720)
-    expect(visited.at(-1)).toBe(660)
+    expect(visited.filter(width => width === 660)).toHaveLength(1)
     expect(visited.every(width=>width>=528 && width<=720 && (width-528)%6===0)).toBe(true)
     expect(staffTaskUses.mock.lastCall![1]).toEqual({})
   })
@@ -224,7 +225,7 @@ describe('staff automatic width range', () => {
     expect(prepareStaffTask).toHaveBeenCalledTimes(2)
     const first = await prepareStaffTask.mock.results[0]!.value, second = await prepareStaffTask.mock.results[1]!.value
     expect(first).not.toBe(second)
-    expect(firstCount).toBeGreaterThan(1)
+    expect(firstCount).toBe(1)
     expect(staffTaskUses.mock.calls.length).toBeGreaterThan(firstCount)
     expect(staffTaskUses.mock.calls.slice(0,firstCount).every(([task]) => task === first)).toBe(true)
     expect(staffTaskUses.mock.calls.slice(firstCount).every(([task]) => task === second)).toBe(true)

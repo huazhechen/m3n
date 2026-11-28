@@ -1,5 +1,5 @@
 import { optimizedScoreWidthPolicy, exactScoreWidthPolicy } from '@m3n/numbered-notation/layout'
-export { optimizedScoreWidthPolicy }
+export { optimizedScoreWidthPolicy, exactScoreWidthPolicy }
 import { scoreHorizontalQuality, scoreNumberedFontCost, scorePageCost } from '@m3n/numbered-notation/layout-quality'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 
@@ -8,7 +8,7 @@ const config = scoreLayoutConfig.pageWidth
 /** Width is the only engraving variable; all candidates use the web defaults. */
 export const widthMinimum = config.unit * config.minimumMultiple, widthMaximum = config.unit * config.maximumMultiple, widthStep = config.unit
 export const widthCandidates = Array.from({ length: (widthMaximum - widthMinimum) / widthStep + 1 }, (_, index) => widthMinimum + index * widthStep)
-export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v79`
+export const widthSearchStrategy = `levels-1-${widthCandidates.length}-quality-${widthMinimum}-${widthMaximum}-refine-6-v80-exact`
 const safe = c => !c.error && c.pageCount > 0 && !c.outside.length && !c.overlaps.length
 function spacingLayoutScore(candidate) {
   if (candidate.totalCost !== undefined) return 1 / (1 + candidate.totalCost)
@@ -127,7 +127,7 @@ export async function selectBestWidth(measure, options) {
     const errors = [...new Set(result.candidates.map(candidate => candidate.error).filter(Boolean))]
     throw new Error(`没有可用的排版候选。${errors.length ? ` ${errors.join('；')}` : ''}`)
   }
-  if(!options?.candidatePolicy)return { ...result, best }
+  if(!options?.candidatePolicy || options.candidatePolicy === exactScoreWidthPolicy)return { ...result, best }
   const verified=await verifyEstimatedWidthCandidates(result.candidates,width=>measure(width,null,exactScoreWidthPolicy),{
     signal:options.signal,verifyWidestWhenMultipage:true,
   })

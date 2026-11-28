@@ -1,5 +1,5 @@
 import type { ScoreWidthCandidatePolicy } from '@m3n/numbered-notation/layout'
-export { optimizedScoreWidthPolicy } from '@m3n/numbered-notation/layout'
+export { optimizedScoreWidthPolicy, exactScoreWidthPolicy } from '@m3n/numbered-notation/layout'
 export type WidthMeasurement = {
   width: number
   error?: string

@@ -12,11 +12,10 @@ export type ScoreWidthCandidatePolicy = Readonly<{
   endpointFloor?: boolean
 }>
 
-export const optimizedScoreWidthPolicy:ScoreWidthCandidatePolicy=Object.freeze({
-  rowReuse:true,greedyCeiling:true,inkBin:12,widthBin:48,pageCostPasses:1,
-  crossTier:true,singleTier:true,equalTier:true,endpointFloor:true,
-})
+/** Production candidates use complete geometry and every spacing tier. */
 export const exactScoreWidthPolicy:ScoreWidthCandidatePolicy=Object.freeze({})
+/** Compatibility name for callers that request the production policy. */
+export const optimizedScoreWidthPolicy = exactScoreWidthPolicy
 
 const flags=[
   ['rowReuse','__m3nExperimentalRowReuse',false],
