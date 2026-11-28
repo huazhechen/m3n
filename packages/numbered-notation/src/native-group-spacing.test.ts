@@ -34,7 +34,7 @@ describe('minimum-only 8px clearance', () => {
   })
 })
 
-describe('shared directional group boundary clearance', () => {
+describe('balanced group boundary clearance', () => {
   it.each(['([123:2]) ([234:2]) ([345:2]) ([456:2])', '((1234)) ((2345)) ((3456)) ((4567))'])('scales ungrouped short-note clearance by duration: %s', notes => {
     const measure = project(notes)
     measureNativeHorizontal([measure], options)
@@ -44,11 +44,11 @@ describe('shared directional group boundary clearance', () => {
     expect(clearance(measure, 0)).toBeLessThan(clearance(measure, boundary))
   })
 
-  it('uses directional pair minima for unequal-duration independent attacks', () => {
+  it('uses balanced pair minima for unequal-duration independent attacks', () => {
     const measure = project('1. (2) 3 4')
     measureNativeHorizontal([measure], options)
     placeNativeHorizontal([measure], options, 0, measure.minimum)
-    expect(clearance(measure, 0)).toBeCloseTo(9 * scoreRhythmicGapWeight(1.5, .5), 8)
+    expect(clearance(measure, 0)).toBeCloseTo(9 * scoreRhythmicGapWeight(1.5, .5, 1, .5), 8)
   })
 
   it('keeps group-internal justification growth at three quarters of the group-boundary growth', () => {
@@ -69,7 +69,7 @@ describe('shared directional group boundary clearance', () => {
     }
     const small = gaps(500), large = gaps(700)
     expect((large[0]! - small[0]!) / (large[1]! - small[1]!))
-      .toBeCloseTo(scoreRhythmicGapWeight(1.5, .5), 8)
+      .toBeCloseTo(scoreRhythmicGapWeight(1.5, .5, 1, .5), 8)
   })
 
   it('does not increase rhythm weights for lyrics, accidentals or parentheses', () => {
@@ -104,13 +104,13 @@ describe('shared directional group boundary clearance', () => {
   })
 })
 
-it.each([8, 16])('opens the long side of a syncopation at gap %s in both minima and stretch', minimumNoteGap => {
+it.each([8, 16])('balances both sides of a syncopation at gap %s in both minima and stretch', minimumNoteGap => {
   const measure = project('(1) 2 (3)')
   const options = { minimumNoteGap }
   const spacing = nativeHorizontalSpacing([measure], options)
   for (const extra of [0, 80]) {
     placeNativeHorizontal([measure], options, 0, spacing.minimumWidth + extra)
     const first = clearance(measure, 0), second = clearance(measure, 1)
-    expect(second / first).toBeCloseTo(2 ** .25, 8)
+    expect(second / first).toBeCloseTo(1, 8)
   }
 })

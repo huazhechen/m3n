@@ -29,6 +29,8 @@ export function nativeBarMetrics(kind: string | undefined) {
 
 type HorizontalItem = { measure: NativeMeasure; navigationMeasure?: NativeMeasure; column?: NativeColumn; controlColumn?: NativeColumn; controls?: NativeControl[]; boundary?: boolean; opening?: boolean; prefix?: boolean; left: number; right: number; cells: SpacingCell[]; fixedAfter?: number }
 type HorizontalOptions = { minimumNoteGap?: number; minimumNoteGapFloor?: number; equalMeasures?: boolean }
+// A sustain dash keeps its musical duration and identity, but spaces as an eighth.
+const spacingDuration = (glyph?: NativeGlyph) => glyph?.multiRest ? 1 : glyph?.sustain ? .5 : glyph?.beats
 const horizontalContexts=new WeakMap<HorizontalOptions,WeakMap<NativeMeasure[],HorizontalItem[]>>()
 type ColumnBinding = { measure: number; column: number }
 type ControlBinding = ColumnBinding & { glyph: number; control: number }
@@ -165,7 +167,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
       }
       }
       const cells = column.glyphs.map(glyph => minimumCell(glyph.lane, glyph.musicLeft ?? glyph.left,
-        glyph.musicRight ?? glyph.right, glyph.multiRest ? 1 : glyph.beats, nativeStyle.music * .25, scale))
+        glyph.musicRight ?? glyph.right, spacingDuration(glyph)!, nativeStyle.music * .25, scale))
       items.push({ measure, column, left: Math.max(...cells.map(cell => cell.left)), right: Math.max(...cells.map(cell => cell.right)), cells })
     }
     // A split measure has no visible closing bar until its final fragment.
@@ -179,15 +181,15 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = previous?.item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     const right = item.column?.glyphs.find(glyph => glyph.lane === cell.lane)
     // A displayed sustain dash continues the preceding sound, including a
-    // fractional tied head. Keep actual durations in the square-root springs.
+    // fractional tied head. Dash springs use eighth-note spacing durations.
     // The measure identity and intervening control items keep bars/settings out.
     const sustain = left && right?.sustain && !right.controls.length
       && Math.abs(left.time + left.beats - right.time) < 1e-7
     if (previous) {
       const grouped = previous.item.measure === item.measure && left && right
         && (sustain || nativeBeamCount(left, right))
-      const weight = scoreRhythmicGapWeight(left?.multiRest ? 1 : left?.beats, right?.multiRest ? 1 : right?.beats,
-        grouped ? nativeStyle.groupSpacingRatio : 1)
+      const weight = scoreRhythmicGapWeight(spacingDuration(left), spacingDuration(right),
+        grouped ? nativeStyle.groupSpacingRatio : 1, .5)
       const halfGap = (options.minimumNoteGap ?? nativeStyle.minimumNoteGap) * weight / 2
       previous.cell.after = halfGap; cell.before = halfGap
       previous.cell.afterStretch = weight; cell.beforeStretch = weight

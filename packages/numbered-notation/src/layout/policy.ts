@@ -44,12 +44,12 @@ export function scoreRhythmicWeight(duration: number): number {
 }
 
 /** Directed pair clearance: quarter = 1; zero-time structural items = quarter.
- * The left onset owns 75% of the rhythmic signal, the right owns 25%.
+ * The left share defaults to 75%; notation adapters may request equal shares.
  * Ink reservations stay independent of this minimum/stretch weight. */
-export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1): number {
+export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1, leftShare = .75): number {
   const a = scoreRhythmicWeight(left && left > 0 ? left : 1)
   const b = scoreRhythmicWeight(right && right > 0 ? right : 1)
-  return a ** .75 * b ** .25 * groupRatio
+  return a ** leftShare * b ** (1 - leftShare) * groupRatio
 }
 
 /** Inter-system policy only: measured music, lyrics, headers and attachments

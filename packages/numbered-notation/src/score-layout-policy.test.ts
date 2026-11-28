@@ -33,6 +33,12 @@ it('gives onset duration the larger share while keeping equal durations and cont
   expect(scoreRhythmicGapWeight(.5, 1)).toBeLessThan(scoreRhythmicGapWeight(1, .5))
 })
 
+it('supports equal duration shares for numbered spacing without changing staff defaults', () => {
+  expect(scoreRhythmicGapWeight(1.5, .5, 1, .5)).toBeCloseTo(.75 ** .25)
+  expect(scoreRhythmicGapWeight(.5, 1.5, 1, .5)).toBeCloseTo(.75 ** .25)
+  expect(scoreRhythmicGapWeight(.5, .5, .75, .5)).toBeCloseTo(Math.sqrt(.5) * .75)
+})
+
 it('allows each notation to configure its own minimum while deriving the same comfort ratios', () => {
   const previous = scoreLayoutConfig.staff.minimumRowGapEm
   try {

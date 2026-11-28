@@ -12,7 +12,7 @@ describe('sustain group spacing', () => {
   it.each([
     ['quarter head', '1~ 1^.', 1],
     ['dotted head', '1^.. (0)', 1.5],
-  ])('retains square-root group clearances for a %s into a dash', (_name, notes, duration) => {
+  ])('spaces a %s into a grouped eighth-weight dash without changing playback duration', (_name, notes, duration) => {
     const { measures } = project(`{4/4}\nN: ${notes} |||`)
     const measure = measures[0]!
     const glyphs = measure.columns.flatMap(column => column.glyphs)
@@ -20,7 +20,7 @@ describe('sustain group spacing', () => {
     const head = glyphs[index - 1]!, dash = glyphs[index]!
     expect(head.beats).toBe(duration)
     expect(dash.beats).toBe(1)
-    // Retain identical ink, lyrics and boundaries; change only this grouping.
+    // Retain identical ink, lyrics and boundaries; compare a dash with a new attack.
     // A chain has two affected gaps if the selected dash is followed by a dash,
     // so isolate the head/dash pair before comparing the minimum clearances.
     const pair = { ...measure, columns: measure.columns.filter(column => column.glyphs.includes(head) || column.glyphs.includes(dash)), lastFragment: false }
@@ -28,9 +28,10 @@ describe('sustain group spacing', () => {
     const groupedMinimum = pair.minimum
     dash.sustain = false
     measureNativeHorizontal([pair], options)
-    // Identical ink, different grouping: only the common pair's 0.75
-    // multiplier changes, including for dotted head durations.
-    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * scoreRhythmicGapWeight(duration, 1) * .25, 8)
+    // A new quarter attack has full weight; the dash has eighth weight and grouping.
+    expect(pair.minimum - groupedMinimum).toBeCloseTo(9 * (
+      scoreRhythmicGapWeight(duration, 1, 1, .5) - scoreRhythmicGapWeight(duration, .5, .75, .5)), 8)
+    expect(dash.beats).toBe(1)
   })
 
   it.each([
@@ -45,7 +46,7 @@ describe('sustain group spacing', () => {
     expect(glyphs.slice(headIndex + 2).map(glyph => [glyph.beats, glyph.sustain])).toEqual([[1, true], [1, true]])
   })
 
-  it('gives head/dash and dash/dash gaps three quarters of the justification surplus of a new attack', () => {
+  it('combines eighth-note dash weights with the sustain group coefficient during justification', () => {
     const { measures } = project('{5/4}\nN: 1^. 2^ |||')
     const measure = { ...measures[0]!, lastFragment: false }
     const positions = (width: number) => {
@@ -55,12 +56,14 @@ describe('sustain group spacing', () => {
     const small = positions(300), large = positions(500)
     const growth = (index: number) => large[index + 1]! - large[index]! - small[index + 1]! + small[index]!
     expect(growth(0) / growth(2)).toBeCloseTo(.75, 8)
-    expect(growth(1) / growth(2)).toBeCloseTo(.75, 8)
+    expect(growth(1) / growth(2)).toBeCloseTo(.75 * 2 ** -.25, 8)
     expect(growth(3) / growth(2)).toBeCloseTo(.75, 8)
   })
 
   it('keeps barlines as group boundaries even if the next bar starts with a dash', () => {
     const { measures } = project('{1/4}\nN: 1~ | 1 |||')
+    // Match spacing durations to isolate grouping across the barline.
+    measures[1]!.columns[0]!.glyphs[0]!.beats = .5
     measureNativeHorizontal(measures, options)
     const widths = measures.map(measure => measure.minimum)
     measures[1]!.columns[0]!.glyphs[0]!.sustain = true

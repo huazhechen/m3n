@@ -19,6 +19,15 @@ const resources = JSON.parse(readFileSync(new URL('manifest.json', root), 'utf8'
 }))
 beforeAll(() => prepareFontDesigns(resources))
 
+it('keeps the eight tremolo training bars together at 720px with tight spacing', () => {
+  const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
+  const layout = layoutNativeScore(parseM3NDocument(source), { width: 720, pageMargin: 0, paged: true,
+    minimumNoteGap: 8, lineDensityTarget: 2 / 3, textMeasurer: fontDesignMeasurer()! })
+  expect(layout.systems.find(row => row.measures.some(measure => measure.number === 19))?.measures.map(measure => measure.number))
+    .toEqual([19, 20, 21, 22, 23, 24, 25, 26])
+  expect(layout.systems.length).toBeLessThanOrEqual(37)
+})
+
 it('measures and renders Segno with real design fonts', () => {
   const measurer = fontDesignMeasurer()!
   expect(measureNativeControl('segno', '𝄋', measurer).width).toBeGreaterThan(0)
