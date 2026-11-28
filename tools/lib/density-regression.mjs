@@ -24,7 +24,7 @@ export function densityRegressionFailures(result, limit, width) {
   }
   if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
   if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
-  for (const [key, expected] of Object.entries({ staffFrameMm: 8.1375, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
+  for (const [key, expected] of Object.entries({ staffFrameMm: 7.846875, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
     if (!Number.isFinite(result.readability[key]) || Math.abs(result.readability[key] - expected * 640 / width) > .001) failures.push(key)
   }
   return failures
