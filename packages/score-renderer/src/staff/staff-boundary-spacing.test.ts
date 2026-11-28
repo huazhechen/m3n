@@ -23,13 +23,13 @@ it('normalizes both real bar gaps by one quarter regardless of the final note du
   }
 })
 
-it('keeps row-start clearance fixed at 1S while only real inner/bar intervals stretch and score', () => {
+it('keeps row-start clearance fixed at 1.6S while only real inner/bar intervals stretch and score', () => {
   const m = model('1# 2 3 4 |', true)
   const xs = staffSpacingPositions(m.prepared, .8, 0), stretched = staffSpacingPositions(m.prepared, .8, 100)
   expect(stretched[0]).toBe(xs[0])
   expect(staffRhythmicSpacing(m.prepared, .8, 0).gaps).toHaveLength(xs.length)
   const right = Math.max(...m.prepared.signatures.flatMap(s => s.symbols.map(v => v.x + staffGlyphMetrics(v.glyph, v.size).right)))
-  expect((m.start + xs[0]! - m.metrics.columns[0]!.left - right) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.staff.space, 8)
+  expect((m.start + xs[0]! - m.metrics.columns[0]!.left - right) * STAFF_SCALE).toBeCloseTo(1.6 * scoreLayoutConfig.staff.space, 8)
 })
 
 it('does not create samples for invisible exterior edges', () => {

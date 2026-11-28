@@ -24,7 +24,7 @@ export type StaffMeasureMetrics = {
   columns: ReadonlyArray<{ left: number; after: number; lyricLeft: number; lyricAfter: number; rhythmLeft: number; rhythmAfter: number; naturalAdvance: number; structural?: boolean; lyricRows: Array<{ lane: string; left: number; after: number }> }>
 }
 /** Music and visible boundaries use the same hard-spacing solver as numbered notation.
- * A row's 1S structural prefix is outside this chain and never stretches or scores. */
+ * A row's fixed structural prefix is outside this chain and never stretches or scores. */
 const columnSpacings = new WeakMap<StaffMeasureMetrics, Map<number, {
   columns: SpacingColumn[]; notes: number[]; intervals: ScoreRhythmicInterval[]; minimumWidth: number; stretchWeight: number
 }>>()
@@ -290,6 +290,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
   const entries = [measure.melody, ...(hasBass ? [measure.bass] : [])].map((items, lane) => {
     const bass = lane === 1, signature: Signature = { symbols: [], width: 0 }
     if (first) {
+      signature.width = style.rowClefInset / STAFF_SCALE
       const glyph = bass ? 'fClef' : 'gClef', m = staffGlyphMetrics(glyph)
       appendSignature(signature, { symbols: [{ glyph, x: -m.left, y: bass ? (staffMusicSize() / 4) * 5 : (staffMusicSize() / 4) * 7 }], width: m.right - m.left + (staffMusicSize() / 4 * 1) })
     }
