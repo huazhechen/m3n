@@ -25,10 +25,14 @@ mean(max(0, (comfortable − g) / (comfortable − minimum))²)
 
 同曲简谱由636px／1页／12行改选630px／1页／12行。两种谱式使用同一评分实现，因此简谱选宽也可能变化。
 
-本轮定点报告位于`.tmp/actual-core-spacing/staff.json`及`numbered.json`。本轮尚未重新统计完整117首，不能据此更新全库总页数。
+本轮定点报告位于`.tmp/actual-core-spacing/staff.json`及`numbered.json`。后续已重跑两种谱式各117首，完整结果见[双谱式全库对比](CURRENT_NOTATION_PAGE_COMPARISON.md)。
 
 ## 验证
 
 196个测试文件共1846项包测试全部通过。新增回归同时覆盖简谱和五线谱：非零baseline、墨迹撑开的实际间隔、各间隔成本平均，以及谱头和跨页样本排除。包测试聚合RSS峰值823MiB。
 
 5份固定宽度双谱式密度回归通过原有门槛；《爱如潮水》714px和720px均另外执行双谱式实绘审计，无碰撞或越界。两次浏览器检查串行运行，聚合RSS峰值872MiB；报告分别位于`.tmp/actual-core-spacing/density/report.json`和`target-density/report.json`。生成物已重新准备，包构建通过。
+
+## 部署与全库统计
+
+版本`391d`已部署并在实际页面核验。全库两种谱式各117首：简谱125页、1174行，平均选宽560.26px；五线谱128页、1051行，平均选宽566.51px。与修改前相比，简谱页数不变，10首选宽变化、1首行数变化；五线谱减少1页，45首选宽变化、19首行数变化。唯一逐曲页数变化为五线谱《爱如潮水》2→1页，无曲目增页。五线谱平均选宽减少2.77px，总行数增加22行。完整逐曲CSV、分页差异与验证边界见[双谱式全库对比](CURRENT_NOTATION_PAGE_COMPARISON.md)。
