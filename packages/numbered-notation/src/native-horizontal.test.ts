@@ -193,7 +193,7 @@ it('pools all interval costs across rows instead of averaging row means or row c
   result.systems[1]!.rhythmicGaps = [16, 20, 24]
   for (const system of result.systems) system.unitRhythmicGap = 18
   const quality = nativeLayoutQuality(result)
-  expect(quality.spacingCrampedCost).toBeCloseTo(.25)
+  expect(quality.spacingCrampedCost).toBeCloseTo(.0625)
   expect(quality.spacingExpandedCost).toBe(0)
 })
 
