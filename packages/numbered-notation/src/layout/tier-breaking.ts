@@ -1,16 +1,15 @@
 import type { ScoreLineCandidate } from './line-breaking.js'
 
-/** Exact shortest path for one horizontal tier. Exemptions identify score,
- * section and forced endings; no musical geometry is approximated. */
+/** Exact shortest path for one horizontal tier. Every row uses the same cost;
+ * no musical geometry is approximated. */
 export function planScoreTier(candidates: readonly (readonly ScoreLineCandidate[])[],
-  densityTarget: number, exempt: (end: number) => boolean): number[] | undefined {
+  densityTarget: number): number[] | undefined {
   const cost = Array<number>(candidates.length + 1).fill(Infinity)
   const next = Array<number>(candidates.length).fill(-1)
   cost[candidates.length] = 0
   for (let start = candidates.length - 1; start >= 0; start--) for (const row of candidates[start]!) {
-    const ending = exempt(row.end)
-    const slack = ending ? 0 : Math.max(0, 1 - row.density)
-    const deficit = ending ? 0 : Math.max(0, 1 - row.density / densityTarget)
+    const slack = Math.max(0, 1 - row.density)
+    const deficit = Math.max(0, 1 - row.density / densityTarget)
     const value = slack * slack + deficit * deficit + (row.penalty ?? 0) + 100 * Math.max(0, row.density - 1) ** 2 + cost[row.end]!
     if (value < cost[start]! - 1e-12 || Number.isFinite(value) && Math.abs(value - cost[start]!) <= 1e-12 && row.end > next[start]!) {
       cost[start] = value; next[start] = row.end

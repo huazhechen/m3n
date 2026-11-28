@@ -149,8 +149,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     let bestPageCount = Infinity
     const trials = scoreLayoutConfig.staff.noteGapCandidates.flatMap(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
-      const chosenEnds = planScoreTier(graph.candidates, scoreTierDensityTarget(spacing, scoreLayoutConfig.staff.noteGapCandidates),
-        end => end === graph.measured.length || Boolean(graph.measured[end]?.measure.force || graph.measured[end]?.measure.section))
+      const chosenEnds = planScoreTier(graph.candidates, scoreTierDensityTarget(spacing, scoreLayoutConfig.staff.noteGapCandidates))
       if (!chosenEnds) throw new Error('换行候选无法覆盖完整内容。')
       // Preserve the last occurrence of a tuplet parent across fragments, just
       // as the complete line scan does, without rescanning the score per row.

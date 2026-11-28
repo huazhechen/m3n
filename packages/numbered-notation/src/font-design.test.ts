@@ -27,6 +27,10 @@ it('keeps the eight tremolo training bars together at 720px with tight spacing',
     .toEqual([19, 20, 21, 22, 23, 24, 25, 26])
   expect(layout.systems.length).toBeLessThanOrEqual(37)
   expect(layout.pages).toHaveLength(2)
+  for (const first of [59, 63, 67, 83]) {
+    const rows = layout.systems.filter(row => row.measures.some(measure => measure.number >= first && measure.number < first + 4))
+    expect(rows.map(row => row.measures.map(measure => measure.number))).toEqual([[first, first + 1], [first + 2, first + 3]])
+  }
 })
 
 it('measures and renders Segno with real design fonts', () => {

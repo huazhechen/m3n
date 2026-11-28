@@ -62,8 +62,7 @@ export function breakMeasures(measures: NativeMeasure[], width: number, options:
   const lines: { measures: NativeMeasure[]; density: number }[] = []
   let start = 0
   const ends = endsOverride ? [...endsOverride] : options.lineDensityTarget === undefined ? planScoreLinesGlobally(candidates, timings)
-    : planScoreTier(candidates, options.lineDensityTarget, end => end === fragments.length || Boolean(fragments[end]?.breakBefore || fragments[end - 1]?.breakAfter)
-      || startsNativeSection(fragments[end]!, fragments[end - 1]))
+    : planScoreTier(candidates, options.lineDensityTarget)
   if (!ends) throw new Error('换行候选无法覆盖完整内容。')
   for (const end of ends) {
     lines.push({ measures: fragments.slice(start, end), density: candidates[start]!.find(row => row.end === end)!.density }); start = end

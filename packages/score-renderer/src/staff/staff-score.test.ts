@@ -69,8 +69,7 @@ describe('staff page packing', () => {
     expect(info.pageCount).toBe(1)
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
       const graph = prepareStaffLineGraph(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
-      const ends = planScoreTier(graph.candidates, spacing === scoreLayoutConfig.staff.noteGapCandidates.at(-1) ? .5 : 2/3,
-        end => end === graph.measured.length || Boolean(graph.measured[end]?.measure.force || graph.measured[end]?.measure.section))
+      const ends = planScoreTier(graph.candidates, spacing === scoreLayoutConfig.staff.noteGapCandidates.at(-1) ? .5 : 2/3)
       if (!ends) continue
       const lines = graph.makeLines(ends)
       const space = scoreLayoutConfig.staff.music / 4
