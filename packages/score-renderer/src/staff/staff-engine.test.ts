@@ -347,13 +347,13 @@ it('retains normal stems for flat beams and bounds shortened leap stems above th
 })
 
 
-it('uses the shared beam coefficient inside common beams', () => {
+it('uses equal rhythmic weights inside and across common beams', () => {
   const result = model('{2/4}\nN: ((5 5 5 5 5 5 5 5)) |||', .8)
   drawStaffMeasure(result, result.minimum, 0)
   const notes = result.entries[0]!.flatMap(entry => entry.notes)
   expect(result.beams.map(beam => beam.notes.length)).toEqual([4, 4])
   const gap = (a: number, b: number) => notes[b]!.headLeft - notes[a]!.headRight
-  expect(gap(1, 2) / gap(3, 4)).toBeCloseTo(scoreLayoutConfig.numbered.groupSpacingRatio, 8)
+  expect(gap(1, 2) / gap(3, 4)).toBeCloseTo(1, 8)
   expect(gap(1, 2) * scoreLayoutConfig.staff.engine.scale).toBeGreaterThan(1)
 })
 
@@ -362,7 +362,7 @@ it('keeps simultaneous voice attacks and beamed columns at the same rhythmic spa
   const result = createStaffMeasure(document.measures[0]!, true, true, measureText, .25)
   const columns = result.prepared.metrics.columns
   const head = staffGlyphMetrics('noteheadBlack'), ink = head.right - head.left
-  expect((columns[1]!.naturalAdvance - ink) / (columns[0]!.naturalAdvance - ink)).toBeCloseTo(scoreLayoutConfig.numbered.groupSpacingRatio, 8)
+  expect((columns[1]!.naturalAdvance - ink) / (columns[0]!.naturalAdvance - ink)).toBeCloseTo(1, 8)
   expect(columns[4]!.naturalAdvance).toBeCloseTo(columns[0]!.naturalAdvance, 8)
 })
 
@@ -414,11 +414,11 @@ describe('grace group engraving', () => {
   })
 })
 
-it('uses directional weights with the shared beam coefficient', async () => {
+it('uses directional weights with the staff duration curve', async () => {
   const { staffReadingSpacing } = await import('./staff-engine.js')
   const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |')
   const space = staffMusicSize() / 4
-  expect(result.prepared.metrics.columns[0]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio)
+  expect(result.prepared.metrics.columns[0]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2 * .5)
   expect(result.prepared.metrics.columns[4]!.naturalAdvance / space).toBeCloseTo(1.18 + 1.2)
   const compressed = staffReadingSpacing(result.prepared, .25, 0)
   const relaxed = staffReadingSpacing(result.prepared, .25, 100)
@@ -432,7 +432,7 @@ it('keeps pair spacing local and independent of unrelated score durations', asyn
   const document = projectStaffDocument(analyzeM3N('{4/4}\nN: ([3333:2]) 3 3 3 | ([3333:2]) 3 3 3 | (3 3) 3 3 3 |').score)
   const preparation = createStaffPreparation(document)
   const result = preparation.measure(document.measures[2]!, false, false, measureText)
-  expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(1.18 + 1.2 * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio)
+  expect(result.metrics.columns[0]!.naturalAdvance / (staffMusicSize() / 4)).toBeCloseTo(1.18 + 1.2 * .5)
 })
 
 it.each([.6, 1.8])('uses %s staff spaces as the quarter-note base minimum without compressing', async spacing => {
@@ -440,7 +440,7 @@ it.each([.6, 1.8])('uses %s staff spaces as the quarter-note base minimum withou
   const result = model('{4/4}\nN: (3 3) (3 3) 3 3 |', spacing)
   const positions = staffReadingSpacing(result.prepared, spacing, 0).positions
   const head = staffGlyphMetrics('noteheadBlack'), space = staffMusicSize() / 4
-  expect(positions[1]! - positions[0]! - (head.right - head.left)).toBeCloseTo(spacing * space * Math.sqrt(.5) * scoreLayoutConfig.numbered.groupSpacingRatio, 8)
+  expect(positions[1]! - positions[0]! - (head.right - head.left)).toBeCloseTo(spacing * space * .5, 8)
   expect(positions[5]! - positions[4]! - (head.right - head.left)).toBeCloseTo(spacing * space, 8)
   expect(staffReadingSpacing(result.prepared, spacing, -100).positions).toEqual(positions)
 })
@@ -474,7 +474,7 @@ it.each([.6, 1.8])('opens the long side of staff syncopation at spacing %s', asy
   for (const extra of [0, 80]) {
     const xs = staffSpacingPositions(result.prepared, spacing, extra)
     const gaps = xs.slice(1).map((x, i) => x - xs[i]! - result.prepared.metrics.columns[i]!.after - result.prepared.metrics.columns[i + 1]!.left)
-    expect(gaps[1]! / gaps[0]!).toBeCloseTo(2 ** .25, 8)
+    expect(gaps[1]! / gaps[0]!).toBeCloseTo(Math.sqrt(2), 8)
   }
 })
 

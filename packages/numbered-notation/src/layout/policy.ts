@@ -38,10 +38,11 @@ export function scoreRhythmicWeight(duration: number): number {
 
 /** Directed pair clearance: quarter = 1; zero-time structural items = quarter.
  * The left share defaults to 75%; notation adapters may request equal shares.
+ * Adapters supply duration curves; the default preserves numbered spacing.
  * Ink reservations stay independent of this minimum/stretch weight. */
-export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1, leftShare = .75): number {
-  const a = scoreRhythmicWeight(left && left > 0 ? left : 1)
-  const b = scoreRhythmicWeight(right && right > 0 ? right : 1)
+export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio = 1, leftShare = .75, durationWeight = scoreRhythmicWeight): number {
+  const a = durationWeight(left && left > 0 ? left : 1)
+  const b = durationWeight(right && right > 0 ? right : 1)
   return a ** leftShare * b ** (1 - leftShare) * groupRatio
 }
 
