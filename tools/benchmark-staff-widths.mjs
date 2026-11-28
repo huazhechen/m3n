@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import {createHash} from 'node:crypto'
 import {existsSync,mkdirSync,readFileSync,readdirSync,renameSync,writeFileSync} from 'node:fs'
@@ -45,9 +46,8 @@ const save=()=>{
  report.totalMs=performance.now()-started
  writeFileSync(output+'.tmp',JSON.stringify(report,null,2)+'\n');renameSync(output+'.tmp',output)
 }
-const executablePath=process.env.CHROMIUM_PATH||['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync)
 for(const [index,input]of inputs.entries()){
- const setupStarted=performance.now(),browser=await chromium.launch({executablePath,headless:true})
+ const setupStarted=performance.now(),browser=await chromium.launch(chromiumLaunchOptions())
  try{
   const page=await browser.newPage()
   await page.route('http://staff-benchmark.local/**',route=>{

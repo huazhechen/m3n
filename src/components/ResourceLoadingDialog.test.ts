@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import '../../tools/test-dialog-setup'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -8,9 +9,7 @@ let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
   vi.useFakeTimers()
-  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
-  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
@@ -19,6 +18,7 @@ afterEach(() => {
   act(() => root.unmount())
   container.remove()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 function render(title: string, loading = true, active = true, delayMs?: number) {
   act(() => root.render(createElement('div', null,

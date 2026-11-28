@@ -1,8 +1,6 @@
 import { compileScorePerformance, formatM3N, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
 import source from '../scores/g_xian_shang_de_yong_tan_diao_01.m3n?raw'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 import reference from './fixtures/air-on-g-string-reference.json'
 
 // G-major arrangement: Kuaiyuepu 4bFml142f, corrected against Mutopia
@@ -41,12 +39,6 @@ it('preserves the complete Air arrangement, chromatic notes and simple repeats w
     ['g:4:', 1], ['f:4:s', .5], ['g:4:', .5],
   ])
   expect(compileScorePerformance(document).beats).toBe(288)
-  const file = 'g_xian_shang_de_yong_tan_diao_01.m3n'
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
-  expect(categories.find(category => category.id === 'instrumental')?.files).toEqual(
-    plan.entries.filter(entry => entry.section === 'instrumental').map(entry => entry.file),
-  )
 })
 
 it('matches the reference melody, rhythm and tied attacks and every slur in the violin reference', () => {

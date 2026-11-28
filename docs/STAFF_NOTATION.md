@@ -14,7 +14,7 @@ ScoreDocument → projectStaffDocument → 原生时间列、Bravura字符与数
 
 不序列化音乐中间格式，不重新解析源码，不修改领域文档。`staff-document.ts` 保留音符、和弦、休止符、连音组子音符、歌词、临时变音、谱号所需音高、调拍速、反复和分行意图；沿用 `scoreEventIds`。普通反复保持紧凑；分遍调号和带调性／八度基准的访问由现有 `staffDisplayScore` 展开，保留源码ID、歌词遍次与演奏身份。
 
-播放仍由项目的演奏编译器与SpessaSynth完成，不使用绘谱库的演奏模型。五线谱模块不请求WASM，资源下载失败仍可切回简谱。
+播放仍由项目的演奏编译器与SpessaSynth完成，不使用绘谱库的演奏模型。五线谱模块不请求WASM，资源下载失败仍可切回简谱。浏览器会缓存失败的ES模块导入，模块网络错误需刷新页面后重新选择五线谱；同页切换谱式不会清除浏览器的模块失败缓存。
 
 ## 引擎边界
 
@@ -91,7 +91,7 @@ Fine、D.C.、D.S. 及 Coda 等导航记号按局部音乐墨迹放置，净空4
 ## 验证与选宽
 
 - `npm run test -w @m3n/score-renderer`：领域投影、完整曲库身份和不变性、临界版宽、共有断点、分页容量和缓存一致性。
-- `npm run test:staff-layout`：真实浏览器检查全库最终SVG边界、A4容量、系统间及系统内的实际像素碰撞，包含房子挂钩、行内调号及独立音符／和弦／休止符；符杠与符干的有意连接不算碰撞。`node tools/verify-staff-layout.mjs --score=文件名片段` 可定向运行，多个片段以逗号分隔；加 `--measure-numbers` 检查开启小节号的版面，`--screenshots` 保留成功谱例的SVG及截图。可通过 `CHROMIUM_PATH` 选择已安装的headless shell以减少浏览器内存。
+- `npm run test:staff-layout`：兼容入口，运行与简谱共用的10份真实字体代表输入，检查最终SVG边界、实际像素碰撞、音乐物理尺度、密度及显式换行。全库身份由轻量领域投影测试覆盖，不再逐曲重复浏览器渲染。定向诊断可运行 `node tools/compare-notation-density.mjs --scores=badinerie_bwv1067_01 --widths=640 --screenshots`；只有明确需要全库视觉诊断时才加 `--all`。
 - `tests/e2e/staff-layout.spec.ts`：硬换行、实际可见五线、连续／分页横坐标一致、等宽小节、字形尺寸、大谱表歌词和超高谱头。
 - `tests/e2e/staff-notation.spec.ts`：无WASM请求、三态选择、定位、高亮、移调、资源失败恢复、反复房子、PNG／矢量PDF。
 

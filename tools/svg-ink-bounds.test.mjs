@@ -1,10 +1,11 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {before,after,test} from 'node:test'
 import {chromium} from '@playwright/test'
 let browser,page
 before(async()=>{
-  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium',headless:true})
+  browser=await chromium.launch(chromiumLaunchOptions())
   page=await browser.newPage()
   await page.setContent('<svg width="300" height="300" viewBox="0 0 300 300"></svg>')
   await page.addScriptTag({content:readFileSync(new URL('./lib/svg-ink-bounds.mjs',import.meta.url),'utf8').replace('export function','function')})

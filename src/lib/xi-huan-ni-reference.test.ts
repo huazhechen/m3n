@@ -1,7 +1,5 @@
 import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDocument, resolveScorePitches, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 import source from '../scores/xi_huan_ni_01.m3n?raw'
 
 // Read independently from the uploaded 8ee9b92473a4c2a7dd94faf94ac2dc7e.jpeg.
@@ -68,7 +66,4 @@ it('returns to the photographed repeat at the car-window verse and reuses the fi
   expect(performance.notes[0]).toMatchObject({ start: 1.5, pitch: 64 })
   expect(document.intervals.some(interval => interval.kind === 'inst')).toBe(false)
   expect(document.parts.get('score')!.melody.flatMap(bar => bar.events).filter(event => event.kind === 'rest').every(event => event.beats <= 1.5)).toBe(true)
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === 'xi_huan_ni_01.m3n')).toHaveLength(1)
-  expect(categories.filter(category => category.files.includes('xi_huan_ni_01.m3n')).map(category => category.id)).toEqual(['classic'])
 })

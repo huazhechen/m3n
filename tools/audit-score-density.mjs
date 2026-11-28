@@ -1,6 +1,7 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 // Offline comparison using current source, browser font measurements and web margins.
@@ -22,7 +23,7 @@ await build({ configFile: false, logLevel: 'error', resolve: { alias: {
   '@m3n/numbered-notation/layout': resolve(root, 'packages/numbered-notation/src/layout/index.ts'),
   '@m3n/numbered-notation': resolve(root, 'packages/numbered-notation/src/index.ts'),
 } }, build: { outDir: resolve(out, 'bundle'), lib: { entry, name: 'density', formats: ['iife'], fileName: () => 'bundle.js' } } })
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--no-sandbox'] })
+const browser = await chromium.launch(chromiumLaunchOptions())
 try {
   const page = await browser.newPage({ viewport: { width: 760, height: 1100 } })
   await page.setContent('<main></main>')

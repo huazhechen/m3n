@@ -5,13 +5,13 @@ const littleRedRidingHood = readFileSync(new URL('../../src/scores/xiao_hong_mao
 
 for (const width of [390, 1280]) {
   for (const mode of ['continuous', 'paged']) {
-    test(`Little Red Riding Hood highlight stays within its engraved row at ${width}px in ${mode} mode`, async ({ page }) => {
+    test(`Little Red Riding Hood highlight follows row and barline bounds at ${width}px in ${mode} mode`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 900 })
       await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
       await page.goto('/editor')
       await page.locator('.score-paper g.note').first().waitFor({ state: 'attached' })
       await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
-      await page.getByLabel('M3N source').fill(littleRedRidingHood.replace('108qpm', '240qpm'))
+      await page.getByLabel('M3N source').fill(littleRedRidingHood.replace('108qpm', '360qpm'))
       const preview = page.getByRole('tab', { name: '预览', exact: true })
       if (await preview.isVisible()) await preview.click()
       await expect(page.locator('.score-paper g.measure')).toHaveCount(24)
@@ -29,7 +29,12 @@ for (const width of [390, 1280]) {
       const startup = await cue.evaluate(rowBounds)
       expect(startup.y).toBeCloseTo(startup.top, 4)
       expect(startup.height).toBeCloseTo(startup.bottom - startup.top, 4)
-      await expect(page.locator('.score-paper .measure-playback-highlight')).toHaveCount(24, { timeout: 25_000 })
+      // Observe the last measure promptly and pause before its short final beat
+      // ends; geometry inspection and screenshots then have no timing race.
+      await expect.poll(() => page.locator('.score-paper .measure-playback-highlight').count(),
+        { timeout: 25_000, intervals: [20] }).toBe(24)
+      await page.getByRole('button', { name: '暂停', exact: true }).click()
+      await expect(page.locator('.score-paper .is-playing-measure')).toHaveCount(1)
       const bands = await page.locator('.score-paper .measure-playback-highlight').evaluateAll(elements => elements.map(element => {
         const band = element as SVGRectElement
         const system = band.closest<SVGGElement>('g.system')!
@@ -40,40 +45,25 @@ for (const width of [390, 1280]) {
         expect(band.y).toBeCloseTo(band.top, 4)
         expect(band.height).toBeCloseTo(band.bottom - band.top, 4)
       }
-    })
-
-    test(`playback measure highlight aligns exactly with barlines at ${width}px in ${mode} mode`, async ({ page }, info) => {
-      await page.setViewportSize({ width, height: 900 })
-      await page.addInitScript(mode => localStorage.setItem('m3n:render-mode', mode), mode)
-      await page.goto('/editor')
-      await page.locator('.score-paper g.note').first().waitFor({ state: 'attached' })
-      await expect(page.locator('.score-paper')).not.toHaveAttribute('aria-busy', 'true')
-      await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: 1 2 3 4 | 5 6 7 1e |||\nL: 一二三四五六七八')
-      const preview = page.getByRole('tab', { name: '预览', exact: true })
-      if (await preview.isVisible()) await preview.click()
-      await expect(page.locator('.score-paper g.note')).toHaveCount(8)
-      await expect(page.locator('.score-paper')).toBeVisible()
-      await page.getByRole('button', { name: '播放', exact: true }).click()
-      const second = page.locator('.score-paper g.measure').nth(1)
-      await expect(second).toHaveClass(/is-playing-measure/, { timeout: 20_000 })
-      const bounds = await second.evaluate(element => {
-        const band = element.querySelector<SVGRectElement>('.measure-playback-highlight')!.getBBox()
-        const previous = element.previousElementSibling!
-        const bars = [...previous.querySelectorAll<SVGRectElement>('rect')]
-          .filter(rect => rect.width.baseVal.value < 10 && rect.height.baseVal.value > 20)
-        const barRight = Math.max(...bars.map(rect => rect.x.baseVal.value + rect.width.baseVal.value))
-        const closingBars = [...element.querySelectorAll<SVGRectElement>('[data-m3n-role="bar"] rect')]
-        const closingRight = Math.max(...closingBars.map(rect => rect.x.baseVal.value + rect.width.baseVal.value))
-        const note = element.querySelector<SVGGraphicsElement>('g.note')!.getBBox()
-        return { bandLeft: band.x, bandRight: band.x + band.width, barRight, closingRight, noteLeft: note.x, noteRight: note.x + note.width }
+      // Row extent and barline alignment use the same highlight rectangles;
+      // verify both after one real playback traversal. Hidden rectangles have
+      // a zero getBBox(), so read their actual engraved SVG coordinates.
+      const bounds = await page.locator('.score-paper').evaluate(paper => {
+        const system = [...paper.querySelectorAll('g.system')].find(system => system.querySelectorAll('g.measure').length > 1)!
+        const [previous, second] = [...system.querySelectorAll('g.measure')]
+        const band = second!.querySelector<SVGRectElement>('.measure-playback-highlight')!
+        const note = second!.querySelector<SVGGraphicsElement>('g.note')!.getBBox()
+        const bars = [...previous!.querySelectorAll<SVGRectElement>('[data-m3n-role="bar"] rect')]
+        const closing = [...second!.querySelectorAll<SVGRectElement>('[data-m3n-role="bar"] rect')]
+        return { left: band.x.baseVal.value, right: band.x.baseVal.value + band.width.baseVal.value, noteRight: note.x + note.width,
+          opening: Math.max(...bars.map(rect => rect.x.baseVal.value + rect.width.baseVal.value)),
+          closing: Math.max(...closing.map(rect => rect.x.baseVal.value + rect.width.baseVal.value)) }
       })
-      expect(bounds.barRight).toBeGreaterThan(0)
-      expect(bounds.bandLeft).toBeCloseTo(bounds.barRight, 4)
-      expect(bounds.bandRight).toBeCloseTo(bounds.closingRight, 4)
-      expect(bounds.bandRight).toBeGreaterThanOrEqual(bounds.noteRight)
+      expect(bounds.opening).toBeGreaterThan(0)
+      expect(bounds.left).toBeCloseTo(bounds.opening, 4)
+      expect(bounds.right).toBeCloseTo(bounds.closing, 4)
+      expect(bounds.right).toBeGreaterThanOrEqual(bounds.noteRight)
       await page.screenshot({ path: info.outputPath('measure-highlight.png') })
-      await page.getByRole('button', { name: '暂停', exact: true }).click()
-      await expect(page.locator('.score-paper .is-playing-measure')).toHaveCount(1)
     })
   }
 }

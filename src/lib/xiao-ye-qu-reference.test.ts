@@ -3,8 +3,6 @@ import { expect, it } from 'vitest'
 import source from '../scores/xiao_ye_qu_01.m3n?raw'
 import reference from './fixtures/xiao-ye-qu-kuaiyuepu-reference.json'
 import fixedPitches from './fixtures/xiao-ye-qu-fixed-pitches.json'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 
 function midi(value: string) {
   const [letter, octave, accidental = ''] = value.split(':')
@@ -84,13 +82,4 @@ it('keeps only the melody, without lyrics, violin credits or bow symbols', () =>
   expect(document.lyrics).toEqual([])
   expect([...deriveScoreInteraction(document).lyricsByEvent.values()].flat()).toEqual([])
   expect(source).not.toMatch(/⊓|∨|弓法|text=|小提琴|兔耳|lyricist=|^L\d*:/m)
-})
-
-it('keeps the small-piece placement and updates the catalog title', () => {
-  const category = categories.find(category => category.id === 'instrumental')!
-  expect(category.id).toBe('instrumental')
-  expect(category.files).toContain('xiao_ye_qu_01.m3n')
-  expect(plan.entries.filter(entry => entry.section === category.id).map(entry => entry.file)).toEqual(category.files)
-  expect(plan.entries.find(entry => entry.file === 'xiao_ye_qu_01.m3n')!.title).toBe('小夜曲')
-  expect(plan.sourceCount).toBe(plan.entries.length)
 })

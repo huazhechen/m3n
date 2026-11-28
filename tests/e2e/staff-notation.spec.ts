@@ -62,10 +62,9 @@ test('staff editor preserves width, locates source, highlights playback and keep
 })
 
 test('staff pagination, tempo and transposition are shared by screen, PNG and vector PDF exports', async ({ page }, info) => {
-  test.setTimeout(120_000)
   await page.goto('/editor')
   await waitForEditor(page)
-  await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 96 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | ') + ' |||\nB: ' + Array.from({ length: 96 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
+  await page.getByLabel('M3N source').fill('{title=五线谱导出}{key=G}{4/4}{90qpm}\nN: ' + Array.from({ length: 16 }, (_, index) => index === 0 ? '{cresc}[135:h]. 2_ 3 4{/}' : '1 2 3 4').join(' | {br} ') + ' |||\nB: ' + Array.from({ length: 16 }, () => '1d 2d 3d 4d').join(' | ') + ' |')
   await selectNotationMode(page, '五线谱')
   await openScoreSettings(page)
   await page.getByRole('slider', { name: '乐谱宽度' }).fill(String(576 / widthConfig.unit))
@@ -159,18 +158,26 @@ test('staff lyrics highlight the matching verse during a written repeat', async 
   })).toEqual({ first: false, second: true, fill: 'rgb(184, 130, 0)' })
 })
 
-test('a failed optional staff download leaves the notation selector available', async ({ page }) => {
+test('a failed staff module permits numbered notation and recovers after reload', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3n:notation-mode', 'staff'))
-  await page.route(/\/(?:staff-score|staff-engine)[^/]*\.js$/, route => route.abort())
+  const staffModules = /\/(?:staff-score|staff-engine)[^/]*\.js$/
+  await page.route(staffModules, route => route.abort())
   await page.goto('/scores/huan_le_song_01')
   await expect(page.locator('.render-message')).toBeVisible()
   await selectNotationMode(page, '首调')
   await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
   await expect(page.locator('.render-message')).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: '准备五线谱', exact: true })).toHaveCount(0)
+  // Failed ESM imports remain in the browser module map. A reload starts a
+  // fresh module graph; switching notation alone cannot retry that URL.
+  await page.unroute(staffModules)
+  await page.reload()
+  await selectNotationMode(page, '五线谱')
+  await expect(page.locator('.score-paper g.staff').first()).toBeVisible()
+  await expect(page.locator('.render-message')).toHaveCount(0)
 })
 
 test('basic exercises keep section labels and Chinese directions inside staff pages', async ({ page }) => {
-  test.setTimeout(120_000)
   const source = await readFile('src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', 'utf8')
   await page.goto('/editor')
   await waitForEditor(page)

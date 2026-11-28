@@ -181,4 +181,6 @@ sequenceDiagram
 | Web app | `src/main.tsx`、`src/App.tsx` | 浏览器路由与页面 |
 | Worker | `worker/index.ts` | Cloudflare Workers runtime |
 
+单测共用 `tools/vitest-settings.ts` 与逐文件清理脚本。验证入口 `tools/verify-project.mjs` 负责串行阶段及测试进程回收；`tools/lib/chromium-options.mjs` 统一审计、导出与端到端的浏览器参数，`tools/lib/density-regression.mjs` 定义真实字体密度契约。`tools/scorebook-width.mjs` 的 `compareWidthMeasurements` 同时供搜索和谱集赢家缓存排序，避免两份排名规则分叉。
+
 更新模块边界、公共入口或关键数据流时，应同步更新本图和 [架构文档](ARCHITECTURE.md)。

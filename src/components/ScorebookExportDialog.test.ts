@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import '../../tools/test-dialog-setup'
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -18,8 +19,6 @@ afterEach(() => { act(() => root?.unmount()); document.body.replaceChildren(); v
 it.each([['staff', '简谱', 'movable'], ['fixed', '五线谱', 'staff']] as const)('uses the export choice independently of saved %s notation and shows progress', async (savedMode, choice, mode) => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('localStorage', { getItem: (key: string) => key === 'm3n:notation-mode' ? savedMode : key === 'm3n:measure-numbers' ? '1' : null })
-  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
-  Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
   let report!: (value: ScorebookProgress) => void
   // Slow PDF code must not keep a ready library waiting to start layout.
   mocks.preload.mockImplementation(() => new Promise(() => {}))
@@ -64,8 +63,6 @@ it.each([['staff', '简谱', 'movable'], ['fixed', '五线谱', 'staff']] as con
 
 it('finishes PDF generation before enabling a synchronous download', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
-  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: vi.fn() })
-  Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: vi.fn() })
   const pages = Array.from({ length: 2 }, () => {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     svg.innerHTML = '<text>Page</text>'

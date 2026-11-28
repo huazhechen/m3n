@@ -1,7 +1,8 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
 
@@ -35,7 +36,7 @@ function validate(file, pages, urls) {
   for (const url of urls) assert(links.some(line => line.trim().endsWith(` ${url}`)), `Missing title link: ${url}`)
   return { bytes: statSync(file).size, sha256: hash(readFileSync(file)) }
 }
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
+const browser = await chromium.launch(chromiumLaunchOptions())
 try {
   const page = await browser.newPage()
   await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><div id="scratch"></div>' }))

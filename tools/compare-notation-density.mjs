@@ -1,5 +1,7 @@
+import { densityLimits, densityRegressionFailures } from './lib/density-regression.mjs'
+import { browserPages } from './lib/browser-pages.mjs'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 
 const argument = name => process.argv.find(value => value.startsWith(`--${name}=`))?.slice(name.length + 3)
@@ -12,19 +14,7 @@ const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')
 const coreGap = argument('core-gap') === undefined ? undefined : Number(argument('core-gap'))
 if (coreGap !== undefined && (!Number.isFinite(coreGap) || coreGap < 0)) throw new Error('Invalid core gap')
-const densityLimits = {
-  // v37 comfort scoring selects the loose tier: 12 rows / 698px. Keep the
-  // existing height, font and ink gates while accepting this intended plan.
-  butter_fly_01: { staffHeight: 860, staffRows: 12, numberedHeight: 700, numberedRows: 12, heightRatio: 1.24 },
-  badinerie_bwv1067_01: { staffHeight: 800, staffRows: 10, numberedHeight: 720, numberedRows: 10, heightRatio: 1.61 },
-  flower_dance_01: { staffHeight: 2470, staffRows: 33, numberedHeight: 1850, numberedRows: 30, heightRatio: 1.44 },
-  mozart_k545_01: { staffHeight: 2190, staffRows: 25, numberedHeight: 1570, numberedRows: 23, heightRatio: 1.43 },
-  guo_huo_01: { staffHeight: 1130, staffRows: 11, numberedHeight: 760, numberedRows: 9, heightRatio: 1.57 },
-  // 6.5px staff spaces select two rows at 640px with the current minimum tiers.
-  ma_li_you_zhi_xiao_gao_yang_01: { staffHeight: 210, staffRows: 2, numberedHeight: 230, numberedRows: 2, heightRatio: 1.5, exactRows: { numbered: 2, staff: 2 } },
-  ban_yin_jie_kou_qin_ji_ben_gong_01: { staffHeight: 3410, staffRows: 47, numberedHeight: 2450, numberedRows: 42, heightRatio: 1.49 },
-  ni_shi_wo_xin_ai_de_gu_niang_01: { staffHeight: 1300, staffRows: 10, numberedHeight: 1060, numberedRows: 9, heightRatio: 1.26 },
-}
+
 if (regression && (['scores', 'widths', 'staff-sizes', 'core-gap'].some(name => argument(name))
     || process.argv.includes('--all') || process.argv.includes('--metrics-only') || autoStaffWidth)) {
   throw new Error('--regression uses fixed fixtures, 640px and full ink audits')
@@ -40,7 +30,6 @@ if (process.argv.includes('--bundle-only')) {
   mkdirSync(output, { recursive: true })
   // Release all bundler/font buffers before launching Chromium.
   execFileSync(process.execPath, [import.meta.filename, '--bundle-only', `--output=${output}`], { stdio: 'inherit' })
-  const { chromium } = await import('@playwright/test')
   const files = (regression ? Object.keys(densityLimits).join(',') : argument('scores') ?? 'huan_le_song_01,mo_li_hua_01,ni_shi_wo_xin_ai_de_gu_niang_01,flower_dance_01').split(',')
   const sourceInputs = process.argv.includes('--all') ? ['scores', 'works', 'examples'].flatMap(scope => readdirSync(join(root, 'src', scope)).filter(file => file.endsWith('.m3n')).map(file => `${scope}/${file}`)) : files.map(file => `scores/${file}.m3n`)
   const inputs = sourceInputs.map(file => ({ file, path: join(root, 'src', file),
@@ -48,7 +37,8 @@ if (process.argv.includes('--bundle-only')) {
   if (regression) inputs.push({ file: 'scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n',
     path: join(root, 'src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n'), width: 768,
     limit: { ...densityLimits.ban_yin_jie_kou_qin_ji_ben_gong_01,
-      together: Array.from({ length: 8 }, (_, index) => `m3n-measure-1-${19 + index}`) } })
+      // The source explicitly ends the tremolo exercise after measure 26.
+      lineEnds: ['m3n-measure-1-26'] } })
   if (regression) inputs.push({ file: 'fixtures/grand-staff-density.m3n',
     path: join(root, 'tools/fixtures/grand-staff-density.m3n'),
     limit: { staffHeight: 600, numberedHeight: 600, staffRows: 3, numberedRows: 3, heightRatio: 2 } })
@@ -78,14 +68,7 @@ if (process.argv.includes('--bundle-only')) {
         outside: entries.reduce((sum, entry) => sum + entry.numbered.outside.length + entry.staff.outside.length, 0),
         overlaps: entries.reduce((sum, entry) => sum + entry.numbered.overlaps.length + entry.staff.overlaps.length, 0) }, entries }, null, 2) + '\n')
   }
-  for (const { file, path: inputPath, limit, width: fixedWidth } of inputs) {
-    // A fresh browser releases native font caches, which survive page reloads.
-    const browser = await chromium.launch({ headless: true,
-      // Chromium's single-process GPU path can crash on hosted Linux runners.
-      args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--max-old-space-size=256'],
-      executablePath: process.env.CHROMIUM_PATH || (process.env.CI ? undefined : ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)) })
-    try {
-      const page = await browser.newPage()
+  for await (const { input: { file, path: inputPath, limit, width: fixedWidth }, page } of browserPages(inputs)) {
       await page.route(`${origin}/**`, route => new URL(route.request().url()).pathname === '/'
         ? route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><html lang="zh-CN" style="font-synthesis:none"><body></body></html>' })
         : route.fulfill({ path: join(output, 'bundle/bundle.js'), contentType: 'application/javascript' }))
@@ -125,19 +108,7 @@ if (process.argv.includes('--bundle-only')) {
           delete result.svg
         }
         if (regression) {
-          const failures = []
-          if (limit.exactRows && Object.entries(limit.exactRows).some(([notation, rows]) => result[notation].rows !== rows)) failures.push('automatic phrase rows')
-          if (limit.together && !['staff', 'numbered'].every(notation => result[notation].measureRows.some(row => limit.together.every(id => row.includes(id))))) failures.push('exercise split across rows')
-          if (result.staff.naturalHeight > limit.staffHeight) failures.push('staff continuous height')
-          if (result.staff.rows > limit.staffRows) failures.push('staff row count')
-          if (result.numbered.naturalHeight > limit.numberedHeight) failures.push('numbered continuous height')
-          if (result.numbered.rows > limit.numberedRows) failures.push('numbered row count')
-          if (result.staff.naturalHeight / result.numbered.naturalHeight > limit.heightRatio) failures.push('height ratio')
-          if (result.staff.displayedEvents !== result.numbered.displayedEvents) failures.push('displayed events')
-          // A density improvement must retain the calibrated musical and lyric sizes.
-          for (const [key, expected] of Object.entries({ staffFrameMm: 7.55625, numberedFrameMm: 8.71875, lyricEmMm: 4.65 })) {
-            if (Math.abs(result.readability[key] - expected * 640 / width) > .001) failures.push(key)
-          }
+          const failures = densityRegressionFailures(result, limit, width)
           if (failures.length) {
             result.regressionFailures = failures
             console.error(`Density regression: ${file}: ${failures.join(', ')}`)
@@ -155,7 +126,6 @@ if (process.argv.includes('--bundle-only')) {
           process.exitCode = 1
         }
       }
-    } finally { await browser.close() }
   }
   writeReport(true)
 }

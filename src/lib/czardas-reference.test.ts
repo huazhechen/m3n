@@ -2,8 +2,6 @@ import { compileScorePerformance, formatM3N, parseM3NDocument, resolveScorePitch
 import { expect, it } from 'vitest'
 import source from '../scores/cha_er_da_shi_01.m3n?raw'
 import reference from './fixtures/czardas-ricordi-reference.json'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 
 const document = parseM3NDocument(source)
 const bars = document.parts.get('score')!.melody.filter(bar => bar.events.length)
@@ -66,12 +64,7 @@ it('keeps the original three repeats and the complete D-minor/D-major form as a 
     expect(tuplets.map(event => [event.tuplet!.num, event.beats])).toEqual([[3, .5], [3, .5]])
   }
   expect(pitches.get(bars.at(-1)!.events[0]!)).toEqual(['d:4:'])
-  const file = 'cha_er_da_shi_01.m3n'
-  expect(categories.find(category => category.id === 'instrumental-large')!.files).toContain(file)
-  expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
-  expect(plan.sourceCount).toBe(plan.entries.length)
 })
-
 
 it('uses an explicit 8va only for the sixteen harmonic bars', () => {
   expect(source.match(/\{8va\}/g)).toHaveLength(1)

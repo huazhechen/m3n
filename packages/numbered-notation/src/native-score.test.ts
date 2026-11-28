@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { deriveScoreInteraction, measurePlaybackPasses, parseM3NDocument, scoreEventIds, type ScoreDocument } from '@m3n/notation'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { NativeRenderOptions as NumberedNotationRenderOptions } from './native-layout-model.js'
@@ -51,37 +51,8 @@ describe('native page measurement', () => {
 })
 
 describe('native engraving acceptance', () => {
-  const folder = resolve(process.cwd(), '../../src/scores')
-  it.each(readdirSync(folder).filter(file => file.endsWith('.m3n')))('keeps every event, pitch slot and lyric in %s across narrow and paged layouts', file => {
-    const document = parseM3NDocument(readFileSync(resolve(folder, file), 'utf8'))
-    const before = structuredClone(document), ids = scoreEventIds(document)
-    Object.defineProperty(document, 'source', { get() { throw new Error('engraving must not scan source') } })
-    let firstIds: string[] | undefined
-    for (const width of [320, 800]) for (const paged of [false, true]) {
-      const { root, score } = render(document, { width, paged })
-      expect(score.diagnostics.filter(item => item.severity === 'error')).toEqual([])
-      const notes = [...root.querySelectorAll('g.note')]
-      const byEvent = new Map<string, Element[]>()
-      for (const note of notes) { const id = note.getAttribute('data-m3n-id')!; byEvent.set(id, [...(byEvent.get(id) ?? []), note]) }
-      const visibleIds = notes.map(note => note.getAttribute('id')!)
-      expect(new Set(visibleIds).size).toBe(visibleIds.length)
-      expect(visibleIds.slice().sort()).toEqual((firstIds ??= visibleIds.slice().sort()))
-      for (const [event, id] of ids) {
-        const fragments = byEvent.get(id) ?? []
-        expect(fragments.length, id).toBeGreaterThan(0)
-        if (event.kind === 'tuplet') expect(fragments).toHaveLength(event.pitches.length)
-        expect(fragments.every(note => note.closest('g.system g.measure'))).toBe(true)
-      }
-      for (const svg of root.querySelectorAll('svg')) {
-        expect(svg.getAttribute('data-engine')).toBe('m3n')
-        expect(Number(svg.getAttribute('height'))).toBeGreaterThan(0)
-      }
-      const allIds = [...root.querySelectorAll('[id]')].map(node => node.id)
-      expect(new Set(allIds).size).toBe(allIds.length)
-    }
-    expect([...document.parts]).toEqual([...before.parts])
-  })
-
+  // Full-corpus identity and immutability live in native-library-projection.
+  // Real-font geometry is covered by the shared notation density regressions.
   it('aligns melody and bass by musical time, and connects each visible system', () => {
     const document = parseM3NDocument('{4/4}\nN: '+Array(8).fill('1 2 3 4 |').join(' ')+'\nB: '+Array(8).fill('1d^ 5d^ |').join(' '))
     for (const width of [320, 800]) for (const paged of [false, true]) {

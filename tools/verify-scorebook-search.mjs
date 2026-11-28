@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 // Exhaustive versus bounded search with the production bundle and real shared
 // fonts. Heavy runs are serial; only small hashes/metadata survive each run.
 import assert from 'node:assert/strict'
@@ -17,8 +18,7 @@ let browser
 try {
   const reports = []
   for (const pruneSearch of [false, true]) {
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true,
-      args: ['--single-process', '--no-zygote', '--disable-gpu', '--js-flags=--max-old-space-size=384'] })
+    browser = await chromium.launch(chromiumLaunchOptions())
     const page = await browser.newPage()
     page.on('console', message => { if (message.text().startsWith('[search-audit]')) console.log(message.text()) })
     await page.goto(address + '/scores')

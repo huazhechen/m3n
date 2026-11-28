@@ -3,7 +3,7 @@ import { scoreCoreGap, scoreMaximumCoreGap, NumberedTextMeasurementCache, Number
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
-import { numberedLayoutScore, type WidthMeasurement } from '../../tools/scorebook-width.mjs'
+import { compareWidthMeasurements, numberedLayoutScore, type WidthMeasurement } from '../../tools/scorebook-width.mjs'
 import type { NotationMode } from './renderer-settings'
 
 export type ScorebookDisplaySettings = { notationMode: NotationMode; measureNumbers: boolean }
@@ -103,9 +103,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       const previous = winners.get(document)?.candidate
       if (!sealed.has(document) && !candidate.error && !candidate.outside?.length && !candidate.overlaps?.length
         && Number.isFinite(candidate.rows) && candidate.pageCount > 0
-        && (!previous || candidate.pageCount < previous.pageCount || candidate.pageCount === previous.pageCount
-          && (numberedLayoutScore(candidate) > numberedLayoutScore(previous)
-            || numberedLayoutScore(candidate) === numberedLayoutScore(previous) && width < previous.width))) {
+        && (!previous || compareWidthMeasurements(candidate, previous) < 0)) {
         const rows = cacheStats.retainedRows - (previous?.rows ?? 0) + candidate.rows
         cacheStats.retainedRows = rows; cacheStats.peakRows = Math.max(rows, cacheStats.peakRows)
         winners.set(document, { candidate, render })

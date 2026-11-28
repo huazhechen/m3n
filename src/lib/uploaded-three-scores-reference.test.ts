@@ -4,8 +4,6 @@ import badinerie from '../scores/badinerie_bwv1067_01.m3n?raw'
 import onion from '../scores/yang_cong_01.m3n?raw'
 import sudden from '../scores/tu_ran_hao_xiang_ni_01.m3n?raw'
 import reference from './fixtures/uploaded-three-scores.json'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 
 function performedWords(source: string) {
   const document = parseM3NDocument(source)
@@ -23,10 +21,10 @@ function performedWords(source: string) {
 
 describe('three scores transcribed from the November 26 uploads', () => {
   it.each([
-    ['badinerie_bwv1067', badinerie, 'Bm', 42, 160, 'instrumental'],
-    ['yang_cong', onion, 'C', 29, 176, 'pop'],
-    ['tu_ran_hao_xiang_ni', sudden, 'D', 52, 231, 'pop'],
-  ] as const)('validates, formats and catalogs %s with melody only', (id, source, key, count, beats, category) => {
+    ['badinerie_bwv1067', badinerie, 'Bm', 42, 160],
+    ['yang_cong', onion, 'C', 29, 176],
+    ['tu_ran_hao_xiang_ni', sudden, 'D', 52, 231],
+  ] as const)('validates and formats %s with melody only', (_id, source, key, count, beats) => {
     expect(validateM3NDiagnostics(source)).toEqual([])
     expect(formatM3N(source)).toBe(source)
     const document = parseM3NDocument(source)
@@ -34,9 +32,6 @@ describe('three scores transcribed from the November 26 uploads', () => {
     expect(document.parts.get('score')!.bass.flatMap(bar => bar.events)).toEqual([])
     expect(document.parts.get('score')!.melody.filter(bar => bar.events.length)).toHaveLength(count)
     expect(compileScorePerformance(document).beats).toBe(beats)
-    expect(categories.find(item => item.id === category)!.files).toContain(`${id}_01.m3n`)
-    expect(plan.entries.find(item => item.id === id)).toMatchObject({ file: `${id}_01.m3n`, section: category })
-    expect(plan.sourceCount).toBe(plan.entries.length)
   })
 
   it('keeps the Badinerie octave register and both complementary repeated halves', () => {

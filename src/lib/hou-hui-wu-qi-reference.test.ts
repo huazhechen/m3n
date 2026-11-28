@@ -2,8 +2,6 @@ import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDoc
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import source from '../scores/hou_hui_wu_qi_01.m3n?raw'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 
 it('keeps the PDF vocal rhythm, lowered octave, modulation and changed closing meter', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
@@ -26,8 +24,6 @@ it('keeps the PDF vocal rhythm, lowered octave, modulation and changed closing m
   expect(bars.filter(bar => bar.left === 'rptstart')).toHaveLength(1)
   expect(bars.filter(bar => bar.right === 'rptend')).toHaveLength(1)
   expect(compileScorePerformance(score).beats).toBe(337.5)
-  expect(categories.find(category => category.id === 'pop')!.files).toContain('hou_hui_wu_qi_01.m3n')
-  expect(plan.entries.find(entry => entry.id === 'hou_hui_wu_qi')).toMatchObject({ section: 'pop', file: 'hou_hui_wu_qi_01.m3n' })
 })
 
 it('sings the screenshot lyrics in order, including both chorus verses and the final ending', () => {

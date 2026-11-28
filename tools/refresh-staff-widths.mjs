@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { chooseBestWidth, widthCandidates, widthSearchStrategy, widthStep } from './scorebook-width.mjs'
 
 const root = resolve(import.meta.dirname, '..')
@@ -15,7 +16,6 @@ await build({ configFile: false, logLevel: 'error', base: '/', define: { 'import
   outDir: join(output, 'bundle'), emptyOutDir: true, minify: false,
   lib: { entry: join(root, 'tools/staff-width-layout.mjs'), name: 'staffWidths', formats: ['iife'], fileName: () => 'bundle.js' },
 } })
-const launchOptions = { executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true }
 const entries = [], hash = value => createHash('sha256').update(value).digest('hex')
 const rendererSha256 = hash(readFileSync(join(output, 'bundle/bundle.js')))
 const report = { rendererSha256, strategy: widthSearchStrategy, range: [widthCandidates[0], widthCandidates.at(-1)], step: widthStep, criterion: 'safe geometry, minimum page count, maximum composite quality, then minimum width', entries }
@@ -35,7 +35,7 @@ async function refresh() {
   for (const [index, { file, source }] of inputs.entries()) {
     // A fresh browser releases the complete renderer heap after each score.
     console.log(`Measuring ${file}`)
-    const browser = await chromium.launch(launchOptions)
+    const browser = await chromium.launch(chromiumLaunchOptions())
     try {
       const page = await browser.newPage()
       await page.route('http://staff-widths.local/**', route => {

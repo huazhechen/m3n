@@ -1,7 +1,8 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { build } from 'vite'
 import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
@@ -24,7 +25,7 @@ await build({ configFile: false, logLevel: 'error', define: { 'import.meta.url':
 prepareBuiltinPdfFont()
 const font = readFileSync(join(root, '.tmp/scorebook-font/text.ttf'))
 const rendererSha256 = hash(Buffer.concat([readFileSync(join(output, 'bundle/bundle.js')), font]))
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
+const browser = await chromium.launch(chromiumLaunchOptions())
 const entries = []
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 1300 } })

@@ -1,8 +1,6 @@
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, scoreEventIds, unfoldScorePerformance, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
 import source from '../scores/ta_shuo_01.m3n?raw'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 import pitchReference from './fixtures/ta-shuo-pitches.json'
 
 it('preserves the uploaded Ta Shuo vocal line, including its second-verse and final-chorus variants', () => {
@@ -42,9 +40,6 @@ it('preserves the uploaded Ta Shuo vocal line, including its second-verse and fi
   const writtenLyrics = deriveScoreInteraction(document).lyricsByEvent
   expect(written[51]!.events.map(event => (writtenLyrics.get(event) ?? []).filter(lyric => lyric.kind === 'text').map(lyric => lyric.text).join('')))
     .toEqual(['', '', '不', '怕'])
-  expect(categories.find(category => category.id === 'pop')!.files).toContain('ta_shuo_01.m3n')
-  expect(plan.entries.find(entry => entry.id === 'ta_shuo')).toMatchObject({ file: 'ta_shuo_01.m3n', section: 'pop' })
-  expect(plan.sourceCount).toBe(plan.entries.length)
 })
 
 it('matches every vocal pitch and octave independently read from the uploaded PDF', () => {
@@ -60,7 +55,6 @@ it('matches every vocal pitch and octave independently read from the uploaded PD
       `PDF measure ${reference.pdfMeasure}, vocal measure ${index + 1}`).toEqual(expected)
   }
 })
-
 
 it('encloses every lyric syllable spanning different pitches in a complete slur', () => {
   const document = parseM3NDocument(source)

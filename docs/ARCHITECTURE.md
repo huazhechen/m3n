@@ -147,7 +147,7 @@ iPhone/iPad 要求音频通过用户手势启动；播放及进度拖动入口�
 
 ## 质量门禁
 
-提交前执行 `npm run check`，依次完成 AST 导入边界检查、lint、各包严格类型检查、包级与应用级测试、生产构建和端到端测试。测试分三层：
+提交前执行 `npm run check`，由 `tools/verify-project.mjs` 在聚合内存守卫内串行完成 AST 导入边界检查、lint、各包严格类型检查、包级与应用级测试、生成物校验、隔离生产构建、全库投影、双谱式代表谱例的真实字体密度及端到端测试。`npm run check:ci` 复用同一编排器运行 GitHub 的生成物、碰撞检测器和真实字体密度门禁。单测复用及逐文件清理由 `tools/vitest-settings.ts` 与 `tools/test-file-setup.ts` 统一配置；弹窗测试通过可恢复的原型替身隔离。浏览器路径、堆限制和进程参数集中于 `tools/lib/chromium-options.mjs`。测试分三层：
 
 1. 基础语法单元测试，覆盖音符、时值、调号和行式歌词、低音对位。
 2. 转换契约测试，覆盖往返、诊断和源码映射。

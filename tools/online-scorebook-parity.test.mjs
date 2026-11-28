@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -29,7 +30,7 @@ test('reader, online and local PDF paths share safe width selection; staff reade
       export {search as staffSearch} from ${JSON.stringify(join(root, 'tools/staff-width-layout.mjs'))};
       export {optimizeScorebook, refineSharedWidths} from ${JSON.stringify(join(root, 'tools/scorebook-packing.mjs'))};`)
     await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle'), fixtures: { plan, sources, files } })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+    browser = await chromium.launch(chromiumLaunchOptions())
     const page = await browser.newPage()
     await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
@@ -126,8 +127,7 @@ test('both notations reorder a chapter around a solo-only work with identical bo
     const entry = join(temp, 'entry.mjs')
     writeFileSync(entry, `export {buildOnlineScorebook} from ${JSON.stringify(join(root, 'src/lib/online-scorebook.ts'))};`)
     await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle'), fixtures: { plan, sources, files } })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true,
-      args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+    browser = await chromium.launch(chromiumLaunchOptions())
     const page = await browser.newPage()
     await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined
       : new URL(route.request().url()).pathname === '/bundle.js'

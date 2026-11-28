@@ -1,5 +1,6 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
 
@@ -26,9 +27,7 @@ const save = complete => {
     differences: differences.map(({ file, numbered, staff }) => ({ file, numbered, staff })), entries }, null, 2) + '\n')
 }
 for (const file of inputs) {
-  const browser = await chromium.launch({ headless: true,
-    executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync),
-    args: ['--disable-gpu', '--single-process', '--no-zygote', '--js-flags=--max-old-space-size=256'] })
+  const browser = await chromium.launch(chromiumLaunchOptions())
   try {
     const page = await browser.newPage()
     await page.route(`${origin}/**`, route => new URL(route.request().url()).pathname === '/'

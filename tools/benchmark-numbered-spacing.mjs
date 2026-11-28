@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
@@ -99,15 +100,13 @@ if (process.argv.includes('--cross-tier')) report.experimentalTierReuse = true
 if (experimentalGreedyCeiling) report.experimentalGreedyCeiling = true
 if (warmupIterations) report.warmupIterations = warmupIterations
 const save = () => { writeFileSync(output + '.tmp', JSON.stringify(report, null, 2) + '\n'); renameSync(output + '.tmp', output) }
-const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium'].find(existsSync)
 report.fontRoot = fontRoot
 const fonts = JSON.parse(readFileSync(join(fontRoot, 'manifest.json'), 'utf8')).fonts
 report.fontHashes = fonts.map(({ file, sha256 }) => ({ file, sha256 }))
 if(checkpoint)assert.deepEqual(checkpoint.fontHashes,report.fontHashes,'Cannot resume with different font inputs')
 let browser, page, latestFontPreparationMs
 const openBrowser=async()=>{
-  browser = await chromium.launch({ executablePath, headless: true,
-  args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--expose-gc --max-old-space-size=256'] })
+  browser = await chromium.launch(chromiumLaunchOptions({ exposeGc: true }))
   page = await browser.newPage()
   if (process.argv.includes('--trace-widths')) page.on('console', message => console.log(message.text()))
   await page.route(`${origin}/**`, route => {

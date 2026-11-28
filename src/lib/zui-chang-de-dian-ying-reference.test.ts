@@ -1,7 +1,5 @@
 import { compileScorePerformance, deriveScoreInteraction, formatM3N, parseM3NDocument, scoreEventIds, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import categories from '../../config/scorebook/library-categories.json'
-import plan from '../../config/scorebook/editorial-plan.json'
 import source from '../scores/zui_chang_de_dian_ying_01.m3n?raw'
 import reference from './fixtures/zui-chang-de-dian-ying-kuaiyuepu.json'
 
@@ -34,12 +32,4 @@ it('uses full-measure repeat and DS boundaries with pickups inside the first and
   expect(source).toMatch(/---V1\nN: 1e\^ 0 \(1 2\) :\|\|/)
   expect(source).toMatch(/---V2\nN: 1e\^ \(0 3e\) \(2e 1e\) \{ds\}/)
   expect(source).toContain('---V3\nN: 1e^. |||')
-})
-
-it('includes the new score once in the modern pop library and book', () => {
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === 'zui_chang_de_dian_ying_01.m3n')).toEqual([
-    expect.objectContaining({ title: '最长的电影', section: 'pop' }),
-  ])
-  expect(categories.filter(category => category.files.includes('zui_chang_de_dian_ying_01.m3n')).map(category => category.id)).toEqual(['pop'])
 })

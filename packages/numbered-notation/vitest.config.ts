@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
+import { testSettings } from '../../tools/vitest-settings'
 
 export default defineConfig({
-  // Corpus cases render several view modes; retain one worker for memory.
-  test: { maxWorkers: 1, include: ['src/**/*.test.ts'], testTimeout: 30000 },
+  test: { ...testSettings, include: ['src/**/*.test.ts'], testTimeout: 30000 },
 })

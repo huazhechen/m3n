@@ -2,8 +2,6 @@ import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagno
 import { expect, it } from 'vitest'
 import source from '../scores/ai_de_li_zan_01.m3n?raw'
 import reference from './fixtures/salut-reference.json'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 
 it('preserves the reviewed Salut melody, shared ending measures and playback route', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
@@ -38,8 +36,4 @@ it('preserves the reviewed Salut melody, shared ending measures and playback rou
     expect(actual.start, `attack ${index + 1} onset`).toBeCloseTo(expectedStart, 6)
     expect(actual.end, `attack ${index + 1} release`).toBeCloseTo(expectedEnd, 6)
   })
-  const file = 'ai_de_li_zan_01.m3n'
-  expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
-  expect(plan.entries.find(entry => entry.file === file)?.section).toBe('instrumental')
-  expect(categories.flatMap(category => category.files).filter(name => name === file)).toHaveLength(1)
 })

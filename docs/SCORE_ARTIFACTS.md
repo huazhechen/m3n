@@ -14,7 +14,7 @@ python3 -m venv .tmp/font-subset-env
 npm run prepare:scores
 ```
 
-可通过 `M3N_FONT_PYTHON` 指定 Python，通过 `CHROMIUM_PATH` 指定 Chromium。有系统 Chromium 时优先使用系统版本。宽度测量在浏览器和PDF构建时执行，字体生成不执行选宽。
+可通过 `M3N_FONT_PYTHON` 指定 Python，通过 `CHROMIUM_PATH` 指定 Chromium。本地及CI默认使用Playwright配套浏览器。宽度测量在浏览器和PDF构建时执行，字体生成不执行选宽。
 
 `config/score-artifacts.json` 记录源文件、排版依赖和所选字体的 SHA-256；宽度和页数不存入生成物。修改谱源只更新对应乐谱；修改影响排版的代码、字体或引擎则更新全部乐谱；五线谱 `src/staff/` 及字形提取脚本也纳入摘要。新增、删除乐谱也会触发生成。CI 执行 `npm run check:score-artifacts`，只校验、不修改文件；绕过本地钩子造成的过期结果会令 CI 失败。
 
@@ -26,10 +26,10 @@ npm run prepare:scores
 
 `npm test` 的常规验证不启动 Chromium。`npm run test:scorebook` 在 Node 中验证粗搜与细搜选宽、合页容量／分组、评分和统计；`npm run test:pdf-font` 使用真实单曲字体子集校验PDF子集字形，避免默认遍历完整中文字体的全部字形。
 
-只有需要真实字体度量、SVG边界和Canvas输出的谱集端到端回归使用 `npm run test:scorebook:browser`。两组浏览器回归串行运行，临时Vite打包在独立子进程完成并退出后才启动浏览器。合成文字使用从原始TrueType轮廓生成的测试专用小子集，字体通过URL读取，不经Base64传输；测试若请求完整中文字体立即失败。测试字体保存在临时目录，不进入前端或曲库生成物。
+只有需要真实字体度量、SVG边界和Canvas输出的谱集端到端回归使用 `npm run test:scorebook:browser`。浏览器回归串行运行，临时Vite打包在独立子进程完成并退出后才启动浏览器。合成文字使用从原始TrueType轮廓生成的测试专用小子集，字体通过URL读取，不经Base64传输；测试若请求完整中文字体立即失败。测试字体保存在临时目录，不进入前端或曲库生成物。
 
-完整字体全部字形的PDF子集验收按256字形分批执行，逐批释放fontkit字形缓存；单独运行 `npm run test:pdf-font:full`，无需浏览器。完整 `npm run check` 仍包含浏览器回归、完整字体验收和页面端到端检查。首次运行浏览器检查需执行 `npx playwright install chromium` 安装与Playwright匹配的Chromium；可通过 `CHROMIUM_PATH` 指定现有可用版本。上述重检查必须串行执行，并使用单worker、受限Node堆和总进程内存监控，遵守本工作区2GB上限。
+完整字体全部字形的PDF子集验收按256字形分批执行，逐批释放fontkit字形缓存；单独运行 `npm run test:pdf-font:full`，无需浏览器。完整 `npm run check` 包含生成物校验、全库投影、代表谱例的双谱式真实字体密度、浏览器回归、完整字体验收和页面端到端检查，并自带聚合内存守卫。`npm run check:ci` 与 GitHub 工作流共用生成物、检测器和密度检查步骤。首次运行浏览器检查需执行 `npx playwright install chromium` 安装与Playwright匹配的Chromium；可通过 `CHROMIUM_PATH` 指定现有可用版本。单独执行其他重检查仍需单worker、受限Node堆和总进程内存监控，遵守本工作区2GB上限。
 
 CI中的真实字体密度回归保留 `.tmp/notation-density/report.json` 与完整运行日志为 `notation-density-report` 构建附件，即使失败也上传。失败日志末尾同时写入工作流错误注解，墨迹检查会输出曲目、宽度、谱式及具体碰撞／越界，便于从通知追查；生成物摘要校验与密度门禁是不同步骤。
 
-密度回归逐曲启动并关闭浏览器，限制渲染进程数及JS堆；使用独立浏览器进程模型。CI默认使用已安装的Playwright配套浏览器，本地仍可使用系统Chromium，`CHROMIUM_PATH` 可显式覆盖两者。浏览器崩溃与排版断言失败均保留失败状态，不以重试或放宽密度／碰撞阈值掩盖。
+密度回归每份输入使用独立上下文，每四份释放浏览器及原生字体缓存，限制渲染进程数及JS堆。本地及CI默认使用已安装的Playwright配套浏览器，`CHROMIUM_PATH` 可显式覆盖。浏览器崩溃与排版断言失败均保留失败状态，不以重试或放宽密度／碰撞阈值掩盖。

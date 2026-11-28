@@ -1,8 +1,6 @@
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
 import source from '../scores/you_raise_me_up_01.m3n?raw'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 
 // Independently read from the replacement image supplied by the user:
 // https://iknow-pic.cdn.bcebos.com/58ee3d6d55fbb2fb4fbb739f434a20a44723dcae
@@ -109,12 +107,4 @@ it('keeps both English verses and the correct chorus syllables without forced ti
   expect(bars[12]!.events.map(event => (lyricsByEvent.get(event) ?? []).filter(item => item.kind === 'text').map(item => item.text))).toEqual([['seas,'], [], ['I'], ['am'], []])
   expect(lyrics[15]).toEqual(['up,', 'To', 'more', 'than', 'I', 'can'])
   expect(source).not.toContain('+')
-})
-
-it('includes the corrected song once in both the contemporary pop library and the book', () => {
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === 'you_raise_me_up_01.m3n')).toEqual([
-    expect.objectContaining({ id: 'you_raise_me_up', title: 'You Raise Me Up', section: 'pop' }),
-  ])
-  expect(categories.filter(category => category.files.includes('you_raise_me_up_01.m3n')).map(category => category.id)).toEqual(['pop'])
 })

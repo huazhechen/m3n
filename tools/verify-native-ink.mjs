@@ -1,4 +1,5 @@
-import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -42,8 +43,7 @@ try {
     { find: 'txml/txml', replacement: join(root, 'node_modules/txml/dist/txml.mjs') },
     { find: 'txml', replacement: join(root, 'node_modules/txml/dist/index.mjs') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false, lib: { entry, name: 'audit', formats: ['iife'], fileName: () => 'bundle.js' } } })
-  const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
-  browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch(chromiumLaunchOptions())
   const page = await browser.newPage()
   page.on('pageerror', error => console.error('Native ink audit browser error:', error))
   await page.route('http://native-ink.local/**', route => new URL(route.request().url()).pathname === '/bundle.js'

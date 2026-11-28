@@ -1,12 +1,12 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { after, before, test } from 'node:test'
 import { chromium } from '@playwright/test'
 
 let browser, page
 before(async () => {
-  const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
-  browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch(chromiumLaunchOptions())
   page = await browser.newPage()
   await page.setContent('<main></main>')
   await page.addScriptTag({ content: readFileSync(new URL('./lib/native-ink-collisions.mjs', import.meta.url), 'utf8').replace('export function', 'function') })

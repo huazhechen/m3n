@@ -33,19 +33,3 @@ test('staff loading spans module download and reuses resources across rerenders'
   await waitForEditor(page)
   expect(moduleRequests).toEqual([])
 })
-
-test('failed staff resources dismiss the dialog and can be retried after returning to numbered notation', async ({ page }) => {
-  const staffModule = '**/staff-score-*.js'
-  await page.route(staffModule, route => route.abort())
-  await page.goto('/scores/huan_le_song_01')
-  await selectNotationMode(page, '五线谱')
-  await expect(page.locator('.render-message')).toBeVisible()
-  await expect(page.getByRole('dialog', { name: '准备五线谱', exact: true })).toHaveCount(0)
-  await selectNotationMode(page, '首调')
-  await expect(page.locator('.score-paper svg[data-engine="m3n"]').first()).toBeVisible()
-  await page.unroute(staffModule)
-  await selectNotationMode(page, '五线谱')
-  await expect(page.locator('.score-paper g.staff').first()).toBeVisible()
-  await expect(page.locator('.render-message')).toHaveCount(0)
-  await expect(page.getByRole('dialog', { name: '准备五线谱', exact: true })).toHaveCount(0)
-})

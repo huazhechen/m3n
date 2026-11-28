@@ -1,9 +1,10 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { scoreLayoutConfig } from '@m3n/numbered-notation/layout-config'
 import { prepareBuiltinPdfFont } from './prepare-builtin-pdf-font.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { availableParallelism, cpus } from 'node:os'
 import { resolve, join } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -45,7 +46,7 @@ assert(!(reuseFile && forceMeasure), 'Choose either --reuse-widths or --force-me
 const reused = reuseFile ? JSON.parse(readFileSync(resolve(reuseFile), 'utf8')) : undefined
 if (reused) assert.equal(reused.auditLayout, auditLayout, 'Reused measurements must match the audit mode')
 if (reused) assert.equal(reused.rendererSha256, rendererSha256, 'Cached width probes must match the renderer and fonts')
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true })
+const browser = await chromium.launch(chromiumLaunchOptions())
 const pageSvg = content => `<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}"><rect width="100%" height="100%" fill="white"/>${content}</svg>`
 const records = [], music = [], sources = new Map(), musicGroups = []
 let orderOptimization

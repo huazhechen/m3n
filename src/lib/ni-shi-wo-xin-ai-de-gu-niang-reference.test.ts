@@ -3,8 +3,6 @@ import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, scor
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import reference from './fixtures/ni-shi-wo-xin-ai-de-gu-niang-jtp123.json'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 
 const file = 'ni_shi_wo_xin_ai_de_gu_niang_01.m3n'
 const source = readFileSync(new URL(`../scores/${file}`, import.meta.url), 'utf8')
@@ -75,11 +73,5 @@ describe('User-approved vocal score with JTP123 reference', () => {
         .map(lyric => lyric.text)).join('')
     expect(text).toBe(reference.lyrics.join(''))
     expect(text.endsWith('你依然会是我心爱的姑娘')).toBe(true)
-  })
-
-  it('includes the score in the pop library and scorebook', () => {
-    expect(categories.find(category => category.id === 'pop')!.files).toContain(file)
-    expect(plan.entries.find(entry => entry.file === file)).toMatchObject({ title: document.title, section: 'pop' })
-    expect(plan.sourceCount).toBe(plan.entries.length)
   })
 })

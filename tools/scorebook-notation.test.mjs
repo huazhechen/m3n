@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -18,7 +19,8 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     // The temporary entry resolves package imports through an absolute re-export.
     writeFileSync(entry, readFileSync(entry, 'utf8').replace("from '@m3n/notation'", `from ${JSON.stringify(join(root, 'packages/notation/dist/index.js'))}`))
     await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle') })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true, args: ['--disable-gpu', '--renderer-process-limit=1', '--js-flags=--max-old-space-size=256'] })
+    execFileSync(process.execPath, [join(root, 'tools/prepare-builtin-pdf-font.mjs')], { stdio: 'ignore' })
+    browser = await chromium.launch(chromiumLaunchOptions())
     const page = await browser.newPage()
     await page.route('**/*', async route => await fontAssets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })
@@ -26,7 +28,6 @@ test('scorebook uses identical web pages, source equal-measures, credits and bas
     await page.goto('http://scorebook.local/')
     await page.addScriptTag({ url: 'http://scorebook.local/bundle.js' })
     await page.evaluate(() => window.scorebook.prepare())
-    execFileSync(process.execPath, [join(root, 'tools/prepare-builtin-pdf-font.mjs')], { stdio: 'ignore' })
     await fontAssets.prepareBookFont(page)
     const fontStability = await page.evaluate(async ({ source, shared }) => {
       const before = await window.scorebook.auditWidth(source, 570)

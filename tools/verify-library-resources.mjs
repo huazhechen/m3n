@@ -1,8 +1,9 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 // Use a single Node process for the full-book browser audit, then close Chromium
 // before parsing the PDF. Run after an isolated production build; no Vite server.
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
-import { createReadStream, existsSync } from 'node:fs'
+import { createReadStream } from 'node:fs'
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { extname, resolve, sep } from 'node:path'
 import { cpus } from 'node:os'
@@ -31,11 +32,9 @@ const server = createServer(async (request, response) => {
 })
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
 const address = `http://127.0.0.1:${server.address().port}`
-const executablePath = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
 let browser, report
 try {
-  browser = await chromium.launch({ ...(executablePath ? { executablePath } : {}), headless: true,
-    args: ['--disable-gpu', '--single-process', '--no-zygote', '--disable-features=SpareRendererForSitePerProcess', `--js-flags=--max-old-space-size=${process.env.M3N_BROWSER_HEAP_MB ?? '384'}`] })
+  browser = await chromium.launch(chromiumLaunchOptions({ heapMb: Number(process.env.M3N_BROWSER_HEAP_MB ?? 384) }))
   const page = await browser.newPage()
   page.on('request', request => { if (/\.(gz|ttf|woff2)$/.test(request.url())) requests.push(new URL(request.url()).pathname) })
   page.on('pageerror', error => errors.push(error.message))

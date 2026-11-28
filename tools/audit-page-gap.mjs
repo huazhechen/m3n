@@ -1,6 +1,7 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { build } from 'vite'
 import { chromium } from '@playwright/test'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
@@ -17,7 +18,7 @@ export { paginateScoreBlocks } from '${root}/packages/numbered-notation/src/layo
 await build({ configFile: false, logLevel: 'error', resolve: { alias: {
   '@m3n/notation': resolve(root, 'packages/notation/src/index.ts'),
 } }, build: { outDir: resolve(out, 'bundle'), lib: { entry, name: 'gapAudit', formats: ['iife'], fileName: () => 'bundle.js' } } })
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync), headless: true, args: ['--no-sandbox'] })
+const browser = await chromium.launch(chromiumLaunchOptions())
 try {
   const page = await browser.newPage()
   await page.setContent('<main></main>')

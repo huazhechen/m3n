@@ -248,7 +248,7 @@ test('full-volume playback stays audible and compresses dense chords without cli
 })
 
 for (const label of ['合成', '钢琴', '吉他', '口琴', '小提琴', '长笛']) {
-  test(`${label} has clear monophonic output after mastering`, async ({ page }) => {
+  test(`${label} stays audible and limits dense chords after mastering`, async ({ page }) => {
     await auditFinalOutput(page)
     await page.goto('/editor')
     await waitForEditor(page)
@@ -261,25 +261,27 @@ for (const label of ['合成', '钢琴', '吉他', '口琴', '小提琴', '长�
     console.log(`${label} output`, JSON.stringify(audit))
     expect(audit.limiters).toBe(1)
     expect(audit.peak).toBeLessThanOrEqual(0.941)
+    if (label !== '合成') {
+      // Keep both signal checks for every sampled instrument, sharing its cold
+      // download and editor setup. The synth's dense mix has a separate case.
+      await page.getByRole('button', { name: '暂停', exact: true }).click()
+      await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
+      await waitForEditor(page)
+      await expect(page.locator('.score-paper [data-m3n-role="voice-connector"]').first()).toBeAttached()
+      await page.evaluate(() => {
+        const audit = Reflect.get(window, 'loudnessAudit')
+        audit.peak = 0; audit.rms = 0
+      })
+      await page.getByRole('button', { name: '播放', exact: true }).click()
+      await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
+      await expect.poll(() => page.evaluate(() => Reflect.get(window, 'loudnessAudit').rms)).toBeGreaterThan(0.15)
+      await page.waitForTimeout(1500)
+      expect(await page.evaluate(() => Reflect.get(window, 'loudnessAudit').peak)).toBeLessThanOrEqual(0.941)
+      await page.getByRole('button', { name: '暂停', exact: true }).click()
+    }
   })
 }
 
-for (const label of ['钢琴', '吉他', '口琴', '小提琴', '长笛']) {
-  test(`${label} dense sampled chords stay below the output ceiling`, async ({ page }) => {
-    await auditFinalOutput(page)
-    await page.goto('/editor')
-    await waitForEditor(page)
-    await page.getByLabel('M3N source').fill('{4/4}{60qpm}\nN: [135:h]^^ | [135:h]^^ |||\nB: [135d:h]^^ | [135d:h]^^ |||')
-    await selectTone(page, label); await ready(page)
-    await page.getByRole('button', { name: '播放', exact: true }).click()
-    await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeEnabled({ timeout: 30_000 })
-    await expect.poll(() => page.evaluate(() => (window as Window & { loudnessAudit?: { rms: number } }).loudnessAudit!.rms)).toBeGreaterThan(0.15)
-    await page.waitForTimeout(1500)
-    const audit = await page.evaluate(() => (window as Window & { loudnessAudit?: { peak: number } }).loudnessAudit!)
-    expect(audit.peak).toBeLessThanOrEqual(0.941)
-    await page.getByRole('button', { name: '暂停', exact: true }).click()
-  })
-}
 
 for (const withNotes of [false, true]) test(`metronome is audible alongside instruments and shares the output ceiling (${withNotes})`, async ({ page }) => {
   await auditFinalOutput(page)

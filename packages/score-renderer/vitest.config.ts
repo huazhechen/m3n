@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
+import { testSettings } from '../../tools/vitest-settings'
 
 export default defineConfig({
-  test: { maxWorkers: 1, include: ['src/**/*.test.ts'] },
+  test: { ...testSettings, include: ['src/**/*.test.ts'] },
 })

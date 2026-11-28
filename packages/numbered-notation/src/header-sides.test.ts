@@ -7,7 +7,7 @@ import { DefaultTextMeasurer } from './native-measure.js';
 const plain = '{title=谱头}{4/4}\nN: 1 2 3 4 |||';
 const measure = new DefaultTextMeasurer();
 describe('measured header side arrangement in the native engine', () => {
-    it.each([320, 599, 600, 800, 1000].flatMap(width => [false, true].map(paged => ({ width, paged }))))('shares the top when content fits at $width, paged=$paged', ({ width }) => {
+    it.each([320, 599, 600, 800, 1000])('shares the top when content fits at %s', width => {
         const one = plain.replace('{4/4}', '{composer=甲}{4/4}');
         const many = plain.replace('{4/4}', '{lyricist=甲}{composer=乙}{4/4}');
         const native = [one, many].map(source => nativeHeaderGeometry(parseM3NDocument(source), width, 32, measure));
@@ -20,7 +20,7 @@ describe('measured header side arrangement in the native engine', () => {
         const native = nativeHeaderGeometry(document, 800, 32, measure);
         expect(native.signaturesTop).toBeGreaterThan(native.creditsTop);
     });
-    it.each([false, true])('keeps origin width independent from other credit rows, paged=%s', _paged => {
+    it('keeps origin width independent from other credit rows', () => {
         const roles = '{lyricist=甲}{composer=乙}{arranger=丙}{singer=丁}';
         const without = plain.replace('{4/4}', roles + '{4/4}');
         const withOrigin = plain.replace('{4/4}', roles + '{origin=这是一段非常长的曲调来源说明文字}{4/4}');
@@ -31,7 +31,7 @@ describe('measured header side arrangement in the native engine', () => {
         });
         expect(labels[0]!.getAttribute('x')).toBe(labels[1]!.getAttribute('x'));
     });
-    it.each([320, 800].flatMap(width => [false, true].map(paged => ({ width, paged }))))('shares the requested credit and subtitle policy at $width, paged=$paged', ({ width }) => {
+    it.each([320, 800])('shares the requested credit and subtitle policy at %s', width => {
         const document = parseM3NDocument('{title=曲名}{subtitle=原副标题}{singer=歌手}{lyricist=甲}{composer=乙}{arranger=丙}{origin=传统曲调}{4/4}\nN: 1 2 3 4 |||');
         const native = nativeHeaderGeometry(document, width, 32, measure);
         expect(native.subtitle).toEqual(['原副标题', '歌手 演唱']);
@@ -50,7 +50,7 @@ describe('measured header side arrangement in the native engine', () => {
     });
 });
 describe('subtitle shares measured vertical space with the sides', () => {
-    it.each([false, true])('shares all three columns when they fit, paged=%s', _paged => {
+    it('shares all three columns when they fit', () => {
         const source = '{title=标题}{subtitle=副标题}{singer=歌手}{composer=甲}{4/4}\nN: 1 2 3 4 |||';
         const native = nativeHeaderGeometry(parseM3NDocument(source), 1000, 32, measure);
         expect(native.subtitleTop).toBeCloseTo(native.titleBottom + 8.64, 4);

@@ -91,26 +91,27 @@ test('multipage PDF downloads with the same pages in continuous and paged modes'
   await page.addInitScript(() => localStorage.setItem('m3n:render-mode', 'continuous'))
   await page.goto('/editor')
   await waitForEditor(page)
-  await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 128 }, () => '1 2 3 4 |').join(' ')}||\nL: 春天来了`)
+  await page.getByRole('textbox', { name: 'M3N source' }).fill(`{title=中文矢量验证}{4/4}\nN: ${Array.from({ length: 16 }, () => '1 2 3 4 |').join(' {br} ')}||\nL: ${'春天来了'.repeat(16)}`)
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await expect(page).toHaveURL(/\/scores\/local-/)
-  await expect(page.locator('.score-paper [data-m3n-id="m3n-e-512"]').first()).toBeAttached()
+  await expect(page.locator('.score-paper [data-m3n-id="m3n-e-64"]').first()).toBeAttached()
   let expectedPages = 0
   for (const paged of [false, true]) {
     await openScoreSettings(page)
     await page.getByRole('slider', { name: '乐谱宽度' }).fill('25')
-    if (paged) {
-      await openScoreSettings(page)
-      await page.getByRole('switch', { name: '分页', exact: true }).click()
-    }
+    await openScoreSettings(page)
+    const pagination = page.getByRole('switch', { name: '分页', exact: true })
+    if (await pagination.isChecked() !== paged) await pagination.click()
     await page.keyboard.press('Escape')
+    await expect(page.locator('.score-paper')).toHaveAttribute('data-render-mode', paged ? 'paged' : 'continuous')
+    await waitForEditor(page)
     await page.getByRole('button', { name: '打印', exact: true }).click()
     const dialog = page.locator('.export-dialog')
+    // A newly opened dialog briefly starts with aria-busy=false before its
+    // effect begins. Wait for real preview content before reading pagination.
+    await expect(dialog.locator('[data-m3n-id="m3n-e-64"]').first()).toBeAttached()
     await expect(dialog.locator('.export-preview')).toHaveAttribute('aria-busy', 'false')
-    const previewPages = await dialog.locator('.export-preview-page').count()
-    if (paged) expect(previewPages).toBe(expectedPages)
-    else expect(previewPages).toBe(0)
-    await expect(dialog.locator('[data-m3n-id="m3n-e-512"]').first()).toBeAttached()
+    await expect(dialog.locator('.export-preview-page')).toHaveCount(paged ? expectedPages : 0)
     const started = Date.now()
     const downloading = page.waitForEvent('download')
     await dialog.getByRole('button', { name: 'PDF', exact: true }).click()

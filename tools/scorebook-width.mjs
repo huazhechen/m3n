@@ -18,7 +18,7 @@ export function numberedLayoutScore(candidate) {
   return scoreHorizontalQuality(candidate.width, { lineDensityVariation: variation, lastLineSlack: slack, lineStretchPenalty: candidate.lineStretchPenalty })
 }
 // Across widths, paper use is the primary objective in both notations.
-const rank = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
+export const compareWidthMeasurements = (a, b) => a.pageCount - b.pageCount || numberedLayoutScore(b) - numberedLayoutScore(a) || a.width - b.width
 
 export class WidthSearchPruned extends Error {}
 
@@ -37,7 +37,7 @@ export function widthCannotWin(width, best, minimumPageCount = 1) {
 export function chooseBestWidth(candidates) {
   // First minimize paper use; then minimize physical spacing cost plus font loss
   // for numbered notation. Width is the deterministic final tie breaker.
-  return candidates.filter(c => safe(c)).sort(rank)[0] ?? null
+  return candidates.filter(c => safe(c)).sort(compareWidthMeasurements)[0] ?? null
 }
 
 /** Cover every 6px interval; explicit estimate policies also record lossy prunes. */
@@ -86,7 +86,7 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     candidates.push(result)
     if(endpointFloor && width===widthMaximum && safe(result))endpointPages=result.pageCount
     if(singleTier && width===widthMinimum)setSingleTier(safe(result) && result.pageCount>1)
-    if (safe(result) && (!best || rank(result, best) < 0)) best = result
+    if (safe(result) && (!best || compareWidthMeasurements(result, best) < 0)) best = result
   }
   const consider = async width => {
     signal?.throwIfAborted()
@@ -136,7 +136,7 @@ export async function selectBestWidth(measure, options) {
 /** Exact-check estimates in rank order, continuing after page underestimates.
  * This verifies the returned geometry, not the global width/page error bound. */
 export async function verifyEstimatedWidthCandidates(candidates, measure, { signal, verifyWidestWhenMultipage = false } = {}) {
-  const ordered = candidates.filter(safe).sort(rank)
+  const ordered = candidates.filter(safe).sort(compareWidthMeasurements)
   const expectedPages = ordered[0]?.pageCount
   // A surrogate can overestimate pages as well as underestimate them. Probe
   // the widest endpoint before trusting a multi-page estimate. This catches
@@ -160,7 +160,7 @@ export async function verifyEstimatedWidthCandidates(candidates, measure, { sign
     }
     signal?.throwIfAborted()
     verifiedCandidates.push(exact)
-    if (safe(exact) && (!best || rank(exact, best) < 0)) best = exact
+    if (safe(exact) && (!best || compareWidthMeasurements(exact, best) < 0)) best = exact
     if (candidate!==preflight && safe(exact) && exact.pageCount <= expectedPages) break
   }
   if (!best) throw new Error('没有通过精确复核的选宽候选。')

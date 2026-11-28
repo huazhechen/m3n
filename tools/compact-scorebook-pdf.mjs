@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
@@ -22,7 +23,7 @@ assert.equal(pages.length, record.pageCount)
 const folder = join(temp, 'compact'); mkdirSync(folder, {recursive:true})
 await build({configFile:false,logLevel:'error',define:{'import.meta.url':JSON.stringify('http://scorebook.local/bundle.js')},build:{outDir:join(folder,'bundle'),emptyOutDir:true,minify:false,
   lib:{entry:join(root,'tools/scorebook-compact-layout.mjs'),name:'compactScorebook',formats:['iife'],fileName:()=>'bundle.js'}}})
-const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || ['/usr/bin/chromium','/usr/sbin/chromium','/usr/bin/chromium-browser'].find(existsSync),headless:true})
+const browser = await chromium.launch(chromiumLaunchOptions())
 const filename = record.outputPdf ?? plan.outputPdf, staged = join(folder, filename)
 const profile = record.page, results = []
 const scoreUrls = new Map(record.entries.map(entry => [entry.id, `https://score.cheesefans.com/scores/${encodeURIComponent(entry.file.replace(/\.m3n$/, ''))}`]))

@@ -1,4 +1,5 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -19,8 +20,7 @@ try {
     { find: '@m3n/notation', replacement: join(root, 'packages/notation/src/index.ts') },
   ] }, build: { outDir: join(temp, 'bundle'), emptyOutDir: true, minify: false,
     lib: { entry, name: 'formatAudit', formats: ['iife'], fileName: () => 'bundle.js' } } })
-  const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser'].find(existsSync)
-  browser = await chromium.launch({ executablePath, headless: true })
+  browser = await chromium.launch(chromiumLaunchOptions())
   const page = await browser.newPage()
   await page.setContent('<main></main>')
   await page.addScriptTag({ path: join(temp, 'bundle/bundle.js') })

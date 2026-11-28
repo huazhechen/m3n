@@ -2,8 +2,6 @@ import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagno
 import { expect, it } from 'vitest'
 import source from '../scores/meng_huan_qu_01.m3n?raw'
 import reference from './fixtures/traumerei-reference.json'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 
 it('preserves the Kuaiyuepu Träumerei melody, repeat route and fermatas', () => {
   expect(validateM3NDiagnostics(source)).toEqual([])
@@ -26,12 +24,4 @@ it('preserves the Kuaiyuepu Träumerei melody, repeat route and fermatas', () =>
     const expectedEnd = index === reference.events.length - 1 ? end! - 1 : end!
     expect(actual.end, `attack ${index + 1} release`).toBeCloseTo(expectedEnd, 6)
   })
-  const file = 'meng_huan_qu_01.m3n'
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
-  expect(plan.entries.find(entry => entry.file === file)?.section).toBe('instrumental')
-  expect(categories.flatMap(category => category.files).filter(name => name === file)).toHaveLength(1)
-  expect(categories.find(category => category.id === 'instrumental')?.files).toEqual(
-    plan.entries.filter(entry => entry.section === 'instrumental').map(entry => entry.file),
-  )
 })

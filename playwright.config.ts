@@ -1,8 +1,5 @@
 import { defineConfig } from '@playwright/test'
-import { existsSync } from 'node:fs'
-
-const systemChromium = process.env.CHROMIUM_PATH ?? ['/usr/bin/chromium', '/usr/sbin/chromium', '/usr/bin/chromium-browser']
-  .find((path) => existsSync(path))
+import { chromiumLaunchOptions } from './tools/lib/chromium-options.mjs'
 
 const previewPort = Number(process.env.M3N_E2E_PORT ?? 4173)
 const previewOutput = `.tmp/playwright-dist-${previewPort}`
@@ -18,12 +15,7 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${previewPort}`,
     browserName,
-    channel: browserName === 'chromium' && !systemChromium ? 'msedge' : undefined,
-    launchOptions: browserName === 'chromium' ? {
-      ...(systemChromium ? { executablePath: systemChromium } : {}),
-      args: ['--disable-gpu', '--renderer-process-limit=1', `--js-flags=--max-old-space-size=${lowMemory ? 192 : 384}`,
-        ...(lowMemory ? ['--disable-features=SpareRendererForSitePerProcess,IsolateOrigins,site-per-process', '--disable-site-isolation-trials', '--no-zygote'] : [])],
-    } : undefined,
+    launchOptions: browserName === 'chromium' ? chromiumLaunchOptions({ heapMb: lowMemory ? 192 : 384, lowMemory }) : undefined,
     headless: true,
   },
   webServer: {

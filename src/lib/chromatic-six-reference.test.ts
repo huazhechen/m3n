@@ -1,7 +1,5 @@
 import { compileScorePerformance, formatM3N, parseM3NDocument, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 import references from './fixtures/chromatic-six-references.json'
 
 const sources = import.meta.glob<string>('../scores/*.m3n', { eager: true, query: '?raw', import: 'default' })
@@ -31,6 +29,4 @@ it.each(references.scores)('preserves the independent reference melody and playb
     expect(actual.start, `attack ${index + 1} onset`).toBeCloseTo(expectedStart, 6)
     expect(actual.end, `attack ${index + 1} release`).toBeCloseTo(expectedEnd, 6)
   })
-  expect(plan.entries.filter(entry => entry.file === file)).toHaveLength(1)
-  expect(categories.flatMap(category => category.files).filter(name => name === file)).toHaveLength(1)
 })

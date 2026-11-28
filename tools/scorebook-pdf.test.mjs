@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -16,8 +17,7 @@ test('vector scorebook PDF keeps the version and omits only front-page footers',
     const entry = join(temp, 'entry.mjs')
     writeFileSync(entry, `export { scorebookFrontPages } from ${JSON.stringify(join(root, 'src/lib/scorebook-front.ts'))}; export { vectorScorePdf } from ${JSON.stringify(join(root, 'packages/score-renderer/src/score-pdf.ts'))}; export { prepareNumberedNotationFonts } from ${JSON.stringify(join(root, 'packages/numbered-notation/dist/index.js'))};`)
     await buildBrowserTestBundle({ root, entry, outDir: join(temp, 'bundle') })
-    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true,
-      args: ['--disable-gpu', '--single-process', '--no-zygote', '--js-flags=--max-old-space-size=256'] })
+    browser = await chromium.launch(chromiumLaunchOptions())
     const page = await browser.newPage()
     await page.route('**/*', async route => await assets.fulfill(route) ? undefined : new URL(route.request().url()).pathname === '/bundle.js'
       ? route.fulfill({ path: join(temp, 'bundle/bundle.js'), contentType: 'application/javascript; charset=utf-8' })

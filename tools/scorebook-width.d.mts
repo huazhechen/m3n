@@ -22,6 +22,7 @@ export type WidthMeasurement = {
 export const widthMinimum: number, widthMaximum: number, widthStep: number
 export const widthCandidates: number[]
 export const widthSearchStrategy: string
+export function compareWidthMeasurements(a: WidthMeasurement, b: WidthMeasurement): number
 export function chooseBestWidth(candidates: WidthMeasurement[]): WidthMeasurement | null
 export function numberedLayoutScore(candidate: Pick<WidthMeasurement, 'width' | 'totalCost' | 'lineDensityVariation' | 'lastLineSlack' | 'lineStretchPenalty' | 'qualityScore'>): number
 export class WidthSearchPruned extends Error { timings?: Record<string, number | Record<string, number>> }

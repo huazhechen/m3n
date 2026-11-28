@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import { chromium, webkit, devices } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -18,8 +19,7 @@ const fixtures = argument('score') ? [argument('score')] : ['ban_yin_jie_kou_qin
 const report = { complete: false, fontHashes: fonts.map(({ file, sha256 }) => ({ file, sha256 })), entries: [] }
 const save = () => writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n')
 for (const engine of argument('engine') ? [argument('engine')] : ['chromium', 'webkit']) {
-  const browser = await (engine === 'chromium' ? chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true,
-    args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--max-old-space-size=256'] })
+  const browser = await (engine === 'chromium' ? chromium.launch(chromiumLaunchOptions())
     : webkit.launch({ headless: true, executablePath: argument('webkit-executable') }))
   try { for (const form of argument('form') ? [argument('form')] : ['desktop', 'tablet']) {
     const context = await browser.newContext(form === 'tablet' ? { ...devices['iPad Mini'] } : {})

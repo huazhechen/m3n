@@ -56,8 +56,10 @@ it('detaches borrowed glyphs, controls and split columns without changing prepar
   }
 })
 
-it.each(['katyusha_01.m3n', 'flower_dance_01.m3n', 'valsentino_01.m3n'])('shares unplaced preparation across widths and settings without sharing placement: %s', file => {
-  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/' + file, import.meta.url), 'utf8'))
+it('shares unplaced preparation across widths and settings without sharing placement', () => {
+  // Candidate retention above covers three real arrangements. Exercise each
+  // settings/cache boundary once on the long score, including return to 480px.
+  const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8'))
   const before = structuredClone(document), layoutTask = new NativeLayoutTask(), textMeasurementCache = new NumberedTextMeasurementCache()
   const variants = [{}, { numericLayout: true }, { fixedDo: true }, { includeBass: false }, { transpose: 5 }, { tempoScale: 1.2 }, { measureNumbers: true, equalMeasures: true }]
   for (const variant of variants) for (const width of [480, 720, 540, 640, 480]) {

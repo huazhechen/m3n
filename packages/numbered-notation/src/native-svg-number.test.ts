@@ -25,5 +25,7 @@ it('preserves decimal quantization, including adjacent floats, ties and signed z
     const value = (seed / 2 ** 32 - .5) * 10 ** (i % 620 - 310)
     values.push(value, adjacent(value, -1n), adjacent(value, 1n))
   }
-  for (const value of values) expect(nativeSvgNumber(value)).toBe(original(value))
+  // Compare the full deterministic corpus in one assertion; per-number matcher
+  // setup dominates the quantizer itself. toEqual preserves NaN/signed-zero checks.
+  expect(values.map(nativeSvgNumber)).toEqual(values.map(original))
 })

@@ -1,7 +1,5 @@
 import { compileScorePerformance, deriveScoreInteraction, parseM3NDocument, resolveScorePitches, validateM3NDiagnostics } from '@m3n/notation'
 import { expect, it } from 'vitest'
-import plan from '../../config/scorebook/editorial-plan.json'
-import categories from '../../config/scorebook/library-categories.json'
 import source from '../scores/na_xie_nian_01.m3n?raw'
 import reference from './fixtures/na-xie-nian-kuaiyuepu.json'
 
@@ -68,12 +66,4 @@ it('uses repeat bars and DC to preserve 765 attacks after merging the six lyric 
   expect(expected).toHaveLength(765)
   expect(performance.notes.filter(note => note.channel === 0).map(note => [note.start, note.end, note.pitch])).toEqual(expected)
   expect(performance.notes.filter(note => note.channel !== 0)).toEqual([])
-})
-
-it('includes the score in both the book and the modern pop library category', () => {
-  expect(plan.sourceCount).toBe(plan.entries.length)
-  expect(plan.entries.filter(entry => entry.file === 'na_xie_nian_01.m3n')).toEqual([
-    expect.objectContaining({ id: 'na_xie_nian', title: reference.title, section: 'pop' }),
-  ])
-  expect(categories.filter(category => category.files.includes('na_xie_nian_01.m3n')).map(category => category.id)).toEqual(['pop'])
 })

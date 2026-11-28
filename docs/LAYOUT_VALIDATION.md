@@ -18,17 +18,23 @@
 
 ## 检查命令
 
-所有重型检查串行执行，单测试 worker，Node 堆受限，使用 `python3 tools/run-low-memory.py <命令>` 监控聚合内存。工作区上限2GB，默认1700MiB停止，最大可设1800MiB。
+所有重型检查串行执行，单测试 worker，Node 堆受限。`npm run check`、`npm run check:ci` 和 `npm run test:e2e` 自带聚合内存守卫；单独运行其他重检查时使用 `python3 tools/run-low-memory.py <命令>`。工作区上限2GB，默认1700MiB停止，最大可设1800MiB。
 
-- `npm run check`：边界、lint、类型、单元测试、构建、简谱布局、谱集浏览器、完整字体和页面端到端门禁。
+- `npm run check`：边界、lint、类型、全部离线测试、生成物校验、隔离构建、全库领域投影、双谱式代表谱例、谱集浏览器、真实字体密度、完整字体和页面端到端门禁。
+- `npm run check:ci`：与 GitHub 工作流相同的生成物、检测器和真实字体密度门禁。
+- `npm run test:tools`：自动发现离线工具测试；浏览器和完整字体测试分阶段执行。
 - `npm run test:native-ink`：简谱最终墨迹与检测器回归。
-- `npm run test:staff-layout`：五线谱全库及专项 SVG 审计。
+- `npm run test:staff-layout`：兼容入口，运行共用的双谱式真实字体密度及墨迹回归；不再重复全库渲染。
 - `npm run test:notation-density`：真实字体双谱式回归，校验物理尺度、连续高度、行数及墨迹安全。
 - `node tools/compare-notation-density.mjs --all --widths=640`：全库同宽双谱式检查；`--screenshots`、`--pdfs` 保存实绘，`--profile` 输出逐行／逐小节诊断。
 - `node tools/compare-optimal-notation-pages.mjs`：两种谱式分别完整选宽后检查页数与墨迹。
 - `node tools/verify-numbered-font-design.mjs`：简谱设计度量在Chromium／WebKit、桌面／平板模拟中的候选评分与几何一致性，小节号显隐不变性，PNG／PDF显式样式及最终墨迹审计。
 - `node tools/review-numbered-widths.mjs`：逐曲核对真实阅读器，并完整枚举41档同页更大字体候选；选定替代方案另作墨迹审计。
 - `npm run check:score-artifacts`：生成物摘要一致性。
+
+验证流程由 `tools/verify-project.mjs` 统一编排，阶段耗时写入 `.tmp/verification-<mode>.json`。离线阶段已通过时，可用 `python3 tools/run-low-memory.py node tools/verify-project.mjs integration` 单独重跑包含构建的全部集成检查；它不代表完整门禁已达到120秒。全库多宽、多模式SVG审计已删除：全库音乐内容和事件完整性由领域契约及轻量投影验证；浏览器只对10份代表性输入验证双谱式的真实字体、墨迹、密度及显式换行。需要逐曲诊断时才手动运行 `compare-notation-density.mjs --all`。端到端按文件释放浏览器，五线谱重用例进一步按测试位置隔离。审计、导出与 Playwright 共用 `tools/lib/chromium-options.mjs`：本地及CI默认使用已安装的 Playwright 配套浏览器，`CHROMIUM_PATH` 可显式覆盖，禁用单进程模式。
+
+密度门禁约束高度、行数上限、音乐及歌词物理尺寸、事件完整性和实际墨迹。普通 `---` 允许自动重排，不固定历史行数或要求整个乐句始终同排；《基本功》专项检查显式 `{br}` 指定的小节行末边界。检查拒绝非有限数值及空布局，不允许无效统计绕过上限。
 
 `--metrics-only` 只适合测量，不作为墨迹验收。检查报告和图像写入忽略的 `.tmp/`；CI 保存报告与失败日志。显示展开量不同的曲目仍参与安全与页数检查，按事件数归一的统计单独处理。
 

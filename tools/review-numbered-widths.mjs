@@ -1,3 +1,4 @@
+import { chromiumLaunchOptions } from './lib/chromium-options.mjs'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -34,8 +35,7 @@ const report = { revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding
 const save = () => writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n')
 const inputs = ['scores', 'works', 'examples'].flatMap(scope => readdirSync('src/' + scope).filter(file => file.endsWith('.m3n')).sort().map(file => `${scope}/${file}`))
   .filter(file => !argument('score') || argument('score').split(',').some(part => file.includes(part)))
-const launch = () => chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true,
-  args: ['--disable-gpu', '--renderer-process-limit=1', '--disable-features=SpareRendererForSitePerProcess', '--js-flags=--expose-gc --max-old-space-size=256'] })
+const launch = () => chromium.launch(chromiumLaunchOptions({ exposeGc: true }))
 for (const file of inputs) {
   const source = readFileSync('src/' + file, 'utf8'), sourceHash = digest(source)
   const reference = baseline?.entries.find(entry => entry.file === file)
