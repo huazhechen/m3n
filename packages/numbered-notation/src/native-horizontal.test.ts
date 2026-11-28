@@ -172,8 +172,8 @@ it('measures physical full-width clearance independently of the tier baseline an
 it('pools all interval costs across rows instead of averaging row means or row costs', () => {
   const result = layout('{4/4}\nN: 1 2 3 4 | {br} 5 6 7 1e |||', 600)
   expect(result.systems).toHaveLength(2)
-  result.systems[0]!.rhythmicGaps = [6]
-  result.systems[1]!.rhythmicGaps = [12, 16, 24]
+  result.systems[0]!.rhythmicGaps = [8]
+  result.systems[1]!.rhythmicGaps = [16, 20, 24]
   for (const system of result.systems) system.unitRhythmicGap = 18
   const quality = nativeLayoutQuality(result)
   expect(quality.spacingCrampedCost).toBeCloseTo(.25)
