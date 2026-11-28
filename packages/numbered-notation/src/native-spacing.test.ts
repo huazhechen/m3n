@@ -157,7 +157,7 @@ it('minimum-only numbered spacing distributes positive surplus without natural c
   expect(filled.positions.at(-1)! + 5).toBeCloseTo(100)
 })
 
-it.each([1, 2, 3])('applies a %spx pair gap across sparse lyric slots without exterior padding', gap => {
+it.each([0, 1, 2])('applies a %spx pair gap across sparse lyric slots without exterior padding', gap => {
   const lyric = (lane: string) => cell(lane, { sparse: true, left: 20, right: 20, before: 9, after: 9, beforeStretch: 0, afterStretch: 0 })
   const music = () => cell('music', { left: 1, right: 1, before: 0, after: 0 })
   const columns = [{ cells: [music(), lyric('lyric-1')] }, { cells: [music(), lyric('lyric-2')] },

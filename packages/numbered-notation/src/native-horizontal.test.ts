@@ -106,7 +106,7 @@ describe('native spacing and measured note envelopes', () => {
         expect(result.systems.slice(-5).map(system => system.measures.map(measure => measure.index + 1)))
             .toEqual([[51], [52], [53, 54, 55], [56, 57, 58], [59, 60, 61]]);
     });
-    it.each([[8, 1], [12, 2], [16, 3]])('uses lyric pair gaps instead of accumulating music clearance at tier %s', (minimumNoteGap, pairGap) => {
+    it.each([[8, 0], [12, 1], [16, 2]])('uses lyric pair gaps instead of accumulating music clearance at tier %s', (minimumNoteGap, pairGap) => {
         const textMeasurer: TextMeasurer = { measureText(text, style) {
                 return { w: text === '0' ? 11.154 : [...text].length * 20, h: style.fontSize, baseline: style.fontSize * 0.8 };
             } };

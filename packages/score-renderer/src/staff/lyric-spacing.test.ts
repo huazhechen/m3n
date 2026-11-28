@@ -14,7 +14,7 @@ import { engraveStaffSystems } from './staff-system.js'
 const measureText: MeasureText = (text, size) => ({ width: text.length * size, left: 0, right: text.length * size, ascent: size * 0.8, descent: size * 0.2 })
 const source = '{2/4}\nN: ||: (1 2 3 4) :|||\nL1: Spring summer autumn winter\nL2: Morning evening sunshine moonlight'
 
-it.each([[0.8, 1], [1.6, 2], [2.4, 3]])('reserves a pair gap for music spacing %s without adding music clearance', (spacing, gap) => {
+it.each([[0.8, 0], [1.6, 1], [2.4, 2]])('reserves a pair gap for music spacing %s without adding music clearance', (spacing, gap) => {
   const document = projectStaffDocument(analyzeM3N(source).score)
   const measure = document.measures[0]!
   const model = createStaffMeasure(measure, false, false, measureText, spacing)
@@ -48,7 +48,7 @@ it('uses the shared lyric font and M/8 clearance for both vertical gaps', () => 
   expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(scoreLayoutConfig.numbered.music / scoreLayoutConfig.page.lyricGapDivisor)
 })
 
-it('includes lyric underline stroke caps in the 1px minimum clearance', () => {
+it('includes lyric underline stroke caps in the zero-gap minimum clearance', () => {
   const document = projectStaffDocument(analyzeM3N('{2/4}\nN: (1 2 3 4) |||\nL: (Spring) (summer) (autumn) (winter)').score)
   const model = createStaffMeasure(document.measures[0]!, false, false, measureText, 0.25)
   expect(model.entries[0]!.every(entry => entry.item.lyrics[0]?.underlined)).toBe(true)
@@ -56,5 +56,5 @@ it('includes lyric underline stroke caps in the 1px minimum clearance', () => {
   const centers = model.entries[0]!.map(entry => (entry.notes[0]!.headLeft + entry.notes[0]!.headRight) / 2)
   const widths = ['Spring', 'summer', 'autumn', 'winter'].map(word => measureText(word, lyricSpacing.fontSize / STAFF_SCALE).width)
   for (let i = 1; i < centers.length; i++)
-    expect((centers[i]! - centers[i - 1]! - (widths[i]! + widths[i - 1]!) / 2) * STAFF_SCALE - 1).toBeCloseTo(1)
+    expect((centers[i]! - centers[i - 1]! - (widths[i]! + widths[i - 1]!) / 2) * STAFF_SCALE - 1).toBeCloseTo(0)
 })

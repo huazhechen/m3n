@@ -22,4 +22,4 @@
 
 旧报告`.tmp/notation-comparison-lyric-pairs/staff.json`与新报告`.tmp/lyric-gap-012/later-staff.json`的谱源SHA-256和共享字体摘要一致。新报告完整结束，696px赢家经过精确复核，无复核失败。另以真实字体对696px进行独立SVG墨迹检查，结果为零越界、零碰撞；报告为`.tmp/lyric-gap-012/later-696-audit.json`。
 
-试验后已恢复原配置及包产物。线上仍为be29及1／2／3px，尚未正式切换或部署0／1／2px。当前全库统计仍适用于原配置。
+试验后曾恢复原配置及包产物。用户确认采用后，正式配置改为0／1／2px（v95）；本页保留单曲试验结果。全库统计仍为1／2／3px的v94基线。
