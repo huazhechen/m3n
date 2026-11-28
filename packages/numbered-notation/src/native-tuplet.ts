@@ -12,13 +12,14 @@ const contexts=new WeakMap<NativeSystem,{peers:Map<NativeRelation,NativeRelation
 export function cacheNativeTuplets(system:NativeSystem){contexts.set(system,{peers:new Map(),geometry:new Map()})}
 export function releaseNativeTuplets(system:NativeSystem){contexts.delete(system)}
 
-/** Adjacent rhythm brackets form one vertical alignment group. */
+/** Adjacent rhythm brackets in one measure form a vertical alignment group. */
 export function nativeTupletPeers(relation: NativeRelation, system: NativeSystem) {
   const cache=contexts.get(system),saved=cache?.peers.get(relation)
   if(saved)return saved
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     .filter(glyph => glyph.lane === relation.first.lane)
-  const spans = system.relations.filter(item => item.kind === 'tuplet' && item.first.lane === relation.first.lane)
+  const spans = system.relations.filter(item => item.kind === 'tuplet' && item.first.lane === relation.first.lane
+    && item.first.measureId === relation.first.measureId)
     .map(item => ({ item, start: glyphs.indexOf(item.first), end: glyphs.indexOf(item.last) }))
     .filter(span => span.start >= 0 && span.end >= span.start).sort((a, b) => a.start - b.start)
   const current = spans.findIndex(span => span.item === relation)

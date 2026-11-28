@@ -84,6 +84,22 @@ describe('native tuplet brackets', () => {
       expect(system.lanes[0]!.top).toBeGreaterThanOrEqual(-first.ink.top)
     }
   })
+  it.each([true, false])('aligns within each measure without lifting its neighbor, numeric=%s', numericLayout => {
+    const score = layoutNativeScore(parseM3NDocument('{4/4}\nN: [1 2 3:2] [4 5 6:2] | [1ee 2ee 3ee:2] [4 5 6:2] |||'), {
+      ...options, numericLayout, textMeasurer: measurer,
+    })
+    expect(score.systems).toHaveLength(1)
+    const marks = brackets(score)
+    expect(marks).toHaveLength(4)
+    expect(marks[0]!.geometry.baseline).toBeCloseTo(marks[1]!.geometry.baseline)
+    expect(marks[2]!.geometry.baseline).toBeCloseTo(marks[3]!.geometry.baseline)
+    expect(marks[0]!.geometry.baseline).toBeGreaterThan(marks[2]!.geometry.baseline)
+    const placed = marks.map(({ system, relation }) => system.relationLayout!.get(relation)!.ink)
+    expect(placed[0]!.top).toBeCloseTo(placed[1]!.top)
+    expect(placed[2]!.top).toBeCloseTo(placed[3]!.top)
+    expect(placed[0]!.top).toBeGreaterThan(placed[2]!.top)
+  })
+
   it('breaks alignment at ordinary notes and at system or lane boundaries', () => {
     const separated = brackets(layout('([1 2 3:2]) 4 ([5ee 6 7:2]) 1e'))
     expect(separated[0]!.geometry.baseline).toBeGreaterThan(separated[1]!.geometry.baseline)
