@@ -94,7 +94,7 @@ function refineStaffBeamDirections(systems: StaffSystem[], document: StaffDocume
         if (!beam.flexible) continue
         const note = prepared.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
         const trialChoices = new Map(choices).set(note.item.id, -note.direction)
-        const trialPreparation = createStaffPreparation(document, trialChoices)
+        const trialPreparation = preparation.withBeamDirections(trialChoices, document)
         const plans = relationPlans.get(preparation)
         if (plans) relationPlans.set(trialPreparation, plans)
         const trial = (buildStaffSystems(document, lines, width, measureText, spacing, measureNumbers,

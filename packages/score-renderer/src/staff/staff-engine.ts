@@ -189,8 +189,15 @@ export type PreparedNote = {
 }
 type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
 export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[]; flexible?: boolean }> }
+export type StaffPreparation = {
+  attachmentGap: number
+  lyricAttributes: WeakMap<StaffEvent, Array<Record<string, string>>>
+  lyricTexts: Map<string, StaffLyricText>
+  measure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText): PreparedMeasure
+  withBeamDirections(directions: ReadonlyMap<string, number>, source: StaffDocument): StaffPreparation
+}
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
-export function createStaffPreparation(document?: StaffDocument, beamDirections: ReadonlyMap<string, number> = new Map()) {
+export function createStaffPreparation(document?: StaffDocument, beamDirections: ReadonlyMap<string, number> = new Map()): StaffPreparation {
   const attachmentGap = scoreAttachmentGap('staff')
   const incomingTies = new Set<string>()
   for (const lane of ['melody', 'bass'] as const) {
@@ -200,21 +207,52 @@ export function createStaffPreparation(document?: StaffDocument, beamDirections:
       previous = entry
     }
   }
-  const measures = new WeakMap<StaffMeasure, Map<string, PreparedMeasure>>()
-  return {
-    attachmentGap,
-    lyricAttributes: new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts: new Map<string, StaffLyricText>(),
-    measure(measure: StaffMeasure, first: boolean, hasBass: boolean, measureText: MeasureText) {
-      let variants = measures.get(measure)
-      if (!variants) { variants = new Map(); measures.set(measure, variants) }
+  type Family = { base: PreparedMeasure; beams?: Array<{ id: string; direction: number }>; variants: Map<string, PreparedMeasure> }
+  const measures = new WeakMap<StaffMeasure, Map<string, Family>>()
+  const defaults = new Map<string, number>()
+  const lyricAttributes = new WeakMap<StaffEvent, Array<Record<string, string>>>(), lyricTexts = new Map<string, StaffLyricText>()
+  const view = (directions: ReadonlyMap<string, number>): StaffPreparation => ({
+    attachmentGap, lyricAttributes, lyricTexts,
+    // A legacy caller may supply an unbound preparation, or one made for
+    // another document. Preserve fresh-trial incoming-tie semantics there.
+    withBeamDirections: (next, source) => source === document ? view(next) : createStaffPreparation(source, next),
+    measure(measure, first, hasBass, measureText) {
+      let families = measures.get(measure)
+      if (!families) { families = new Map(); measures.set(measure, families) }
       const key = `${first}:${hasBass}`
-      let prepared = variants.get(key)
-      if (!prepared) { prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, beamDirections); variants.set(key, prepared) }
+      let family = families.get(key)
+      if (!family) {
+        family = { base: prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, defaults), variants: new Map() }
+        families.set(key, family)
+      }
+      if (!directions.size) return family.base
+      // Only flexible beam IDs of this measure affect preparation. Changes
+      // elsewhere in the row can share this exact immutable descriptor.
+      family.beams ??= family.base.beams.filter(beam => beam.flexible).map(beam => {
+        const note = family!.base.entries[beam.lane]!.flatMap(entry => entry.notes)[beam.indices[0]!]!
+        return { id: note.item.id, direction: note.direction }
+      })
+      let changed = false
+      const choices = family.beams.map(beam => {
+        const direction = directions.get(beam.id) ?? beam.direction
+        changed ||= direction !== beam.direction
+        return direction
+      })
+      if (!changed) return family.base
+      const variant = choices.join(':')
+      let prepared = family.variants.get(variant)
+      if (!prepared) {
+        prepared = prepareMeasure(measure, first, hasBass, measureText, incomingTies, attachmentGap / STAFF_SCALE, directions)
+        // Bound task retention even for a measure with many flexible groups.
+        // Eviction only recomputes a descriptor; it never removes a trial.
+        if (family.variants.size >= 16) family.variants.delete(family.variants.keys().next().value!)
+        family.variants.set(variant, prepared)
+      }
       return prepared
     },
-  }
+  })
+  return view(beamDirections)
 }
-export type StaffPreparation = ReturnType<typeof createStaffPreparation>
 const marks: Record<string, StaffGlyph> = { str: 'articAccentAbove', tip: 'articStaccatoAbove', brk: 'articStaccatissimoAbove', hold: 'articTenutoAbove', fermata: 'fermataAbove', breath: 'breathMarkComma', tr: 'ornamentTrill', prall: 'ornamentShortTrill' }
 function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<string, string>, key: string, grace = false, beamedGrace = false, attachmentGap = style.attachmentGap / STAFF_SCALE): PreparedNote {
   const { dur, dots } = staffDuration(item.beats), rest = item.event.kind === 'rest'
