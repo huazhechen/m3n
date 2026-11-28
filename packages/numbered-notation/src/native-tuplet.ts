@@ -1,4 +1,5 @@
 import { SCORE_NUMBER_FONT } from './font-family.js'
+import { scoreLayoutConfig } from './score-layout-config.js'
 import { nativeStyle } from './native-style.js'
 import type { NativeRelation, NativeSystem } from './native-layout-model.js'
 import type { TextMeasurer } from './native-measure.js'
@@ -39,8 +40,8 @@ function calculateTupletGeometry(relation: NativeRelation, system: NativeSystem,
   const glyphs = system.measures.flatMap(measure => measure.columns.flatMap(column => column.glyphs))
     .filter(glyph => glyph.lane === relation.first.lane)
   const peers = nativeTupletPeers(relation, system)
-  const size = nativeStyle.music, fontSize = (nativeStyle.music * .7), hook = size * 0.18, gap = size / 12
-  const stroke = size / 20, halfStroke = stroke / 2
+  const size = nativeStyle.music, fontSize = scoreLayoutConfig.numbered.tupletFontSize, hook = scoreLayoutConfig.numbered.tupletHookLength, gap = size / 12
+  const stroke = scoreLayoutConfig.numbered.tupletStroke, halfStroke = stroke / 2
   const halfBody = measurer.measureText('0', { fontSize: size, fontFamily: SCORE_NUMBER_FONT }).w / 2
   const shape = (peer: NativeRelation) => {
     const text = measurer.measureText(peer.label ?? '', { fontSize, fontFamily: SCORE_NUMBER_FONT, textAlign: 'center' })

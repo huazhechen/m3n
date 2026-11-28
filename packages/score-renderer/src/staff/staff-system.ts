@@ -13,6 +13,7 @@ import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, typ
 
 const style = scoreLayoutConfig.staff
 const engine = style.engine
+const shared = scoreLayoutConfig.numbered
 
 // Projection identity and this map both belong to one measurement task.
 const relationPlans = new WeakMap<StaffPreparation, WeakMap<StaffDocument, ReturnType<typeof prepareSystemRelations>>>()
@@ -78,8 +79,9 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
     ])
   }
   const wrap = (value: string, x: number, y: number, cls: string, bold = false) => {
-    const rows = numberedHeadingLines(value, rawWidth - style.attachmentWrapInset / scale, style.annotation / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight)
-    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * style.annotationLineHeight / scale, style.annotation, cls, bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}))[0]!))
+    const size = cls === 'tempo-direction' ? style.tempo : style.annotation
+    const rows = numberedHeadingLines(value, rawWidth - style.attachmentWrapInset / scale, size / scale, { measureText: (s: string, style: { fontSize: number }) => ({ w: measureText(s, style.fontSize, bold).width }) }, bold ? scoreLayoutConfig.fonts.boldWeight : scoreLayoutConfig.fonts.regularWeight)
+    return element('g', { class: cls }, rows.map((s, i) => nodes(text(s, x, y + i * size / scale, size, cls, bold ? { 'font-weight': String(scoreLayoutConfig.fonts.boldWeight) } : {}))[0]!))
   }
   let plans = preparation && relationPlans.get(preparation)
   if (preparation && !plans) { plans = new WeakMap(); relationPlans.set(preparation, plans) }
@@ -273,11 +275,14 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
         const range = endingRanges.get(originalId)!
         const first = range.start === originalId && (!member.measure.fragment || member.measure.id.endsWith('-fragment-1'))
         const cls = `ending voltaBracket id-m3n-ending-${range.index}`
+        const hookTop = staffMusicSize() / 4 * .5
+        const labelInk = measureText(`${ending}.`, style.voltaLabel / scale)
+        const hookLength = (labelInk.ascent + labelInk.descent) * shared.voltaHookRatio
         node.children.push(element('g', { class: cls }, [
-          ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${(staffMusicSize() / 4 * 1.7)} V${(staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })] : []),
-          element('path', { d: `M${left} ${(staffMusicSize() / 4 * 0.5)} H${right}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' }),
-          element('path', { d: `M${right} ${(staffMusicSize() / 4 * 0.5)} V${(staffMusicSize() / 4 * 1.7)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' }),
-          ...nodes(text(first ? `${ending}.` : '', left + engine.endingTextInset, engine.endingTextY, style.voltaLabel, 'ending')),
+          ...(first ? [element('path', { class: 'm3n-ending-start-hook', d: `M${left} ${(hookTop + hookLength)} V${hookTop}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' })] : []),
+          element('path', { d: `M${left} ${hookTop} H${right}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
+          element('path', { d: `M${right} ${hookTop} V${(hookTop + hookLength)}`, stroke: '#000', 'stroke-width': String(shared.voltaStroke / scale), fill: 'none' }),
+          ...nodes(text(first ? `${ending}.` : '', left + shared.voltaTextInset / scale, hookTop + (hookLength - labelInk.ascent - labelInk.descent) / 2 + labelInk.ascent, style.voltaLabel, 'ending')),
         ]))
       }
       const tieGeometry = new SvgGeometry(node, measureText, true)
@@ -333,7 +338,7 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const y = low + (staffMusicSize() / 4 * 2.5), cresc = interval.kind === 'cresc'
             const endX = Math.max(left + (staffMusicSize() / 4 * 0.4), b?.last.durationEndX ?? right)
             const parent = a?.measure ?? nodes(node).find(n => hasClass(n, 'measure'))!
-            parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (staffMusicSize() / 4 * 0.5)} L${left} ${y} L${endX} ${y + (staffMusicSize() / 4 * 0.5)}` : `M${left} ${y - (staffMusicSize() / 4 * 0.5)} L${endX} ${y} L${left} ${y + (staffMusicSize() / 4 * 0.5)}`, stroke: '#000', 'stroke-width': String((staffMusicSize() / 4 * 0.1)), fill: 'none' })]))
+            parent.children.push(element('g', { class: 'hairpin', 'data-m3n-staff': String(lane) }, [element('path', { d: cresc ? `M${endX} ${y - (shared.hairpinHalfOpening / scale)} L${left} ${y} L${endX} ${y + (shared.hairpinHalfOpening / scale)}` : `M${left} ${y - (shared.hairpinHalfOpening / scale)} L${endX} ${y} L${left} ${y + (shared.hairpinHalfOpening / scale)}`, stroke: '#000', 'stroke-width': String(shared.hairpinStroke / scale), fill: 'none' })]))
           }
         } else if (interval.kind === '8va' || interval.kind === '8vb') {
           const y = interval.kind === '8va' ? yTop - engine.octaveAboveGap : low + engine.octaveBelowGap

@@ -9,7 +9,7 @@ const argument = name => process.argv.find(value => value.startsWith(`--${name}=
 const root = resolve(import.meta.dirname, '..')
 const output = resolve(argument('output') ?? '.tmp/notation-density')
 // Fixed-width end-to-end guardrails retain real fonts, lyrics and beam geometry.
-// Keep the existing height ceilings; musical size is calibrated to 26px em / 6.5px spaces.
+// Keep the existing height ceilings; musical size is calibrated to 28px em / 7px spaces.
 // lyric/music sizes, ink audits and the numbered optimal-width gate stay fixed.
 const autoStaffWidth = process.argv.includes('--auto-staff-width')
 const regression = process.argv.includes('--regression')

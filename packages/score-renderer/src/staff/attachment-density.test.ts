@@ -34,7 +34,7 @@ it.each([['dir', 6], ['harm', 6], ['fing', 12]] as const)('anchors upper %s to l
   }
   const near = place(10, 10), far = place(-100, -100)
   expect(far.bottom).toBeCloseTo(near.bottom)
-  expect((39.5 - far.bottom) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.music / divisor)
+  expect((39.5 - far.bottom) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.numbered.music / divisor)
 })
 
 
@@ -91,7 +91,7 @@ it.each(['dynam', 'hairpin'])('anchors a grand-staff %s to its own lane regardle
 })
 
 it('clears a framed section title from its caption by the fixed annotation gap', () => {
-  const scale = scoreLayoutConfig.staff.engine.scale, gap = scoreLayoutConfig.staff.music / scoreLayoutConfig.page.annotationGapDivisor
+  const scale = scoreLayoutConfig.staff.engine.scale, gap = scoreLayoutConfig.numbered.music / scoreLayoutConfig.page.annotationGapDivisor
   const rules = [40, 50, 60, 70, 80].map(y => element('path', {
     class: 'staff-line', d: `M0 ${y} H300`, fill: 'none', stroke: '#000', 'stroke-width': '1',
   }))

@@ -7,7 +7,7 @@ import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
 import { findAll, SvgGeometry, xml } from './layout-svg.js'
 import { projectStaffDocument } from './staff-document.js'
-import { createStaffMeasure, drawStaffMeasure, drawStaffBar } from './staff-engine.js'
+import { createStaffMeasure, drawStaffMeasure, drawStaffBar, STAFF_SCALE } from './staff-engine.js'
 
 const measureText = () => ({ width: 0, left: 0, right: 0, ascent: 0, descent: 0 })
 function model(source: string, spacing = .25) {
@@ -100,7 +100,7 @@ describe('staff rhythm engraving', () => {
     const result = createStaffMeasure(measure, false, false, text, .25)
     drawStaffMeasure(result, result.minimum, 0)
     const [first, second] = result.entries[0]!.map(entry => entry.notes[0]!)
-    const gap = .25 * scoreLayoutConfig.staff.engine.spacingUnit / scoreLayoutConfig.staff.engine.scale
+    const gap = .25 * scoreLayoutConfig.staff.space / scoreLayoutConfig.staff.engine.scale
     expect(second!.x - second!.prepared.left - (first!.x + first!.prepared.after)).toBeGreaterThanOrEqual(gap - 1e-7)
     const centers = [first!, second!].map(note => (note.headLeft + note.headRight) / 2)
     const size = scoreLayoutConfig.lyrics.fontSize / scoreLayoutConfig.staff.engine.scale
@@ -302,7 +302,7 @@ it.each(['tip', 'brk', 'hold', 'str'])('puts %s opposite final stems, including 
   }
 })
 
-it.each([28, 35])('measures proportional tuplet bracket clearance at music size %s', size => {
+it.each([28, 35])('keeps shared tuplet text and bracket clearance fixed at staff music size %s', size => {
   const previous = scoreLayoutConfig.staff.music;
   scoreLayoutConfig.staff.music = size;
   try {
@@ -314,11 +314,11 @@ it.each([28, 35])('measures proportional tuplet bracket clearance at music size 
     const text = findAll(label, n => n.tagName === 'text')[0]!;
     const geometry = new SvgGeometry(label, measured);
     const paths = findAll(label, n => n.tagName === 'path');
-    const center = Number(text.attributes.x), width = measured('3', size * .4 / scoreLayoutConfig.staff.engine.scale).width;
-    expect(Number(text.attributes['font-size'])).toBe(size * .4 / scoreLayoutConfig.staff.engine.scale);
+    const center = Number(text.attributes.x), width = measured('3', scoreLayoutConfig.staff.tupletFontSize / scoreLayoutConfig.staff.engine.scale).width;
+    expect(Number(text.attributes['font-size'])).toBe(scoreLayoutConfig.staff.tupletFontSize / scoreLayoutConfig.staff.engine.scale);
     expect(text.attributes['font-family']).toBe(scoreLayoutConfig.fonts.text);
-    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - (staffMusicSize() / 4 * 0.3) + (staffMusicSize() / 4 * 0.1) / 2);
-    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + (staffMusicSize() / 4 * 0.3) - (staffMusicSize() / 4 * 0.1) / 2);
+    expect(geometry.ink(paths[1]!).right).toBeCloseTo(center - width / 2 - scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE + scoreLayoutConfig.staff.tupletStroke / STAFF_SCALE / 2);
+    expect(geometry.ink(paths[2]!).left).toBeCloseTo(center + width / 2 + scoreLayoutConfig.staff.attachmentGap / STAFF_SCALE - scoreLayoutConfig.staff.tupletStroke / STAFF_SCALE / 2);
   } finally { scoreLayoutConfig.staff.music = previous; }
 });
 

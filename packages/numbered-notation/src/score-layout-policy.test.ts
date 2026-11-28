@@ -5,14 +5,14 @@ import { scoreVerticalSpacing, scoreVerticalCost, scoreRhythmicGapWeight } from 
 
 it('preserves the configured staff space and physical print readability', () => {
   const staffHeight = scoreLayoutConfig.staff.music
-  expect(staffHeight / 4).toBe(6.5)
+  expect(staffHeight / 4).toBe(7)
   const widestAutomaticWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.maximumMultiple
   expect(staffHeight / 4 * A4_CONTENT_WIDTH_MM / widestAutomaticWidth).toBeGreaterThanOrEqual(1.6)
 })
-it('derives vertical comfort bounds from each notation minimum independently', () => {
+it('uses the shared M for both notation vertical comfort bounds', () => {
   for (const notation of ['numbered', 'staff'] as const) {
     const spacing = scoreVerticalSpacing(notation)
-    expect(spacing.minimum / scoreLayoutConfig[notation].music).toBeCloseTo(.75)
+    expect(spacing.minimum / scoreLayoutConfig.numbered.music).toBeCloseTo(.75)
     expect(spacing.comfortable).toBeCloseTo(spacing.minimum * 1.5)
     expect(spacing.maximum).toBeCloseTo(spacing.minimum * 2)
     expect(scoreVerticalCost(spacing.minimum, spacing)).toBeCloseTo(1)
@@ -37,16 +37,17 @@ it('supports equal duration shares for numbered spacing without changing staff d
   expect(scoreRhythmicGapWeight(.5, .5, .75, .5)).toBeCloseTo(Math.sqrt(.5) * .75)
 })
 
-it('allows each notation to configure its own minimum while deriving the same comfort ratios', () => {
-  const previous = scoreLayoutConfig.staff.minimumRowGapEm
+it('keeps shared gaps and type fixed when S changes, while staff geometry scales', () => {
+  const staff = scoreLayoutConfig.staff, previous = staff.space
+  const shared = () => ({ vertical: scoreVerticalSpacing('staff'), attachment: staff.attachmentGap,
+    lyric: staff.lyricGap, annotation: staff.annotationGap, chord: staff.chordGap,
+    title: staff.title, text: staff.text, tuplet: staff.tupletFontSize })
   try {
-    scoreLayoutConfig.staff.minimumRowGapEm = .9
-    const staff = scoreVerticalSpacing('staff'), numbered = scoreVerticalSpacing()
-    expect(staff.minimum).toBeCloseTo(scoreLayoutConfig.staff.music * .9)
-    expect(staff.comfortable).toBeCloseTo(staff.minimum * 1.5)
-    expect(staff.maximum).toBeCloseTo(staff.minimum * 2)
-    expect(numbered.minimum).toBeCloseTo(scoreLayoutConfig.numbered.music * .75)
-  } finally {
-    scoreLayoutConfig.staff.minimumRowGapEm = previous
-  }
+    const before = shared(), bass = staff.engine.bassY
+    staff.space *= 1.5
+    expect(shared()).toEqual(before)
+    expect(scoreVerticalSpacing('staff')).toEqual(scoreVerticalSpacing('numbered'))
+    expect(staff.engine.bassY).toBeCloseTo(bass * 1.5)
+    expect(staff.music).toBeCloseTo(4 * staff.space)
+  } finally { staff.space = previous }
 })

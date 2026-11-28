@@ -15,7 +15,7 @@ describe('staff metronome notes', () => {
       expect(svg).not.toMatch(/<(?:path|circle)\b/)
       expect(ink.left).toBeCloseTo(17)
       expect(ink.bottom).toBeCloseTo(31)
-      expect(beat.textX - ink.right).toBeCloseTo(16 * .7 * .35 * scoreLayoutConfig.staff.musicSizeRatio)
+      expect(beat.textX - ink.right).toBeCloseTo(16 * .7 * .35 * (scoreLayoutConfig.staff.space / 7))
     }
   })
 
@@ -24,8 +24,8 @@ describe('staff metronome notes', () => {
     const large = staffTempoBeat(4, 0, 0, 0, 32, measure)
     const a = new SvgGeometry(small.node, measure).ink(small.node)
     const b = new SvgGeometry(large.node, measure).ink(large.node)
-    expect(a.bottom - a.top).toBeCloseTo(14 * scoreLayoutConfig.staff.musicSizeRatio)
-    expect(b.bottom - b.top).toBeCloseTo(28 * scoreLayoutConfig.staff.musicSizeRatio)
+    expect(a.bottom - a.top).toBeCloseTo(14 * (scoreLayoutConfig.staff.space / 7))
+    expect(b.bottom - b.top).toBeCloseTo(28 * (scoreLayoutConfig.staff.space / 7))
     expect(b.right).toBeCloseTo(a.right * 2)
     expect(large.textX).toBeCloseTo(small.textX * 2)
   })

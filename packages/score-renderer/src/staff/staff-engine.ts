@@ -237,7 +237,7 @@ function prepareNote(item: StaffEvent, bass: boolean, accidentalState: Map<strin
   const ys = rest ? [(staffMusicSize() * 1.5)] : item.pitches.map(p => staffPitchY(p.key, bass))
   const direction = grace || rest || ys.reduce((sum, y) => sum + y, 0) / ys.length > (staffMusicSize() * 1.5) ? 1 : -1
   const head: StaffGlyph = rest ? `rest${dur}` as StaffGlyph : dur === 1 ? 'noteheadWhole' : dur === 2 ? 'noteheadHalf' : 'noteheadBlack'
-  const size = (grace ? (style.music * .65) : style.music) / STAFF_SCALE, headWidth = staffGlyphMetrics(head, size).right - staffGlyphMetrics(head, size).left
+  const size = (grace ? (style.music * style.graceRatio) : style.music) / STAFF_SCALE, headWidth = staffGlyphMetrics(head, size).right - staffGlyphMetrics(head, size).left
   const ordered = ys.map((y, index) => ({ y, index })).sort((a, b) => direction * (b.y - a.y))
   const heads: Head[] = ys.map(y => ({ x: 0, y }))
   let displaced = false
@@ -386,7 +386,7 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
     for (const [i, note] of flat.entries()) if (!note.rest && note.dur >= 8 && !beamed.has(i)) {
       const head = staffGlyphMetrics(note.head, note.size)
       const flag = staffGlyphMetrics(`flag${note.dur}${note.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.size)
-      const stemX = note.direction === 1 ? head.right - note.size / 4 * .06 : note.size / 4 * .06
+      const stemX = note.direction === 1 ? head.right - note.size / 4 * .05 : note.size / 4 * .05
       note.left = Math.max(note.left, -stemX - flag.left)
       note.after = Math.max(note.after, stemX + flag.right)
     }
@@ -605,7 +605,7 @@ function positionNote(note: StaffNoteAnchor, x: number, y: number) {
   note.headLeft = x + fixed.left
   note.headRight = x + fixed.right + fixed.glyph.right
   const mainWidth = fixed.glyph.right
-  note.stemX = x + (p.direction === 1 ? mainWidth - (p.size / 4 * 0.06) : (p.size / 4 * 0.06))
+  note.stemX = x + (p.direction === 1 ? mainWidth - (p.size / 4 * 0.05) : (p.size / 4 * 0.05))
   const outer = p.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
   note.stemEnd = outer - p.direction * Math.max(p.size * 0.875, p.size * 0.625 + Math.max(0, Math.log2(p.dur / 8)) * (p.size / 4 * 0.5))
 }
@@ -653,7 +653,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false, ou
   for (const head of p.heads) drawing.glyph(p.head, note.x + head.x, staveY + head.y + (p.rest && p.dur === 1 ? -(staffMusicSize() / 4) : 0), size, p.rest ? 'rest-symbol' : 'notehead')
   if (!p.rest && p.dur > 1) {
     const root = p.direction === 1 ? Math.max(...note.ys) - unit * .1 : Math.min(...note.ys) + unit * .1
-    drawing.line(note.stemX, root, note.stemX, note.stemEnd, unit * .12, 'stem', note)
+    drawing.line(note.stemX, root, note.stemX, note.stemEnd, unit * .1, 'stem', note)
     if (p.dur >= 8 && !note.beam) drawing.glyph(`flag${p.dur}${p.direction === 1 ? 'Up' : 'Down'}` as StaffGlyph, note.stemX, note.stemEnd, size)
   }
   const markShift = !p.rest && p.dur > 1 && p.direction === 1
@@ -799,14 +799,15 @@ function drawTuplet(notes: StaffNoteAnchor[], item: StaffEvent, staveY: number, 
     : Math.min(staveY + (staffMusicSize() / 4 * 2.5), ...notes.map(n => Math.min(...n.ys, n.stemEnd) - (staffMusicSize() / 4 * 1.2)))
   const tuplet = item.event.tuplet!, ratio = tuplet.numbase !== 2 ** Math.floor(Math.log2(tuplet.num))
   const label = ratio ? `${tuplet.num}:${tuplet.numbase}` : String(tuplet.num)
-  const cx = (first.headLeft + last.headRight) / 2, labelWidth = measureText(label, (style.music * .4) / STAFF_SCALE).width
-  const children: XmlNode[] = [element('text', { x: String(cx), y: String(y), 'font-size': String((style.music * .4) / STAFF_SCALE), 'text-anchor': 'middle', 'font-family': SCORE_TEXT_FONT }, [label])]
+  const cx = (first.headLeft + last.headRight) / 2, labelWidth = measureText(label, style.tupletFontSize / STAFF_SCALE).width
+  const children: XmlNode[] = [element('text', { x: String(cx), y: String(y), 'font-size': String(style.tupletFontSize / STAFF_SCALE), 'text-anchor': 'middle', 'font-family': SCORE_TEXT_FONT }, [label])]
   if (!first.beam || notes.some(note => !note.beam || note.beam !== first.beam)) {
-    const lineY = y - (staffMusicSize() / 4 * 0.5), hook = (below ? -1 : 1) * (staffMusicSize() / 4 * 0.5)
-    children.push(staffLine(first.headLeft, lineY + hook, first.headLeft, lineY),
-      staffLine(first.headLeft, lineY, cx - labelWidth / 2 - (staffMusicSize() / 4 * 0.3), lineY),
-      staffLine(cx + labelWidth / 2 + (staffMusicSize() / 4 * 0.3), lineY, last.headRight, lineY),
-      staffLine(last.headRight, lineY, last.headRight, lineY + hook))
+    const lineY = y - (staffMusicSize() / 4 * 0.5), hook = (below ? -1 : 1) * style.tupletHookLength / STAFF_SCALE
+    const stroke = style.tupletStroke / STAFF_SCALE, gap = style.attachmentGap / STAFF_SCALE
+    children.push(staffLine(first.headLeft, lineY + hook, first.headLeft, lineY, stroke),
+      staffLine(first.headLeft, lineY, cx - labelWidth / 2 - gap, lineY, stroke),
+      staffLine(cx + labelWidth / 2 + gap, lineY, last.headRight, lineY, stroke),
+      staffLine(last.headRight, lineY, last.headRight, lineY + hook, stroke))
   }
   return element('g', { class: 'm3n-tuplet-label', 'data-m3n-below': String(below) }, [element('g', { class: 'tupletNum' }, children)])
 }

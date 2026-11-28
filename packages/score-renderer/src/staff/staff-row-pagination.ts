@@ -2,8 +2,11 @@ import { prepareScorePagination, type ScorePageBlock, scoreLayoutConfig, scoreHe
 import type { StaffSystem, StaffPage } from './system-layout.js'
 
 export const staffMusicCentre = scoreLayoutConfig.staff.music * 1.5
-export function staffHeaderBlock(height: number): ScorePageBlock {
-  return { height, ink: [{ left: -Infinity, right: Infinity, top: 0, bottom: height }] }
+export type StaffHeaderSize = number | { height: number; atRowGap: (gap: number) => { height: number } }
+export function staffHeaderBlock(header: StaffHeaderSize): ScorePageBlock {
+  const height = typeof header === 'number' ? header : header.height
+  return { height, ink: [{ left: -Infinity, right: Infinity, top: 0, bottom: height }],
+    ...(typeof header === 'number' ? {} : { atRowGap: (gap: number) => staffHeaderBlock(header.atRowGap(gap).height) }) }
 }
 const rowBlocks = new WeakMap<StaffSystem, Map<string, ScorePageBlock>>()
 export function staffRowBlock(system: StaffSystem, index: number, gap: number): ScorePageBlock {
@@ -21,12 +24,12 @@ export function staffRowBlock(system: StaffSystem, index: number, gap: number): 
   return block
 }
 /** The same shared element paginator is used for planning and SVG output. */
-export function paginateStaffRows(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
+export function paginateStaffRows(systems: StaffSystem[], height: number, headerHeight: StaffHeaderSize, minimum: number,
   paged: boolean, maximum: number, headerGap = scoreHeaderGap(minimum), vertical?: ScoreVerticalSpacing, pageCeiling?: number): StaffPage[] {
   const blocks = [staffHeaderBlock(headerHeight), ...systems.map((system, index) => staffRowBlock(system, index, minimum))]
   const placed = prepareScorePagination(blocks, { immutableBlocks: true })({
     pageHeight: paged ? height : Infinity, margin: scoreLayoutConfig.staff.pageInset,
-    gap: minimum, vertical, pageCeiling, maxGap: paged ? maximum : minimum, headerGap,
+    gap: minimum, vertical, pageCeiling, maxGap: paged ? maximum : minimum, headerGap, headerGapRatio: 2 / 3,
   })
   return placed.heights.map((pageHeight, page) => {
     const indices = systems.flatMap((_, index) => placed.positions[index + 1]!.page === page ? [index] : [])

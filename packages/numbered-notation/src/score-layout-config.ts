@@ -3,7 +3,7 @@
  * Presentation scales the whole SVG. Font ink and final coordinates stay fractional.
  * Music-attached geometry is derived from the core font em at its use sites.
  */
-// 共用歌词字号与横向留白；纵向净空直接引用各谱式的附件净空。
+// 共用歌词字号与横向留白；两种谱式的纵向歌词净空统一为M/8。
 const numberedMusic = 24
 const lyrics = { fontSize: numberedMusic * 2 / 3, horizontalPadding: numberedMusic / 24, preferredExtraGap: numberedMusic / 12 } as const
 
@@ -39,6 +39,14 @@ const numbered = {
   octaveDotRadiusEm: .075,
   durationDotRadiusEm: .09,
   accidentalScale: 1.15,
+  tupletFontSize: numberedMusic * .7,
+  tupletHookLength: numberedMusic * .18,
+  tupletStroke: numberedMusic / 20,
+  hairpinStroke: numberedMusic * .035,
+  hairpinHalfOpening: numberedMusic * .2,
+  voltaStroke: numberedMusic * .055,
+  voltaTextInset: numberedMusic * .15,
+  voltaHookRatio: 1.2,
   minimumRowGapEm: .75,
   lyric: lyrics.fontSize,
 
@@ -46,8 +54,8 @@ const numbered = {
   minimumNoteGap: numberedMusic / 3,
   noteGapCandidates: [numberedMusic / 3, numberedMusic / 2, numberedMusic * 2 / 3] as readonly number[],
   // 标题换行行高随对应文字字号。
-  titleLineHeight: typography.title * 9 / 8,
-  subtitleLineHeight: typography.subtitle * 9 / 8,
+  titleLineHeight: typography.title,
+  subtitleLineHeight: typography.subtitle,
 
   // 行内横向间距（px）。
   headingBarGap: numberedMusic / 12,
@@ -73,64 +81,75 @@ const numbered = {
   sharedScoreGap,
 }
 
-/** Native staff music and text share the same typography policy. */
+/** M and N belong to the shared policy; S alone controls staff engraving.
+ * Engine coordinates are logical score dimensions divided by engine.scale.
+ */
 const staffScale = 0.7
 const staff = {
   ...typography,
-  annotationLineHeight: 20,
-  tempo: typography.annotation, chord: typography.annotation, dynamic: typography.expression,
-  restCount: 16, octave: 13,
-  // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
-  music: 26, // 四个6.5px谱间。
-  minimumRowGapEm: .75,
-  // 既有五线谱独立几何以28px（四个7px谱间）为设计基准。
-  get musicSizeRatio(): number { return this.music / 28 },
+  annotationLineHeight: typography.annotation,
+  tempo: typography.text, chord: typography.annotation, dynamic: typography.expression,
+  restCount: typography.text, octave: typography.expression,
+  space: 7,
+  get music(): number { return 4 * this.space },
+  // Compatibility for consumers adjusting the music em: S remains the source.
+  set music(value: number) { this.space = value / 4 },
+  graceRatio: .6,
+  get minimumRowGapEm(): number { return numbered.minimumRowGapEm },
   spacingIncrementSpaces: 1.2,
-
-  headerRowGap: 5, headerSideGap: 14,
-  headerWrapInset: 2, orderTopGap: 12, orderItemGap: 4,
-  orderArrowWidth: 14, orderArrowHeight: 10, orderArrowTip: 4, orderArrowAdvance: 20,
-  orderFramePadding: 4, frameStroke: 1,
-  sectionLabelInset: 21, contentEdgeInset: 4,
-  get attachmentGap(): number { return this.music / page.attachmentGapDivisor },
-  attachmentWrapInset: 12,
-  lyricUnderlineHalfWidth: 0.5,
-  measureNumberPadding: 2, measureNumberBarGap: 2, attachmentRowTolerance: 10,
+  get interStaffGap(): number { return 3 * this.space },
+  headerWrapInset: numbered.headerWrapInset,
+  orderItemGap: numberedMusic / 6,
+  orderArrowWidth: numberedMusic * 7 / 12, orderArrowHeight: numberedMusic * 5 / 12,
+  orderArrowTip: numberedMusic / 6, orderArrowAdvance: numberedMusic * 5 / 6,
+  orderFramePadding: numberedMusic / 6, frameStroke: numbered.frameStroke,
+  sectionLabelInset: numberedMusic * 7 / 8, contentEdgeInset: numberedMusic / 6,
+  get attachmentGap(): number { return numbered.music / page.attachmentGapDivisor },
+  get lyricGap(): number { return numbered.music / page.lyricGapDivisor },
+  get annotationGap(): number { return numbered.music / page.annotationGapDivisor },
+  get chordGap(): number { return numbered.music / page.chordGapDivisor },
+  attachmentWrapInset: numberedMusic / 2,
+  lyricUnderlineHalfWidth: numberedMusic / 48,
+  measureNumberPadding: numbered.measureNumberPadding, measureNumberBarGap: numbered.measureNumberBarGap,
+  attachmentRowTolerance: numberedMusic * 5 / 12,
   get attachmentStandaloneGap(): number { return this.attachmentGap },
   get attachmentHorizontalGap(): number { return this.attachmentGap },
-  attachmentFramePadding: 4,
+  attachmentFramePadding: numberedMusic / 6,
   get repeatMarkGap(): number { return this.attachmentGap },
-  headingLeftInset: 0.5, edgeGap: 2, pageInset: 2,
-  minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
+  headingLeftInset: numberedMusic / 48, edgeGap: numberedMusic / 12, pageInset: numberedMusic / 12,
+  minimumWidth: numbered.minimumWidth, minimumContentWidth: numbered.minimumContentWidth,
+  get bassGutter(): number { return 2 * this.space },
+  get singleGutter(): number { return this.space / 7 },
+  get rightGutter(): number { return this.space / 7 },
   groupSpacingRatio: 1,
-  minimumNoteGap: 0.8,
-  noteGapCandidates: [0.8, 1.2, 1.6] as readonly number[],
-  // 引擎坐标变换保持不变；音乐附属距离按既有28px设计比例随music变化。
-  // 歌词、文字占宽及曲线包络分片精度继续使用独立尺寸。
+  minimumNoteGap: .8,
+  noteGapCandidates: [.8, 1.2, 1.6] as readonly number[],
+  get tupletFontSize(): number { return numbered.tupletFontSize },
+  get tupletHookLength(): number { return numbered.tupletHookLength },
+  get tupletStroke(): number { return numbered.tupletStroke },
   engine: {
     scale: staffScale,
-    get bassY(): number { return 140 * staff.musicSizeRatio },
-    get initialBassY(): number { return 130 * staff.musicSizeRatio },
-    get fragmentSafetyInset(): number { return 20 * staff.musicSizeRatio },
-    spacingUnit: 22,
-    get minimumMeasureWidth(): number { return 40 * staff.musicSizeRatio },
-    lyricInitialOffset: 30, lyricUnderlineOffset: 4,
-    get attachmentTopGap(): number { return 40 * staff.musicSizeRatio },
-    get dynamicBottomGap(): number { return 35 * staff.musicSizeRatio },
-    get navigationBarInset(): number { return 15 * staff.musicSizeRatio },
-    get navigationY(): number { return -10 * staff.musicSizeRatio },
-    get restCountGap(): number { return staff.attachmentGap },
-    get measureNumberOffset(): number { return 10 * staff.musicSizeRatio },
-    get endingBarInset(): number { return 3 * staff.musicSizeRatio },
-    get endingTextInset(): number { return 4 * staff.musicSizeRatio },
-    get endingTextY(): number { return 22 * staff.musicSizeRatio },
+    // Four spaces of staff height + 3S clear ink + one rule thickness.
+    get bassY(): number { return (4 * staff.space + staff.interStaffGap + .1 * staff.space) / staffScale },
+    get initialBassY(): number { return this.bassY },
+    get fragmentSafetyInset(): number { return 2 * staff.space / staffScale },
+    get minimumMeasureWidth(): number { return 4 * staff.space / staffScale },
+    lyricInitialOffset: numberedMusic / staffScale,
+    lyricUnderlineOffset: numberedMusic / 8 / staffScale,
+    get attachmentTopGap(): number { return 4 * staff.space / staffScale },
+    get dynamicBottomGap(): number { return 3.5 * staff.space / staffScale },
+    navigationBarInset: numberedMusic / 2 / staffScale,
+    navigationY: -numberedMusic / 3 / staffScale,
+    measureNumberOffset: numberedMusic / 3 / staffScale,
+    endingBarInset: numberedMusic / 12 / staffScale,
+    // Numerical precision, independent of physical engraving dimensions.
     slurInkSlice: 4,
-    get expressionBottomGap(): number { return 30 * staff.musicSizeRatio },
-    get octaveAboveGap(): number { return 40 * staff.musicSizeRatio },
-    get octaveBelowGap(): number { return 35 * staff.musicSizeRatio },
-    octaveTextWidth: 25,
-    get expressionTopGap(): number { return 25 * staff.musicSizeRatio },
-    get bassAdjustmentGap(): number { return 5 * staff.musicSizeRatio },
+    get expressionBottomGap(): number { return 3 * staff.space / staffScale },
+    get octaveAboveGap(): number { return 4 * staff.space / staffScale },
+    get octaveBelowGap(): number { return 3.5 * staff.space / staffScale },
+    octaveTextWidth: numberedMusic * .75 / staffScale,
+    get expressionTopGap(): number { return 2.5 * staff.space / staffScale },
+    get bassAdjustmentGap(): number { return staff.space / 2 / staffScale },
   },
 }
 
