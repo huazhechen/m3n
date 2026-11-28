@@ -491,7 +491,7 @@ test('numbered additive score compares cost only after page count', () => {
 })
 
 test('numbered pruning uses the normalized font curve and preserves a 552px winner', async () => {
-  const fontCost = width => 4 * ((width - 528) / 192) ** 2
+  const fontCost = width => ((width - 528) / 192) ** 2
   const measure = async width => ({ width, pageCount: 1, rows: 8, outside: [], overlaps: [],
     fontSizeCost: fontCost(width), totalCost: fontCost(width) + (width === 528 ? .15 : width === 552 ? .01 : 1) })
   const exhaustive = await selectBestWidth(measure)

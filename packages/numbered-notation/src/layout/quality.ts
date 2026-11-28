@@ -21,11 +21,11 @@ export function scoreHorizontalQuality(width: number, quality: { lineDensityVari
   return (minimumWidth / width) ** 2 / (1 + quality.lineDensityVariation + 0.5 * quality.lastLineSlack + 4 * (quality.lineStretchPenalty ?? 0))
 }
 
-/** Readability loss grows from zero at the largest font to 4 at the smallest. */
+/** Readability loss grows from zero at the largest font to 1 at the smallest. */
 export function scoreNumberedFontCost(width: number) {
   const config = scoreLayoutConfig.pageWidth
   const minimum = config.unit * config.minimumMultiple, maximum = config.unit * config.maximumMultiple
-  return 4 * Math.max(0, (width - minimum) / (maximum - minimum)) ** 2
+  return Math.max(0, (width - minimum) / (maximum - minimum)) ** 2
 }
 
 /** Break diagnostics and font/overflow costs; final physical spacing is scored separately. */
