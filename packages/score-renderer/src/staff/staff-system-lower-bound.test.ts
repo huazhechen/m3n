@@ -180,3 +180,27 @@ it('does not create a lyric row from cached text on an empty verse container', (
   expect(bound).toEqual(staffSystemLowerBound(make(false), measure, 600, new Set(), 12))
   expect(bound.lowerBoundGeometry!.bottom).toBeLessThanOrEqual(actual.ink.bottom + 1e-8)
 })
+
+
+it('indexes multi-class proof nodes once and preserves depth-first attachment order', () => {
+  const make = () => element('g', { class: 'system' }, [element('g', { class: 'measure' }, [
+    element('g', { class: 'staff' }, [
+      element('rect', { class: 'staff-line', width: '1000', height: '30' }),
+      element('g', { class: 'verse', id: 'verse-v1' }, [element('text', { x: '10', y: '30' }, ['春'])]),
+      element('g', { class: 'fing' }, [element('text', { x: '10', y: '0' }, ['1'])]),
+    ]),
+    element('g', { class: 'dir' }, [element('text', { x: '10', y: '0' }, ['slow'])]),
+    element('g', { class: 'dynam' }, [element('text', { x: '10', y: '80' }, ['mp'])]),
+  ])])
+  const node = make(), expected = staffSystemLowerBound(node, measure, 600, new Set(), 12)
+  for (const child of findAll(node, n => Boolean(n.attributes.class))) {
+    const raw = child.attributes.class!
+    child.attributes.class = `extra \t${raw}\n${raw} `
+  }
+  expect(staffSystemLowerBound(node, measure, 600, new Set(), 12)).toEqual(expected)
+  // Reusing nodes after a class edit must observe current tokens.
+  findAll(node, n => hasClass(n, 'dynam'))[0]!.attributes.class = 'ignored'
+  const plain = make()
+  findAll(plain, n => hasClass(n, 'dynam'))[0]!.attributes.class = 'ignored'
+  expect(staffSystemLowerBound(node, measure, 600, new Set(), 12)).toEqual(staffSystemLowerBound(plain, measure, 600, new Set(), 12))
+})

@@ -255,7 +255,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (ceiling === 0) return { ends, pages: Infinity, verticalCost: Infinity }
         // Optional proof work pays off for long plans. Short plans are cheaper
         // to finish directly; bypassing this check never omits exact candidates.
-        if (ceiling !== undefined && lines.length >= 16 && !projected.hasBass) {
+        if (ceiling !== undefined && lines.length >= 8 && !projected.hasBass) {
           try {
             let start = 0
             const lowerBlocks = [staffHeaderBlock(header), ...ends.map((end, index) => {

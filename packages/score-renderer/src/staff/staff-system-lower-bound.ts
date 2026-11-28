@@ -5,6 +5,8 @@ import { SvgGeometry, findAll, hasClass, nodes, moveInk, overlapsX, union, textC
 
 const omitted = [...staffDecorationClasses, 'verse', 'slur', 'tie', 'staff-clef']
 const eligible = ['dir', 'harm', 'fing', 'dynam', 'tempo', 'repeatMark', 'octave']
+const indexedClasses = [...eligible, 'reh', 'staff-line', 'staff', 'verse']
+const indexedClassSet = new Set(indexedClasses)
 
 /** Single-staff optimistic geometry. An upper attachment can only move farther
  * up after anchoring to local music, a lower attachment only farther down.
@@ -13,14 +15,23 @@ const eligible = ['dir', 'harm', 'fing', 'dynam', 'tempo', 'repeatMark', 'octave
 export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, width: number, sectionHeadings: Set<string>, attachmentGap: number, rulesOnly = false, fixedMusic?: Ink[]): ScorePageBlock & { invariantHeightLowerBound: number } {
   const scale = STAFF_SCALE, style = scoreLayoutConfig.staff
   const geometry = new SvgGeometry(node, measureText, true)
+  // The proof needs a small subset of the row tree. Scan once, then filter
+  // that subset; unadorned music no longer pays for separate full-tree walks.
+  const indexed = findAll(node, child => {
+    const raw = child.attributes.class
+    return Boolean(raw && (indexedClassSet.has(raw)
+      || /\s/.test(raw) && indexedClasses.some(name => hasClass(child, name))))
+  })
+  const byClass = (name: string) => indexed.filter(child => hasClass(child, name))
+  const staves = byClass('staff')
   const firstMeasure = nodes(node).find(n => hasClass(n, 'measure'))
-  const inlineHeading = sectionHeadings.has(firstMeasure?.attributes.id ?? '') ? undefined : findAll(node, n => hasClass(n, 'reh'))[0]
+  const inlineHeading = sectionHeadings.has(firstMeasure?.attributes.id ?? '') ? undefined : byClass('reh')[0]
   const inset = inlineHeading ? staffInlineHeadingInset(inlineHeading, geometry) : 0
-  const rules = findAll(node, n => hasClass(n, 'staff-line')).flatMap(rule => geometry.pieces(rule))
+  const rules = byClass('staff-line').flatMap(rule => geometry.pieces(rule))
   // A supplied invariant subset can retain heads and fixed stems even when
   // legal direction trials move flexible stems and their dependent ink.
   const music = fixedMusic ?? (rulesOnly ? rules : geometry.withoutClasses(node, omitted))
-  const staffMusic = fixedMusic ?? (rulesOnly ? rules : findAll(node, n => hasClass(n, 'staff')).flatMap(staff => geometry.withoutClasses(staff, omitted)))
+  const staffMusic = fixedMusic ?? (rulesOnly ? rules : staves.flatMap(staff => geometry.withoutClasses(staff, omitted)))
   const core = union(rules.map(p => ({ left: p.left * scale, right: p.right * scale, top: p.top * scale, bottom: p.bottom * scale })))
   // Relax only the proof geometry to cover composition roundoff; final layout
   // still uses the original operations and coordinates. Shrink x intervals so
@@ -38,8 +49,7 @@ export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, w
   // horizontal spans and row heights do not depend on beam directions. An
   // invariant music subset therefore gives a lower baseline for every row.
   // Only bottoms are constraints: exact music may move the lyrics down.
-  const staves = findAll(node, n => hasClass(n, 'staff'))
-  if (!staves.some(staff => staff.attributes['data-staff'] === 'bass')
+  if (byClass('verse').length && !staves.some(staff => staff.attributes['data-staff'] === 'bass')
     && nodes(node).filter(n => hasClass(n, 'measure')).every(m => nodes(m).filter(n => hasClass(n, 'staff')).length <= 1)) {
     const rows = new Map<number, Ink[]>()
     for (const staff of staves) for (const verse of findAll(staff, n => hasClass(n, 'verse') && n.children.length > 0)) {
@@ -65,7 +75,7 @@ export function staffSystemLowerBound(node: XmlNode, measureText: MeasureText, w
       }
     }
   }
-  for (const attachment of findAll(node, n => eligible.some(kind => hasClass(n, kind)))) {
+  for (const attachment of indexed.filter(n => eligible.some(kind => hasClass(n, kind)))) {
     const ink = geometry.ink(attachment)
     if (ink.right <= ink.left || ink.bottom <= ink.top || ink.right - ink.left > (width - style.attachmentWrapInset) / scale) continue
     let dx = Math.max(0, -ink.left)
