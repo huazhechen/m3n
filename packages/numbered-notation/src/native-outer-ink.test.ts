@@ -3,7 +3,7 @@ import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeArcSlice } from './native-curve.js'
 import { nativeSvgPieces } from './native-ink.js'
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 
 it.each([
   '{lg}{p}1 2 3 4{/}',
@@ -18,8 +18,8 @@ it.each([
   for (let i = 0; i <= 2000; i++) {
     top = Math.min(top, nativeArcSlice(placed.arc!.commands, left + (right - left) * i / 2000)!.top)
   }
-  expect(top - mark.top - mark.height).toBeCloseTo((nativeCoreGap() * .1), 4)
-  expect(mark.top + mark.height).toBeGreaterThan(placed.ink.top - (nativeCoreGap() * .1) + 0.1)
+  expect(top - mark.top - mark.height).toBeCloseTo((nativeAttachmentGap()), 4)
+  expect(mark.top + mark.height).toBeGreaterThan(placed.ink.top - (nativeAttachmentGap()) + 0.1)
 })
 
 it.each(['{text=间奏}2', '{mf}2', '2{tr}'])('ignores the empty span between instrumental parentheses for %s', middle => {
@@ -48,5 +48,5 @@ it('still clears a real parenthesis overlapping a wide dynamic', () => {
   const pieces = nativeSvgPieces(bracket.svg, textMeasurer)
     .filter(piece => piece.left <= glyph.x + mark.right && piece.right >= glyph.x + mark.left)
   expect(pieces).toHaveLength(1)
-  expect(pieces[0]!.top - mark.top - mark.height).toBeCloseTo((nativeCoreGap() * .1), 5)
+  expect(pieces[0]!.top - mark.top - mark.height).toBeCloseTo((nativeAttachmentGap()), 5)
 })

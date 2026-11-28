@@ -27,8 +27,8 @@ const sharedScoreGap = numberedMusic * numberedCoreGapEm * sharedScoreGapCoreRat
 const typography = { title: 32, subtitle: 16, credit: 14, text: 16, annotation: 14,
   navigation: 16, fine: 16.8, measureNumber: 10, fingering: 12, expression: 13, voltaLabel: 14.4, repeatCount: 13 }
 
-// 附件及歌词净空统一为该曲基础核心行距的0.1倍。
-const page = { collisionGapRatio: 0.5, attachmentGapRatio: 0.1 } as const
+// 行内净空按各谱式音乐字号除以下列系数，不随档位或行距变化。
+const page = { collisionGapRatio: 0.5, attachmentGapDivisor: 12, annotationGapDivisor: 6, chordGapDivisor: 4 } as const
 
 const numbered = {
   ...typography,
@@ -95,7 +95,7 @@ const staff = {
   orderArrowWidth: 14, orderArrowHeight: 10, orderArrowTip: 4, orderArrowAdvance: 20,
   orderFramePadding: 4, frameStroke: 1,
   sectionLabelInset: 21, contentEdgeInset: 4,
-  get attachmentGap(): number { return this.music / 4 * this.coreGapSpaces * page.attachmentGapRatio },
+  get attachmentGap(): number { return this.music / page.attachmentGapDivisor },
   attachmentWrapInset: 12,
   lyricUnderlineHalfWidth: 0.5,
   measureNumberPadding: 2, measureNumberBarGap: 2, attachmentRowTolerance: 10,

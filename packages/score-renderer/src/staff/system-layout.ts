@@ -330,7 +330,8 @@ export function arrangeStaffSystem(
     let dy = 0
     const below = hasClass(attachment, 'dynam') || isHairpin(attachment) || attachment.attributes['data-m3n-below'] === 'true'
     const standalone = isStandaloneHeading(attachment)
-    const localGap = gap
+    const localGap = hasClass(attachment, 'harm') ? style.music / scoreLayoutConfig.page.chordGapDivisor / scale
+      : ['reh', 'dir'].some(kind => hasClass(attachment, kind)) ? style.music / scoreLayoutConfig.page.annotationGapDivisor / scale : gap
     const attachmentLane = attachment.attributes['data-m3n-staff']
     const lane = attachmentLane === undefined ? undefined : Number(attachmentLane)
     const localUpperText = lanes === 1 && ['dir', 'harm', 'fing'].some(kind => hasClass(attachment, kind))
@@ -343,7 +344,7 @@ export function arrangeStaffSystem(
         ? Math.max(...local.map(other => other.bottom)) + localGap - ink.top
         : Math.min(...local.map(other => other.top)) - localGap - ink.bottom
     }
-    if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - gap - ink.bottom
+    if (standalone || isHeadingTempo(attachment)) dy = union(obstacles).top - localGap - ink.bottom
     // Consecutive wedges may share a baseline with a small real gap between
     // their endpoints; horizontal padding must not invent a second lane.
     const attachmentPieces = geometry.pieces(attachment).map(piece => moveInk(piece, dx, 0))

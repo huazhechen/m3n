@@ -7,16 +7,25 @@ import { NativeSymbols } from './native-symbols.js'
 import { nativeMarkStack } from './native-marks.js'
 import { nativeNoteMetrics } from './native-note-metrics.js'
 import { DefaultTextMeasurer } from './native-measure.js'
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 import { nativeSystemCore } from './native-core.js'
 import { NativeNumberedNotationScore } from './native-score.js'
 
 const options = { width: 800, paged: false }
 describe('native articulation occupancy', () => {
+  it.each([19.2, 28.8, 38.4])('keeps attachment stacking fixed at core gap %s', coreGap => {
+    const stack = nativeMarkStack(['tip', 'tr'], 20, undefined, coreGap)
+    let bottom = -20
+    for (const mark of stack.items) {
+      expect(bottom - mark.top - mark.height).toBeCloseTo(2)
+      bottom = mark.top
+    }
+  })
+
   it.each([['tip', 7.2], ['brk', 7.2], ['hold', 1.2], ['str', 6]] as const)('measures %s by its own height', (name, height) => {
     const score = layoutNativeScore(parseM3NDocument(`{4/4}\nN: 1{${name}} 2 3 4 |||`), options)
     const glyph = score.projection.glyphs[0]!
-    expect(glyph.top).toBeCloseTo(19.2 + 2.88 + height)
+    expect(glyph.top).toBeCloseTo(19.2 + 2 + height)
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(glyph.top)
   })
 
@@ -39,8 +48,8 @@ describe('native articulation occupancy', () => {
     const separate = nativeMarkStack(['tip'], 40, undefined, undefined, [...body, side])
     const overlapping = nativeMarkStack(['tip'], 40, undefined, undefined,
       [...body, { ...side, right: 1 }])
-    expect(separate.items[0]!.top).toBeCloseTo(-29.28)
-    expect(overlapping.items[0]!.top).toBeCloseTo(-50.08)
+    expect(separate.items[0]!.top).toBeCloseTo(-28.4)
+    expect(overlapping.items[0]!.top).toBeCloseTo(-49.2)
   })
 
   it('distinguishes ordinary staccato from staccatissimo in the printed score', () => {
@@ -55,7 +64,7 @@ describe('native articulation occupancy', () => {
     expect(stack.items.map(item => item.name)).toEqual(['tip', 'hold', 'f1', 'tr', 'mf'])
     let bottom = -17.6
     for (const mark of stack.items) {
-      expect(bottom - mark.top - mark.height).toBeCloseTo(2.88)
+      expect(bottom - mark.top - mark.height).toBeCloseTo(2)
       bottom = mark.top
     }
     expect(stack.top).toBeCloseTo(-bottom)
@@ -75,7 +84,7 @@ describe('native articulation occupancy', () => {
     const ornament = ornamentGlyph.markLayout!.find(m => m.name === 'f1')!
     expect(ornamentGlyph.x+ornament.left).toBeLessThan(dynamicGlyph.x+dynamic.right)
     expect(ornamentGlyph.x+ornament.right).toBeGreaterThan(dynamicGlyph.x+dynamic.left)
-    expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-(nativeCoreGap() * .1)+.001)
+    expect(dynamic.top+dynamic.height).toBeLessThanOrEqual(ornament.top-nativeAttachmentGap()+.001)
   })
 
   it('paints the triangle inside its measured box above a high stacked chord', () => {
@@ -104,6 +113,6 @@ describe('native articulation occupancy', () => {
       expect(lower.top - upper.bottom).toBeGreaterThanOrEqual(19.2 - 1e-6)
       expect(lower.top - upper.bottom).toBeLessThanOrEqual(20.4 + 1e-6)
     }
-    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(29.28)
+    expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(28.4)
   })
 })

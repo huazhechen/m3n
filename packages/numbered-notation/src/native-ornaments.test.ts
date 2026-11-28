@@ -36,7 +36,7 @@ it.each([320, 600, 800, 1000])('measures ornament ink with legal note/chord host
         const dynamic = first.markLayout!.find(m => m.name === 'p')!;
         const system = layout.systems.find(s => s.measures.some(m => m.columns.some(c => c.glyphs.includes(first))))!;
         const tuplet = [...system.relationLayout!].find(([r]) => r.kind === 'tuplet')![1];
-        expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(tuplet.ink.top - (nativeStyle.music * .12) + .001);
+        expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(tuplet.ink.top - (nativeStyle.music / 12) + .001);
         for (const g of layout.projection.glyphs)
             for (const mark of g.markLayout ?? []) {
                 if (!['tr', 'prall'].includes(mark.name))

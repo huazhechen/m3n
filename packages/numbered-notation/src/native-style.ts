@@ -11,7 +11,7 @@ export const nativeCoreGap = () => scoreCoreGap()
 export const nativeHeaderGap = () => scoreHeaderGap(nativeCoreGap())
 
 /** Shared attachment clearance, also used between music and lyric tiers. */
-export const nativeAttachmentGap = (coreGap = nativeCoreGap()) => coreGap * scoreLayoutConfig.page.attachmentGapRatio
+export const nativeAttachmentGap = (_coreGap = nativeCoreGap()) => nativeStyle.music / scoreLayoutConfig.page.attachmentGapDivisor
 
 export function nativeDesignPath(d: string): string {
   return d.replace(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g, value => String(n(Number(value))))

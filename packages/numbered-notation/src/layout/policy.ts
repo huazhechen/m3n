@@ -7,9 +7,9 @@ export function scoreCoreGap(notation: 'numbered' | 'staff' = 'numbered'): numbe
     : scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.coreGapEm
   return base
 }
-/** Local attachment clearance follows the score baseline, not page stretching. */
+/** Local clearance follows music size, independent of page stretching. */
 export const scoreAttachmentGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
-  scoreCoreGap(notation) * scoreLayoutConfig.page.attachmentGapRatio
+  scoreLayoutConfig[notation].music / scoreLayoutConfig.page.attachmentGapDivisor
 
 /** Header spacing uses the fixed engraving baseline and never stretches per page. */
 export const scoreHeaderGap = (minimum: number): number => minimum * .8

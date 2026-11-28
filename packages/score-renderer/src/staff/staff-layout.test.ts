@@ -273,7 +273,7 @@ describe('staff layout contract', () => {
       left: piece.left * STAFF_SCALE, right: piece.right * STAFF_SCALE,
       top: piece.top * STAFF_SCALE, bottom: piece.bottom * STAFF_SCALE,
     })
-    expect(system.edgePieces.every(piece => piece.gap === scoreLayoutConfig.staff.music * .1)).toBe(true)
+    expect(system.edgePieces.every(piece => piece.gap === scoreLayoutConfig.staff.attachmentGap)).toBe(true)
   })
   it('keeps half the local lyric core gap between Ai Ru Chao Shui lyrics and the next row ending strokes', async () => {
     const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/ai_ru_chao_shui_01.m3n'), 'utf8')).score
@@ -571,7 +571,7 @@ it('pulls triplet brackets toward local music on both sides of the staff', () =>
     const gaps = geometry.pieces(label).flatMap(piece => music
       .filter(other => overlapsX(piece, other, 1.5 / STAFF_SCALE))
       .map(other => (below ? piece.top - other.bottom : other.top - piece.bottom) * STAFF_SCALE))
-    expect(Math.min(...gaps)).toBeCloseTo(scoreLayoutConfig.staff.music * .1)
+    expect(Math.min(...gaps)).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
   }
 })
 

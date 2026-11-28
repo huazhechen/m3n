@@ -6,7 +6,7 @@ import { nativeSvgInk } from './native-ink.js';
 import { layoutNativeScore } from './native-layout.js';
 import { nativeLyricSvg,placeNativeLyrics } from './native-lyrics.js';
 import { DefaultTextMeasurer } from './native-measure.js';
-import { nativeCoreGap } from './native-style.js';
+import { nativeAttachmentGap } from './native-style.js';
 const source = '{2/4}\nN: 1 2 |\nL1: 甲乙\n---\nN: 3 4 |||\nL2: 丙丁\nL3: 戊己';
 it('preserves empty verse slots across wrapping without adding a blank lyric tier', () => {
     const joined = '{2/4}\nN: ||: 1 2 |\nL1: 甲乙\nL2: 丙丁\n---\nN: 3 4 :|||\nL1: 戊己\nL2: %%';
@@ -83,6 +83,6 @@ it('measures packed tiers including underlines and font descenders', () => {
     glyph.lyrics.get(1)!.underlined = true;
     placeNativeLyrics(system, lane, measurer);
     const boxes = [1, 2].map(row => nativeSvgInk(nativeLyricSvg(glyph, row, glyph.lyricBaselines!.get(row)!, system.index, measurer), measurer));
-    expect(boxes[1]!.top - boxes[0]!.bottom).toBeCloseTo(nativeCoreGap() * .1, 3);
+    expect(boxes[1]!.top - boxes[0]!.bottom).toBeCloseTo(nativeAttachmentGap(), 3);
     expect(lane.bottom).toBeGreaterThanOrEqual(boxes[1]!.bottom - .001);
 });

@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
 import { layoutNativeScore } from './native-layout.js'
 import { nativeRibbonRange } from './native-curve.js'
-import { nativeCoreGap } from './native-style.js'
+import { nativeAttachmentGap } from './native-style.js'
 import { DefaultTextMeasurer } from './native-measure.js'
 
 it.each(['fermata', 'tr', 'prall', 'f1', 'f5', 'breath'])('keeps %s with its host inside arcs and hairpins, including wrapped continuations', name => {
@@ -30,7 +30,7 @@ it.each(['fermata', 'tr', 'prall', 'f1', 'f5', 'breath'])('keeps %s with its hos
           checked++
         }
         const dynamic = glyph.markLayout?.find(mark => mark.name === 'p')
-        if (dynamic) expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(hairpin.ink.top - (nativeCoreGap() * .1) + 0.001)
+        if (dynamic) expect(dynamic.top + dynamic.height).toBeLessThanOrEqual(hairpin.ink.top - (nativeAttachmentGap()) + 0.001)
       }
       for (const [, placed] of relations) if (placed.arc) {
         expect(hairpin.ink.bottom).toBeLessThan(placed.ink.top)

@@ -23,7 +23,7 @@ it.each([24, 32])('changes vertical clearances independently of note and text si
     expect(spacious.gap).toBeCloseTo(size * 1.6)
     for (const result of [normal, spacious]) {
       expect(result.score.pages[0]!.coreGap).toBeCloseTo(size * .8)
-      expect(result.markClearance).toBeCloseTo(result.gap * .1)
+      expect(result.markClearance).toBeCloseTo(size / 12)
       expect(result.header.sidesTop - result.header.titleBottom).toBeCloseTo(result.gap * .6)
       expect(result.header.subtitleTop - result.header.titleBottom).toBeCloseTo(result.gap * .3)
     }

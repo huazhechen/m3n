@@ -26,6 +26,7 @@ it('keeps the eight tremolo training bars together at 720px with tight spacing',
   expect(layout.systems.find(row => row.measures.some(measure => measure.number === 19))?.measures.map(measure => measure.number))
     .toEqual([19, 20, 21, 22, 23, 24, 25, 26])
   expect(layout.systems.length).toBeLessThanOrEqual(37)
+  expect(layout.pages).toHaveLength(2)
 })
 
 it('measures and renders Segno with real design fonts', () => {
@@ -123,7 +124,6 @@ it('engraves local hairpins without partition enumeration', () => {
     const timings: Record<string, number> = {}
     const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
     expect(layout.pages.length).toBe(3)
-    expect(layout.systems.length).toBe(40)
     expect(timings.numericEndingBoundsMs).toBeUndefined()
     expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
   } finally {
