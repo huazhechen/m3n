@@ -11,7 +11,7 @@ import { resolveStaffText } from './svg-text.js'
 import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 import { staffGlyphMetrics } from './staff-music-font.js'
-import { staffMusicCentre, staffHeaderBlock, staffRowBlock, paginateStaffBlocks } from './staff-row-pagination.js'
+import { staffMusicCentre, staffHeaderBlock, staffRowBlock, paginateStaffBlocks, staffPagesFromPlacement } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from '@m3n/numbered-notation/layout'
 
@@ -221,7 +221,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
           const cost = horizontal.spacingCost + horizontal.overflowCost + (result.verticalCost ?? 0)
           const candidate = { pages: result.heights.length, cost, spacing }
           if (!incumbent || compareScoreSpacingTrials(candidate, incumbent) < 0) incumbent = candidate
-          return { ends, pages: result.heights.length, verticalCost: result.verticalCost ?? 0, value: ends }
+          return { ends, pages: result.heights.length, verticalCost: result.verticalCost ?? 0, value: ends, placement: result }
         }
         catch (error) {
           if (error instanceof Error && 'code' in error && error.code === 'M3N_PAGE_BOUND_REJECTED')
@@ -239,7 +239,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         const end = plan.ends[index]!, system = rowFor(rowStart, end, line.target)
         rowStart = end; return system
       })
-      return [{ spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines, plan.verticalCost), pages: plan.pages }]
+      return [{ spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines, plan.verticalCost), pages: plan.pages, placement: 'placement' in plan ? plan.placement : undefined }]
     })
     if (!trials.length && widthBound)
       throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
@@ -253,7 +253,8 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
     const systems = trial.proxies
     let pages: StaffPage[] = [], paginationError: Error | undefined
-    try { pages = paginateStaff(systems, height, header, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical) }
+    try { pages = trial.placement ? staffPagesFromPlacement(systems, trial.placement)
+      : paginateStaff(systems, height, header, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical) }
     catch (error) {
       if (!(error instanceof Error) || !error.message.includes('单个谱行')) throw error
       paginationError = new Error('单个五线谱谱行无法放入A4页面。')

@@ -36,6 +36,10 @@ export function paginateStaffRows(systems: StaffSystem[], height: number, header
   paged: boolean, maximum: number, headerGap = scoreHeaderGap(minimum), vertical?: ScoreVerticalSpacing, pageCeiling?: number): StaffPage[] {
   const blocks = [staffHeaderBlock(headerHeight), ...systems.map((system, index) => staffRowBlock(system, index, minimum))]
   const placed = paginateStaffBlocks(blocks, height, minimum, paged, maximum, headerGap, vertical, pageCeiling)
+  return staffPagesFromPlacement(systems, placed)
+}
+/** Preserve an already fitted exact plan without running the paginator again. */
+export function staffPagesFromPlacement(systems: StaffSystem[], placed: ReturnType<typeof paginateStaffBlocks>): StaffPage[] {
   return placed.heights.map((pageHeight, page) => {
     const indices = systems.flatMap((_, index) => placed.positions[index + 1]!.page === page ? [index] : [])
     return { systems: indices.map(index => systems[index]!), ys: indices.map(index => placed.positions[index + 1]!.top),
