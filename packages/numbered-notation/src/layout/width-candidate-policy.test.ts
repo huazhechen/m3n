@@ -35,3 +35,14 @@ it('production policy disables every approximation even when diagnostic globals 
     expect(Object.values(scoreWidthPolicyState()).every(value => value === false || value === 0)).toBe(true)
   })
 })
+
+it('scopes exact incumbent bounds independently of nested measurements and restores them after errors', () => {
+  const widthBound = { width: 600, quality: .5 }
+  expect(() => withScoreWidthCandidatePolicy({widthBound}, () => {
+    expect(scoreWidthPolicyState().widthBound).toBe(widthBound)
+    withScoreWidthCandidatePolicy(exactScoreWidthPolicy, () => expect(scoreWidthPolicyState().widthBound).toBeUndefined())
+    expect(scoreWidthPolicyState().widthBound).toBe(widthBound)
+    throw new Error('finished')
+  })).toThrow('finished')
+  expect(scoreWidthPolicyState().widthBound).toBeUndefined()
+})

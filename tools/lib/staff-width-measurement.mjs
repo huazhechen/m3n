@@ -11,13 +11,19 @@ export async function measureStaffWidth(score, width, settings = {}, signal, { a
   const started = performance.now(), timings = {}
   const render = await prepareStaffScore(score, { ...settings, width }, signal, task)
   onPrepared?.(render)
-  const {info,pageCount,qualityScore}=withScoreWidthCandidatePolicy(candidatePolicy,()=>{
+  let measured
+  try { measured=withScoreWidthCandidatePolicy(candidatePolicy,()=>{
     // Font preparation above may yield; only numeric engraving holds a policy.
     if (!scoreWidthPolicyState().__m3nExperimentalRowReuse && !auditLayout && minimumQuality !== undefined && !render.canBeatPageQuality(maximumPageCount, minimumQuality)) throw new WidthSearchPruned()
     const info=auditLayout ? render.layoutInfo() : render.measurementInfo()
     const pageCount=render.pageCount(true)
     return {info,pageCount,qualityScore:numberedLayoutScore({width,...info.quality})}
   })
+  } catch (error) {
+    if (error.code === 'M3N_WIDTH_QUALITY_PRUNED') throw new WidthSearchPruned()
+    throw error
+  }
+  const {info,pageCount,qualityScore}=measured
   const { lineDensityVariation, lastLineSlack, lineStretchPenalty, meanLineDensity } = info.quality
   timings.layoutMs = performance.now() - started
   if (!auditLayout) {

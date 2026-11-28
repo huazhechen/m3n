@@ -1,3 +1,4 @@
+import { scorePageCost } from '@m3n/numbered-notation/layout-quality'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 // @vitest-environment jsdom
@@ -6,7 +7,7 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 // jsdom has no SVG character-position API; compare engraving before browser
 // text resolution here. Full PDF parity covers real browser text placement.
 vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
-import { planScoreTier, scorePhysicalSpacing, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { planScoreTier, scorePhysicalSpacing, scoreLayoutConfig, withScoreWidthCandidatePolicy } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
@@ -187,4 +188,23 @@ it('reuses full-row rhythm measurements across break plans without sharing mutab
  graph.makeLines([2,3])
  expect(vi.mocked(minimum.rhythmic).mock.calls).toHaveLength(more)
  expect(graph.makeLines([1],false,0,false)[0]!.unitRhythmicGap).toBeUndefined()
+})
+
+it('publishes a complete staff candidate or rejects its entire width under exact total-cost bounds', async () => {
+  const score = analyzeM3N('{4/4}\nN: {p}(1 2 3 4 | 5 6 7 1e) | 2e 3e 4e 5e |||').score
+  const baseline = await prepareStaffScore(score, {width:564})
+  const expected = baseline.measurementInfo()
+  const quality = 1 / (1 + expected.quality.totalCost + scorePageCost(baseline.pageCount(true)))
+  for (const widthBound of [{width:570,quality}, {width:528,quality:quality / 2}]) {
+    const actual = await prepareStaffScore(score, {width:564})
+    expect(withScoreWidthCandidatePolicy({widthBound}, () => actual.measurementInfo())).toEqual(expected)
+    expect(actual(true).map(svg => svg.outerHTML)).toEqual(baseline(true).map(svg => svg.outerHTML))
+  }
+  const rejected = await prepareStaffScore(score, {width:564})
+  try {
+    withScoreWidthCandidatePolicy({widthBound:{width:528,quality:1}}, () => rejected.measurementInfo())
+    throw new Error('Expected certified rejection')
+  } catch (error) {
+    expect(error).toHaveProperty('code', 'M3N_WIDTH_QUALITY_PRUNED')
+  }
 })

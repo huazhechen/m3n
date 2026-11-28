@@ -62,7 +62,10 @@ export async function probeWidthCandidates(measure, { verify, signal, prune = fa
     } else globalThis.__m3nExperimentalSingleTier=value
   }
   // Old incumbent page ceilings would incorrectly exclude affordable extra pages.
-  const measureCandidate=(width,_best)=>measure(width,null,measurementPolicy)
+  const measureCandidate=(width,incumbent)=>measure(width,null,
+    prune && !verify && incumbent && candidatePolicy === exactScoreWidthPolicy
+      ? {...measurementPolicy,widthBound:{width:incumbent.width,quality:numberedLayoutScore(incumbent)}}
+      : measurementPolicy)
   const endpointFloor=candidatePolicy ? candidatePolicy.rowReuse && candidatePolicy.endpointFloor
     : globalThis.__m3nExperimentalRowReuse && globalThis.__m3nExperimentalEndpointFloor
   const probe = async width => {

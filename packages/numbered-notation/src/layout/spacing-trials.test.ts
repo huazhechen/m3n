@@ -35,3 +35,22 @@ it('derives a page ceiling only from a losing combined lower bound including tie
           for (const vertical of [0, .2, 1]) expect(compare({ pages: candidatePages, cost: cost + vertical, spacing }, incumbent)).toBeGreaterThanOrEqual(0)
     }
 })
+
+it('keeps affordable extra pages and narrower score ties under exact global bounds', async () => {
+  const { scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling } = await import('./spacing-trials.js')
+  const { scorePageCost } = await import('./quality.js')
+  const bound = { width: 600, quality: 1 / (1 + 2.1) }
+  expect(scoreWidthCandidateCanWin(606, 0, 2, bound)).toBe(true)
+  const tie = { width: 600, quality: 1 / (1 + .25 + scorePageCost(2)) }
+  expect(scoreWidthCandidateCanWin(594, .25, 2, tie)).toBe(true)
+  expect(scoreWidthCandidateCanWin(606, .25, 2, tie)).toBe(false)
+  // A roundoff-level difference is never sufficient to omit geometry.
+  expect(scoreWidthCandidatePageCeiling(606, .25, 2, tie)).toBeUndefined()
+  for (const width of [528, 600, 720]) for (const cost of [0, .1, .5, 2, 5])
+    for (const pages of [1, 2, 4]) for (const incumbentCost of [0, .2, 3]) {
+      const incumbent = { width: 600, quality: 1 / (1 + incumbentCost + scorePageCost(pages)) }
+      const ceiling = scoreWidthCandidatePageCeiling(width, cost, 12, incumbent)
+      if (ceiling !== undefined) for (let page = ceiling + 1; page <= 12; page++)
+        for (const vertical of [0, .1, 1]) expect(scoreWidthCandidateCanWin(width, cost + vertical, page, incumbent)).toBe(false)
+    }
+})

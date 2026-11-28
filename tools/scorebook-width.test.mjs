@@ -713,3 +713,20 @@ test('production candidates are exact and never repeat the winner measurement', 
   assert.equal(result.renderCache.tierRechecks, 0)
   assert.equal(result.renderCache.finalExactRequests, undefined)
 })
+
+test('exact search passes combined-score bounds without reviving legacy page ceilings', async () => {
+  const { exactScoreWidthPolicy } = await import('./scorebook-width.mjs')
+  let incumbent
+  const result = await selectBestWidth((width, legacy, policy) => {
+    assert.equal(legacy, null)
+    assert.deepEqual(policy.widthBound, incumbent && {width:incumbent.width,quality:numberedLayoutScore(incumbent)})
+    assert.equal(policy.rowReuse, undefined)
+    const candidate = {width,pageCount:width===552 ? 2 : 1,totalCost:width===552 ? 0 : 2.1,rows:4,outside:[],overlaps:[]}
+    if (!incumbent || numberedLayoutScore(candidate)>numberedLayoutScore(incumbent)
+      || numberedLayoutScore(candidate)===numberedLayoutScore(incumbent) && width<incumbent.width) incumbent=candidate
+    return candidate
+  },{prune:true,candidatePolicy:exactScoreWidthPolicy})
+  assert.equal(result.best.width,552)
+  assert.equal(result.best.pageCount,2)
+  assert.deepEqual(exactScoreWidthPolicy,{})
+})

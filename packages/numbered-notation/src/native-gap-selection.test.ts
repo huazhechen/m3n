@@ -1,3 +1,4 @@
+import { withScoreWidthCandidatePolicy } from './layout/width-candidate-policy.js'
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { parseM3NDocument } from '@m3n/notation'
@@ -68,5 +69,22 @@ it('preserves the best of all three tiers on the one-page floor with joint spaci
     const fixed = layoutNativeScore(document, { ...options, width: 720, minimumNoteGap, lineDensityTarget: minimumNoteGap === 16 ? .5 : 2/3 })
     expect(nativeLayoutQuality(automatic).totalCost).toBeLessThanOrEqual(nativeLayoutQuality(fixed).totalCost)
     if (minimumNoteGap === automatic.options.minimumNoteGap) expect(renderNativePages(automatic)).toEqual(renderNativePages(fixed))
+  }
+})
+
+it('returns complete exact geometry or rejects the entire width under a combined-score bound', () => {
+  const document = parseM3NDocument(source)
+  const baseline = layoutNativeScore(document, options)
+  const quality = 1 / (1 + nativeLayoutQuality(baseline).totalCost + scorePageCost(baseline.pages.length))
+  for (const bound of [{width:570,quality}, {width:528,quality:quality / 2}]) {
+    const actual = withScoreWidthCandidatePolicy({widthBound:bound}, () => layoutNativeScore(document, options))
+    expect(nativeLayoutQuality(actual)).toEqual(nativeLayoutQuality(baseline))
+    expect(renderNativePages(actual)).toEqual(renderNativePages(baseline))
+  }
+  try {
+    withScoreWidthCandidatePolicy({widthBound:{width:528,quality:1}}, () => layoutNativeScore(document, options))
+    throw new Error('Expected certified rejection')
+  } catch (error) {
+    expect(error).toHaveProperty('code', 'M3N_WIDTH_QUALITY_PRUNED')
   }
 })

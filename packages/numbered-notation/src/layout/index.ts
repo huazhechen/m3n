@@ -12,7 +12,7 @@ export { planScoreLinesWithRefinedPages, measureScoreGreedyPageCeiling, type Sco
 export { scorePageCollision, scorePageDistance } from './page-collision.js'
 export { sortedScoreInkSeparation as sortedInkSeparation } from './ink-separation.js'
 export type { ScoreInk } from './geometry.js'
-export { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, type ScoreSpacingTrial } from './spacing-trials.js'
+export { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling, type ScoreSpacingTrial } from './spacing-trials.js'
 
 export { scoreLayoutConfig } from '../score-layout-config.js'
 export * from './policy.js'
@@ -23,6 +23,6 @@ export { scoreReadingWindows, type ReadingPoint } from './reading-density.js'
 export { inheritElasticWidth, elasticLineBadness, solveElasticSprings, type SpacingSpring, type ElasticSpacing } from './elastic-spacing.js'
 export { balanceScorePageTail } from './page-tail.js'
 
-export { optimizedScoreWidthPolicy, exactScoreWidthPolicy, withScoreWidthCandidatePolicy, scoreWidthPolicyState, type ScoreWidthCandidatePolicy } from './width-candidate-policy.js'
+export { optimizedScoreWidthPolicy, exactScoreWidthPolicy, withScoreWidthCandidatePolicy, scoreWidthPolicyState, type ScoreWidthCandidatePolicy, type ScoreWidthCandidateBound } from './width-candidate-policy.js'
 
 export { planScoreTier, scoreTierDensityTarget } from './tier-breaking.js'

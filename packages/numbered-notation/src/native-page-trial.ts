@@ -32,6 +32,7 @@ export type NativeGapTrial = {
   tightenRowBounds?: (cache: NativePageTrialCache, rows?: ReadonlySet<string>) => void
   coreLowerBound?: (start: number, end: number, cache?: NativePageTrialCache, previousStart?: number, reference?: number) => ScorePageBlock
   score: number
+  tierTotalCost: number
   tierCost: number
   systemCount: number
   ends: number[]

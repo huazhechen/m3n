@@ -193,7 +193,7 @@ describe('staff automatic width range', () => {
     expect(prepareStaffTask).toHaveBeenCalledOnce()
     const task = await prepareStaffTask.mock.results[0]!.value
     expect(staffTaskUses.mock.calls.length).toBeGreaterThan(1)
-    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({widthBound:{width:selected,quality:expect.any(Number)}})
     expect(staffTaskUses.mock.calls.every(([used]) => used === task)).toBe(true)
     expect(staffPageCount.mock.calls.every(([paged, width]) => paged && width >= 528 && width <= 720)).toBe(true)
   })
@@ -210,7 +210,7 @@ describe('staff automatic width range', () => {
     expect(visited).toContain(720)
     expect(visited.filter(width => width === 660)).toHaveLength(1)
     expect(visited.every(width=>width>=528 && width<=720 && (width-528)%6===0)).toBe(true)
-    expect(staffTaskUses.mock.lastCall![1]).toEqual({})
+    expect(staffTaskUses.mock.lastCall![1]).toEqual({widthBound:{width:660,quality:expect.any(Number)}})
   })
 
   it('creates a fresh measurement task for every selection', async () => {

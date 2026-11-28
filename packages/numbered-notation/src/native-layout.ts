@@ -1,7 +1,7 @@
 import { scoreTierDensityTarget } from './layout/tier-breaking.js'
 import { scoreWidthPolicyState } from './layout/width-candidate-policy.js'
 import { type NativeGapTrial, type NativePageTrialCache } from './native-page-trial.js'
-import { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling } from './layout/spacing-trials.js'
+import { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling } from './layout/spacing-trials.js'
 import { startsNativeSection, nativeRowIdentity, breakMeasures } from './native-line-graph.js'
 import { repaginateNativeLayout, positionNativeLayout } from './native-layout-pagination.js'
 import { relationsFor, reserveInstrumentalEndpoints } from './native-relation-plan.js'
@@ -151,11 +151,15 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
       throw Object.assign(new Error('Optimistic row graph cannot reach the incumbent page ceiling'),{code:'M3N_WIDTH_QUALITY_PRUNED'})
     }
   }
-  let selected: NativeLayout | undefined, selectedCost = Infinity
+  const widthBound = scoreWidthPolicyState().widthBound
+  let selected: NativeLayout | undefined, selectedCost = Infinity, selectedTotalCost = Infinity
   let oversized: { error: Error; minimumNoteGap: number } | undefined
   for (const { minimumNoteGap, trial } of trials) {
-    const ceiling = scoreSpacingTrialPageCeiling(trial.tierCost, minimumNoteGap, selected
+    const localCeiling = scoreSpacingTrialPageCeiling(trial.tierCost, minimumNoteGap, selected
       ? { pages: selected.pages.length, cost: selectedCost, spacing: selected.options.minimumNoteGap ?? 0 } : undefined, trial.systemCount + 1)
+    const globalCeiling = scoreWidthCandidatePageCeiling(supplied.width, trial.tierTotalCost, trial.systemCount + 1, widthBound)
+    const limit = Math.min(localCeiling ?? Infinity, globalCeiling ?? Infinity)
+    const ceiling = Number.isFinite(limit) ? limit : undefined
     if (ceiling === 0) continue
     let candidate: NativeLayout
     try {
@@ -179,10 +183,12 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
     if (!selected || compareScoreSpacingTrials(
       { pages: candidate.pages.length, cost: candidateCost, spacing: minimumNoteGap },
       { pages: selected.pages.length, cost: selectedCost, spacing: selected.options.minimumNoteGap ?? 0 }) < 0) {
-      selected = candidate; selectedCost = candidateCost
+      selected = candidate; selectedCost = candidateCost; selectedTotalCost = candidateQuality.totalCost
     }
 
   }
+  if (widthBound && (!selected || !scoreWidthCandidateCanWin(supplied.width, selectedTotalCost, selected.pages.length, widthBound)))
+    throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
   if (!selected) {
     if (!supplied.paged && oversized)
       return layoutNativeScoreAtGap(document, { ...supplied, minimumNoteGap: oversized.minimumNoteGap }, timings, preparation)
@@ -675,7 +681,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
       foundationBounds.set(key,bound)
     }
     return bound
-  } : undefined, score: 1 / (1 + quality.totalCost), tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit, onlyRow) => {
+  } : undefined, score: 1 / (1 + quality.totalCost), tierTotalCost: quality.totalCost, tierCost: quality.spacingCost + quality.overflowCost, systemCount: systems.length, ends: linePlan.ends, candidates: linePlan.candidates, complete: (rowCache, pageLimit, onlyRow) => {
   // Preparation and completion can be interleaved across spacing trials.
   // The deferred path must not charge another trial's work to this one.
   stageStarted = timings ? performance.now() : 0

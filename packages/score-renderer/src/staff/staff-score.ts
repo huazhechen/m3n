@@ -1,4 +1,4 @@
-import { scoreWidthPolicyState, compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreWidthPolicyState, compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, scoreWidthCandidateCanWin, scoreWidthCandidatePageCeiling, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -146,6 +146,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const musicWidth = innerWidth - gutter - scoreLayoutConfig.staff.rightGutter
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
+    const widthBound = scoreWidthPolicyState().widthBound
     let bestPageCount = Infinity
     let incumbent: { pages: number; cost: number; spacing: number } | undefined
     const trials = scoreLayoutConfig.staff.noteGapCandidates.flatMap(spacing => {
@@ -205,7 +206,11 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         signal?.throwIfAborted()
         const lines = linesFor(ends)
         const horizontal = qualityFor(candidateWidth, lines, 0)
-        const ceiling = scoreSpacingTrialPageCeiling(horizontal.spacingCost + horizontal.overflowCost, spacing, incumbent, ends.length + 1)
+        const localCeiling = scoreSpacingTrialPageCeiling(horizontal.spacingCost + horizontal.overflowCost, spacing, incumbent, ends.length + 1)
+        const globalCeiling = scoreWidthCandidatePageCeiling(candidateWidth, horizontal.totalCost, ends.length + 1, widthBound)
+        const limit = Math.min(localCeiling ?? Infinity, globalCeiling ?? Infinity)
+        const ceiling = Number.isFinite(limit) ? limit : undefined
+        if (ceiling === 0) return { ends, pages: Infinity, verticalCost: Infinity }
         let start = 0
         const blocks = [staffHeaderBlock(header), ...ends.map((end, index) => {
           const first = start; start = end
@@ -226,7 +231,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         }
       }
       const plan = {...evaluate(chosenEnds), ends: chosenEnds}
-      if (!Number.isFinite(plan.pages) && Number.isFinite(bestPageCount)) return []
+      if (!Number.isFinite(plan.pages) && (widthBound || Number.isFinite(bestPageCount))) return []
       bestPageCount = Math.min(bestPageCount, plan.pages)
       const lines = linesFor(plan.ends)
       let rowStart = 0
@@ -236,12 +241,16 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
       })
       return [{ spacing, lines, proxies: finalSystems, quality: qualityFor(candidateWidth, lines, plan.verticalCost), pages: plan.pages }]
     })
+    if (!trials.length && widthBound)
+      throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
     if (!trials.length) throw new Error('五线谱间距候选为空。')
     const trial = trials.reduce((best, candidate) => compareScoreSpacingTrials(
       { pages: candidate.pages, cost: candidate.quality.spacingCost + candidate.quality.overflowCost + candidate.quality.verticalCost, spacing: candidate.spacing },
       { pages: best.pages, cost: best.quality.spacingCost + best.quality.overflowCost + best.quality.verticalCost, spacing: best.spacing }) < 0 ? candidate : best)
     // Candidate rows are already measured and cached at their actual width.
     // Reuse the chosen row nodes for output as well as numeric pagination.
+    if (widthBound && !scoreWidthCandidateCanWin(candidateWidth, trial.quality.totalCost, trial.pages, widthBound))
+      throw Object.assign(new Error('Exact total-cost bound cannot improve the incumbent'), { code: 'M3N_WIDTH_QUALITY_PRUNED' })
     const systems = trial.proxies
     let pages: StaffPage[] = [], paginationError: Error | undefined
     try { pages = paginateStaff(systems, height, header, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical) }

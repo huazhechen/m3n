@@ -1,6 +1,10 @@
 /** Search estimates are private to one synchronous numeric measurement.
  * Final engraving and unrelated concurrent requests keep their own policy. */
+export type ScoreWidthCandidateBound = Readonly<{ width: number; quality: number }>
+
 export type ScoreWidthCandidatePolicy = Readonly<{
+  /** Exact incumbent score; a search bound, never a geometry estimate. */
+  widthBound?: ScoreWidthCandidateBound
   rowReuse?: boolean
   greedyCeiling?: boolean
   inkBin?: number
@@ -29,7 +33,7 @@ const flags=[
   ['endpointFloor','__m3nExperimentalEndpointFloor',false],
 ] as const
 
-type PolicyState={ [Entry in typeof flags[number] as Entry[1]]?:ScoreWidthCandidatePolicy[Entry[0]] }
+type PolicyState={ [Entry in typeof flags[number] as Entry[1]]?:ScoreWidthCandidatePolicy[Entry[0]] } & { widthBound?: ScoreWidthCandidateBound }
 const compiledPolicies=new WeakMap<ScoreWidthCandidatePolicy,PolicyState>()
 let activePolicy:PolicyState|undefined
 
@@ -45,6 +49,7 @@ export function withScoreWidthCandidatePolicy<T>(policy:ScoreWidthCandidatePolic
   let compiled=compiledPolicies.get(policy)
   if(!compiled) {
     const values:Record<string,unknown>={}
+    if(policy.widthBound)values.widthBound=policy.widthBound
     for(const [field,key,fallback] of flags)values[key]=policy[field] ?? fallback
     compiled=values as PolicyState
     compiledPolicies.set(policy,compiled)
