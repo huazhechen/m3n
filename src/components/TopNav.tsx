@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import type { ReactNode } from 'react'
+import { buildVersion } from '../lib/build-version'
 
 const navActions = {
   loading: { label: '加载中', path: 'M12 3a9 9 0 1 1-9 9' },
@@ -27,6 +28,7 @@ export function TopNav({ actions, libraryTo = '/scores', libraryLabel = '乐谱�
       <NavLink to="/" className="brand-mark">
         <img src={`${import.meta.env.BASE_URL}favicon.svg`} width="28" height="28" alt="" aria-hidden="true" />
         <span>M3N</span>
+        <span className="brand-version" title={`版本 ${buildVersion}`}>{buildVersion.slice(0, 4)}</span>
       </NavLink>
       <nav aria-label="主导航">
         {actions}

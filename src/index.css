@@ -66,12 +66,20 @@
 
 .brand-mark {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: var(--ui-space);
   color: #163f45;
   font-size: var(--ui-text);
   font-weight: 800;
   letter-spacing: 0;
+}
+
+.brand-version {
+  color: #6b7275;
+  font-family: ui-monospace, monospace;
+  font-size: .8em;
+  font-weight: 400;
 }
 
 .brand-mark img {
