@@ -55,7 +55,7 @@ export function fitScoreCoreGap(heightAt: (gap: number) => number, capacity: num
 
 /** One immutable horizontal layout: reuse normalized ink and pair constraints
  * across its spacing fit, paged output and continuous/shared-page probes. */
-export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy: { immutableBlocks?:boolean } = {}) {
+export function prepareScorePagination(sources: readonly (ScorePageBlock | (() => ScorePageBlock))[], policy: { immutableBlocks?:boolean } = {}) {
   const normalize = (block: ScorePageBlock, index: number, dynamic = false) => {
     const saved=policy.immutableBlocks && normalizedBlocks.get(block)
     if(saved)return {block:saved.block,axis:saved.axis,ink:saved.ink,top:saved.top,lower:saved.lower,core:saved.core,boundaryInk:saved.boundaryInk,edgeInk:saved.edgeInk,edgeGap:saved.edgeGap,sortState:saved.sortState,index,dynamic}
@@ -67,8 +67,16 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
     if(policy.immutableBlocks)normalizedBlocks.set(block,value)
     return {block,axis,ink,top,lower,core,boundaryInk,edgeInk,edgeGap,sortState:value.sortState,index,dynamic}
   }
+  const blocks = new Array<ScorePageBlock>(sources.length)
+  sources.forEach((source, index) => { if (typeof source !== 'function') blocks[index] = source })
   const normalized = blocks.map((block,index)=>normalize(block,index))
-  const atGap = (gap: number) => normalized.map((item,index)=>blocks[index]!.atRowGap ? normalize(blocks[index]!.atRowGap!(gap),index,true) : item)
+  const atIndex = (gap: number, index: number) => {
+    let block = blocks[index]
+    if (!block) blocks[index] = block = (sources[index] as () => ScorePageBlock)()
+    const item = normalized[index] ?? (normalized[index] = normalize(block, index))
+    return block.atRowGap ? normalize(block.atRowGap(gap), index, true) : item
+  }
+  const atGap = (gap: number) => Array.from({ length: sources.length }, (_, index) => atIndex(gap, index))
   type Placed = typeof normalized[number] & { baseline: number }
   const atBaseline=(item:typeof normalized[number],baseline:number):Placed=>({block:item.block,axis:item.axis,ink:item.ink,top:item.top,
     lower:item.lower,core:item.core,boundaryInk:item.boundaryInk,edgeInk:item.edgeInk,edgeGap:item.edgeGap,sortState:item.sortState,index:item.index,dynamic:item.dynamic,baseline})
@@ -101,7 +109,7 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
   }
   return ({ pageHeight, margin, gap, maxGap = gap, headerGap = scoreHeaderGap(gap), headerGapRatio, vertical, pageCeiling }: ElasticOptions): {positions: ScoreBlockPosition[]; heights: number[]; coreGaps: number[]; verticalCost?: number} => {
     for (const item of normalized)
-      if (item.lower - item.top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
+      if (item && item.lower - item.top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
       let baseline = margin - item.top
       const previous = placed.at(-1)
@@ -132,12 +140,17 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
       const arrange = (n: number) => {
         const positions: ScoreBlockPosition[] = [], heights: number[] = []
         let page = 0, current: Placed[] = []
-        for (const item of atGap(n)) {
+        for (let index = 0; index < sources.length; index++) {
+          const item = atIndex(n, index)
           let baseline = nextBaseline(item, current, n)
           if (current.length && baseline + item.lower > pageHeight - margin + 1e-6) {
             page++; current = []; baseline = nextBaseline(item, current, n)
           }
           if (baseline + item.lower > pageHeight - margin + 1e-6) return undefined
+          // Prefix page counts can only increase as rows are appended. Reject
+          // during the minimum probe before constructing any remaining rows.
+          if (n === vertical.minimum && pageCeiling !== undefined && page + 1 > pageCeiling)
+            throw Object.assign(new Error('谱行超过当前候选页数上限。'), { code: 'M3N_PAGE_BOUND_REJECTED', pageCount: page + 1 })
           positions.push({page, top: baseline - item.axis})
           current.push(atBaseline(item, baseline)); heights[page] = pageHeight
         }

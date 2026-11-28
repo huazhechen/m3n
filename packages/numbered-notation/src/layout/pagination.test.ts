@@ -261,3 +261,36 @@ it.each([24,26])('fits a shared page with one N across every member at music siz
   expect(heights.reduce((sum,height)=>sum+height(result.coreGap),result.scoreGap)).toBeLessThanOrEqual(220)
   expect(heights.reduce((sum,height)=>sum+height(result.coreGap+.001),(result.coreGap+.001)*1.2)).toBeGreaterThan(220)
 })
+
+it('resolves lazy rows once and stops at an exact minimum-prefix page ceiling', () => {
+  const row = (): ScorePageBlock => ({ height: 30, core: { top: 0, bottom: 30 }, ink: [{ left: 0, right: 100, top: 0, bottom: 30 }] })
+  const made: number[] = []
+  const sources = Array.from({ length: 8 }, (_, index) => () => { made.push(index); return row() })
+  const fit = { pageHeight: 100, margin: 0, gap: 20, vertical: { minimum: 20, comfortable: 30, maximum: 40 } }
+  expect(() => prepareScorePagination(sources)( { ...fit, pageCeiling: 1 })).toThrow('页数上限')
+  expect(made).toEqual([0, 1, 2])
+  made.length = 0
+  const lazy = prepareScorePagination(sources, { immutableBlocks: true })
+  const eager = prepareScorePagination(Array.from({ length: 8 }, row), { immutableBlocks: true })
+  for (const pageHeight of [100, 175, 800]) {
+    expect(lazy({ ...fit, pageHeight })).toEqual(eager({ ...fit, pageHeight }))
+    expect(made).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+  }
+})
+
+it('keeps dynamic headers and exact coordinates identical with lazy musical rows', () => {
+  const header = { height: 12, atRowGap: (n: number) => ({ height: n / 3, ink: [{ left: -Infinity, right: Infinity, top: -2, bottom: n / 3 }] }) }
+  const rows = Array.from({ length: 13 }, (_, i): ScorePageBlock => ({
+    height: 40, baseline: 11.1234, core: { top: -2.1234, bottom: 17.9876 }, gapBefore: i % 3 ? 0 : 7.123,
+    ink: [{ left: i % 2 * 12, right: 25, top: -8.234, bottom: 30.345 }],
+    boundaryInk: [{ left: 25, right: 28, top: -10.123, bottom: 7.234 }],
+    edgeInk: [{ left: 0, right: 4, top: -9.123, bottom: 31.234, gap: 2.345 }],
+  }))
+  const eager = prepareScorePagination([header, ...rows], { immutableBlocks: true })
+  const lazy = prepareScorePagination([header, ...rows.map(row => () => row)], { immutableBlocks: true })
+  for (const pageHeight of [125, 200, 350, Infinity]) {
+    const options = { pageHeight, margin: 4.123, gap: 12.456, headerGapRatio: 2 / 3,
+      vertical: { minimum: 12.456, comfortable: 18.234, maximum: 24.789 } }
+    expect(lazy(options)).toEqual(eager(options))
+  }
+})

@@ -23,3 +23,15 @@ it('charges two for the first extra page with decreasing marginal cost', () => {
   expect(compare({pages:1,cost:1.9,spacing:8},{pages:2,cost:0,spacing:16})).toBeLessThan(0)
   expect(compare({pages:1,cost:2.1,spacing:8},{pages:2,cost:0,spacing:16})).toBeGreaterThan(0)
 })
+
+it('derives a page ceiling only from a losing combined lower bound including tie order', async () => {
+  const { scoreSpacingTrialPageCeiling } = await import('./spacing-trials.js')
+  for (const cost of [0, .1, 1, 3]) for (const spacing of [.8, 1.2, 1.6])
+    for (const pages of [1, 2, 3, 6]) for (const incumbentCost of [0, .5, 2.1]) for (const incumbentSpacing of [.8, 1.2, 1.6]) {
+      const incumbent = { pages, cost: incumbentCost, spacing: incumbentSpacing }
+      const ceiling = scoreSpacingTrialPageCeiling(cost, spacing, incumbent, 12)
+      for (let candidatePages = 1; candidatePages <= 12; candidatePages++)
+        if (ceiling !== undefined && candidatePages > ceiling)
+          for (const vertical of [0, .2, 1]) expect(compare({ pages: candidatePages, cost: cost + vertical, spacing }, incumbent)).toBeGreaterThanOrEqual(0)
+    }
+})

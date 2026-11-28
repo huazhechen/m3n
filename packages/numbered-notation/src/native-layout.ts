@@ -1,7 +1,7 @@
 import { scoreTierDensityTarget } from './layout/tier-breaking.js'
 import { scoreWidthPolicyState } from './layout/width-candidate-policy.js'
 import { type NativeGapTrial, type NativePageTrialCache } from './native-page-trial.js'
-import { compareScoreSpacingTrials } from './layout/spacing-trials.js'
+import { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling } from './layout/spacing-trials.js'
 import { startsNativeSection, nativeRowIdentity, breakMeasures } from './native-line-graph.js'
 import { repaginateNativeLayout, positionNativeLayout } from './native-layout-pagination.js'
 import { relationsFor, reserveInstrumentalEndpoints } from './native-relation-plan.js'
@@ -154,10 +154,13 @@ function selectNativeLayout(document: ScoreDocument, supplied: NativeRenderOptio
   let selected: NativeLayout | undefined, selectedCost = Infinity
   let oversized: { error: Error; minimumNoteGap: number } | undefined
   for (const { minimumNoteGap, trial } of trials) {
+    const ceiling = scoreSpacingTrialPageCeiling(trial.tierCost, minimumNoteGap, selected
+      ? { pages: selected.pages.length, cost: selectedCost, spacing: selected.options.minimumNoteGap ?? 0 } : undefined, trial.systemCount + 1)
+    if (ceiling === 0) continue
     let candidate: NativeLayout
     try {
       if (timings) timings.completedLayoutTrials = (timings.completedLayoutTrials ?? 0) + 1
-      candidate = trial.complete({blocks: new Map()})
+      candidate = trial.complete({blocks: new Map()}, ceiling)
     }
     catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'M3N_PAGE_BOUND_REJECTED') {
@@ -545,11 +548,12 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     }
     return block
   }
-  const finishLayout = (blocks:ScorePageBlock[], measuredSystems:NativeSystem[], onlyRow?:number, pageCeiling?:number):NativeLayout => {
+  const finishLayout = (blocks:ScorePageBlock[], measuredSystems:NativeSystem[], onlyRow?:number, pageCeiling?:number,
+    sources?: readonly (ScorePageBlock | (() => ScorePageBlock))[]):NativeLayout => {
     const resultSystems = measurement ? measuredSystems.map(system => ({ ...system,
       measures: system.measures.map(measure => ({ ...measure })) })) : measuredSystems
     const layout: NativeLayout = { document, headerDocument, projection, systems:resultSystems, pages: [], relations, options, measurer, headerHeight, margin,
-      pagination: prepareScorePagination(blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerAtGap, headerBlocks: onlyRow===undefined ? header.blocks : [] }
+      pagination: prepareScorePagination(sources ?? blocks, { immutableBlocks: true }), verticalBlocks: blocks, headerAtGap, headerBlocks: onlyRow===undefined ? header.blocks : [] }
     if(onlyRow!==undefined)return layout
     const vertical = options.coreGap === undefined ? scoreVerticalSpacing() : scoreFixedVerticalSpacing(options.coreGap)
     const gap = options.coreGap ?? vertical!.minimum
@@ -933,7 +937,7 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
   }
   record('decorationsLyricsMs')
   const measuredSystems=onlyRow===undefined ? systems : [systems[onlyRow]!]
-  const blocks = [...(onlyRow===undefined ? headerBlocks : []), ...measuredSystems.map(system => {
+  const rowBlockFor = (system: NativeSystem): ScorePageBlock => {
     if (options.numericLayout) {
       if (reused.has(system)) return rowCache!.blocks.get(rowKeys![system.index]!)!
       const block = nativeRowGeometry(system, measurer, margin)
@@ -986,8 +990,16 @@ function prepareNativeScoreAtGap(document: ScoreDocument, supplied: NativeRender
     const block = { height, baseline: system.lanes[0]?.y ?? 0, core, coreGapScale, ink, boundaryInk, coreGapBefore: system.measures[0]?.coreGapBefore }
     if (rowKeys) rowCache!.blocks.set(rowKeys[system.index]!, block)
     return block
+  }
+  const headers = onlyRow === undefined ? headerBlocks : []
+  const blocks: ScorePageBlock[] = [...headers]
+  const sources = [...headers, ...measuredSystems.map((system, index) => {
+    const make = () => blocks[headers.length + index] = rowBlockFor(system)
+    // A rejected prefix never asks for the remaining exact row geometry.
+    // Every source is resolved before a successful layout is published.
+    return pageLimit !== undefined && onlyRow === undefined && options.numericLayout ? make : make()
   })]
-  return finishLayout(blocks,measuredSystems,onlyRow,pageLimit)
+  return finishLayout(blocks,measuredSystems,onlyRow,pageLimit,sources)
   } }
 }
 

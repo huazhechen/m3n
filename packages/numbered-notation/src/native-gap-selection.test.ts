@@ -56,16 +56,17 @@ it('keeps the tight tier when the loose spacing benefit cannot offset an extra p
   expect(renderNativePages(automatic)).toEqual(renderNativePages(tight))
 })
 
-it('compares both tiers on the one-page floor with joint spacing costs', () => {
+it('preserves the best of all three tiers on the one-page floor with joint spacing costs', () => {
   const document = parseM3NDocument('{4/4}\nN: ' + Array(6).fill('1 2 3 4 |').join(' '))
   const timings: Record<string, number> = {}
   const automatic = layoutNativeScore(document, { ...options, width: 720 }, timings)
   expect(automatic.pages).toHaveLength(1)
   expect(timings.layoutTrials).toBeGreaterThanOrEqual(2)
-  expect(timings.completedLayoutTrials).toBe(3)
+  expect(timings.layoutTrials).toBe(3)
   expect(timings.pageFloorTierPrunes ?? 0).toBe(0)
   for (const minimumNoteGap of [8, 12, 16]) {
     const fixed = layoutNativeScore(document, { ...options, width: 720, minimumNoteGap, lineDensityTarget: minimumNoteGap === 16 ? .5 : 2/3 })
     expect(nativeLayoutQuality(automatic).totalCost).toBeLessThanOrEqual(nativeLayoutQuality(fixed).totalCost)
+    if (minimumNoteGap === automatic.options.minimumNoteGap) expect(renderNativePages(automatic)).toEqual(renderNativePages(fixed))
   }
 })

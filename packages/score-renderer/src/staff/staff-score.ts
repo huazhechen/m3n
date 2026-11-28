@@ -1,4 +1,4 @@
-import { scoreWidthPolicyState, compareScoreSpacingTrials, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scoreWidthPolicyState, compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, prepareScorePagination, planScoreTier, scoreTierDensityTarget, scoreVerticalSpacing, scoreFixedVerticalSpacing, scorePageFeasibility, scoreHeightEnvelope, scoreEnvelopeBlock, scoreLayoutConfig, scoreLineQuality, scoreHeaderGap, scorePhysicalSpacing, scoreLayoutCosts, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreSvgFontFamilies } from '@m3n/numbered-notation'
 import { DEFAULT_PREFERRED_WIDTH, type ScoreDocument } from '@m3n/notation'
 import { findAll, hasClass, element, translate, moveInk, xml, SvgGeometry, type XmlNode } from './layout-svg.js'
@@ -11,7 +11,7 @@ import { resolveStaffText } from './svg-text.js'
 import { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 export { prepareStaffMeasurementTask, type StaffMeasurementTask } from './staff-measurement-task.js'
 import { staffGlyphMetrics } from './staff-music-font.js'
-import { staffMusicCentre, staffHeaderBlock } from './staff-row-pagination.js'
+import { staffMusicCentre, staffHeaderBlock, staffRowBlock } from './staff-row-pagination.js'
 import { engraveStaffSystems } from './staff-system.js'
 import { proxyScoreWidthInk, proxyScoreWidthPartition, proxyScoreWidthBounds, scoreWidthProxyKey } from '@m3n/numbered-notation/layout'
 
@@ -147,6 +147,7 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
     const header = staffHeader(score, innerWidth, measure, settings.transpose)
     const height = a4SourcePageHeight(candidateWidth) - 2 * margin
     let bestPageCount = Infinity
+    let incumbent: { pages: number; cost: number; spacing: number } | undefined
     const trials = scoreLayoutConfig.staff.noteGapCandidates.flatMap(spacing => {
       const graph = prepareStaffLineGraph(projected, musicWidth, Boolean(score.equalMeasures), measure, spacing, measurements.minimum)
       const chosenEnds = planScoreTier(graph.candidates, scoreTierDensityTarget(spacing, scoreLayoutConfig.staff.noteGapCandidates))
@@ -200,17 +201,24 @@ export async function prepareStaffScore(score: ScoreDocument, settings: StaffSet
         if (!lines) { lines = graph.makeLines(ends); linePlans.set(key, lines) }
         return lines
       }
-      const systemsFor = (ends: number[]) => {
-        let start = 0
-        const lines = linesFor(ends)
-        return ends.map((end, index) => { const system = rowFor(start, end, lines[index]!.target); start = end; return system })
-      }
       const evaluate = (ends: number[]) => {
         signal?.throwIfAborted()
-        const systems = systemsFor(ends)
+        const lines = linesFor(ends)
+        const horizontal = qualityFor(candidateWidth, lines, 0)
+        const ceiling = scoreSpacingTrialPageCeiling(horizontal.spacingCost + horizontal.overflowCost, spacing, incumbent, ends.length + 1)
+        let start = 0
+        const blocks = [staffHeaderBlock(header.height), ...ends.map((end, index) => {
+          const first = start; start = end
+          return () => staffRowBlock(rowFor(first, end, lines[index]!.target), index, minimumGap)
+        })]
         try {
-          const pages = paginateStaff(systems, height, header.height, minimumGap, true, vertical?.maximum ?? minimumGap, headerGap, vertical)
-          return { ends, pages: pages.length, verticalCost: pages[0]?.verticalCost ?? 0, value: ends }
+          const result = prepareScorePagination(blocks, { immutableBlocks: true })({ pageHeight: height,
+            margin: scoreLayoutConfig.staff.pageInset, gap: minimumGap, maxGap: vertical?.maximum ?? minimumGap,
+            headerGap, vertical, pageCeiling: ceiling })
+          const cost = horizontal.spacingCost + horizontal.overflowCost + (result.verticalCost ?? 0)
+          const candidate = { pages: result.heights.length, cost, spacing }
+          if (!incumbent || compareScoreSpacingTrials(candidate, incumbent) < 0) incumbent = candidate
+          return { ends, pages: result.heights.length, verticalCost: result.verticalCost ?? 0, value: ends }
         }
         catch (error) {
           if (error instanceof Error && 'code' in error && error.code === 'M3N_PAGE_BOUND_REJECTED')

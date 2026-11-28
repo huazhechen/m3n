@@ -12,7 +12,7 @@ export { planScoreLinesWithRefinedPages, measureScoreGreedyPageCeiling, type Sco
 export { scorePageCollision, scorePageDistance } from './page-collision.js'
 export { sortedScoreInkSeparation as sortedInkSeparation } from './ink-separation.js'
 export type { ScoreInk } from './geometry.js'
-export { compareScoreSpacingTrials, type ScoreSpacingTrial } from './spacing-trials.js'
+export { compareScoreSpacingTrials, scoreSpacingTrialPageCeiling, type ScoreSpacingTrial } from './spacing-trials.js'
 
 export { scoreLayoutConfig } from '../score-layout-config.js'
 export * from './policy.js'
