@@ -1,17 +1,17 @@
 import { scoreLayoutConfig } from '../score-layout-config.js'
 
-/** Source leading is a dimensionless multiplier of each notation's base gap. */
-export function scoreCoreGap(score?: { coreGapEm?: number }, notation: 'numbered' | 'staff' = 'numbered'): number {
+/** Fixed internal engraving baseline; independent of elastic row spacing. */
+export function scoreCoreGap(notation: 'numbered' | 'staff' = 'numbered'): number {
   const base = notation === 'staff'
     ? scoreLayoutConfig.staff.music / 4 * scoreLayoutConfig.staff.coreGapSpaces
     : scoreLayoutConfig.numbered.music * scoreLayoutConfig.numbered.coreGapEm
-  return base * (score?.coreGapEm ?? 1)
+  return base
 }
 /** Local attachment clearance follows the score baseline, not page stretching. */
-export const scoreAttachmentGap = (score?: { coreGapEm?: number }, notation: 'numbered' | 'staff' = 'numbered'): number =>
-  scoreCoreGap(score, notation) * scoreLayoutConfig.page.attachmentGapRatio
+export const scoreAttachmentGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
+  scoreCoreGap(notation) * scoreLayoutConfig.page.attachmentGapRatio
 
-/** Header spacing is based on the source gap and never stretched per page. */
+/** Header spacing uses the fixed engraving baseline and never stretches per page. */
 export const scoreHeaderGap = (minimum: number): number => minimum * .8
 /** Inline section starts replace the ordinary core gap; no additive spacer. */
 export const scoreSectionCoreGap = (notation: 'numbered' | 'staff' = 'numbered'): number =>
@@ -50,4 +50,21 @@ export function scoreRhythmicGapWeight(left?: number, right?: number, groupRatio
   const a = scoreRhythmicWeight(left && left > 0 ? left : 1)
   const b = scoreRhythmicWeight(right && right > 0 ? right : 1)
   return a ** .75 * b ** .25 * groupRatio
+}
+
+/** Inter-system policy only: measured music, lyrics, headers and attachments
+ * retain their measured geometry. Both notations use their music em. */
+export type ScoreVerticalSpacing = { minimum: number; comfortable: number; maximum: number }
+export function scoreVerticalSpacing(notation: 'numbered' | 'staff' = 'numbered'): ScoreVerticalSpacing {
+  const minimum = scoreLayoutConfig[notation].music * scoreLayoutConfig[notation].minimumRowGapEm
+  return { minimum, comfortable: minimum * 1.5, maximum: minimum * 2 }
+}
+export function scoreVerticalCost(gap: number, spacing: ScoreVerticalSpacing): number {
+  if (spacing.maximum <= spacing.minimum) return 0
+  return Math.max(0, (spacing.comfortable - gap) / (spacing.comfortable - spacing.minimum)) ** 2
+}
+
+/** Explicit pixel overrides still use the same row and collision policy. */
+export function scoreFixedVerticalSpacing(gap: number): ScoreVerticalSpacing {
+  return { minimum: gap, comfortable: gap, maximum: gap }
 }

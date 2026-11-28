@@ -17,6 +17,7 @@ export type WidthMeasurement = {
   lineUniformityCost?: number
   layoutCost?: number
   fontSizeCost?: number
+  verticalCost?: number
   totalCost?: number
 }
 export const widthMinimum: number, widthMaximum: number, widthStep: number

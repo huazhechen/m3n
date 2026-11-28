@@ -207,7 +207,7 @@ type PreparedEntry = { item: StaffEvent; notes: PreparedNote[] }
 export type PreparedMeasure = { entries: PreparedEntry[][]; metrics: StaffMeasureMetrics; signatures: Signature[]; onsets: number[]; weights: number[]; beams: Array<{ lane: number; indices: number[] }> }
 /** Only immutable local descriptors belong to a task; candidate anchors are fresh. */
 export function createStaffPreparation(document?: StaffDocument) {
-  const attachmentGap = scoreAttachmentGap(document?.score, 'staff')
+  const attachmentGap = scoreAttachmentGap('staff')
   const incomingTies = new Set<string>()
   for (const lane of ['melody', 'bass'] as const) {
     let previous: StaffEvent | undefined

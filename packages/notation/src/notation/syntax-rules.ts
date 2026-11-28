@@ -19,14 +19,6 @@ export function validateM3NSyntaxTree(tree: M3NSyntaxTree): ScoreDiagnostic[] {
       || !tree.lines.some(line => line.line === directive.line && line.row?.kind === 'melody'))) {
       report('M3N_DIRECTIVE_INVALID_INTERLUDE', 'interlude 只能作为无参数指令写在 N: 行中', directive)
     }
-    if (directive.name === 'leading') {
-      if (directive.closing || !/^\d+(?:\.\d+)?$/.test(directive.value ?? '') || !Number.isFinite(Number(directive.value))) {
-        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'leading 必须为非负有限数值', directive)
-      }
-      if (!tree.lines.some(line => line.line === directive.line && line.kind === 'header')) {
-        report('M3N_DIRECTIVE_INVALID_LAYOUT', 'leading 只能写在文档首部', directive)
-      }
-    }
     if (directive.name === 'equal-measures') {
       if (directive.closing || !['true', 'false'].includes(directive.value ?? '')) {
         report('M3N_DIRECTIVE_INVALID_LAYOUT', 'equal-measures 必须为 true 或 false', directive)

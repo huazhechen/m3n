@@ -10,7 +10,7 @@ describe('tuplet expressions remain outside rhythm brackets in the native render
     it.each(variants)('orders every Clarinet Polka tuplet dynamic at width $width, paged=$paged', options => {
         const source = readFileSync(resolve(import.meta.dirname, '../../../src/scores/dan_huang_guan_bo_er_ka_01.m3n'), 'utf8');
         const document = parseM3NDocument(source);
-        const native = layoutNativeScore(document, options);
+        const native = layoutNativeScore(document, {...options, minimumNoteGap:8});
         let checked = 0;
         for (const system of native.systems)
             for (const relation of system.relations.filter(r => r.kind === 'tuplet')) {

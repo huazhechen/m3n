@@ -1,4 +1,4 @@
-import { prepareScorePagination, type ScorePageBlock, scoreLayoutConfig, scoreHeaderGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { prepareScorePagination, type ScorePageBlock, scoreLayoutConfig, scoreHeaderGap, scoreLyricGapScale, type ScoreVerticalSpacing } from '@m3n/numbered-notation/layout'
 import type { StaffSystem, StaffPage } from './system-layout.js'
 
 export const staffMusicCentre = scoreLayoutConfig.staff.music * 1.5
@@ -22,15 +22,15 @@ export function staffRowBlock(system: StaffSystem, index: number, gap: number): 
 }
 /** The same shared element paginator is used for planning and SVG output. */
 export function paginateStaffRows(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
-  paged: boolean, maximum: number, headerGap = scoreHeaderGap(minimum)): StaffPage[] {
+  paged: boolean, maximum: number, headerGap = scoreHeaderGap(minimum), vertical?: ScoreVerticalSpacing, pageCeiling?: number): StaffPage[] {
   const blocks = [staffHeaderBlock(headerHeight), ...systems.map((system, index) => staffRowBlock(system, index, minimum))]
   const placed = prepareScorePagination(blocks, { immutableBlocks: true })({
     pageHeight: paged ? height : Infinity, margin: scoreLayoutConfig.staff.pageInset,
-    gap: minimum, maxGap: paged ? maximum : minimum, headerGap,
+    gap: minimum, vertical, pageCeiling, maxGap: paged ? maximum : minimum, headerGap,
   })
   return placed.heights.map((pageHeight, page) => {
     const indices = systems.flatMap((_, index) => placed.positions[index + 1]!.page === page ? [index] : [])
     return { systems: indices.map(index => systems[index]!), ys: indices.map(index => placed.positions[index + 1]!.top),
-      height: pageHeight, gap: placed.coreGaps![page]! }
+      height: pageHeight, gap: placed.coreGaps![page]!, verticalCost: placed.verticalCost ?? 0 }
   })
 }

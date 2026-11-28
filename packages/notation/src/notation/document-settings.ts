@@ -11,7 +11,6 @@ export function documentSettings(tree: M3NSyntaxTree) {
   }
   const headerLines = new Set(tree.lines.filter(line => line.kind === 'header').map(line => line.line))
   let equalMeasures = false
-  let coreGapEm: number | undefined
   let order: string[] | undefined
   let orderKeys: Array<string | undefined> | undefined
   let orderKeyOctaves: Array<number | undefined> | undefined
@@ -26,7 +25,6 @@ export function documentSettings(tree: M3NSyntaxTree) {
       orderKeys = entries.some(entry => entry.key !== undefined) ? entries.map(entry => entry.key) : undefined
     }
     if (directive.name === 'equal-measures') equalMeasures = directive.value === 'true'
-    if (directive.name === 'leading' && /^\d+(?:\.\d+)?$/.test(directive.value ?? '') && Number.isFinite(Number(directive.value))) coreGapEm = Number(directive.value)
   }
 
   let key = 'C'
@@ -56,5 +54,5 @@ export function documentSettings(tree: M3NSyntaxTree) {
       hasExplicitTempo = true
     }
   }
-  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, ...(coreGapEm !== undefined ? {coreGapEm} : {}), key, initialKeyPasses, meterCount, meterUnit, tempo, hasExplicitTempo }
+  return { ...metadata, ...(order ? {order} : {}), ...(orderKeys ? {orderKeys} : {}), ...(orderKeyOctaves ? {orderKeyOctaves} : {}), equalMeasures, key, initialKeyPasses, meterCount, meterUnit, tempo, hasExplicitTempo }
 }

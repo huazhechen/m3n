@@ -212,11 +212,9 @@ describe('validateM3N', () => {
     expect(messages('{key=C} {4/4}\n1{arp} 2 3 4 |||')).toContain('琶音只能附在和音组之后')
   })
 
-
   it('allows multiple implicit repeats from the beginning of a validation unit', () => {
     expect(validateM3N('{2/4}\n1 2 :|| 3 4 :|||')).toEqual([])
   })
-
 
   it('accepts rests and insignificant whitespace in tuplet groups', () => {
     expect(validateM3N('{key=C} {2/4}\n[0 6 6 : 2] |||')).toEqual([])
@@ -269,13 +267,6 @@ describe('validateM3N', () => {
     expect(messages('{equal-measures=yes}\nN: 1 2 3 4 |||')).toContain('equal-measures 必须为 true 或 false')
     expect(messages('N: {equal-measures=true}1 2 3 4 |||')).toContain('equal-measures 只能写在文档首部')
     expect(messages('{equal-measures=true} {equal-measures=false}\nN: 1 2 3 4 |||')).toContain('重复声明')
-  })
-
-  it('validates the numeric gap, header placement and uniqueness', () => {
-    for (const gap of ['0', '18', '28', '32.5']) expect(validateM3N(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toEqual([])
-    for (const gap of ['', '-1', 'NaN', 'Infinity', 'true']) expect(messages(`{leading=${gap}}\nN: 1 2 3 4 |||`)).toContain('leading 必须为非负有限数值')
-    expect(messages('N: {leading=0.8}1 2 3 4 |||')).toContain('leading 只能写在文档首部')
-    expect(messages('{leading=0.8}{leading=28}\nN: 1 2 3 4 |||')).toContain('重复声明')
   })
 
   it('enforces metadata placement, uniqueness, and non-empty values', () => {

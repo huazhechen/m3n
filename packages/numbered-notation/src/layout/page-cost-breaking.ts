@@ -1,3 +1,4 @@
+import type { ScoreVerticalSpacing } from './policy.js'
 import { scoreLineStateHull, insertScoreLineStateHull, type ScoreLineStatisticPlan, type ScoreLineCandidate } from './line-breaking.js'
 import type { ScorePageBlock } from './geometry.js'
 import { scorePageCollision, scorePageDistance } from './page-collision.js'
@@ -8,7 +9,7 @@ type Box=ScorePageGeometry
 type State=ScoreLineStatisticPlan & {start:number;gapSum:number;gapCount:number;box?:Box;page:number;baseline:number}
 type HeightBounds={boxes:Box[];remaining:Map<number,number>[];pricedHeight:Map<number,number[]>[]}
 export function createScorePageCostCache(){return {heightBounds:new WeakMap<object,HeightBounds>(),boxes:new WeakMap<ScorePageBlock,Box>(),distances:new WeakMap<Box,WeakMap<Box,number>>(),policy:''}}
-export type ScorePageCostOptions={immutableBlocks?:boolean;rowsToResolve?:Set<string>;cache?:ReturnType<typeof createScorePageCostCache>;pageHeight:number;margin:number;gap:number;headerGap:number;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
+export type ScorePageCostOptions={immutableBlocks?:boolean;rowsToResolve?:Set<string>;cache?:ReturnType<typeof createScorePageCostCache>;pageHeight:number;margin:number;gap:number;vertical?:ScoreVerticalSpacing;headerGap:number;ceiling:number;maximumCost:number;reference?:{emptyMean?:number;required?:(at:number)=>boolean;section:(at:number)=>number;gap:(start:number,end:number)=>number|undefined;terminal:(start:number,end:number)=>boolean}}
 const box=scorePageGeometry
 const planPaths=new WeakMap<ScoreLineStatisticPlan,number[]>()
 const ends=(state:ScoreLineStatisticPlan)=>{
@@ -38,7 +39,7 @@ export function planScoreLinesWithPageCost(graph:readonly (readonly ScoreLineCan
   let peers=distances.get(prior)
   const cached=peers?.get(item)
   if(cached!==undefined)return cached
-  const local=item.gap ?? options.gap*prior.scale
+  const local=options.vertical ? (prior.music && item.music ? options.gap : Math.min(options.gap, options.headerGap / .8)) : item.gap ?? options.gap*prior.scale
   const separation=prior.music && item.music ? local : options.headerGap
   const core=prior.coreBottom-item.coreTop+separation
   let collision=-Infinity,edge=-Infinity

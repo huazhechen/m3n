@@ -104,10 +104,9 @@ it('reserves a fixed raster edge guard without changing design glyph metrics', (
 
 // This score used to leave local hairpin rows unresolved, causing thousands
 // of disjoint-prefix searches at the 600px candidate.
-it('resolves local hairpin geometry before falling back to partition enumeration', () => {
-  // Keep the original 19.2px regression fixture independent of source leading edits.
+it('engraves local hairpins without partition enumeration', () => {
   const source = readFileSync(new URL('../../../src/scores/ban_yin_jie_kou_qin_ji_ben_gong_01.m3n', import.meta.url), 'utf8')
-  const document = parseM3NDocument(source.replace(/\{leading=[^}]+\}/, `{leading=${2 / 3}}`))
+  const document = parseM3NDocument(source)
   // Preserve the spacing fixture that exercises local ending-bound search.
   const groupRatio = scoreLayoutConfig.numbered.groupSpacingRatio
   try {
@@ -116,7 +115,7 @@ it('resolves local hairpin geometry before falling back to partition enumeration
     const layout = layoutNativeScore(document, { width: 600, pageMargin: 0, paged: true, numericLayout: true, textMeasurer: fontDesignMeasurer()! }, timings)
     expect(layout.pages.length).toBe(3)
     expect(layout.systems.length).toBe(40)
-    expect(timings.numericEndingBoundsMs).toBeGreaterThan(0)
+    expect(timings.numericEndingBoundsMs).toBeUndefined()
     expect(timings.pageBoundDpSolves ?? 0).toBeLessThan(100)
   } finally {
     scoreLayoutConfig.numbered.groupSpacingRatio = groupRatio

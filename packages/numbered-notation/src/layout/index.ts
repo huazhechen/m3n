@@ -24,3 +24,5 @@ export { inheritElasticWidth, elasticLineBadness, solveElasticSprings, type Spac
 export { balanceScorePageTail } from './page-tail.js'
 
 export { optimizedScoreWidthPolicy, exactScoreWidthPolicy, withScoreWidthCandidatePolicy, scoreWidthPolicyState, type ScoreWidthCandidatePolicy } from './width-candidate-policy.js'
+
+export { planScoreTier, scoreTierDensityTarget } from './tier-breaking.js'

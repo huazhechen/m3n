@@ -1,5 +1,5 @@
 import { paginateStaffRows } from './staff-row-pagination.js'
-import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreHeaderGap, scoreLyricGapScale } from '@m3n/numbered-notation/layout'
+import { scorePageCollision, scorePageDistance, scoreLayoutConfig, scoreMaximumCoreGap, scoreHeaderGap, scoreLyricGapScale, type ScoreVerticalSpacing } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, interpolateScoreCoreGap } from '@m3n/numbered-notation'
 import { numberedHeadingLines } from '@m3n/notation'
 import {
@@ -454,8 +454,8 @@ export function systemDistance(previous: StaffSystem, next: StaffSystem, gap: nu
   const pair = scorePageCollision(shape(previous), shape(next))
   return scorePageDistance(pair, coreGap, previous.core.bottom + coreGap - next.core.top)
 }
-export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number }
+export type StaffPage = { systems: StaffSystem[]; ys: number[]; height: number; gap: number; verticalCost?: number }
 export function paginateStaff(systems: StaffSystem[], height: number, headerHeight: number, minimum: number,
-  paged: boolean, maximum = scoreMaximumCoreGap(minimum), headerGap = scoreHeaderGap(minimum)): StaffPage[] {
-  return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum, headerGap)
+  paged: boolean, maximum = scoreMaximumCoreGap(minimum), headerGap = scoreHeaderGap(minimum), vertical?: ScoreVerticalSpacing, pageCeiling?: number): StaffPage[] {
+  return paginateStaffRows(systems, height, headerHeight, minimum, paged, maximum, headerGap, vertical, pageCeiling)
 }

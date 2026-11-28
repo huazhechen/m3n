@@ -1,10 +1,11 @@
+import { scoreVerticalSpacing } from './layout/policy.js'
 import { nativeLayoutQuality } from './native-quality.js'
 import { nativeSvgNumber } from './native-svg-number.js'
 import { A4_CONTENT_ASPECT_RATIO, validateScoreDocument, type ScoreDocument } from '@m3n/notation'
 import { layoutNativeScore, measureNativeLayout, nativeContinuousPagination, reflowNativeContinuousLayout, repaginateNativeLayout, type NativeRenderOptions } from './native-layout.js'
 import { renderNativePages } from './native-svg.js'
 import { fitScoreCoreGap } from './layout/pagination.js'
-import { nativeCoreGap, nativeStyle } from './native-style.js'
+import { nativeHeaderGap, nativeStyle } from './native-style.js'
 import type { NativeDiagnostic } from './native-model.js'
 
 /** Native music engraving, with ScoreDocument as its only musical input. */
@@ -54,7 +55,7 @@ export class PreparedNumberedNotationScore {
     if (measurementOnly && options.numericLayout !== false) {
       const result = this.measurement = measureNativeLayout(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
       this.pageCount = result.pageCount; this.systemCount = result.systemCount; this.quality = result.quality; this.width = result.width
-      this.minimumCoreGap = nativeCoreGap(document)
+      this.minimumCoreGap = scoreVerticalSpacing().minimum
       return
     }
     this.placedLayout = layoutNativeScore(document, { numericLayout: true, ...options, paged: true }, timings, minimumQuality, maximumPageCount)
@@ -62,7 +63,7 @@ export class PreparedNumberedNotationScore {
     this.systemCount = this.layout.systems.length
     this.quality = nativeLayoutQuality(this.layout)
     this.width = this.layout.options.width
-    this.minimumCoreGap = nativeCoreGap(document)
+    this.minimumCoreGap = scoreVerticalSpacing().minimum
   }
   /** Detached logical geometry for cross-notation density diagnostics. */
   layoutInfo() {
@@ -76,7 +77,7 @@ export class PreparedNumberedNotationScore {
   }
   continuousHeight(coreGap = this.minimumCoreGap) {
     const heights = this.measurement
-      ? this.measurement.pagination({ pageHeight: Infinity, margin: this.measurement.margin, gap: coreGap, headerGap: this.minimumCoreGap * .8 }).heights
+      ? this.measurement.pagination({ pageHeight: Infinity, margin: this.measurement.margin, gap: coreGap, vertical: scoreVerticalSpacing(), headerGap: nativeHeaderGap() }).heights
       : nativeContinuousPagination(this.layout, coreGap).heights
     return Math.ceil(nativeSvgNumber(heights[0] ?? 0))
   }
@@ -98,7 +99,7 @@ export function renderSharedPreparedNumberedNotationScores(scores: readonly Prep
   if (scores.some(score => score.width !== width)) throw new Error('合页曲目必须使用相同版宽。')
   const minimum = Math.max(...scores.map(score => score.minimumCoreGap))
   const heightAt = (gap: number) => scores.reduce((sum, score) => sum + score.continuousHeight(gap), scoreGap * (scores.length - 1))
-  const coreGap = fitScoreCoreGap(heightAt, Math.floor(width * A4_CONTENT_ASPECT_RATIO), minimum, minimum * 1.1)
+  const coreGap = fitScoreCoreGap(heightAt, Math.floor(width * A4_CONTENT_ASPECT_RATIO), minimum, scoreVerticalSpacing().maximum)
   // Give every score, including the last, an equal share of the spare height.
   const trailingGap = Math.max(0, Math.floor(width * A4_CONTENT_ASPECT_RATIO) - heightAt(coreGap)) / scores.length
   const fittedScoreGap = scoreGap + trailingGap
@@ -109,12 +110,12 @@ export function renderSharedPreparedNumberedNotationScores(scores: readonly Prep
 export function renderSharedNumberedNotationScores(documents: readonly ScoreDocument[], options: Omit<NativeRenderOptions, 'paged' | 'coreGap'>, scoreGap = nativeStyle.sharedScoreGap) {
   if (documents.length < 2) throw new Error('A shared page needs at least two scores')
   if (!Number.isFinite(scoreGap) || scoreGap < 0) throw new Error('曲间留白必须为非负有限数值。')
-  const minimum = Math.max(...documents.map(document => nativeCoreGap(document)))
+  const minimum = scoreVerticalSpacing().minimum
   const layouts = documents.map(document => layoutNativeScore(document, { numericLayout: true, ...options, paged: false, coreGap: minimum }))
   const capacity = Math.floor(layouts[0]!.options.width * A4_CONTENT_ASPECT_RATIO)
   // Continuous SVG viewports round up; fit their real exported heights.
   const heightAt = (gap: number) => layouts.reduce((sum, layout) => sum + Math.ceil(nativeSvgNumber(nativeContinuousPagination(layout, gap).heights[0] ?? 0)), scoreGap * (layouts.length - 1))
-  const coreGap = fitScoreCoreGap(heightAt, capacity, minimum, minimum * 1.1)
+  const coreGap = fitScoreCoreGap(heightAt, capacity, minimum, scoreVerticalSpacing().maximum)
   for (const layout of layouts) reflowNativeContinuousLayout(layout, coreGap)
   const trailingGap = Math.max(0, capacity - heightAt(coreGap)) / layouts.length
   const fittedScoreGap = scoreGap + trailingGap

@@ -38,15 +38,16 @@ const numbered = {
   octaveDotRadiusEm: .075,
   durationDotRadiusEm: .09,
   accidentalScale: 1.15,
-  // 核心上下间距，以 music 为1em；外层净空在使用处乘系数。
-  coreGapEm: numberedCoreGapEm, // 谱源 leading 作为倍率缩放，默认1。
+  // 固定行内雕版基准，以 music 为1em；与自动行间距独立。
+  coreGapEm: numberedCoreGapEm, // 固定的行内雕版基准。
+  minimumRowGapEm: .8,
   lyric: lyrics.fontSize,
   grace: 13,
 
   // 外层表情与导航文字保持独立字号。
   // 紧／松两档最小净空；时值与组内比例由横向引擎换算。
   minimumNoteGap: 8,
-  noteGapCandidates: [8, 16] as readonly number[],
+  noteGapCandidates: [8, 12, 16] as readonly number[],
   // 文字换行行高独立于音乐字号和核心间距。
   titleLineHeight: 36,
   subtitleLineHeight: 18,
@@ -83,7 +84,8 @@ const staff = {
   restCount: 16, octave: 13,
   // 音乐主字号为最终逻辑 px；倚音、速度音符、琶音与连音数字由其推导。
   music: 26, // 四个6.5px谱间。
-  coreGapSpaces: 4, // 五线谱独立核心行间净空，随谱间缩放。
+  minimumRowGapEm: .8,
+  coreGapSpaces: 4, // 固定行内雕版基准，随谱间缩放。
   // 既有五线谱独立几何以28px（四个7px谱间）为设计基准。
   get musicSizeRatio(): number { return this.music / 28 },
   spacingIncrementSpaces: 1.2,
@@ -105,7 +107,7 @@ const staff = {
   minimumWidth: 320, minimumContentWidth: 80, bassGutter: 14, singleGutter: 1, rightGutter: 1,
   groupSpacingRatio: 1,
   minimumNoteGap: 0.8,
-  noteGapCandidates: [0.8, 2.4] as readonly number[],
+  noteGapCandidates: [0.8, 1.2, 1.6] as readonly number[],
   // 引擎坐标变换保持不变；音乐附属距离按既有28px设计比例随music变化。
   // 歌词、文字占宽及曲线包络分片精度继续使用独立尺寸。
   engine: {

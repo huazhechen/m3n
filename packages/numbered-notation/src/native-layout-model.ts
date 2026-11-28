@@ -18,6 +18,8 @@ export type NativeRenderOptions = {
   numericLayout?: boolean
   /** Allows uncached parity measurements of the experimental solver. */
   cachePageLineGeometry?: boolean
+  /** Internal soft occupancy target; explicit spacing overrides omit it. */
+  lineDensityTarget?: number
   minimumNoteGap?: number; minimumNoteGapFloor?: number
   equalMeasures?: boolean; wrapWidthRatio?: number
 }
@@ -28,6 +30,7 @@ export type NativePage = { coreGap?: number; header?: string; index: number; wid
 export type NativeLayout = {
   document: ScoreDocument; headerDocument: ScoreDocument; projection: NativeProjection; systems: NativeSystem[]; pages: NativePage[]; relations: NativeRelation[]
   options: NativeRenderOptions; measurer: TextMeasurer; headerHeight: number; margin: number
+  verticalCost?: number
   pagination: ReturnType<typeof prepareScorePagination>; verticalBlocks: ScorePageBlock[]; headerBlocks: { height: number; svg: string }[]
 }
 

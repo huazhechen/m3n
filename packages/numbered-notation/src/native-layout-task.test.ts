@@ -206,3 +206,8 @@ it('keeps explicit estimate contexts out of retained tasks and final drawings',(
   expect(new PreparedNumberedNotationScore(document,options).renderPaged())
     .toEqual(new PreparedNumberedNotationScore(document,{width:600,pageMargin:0}).renderPaged())
 })
+
+it('retains a width with sparse rows through soft occupancy costs', () => {
+  const score = parseM3NDocument(readFileSync(new URL('../../../src/scores/flower_dance_01.m3n', import.meta.url), 'utf8'))
+  expect(layoutNativeScore(score, {width:528,paged:true,pageMargin:0}).systems.length).toBeGreaterThan(0)
+})

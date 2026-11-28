@@ -28,7 +28,7 @@ describe('native equal-measure interior spacing', () => {
 
 it.each(cases)('keeps equal visible boundaries and all music for %s', (_name, source) => {
     for (const width of [320, 800]) {
-        const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:false,equalMeasures:true,textMeasurer:measurer});
+        const layout = layoutNativeScore(parseM3NDocument(source), {width,paged:false,equalMeasures:true,textMeasurer:measurer,minimumNoteGap:8});
         expect(layout.projection.glyphs.length).toBeGreaterThan(0);
         for (const system of layout.systems) {
             const bars = system.measures.map(m => m.barX).filter((x): x is number => x !== undefined);

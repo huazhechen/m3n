@@ -6,7 +6,7 @@ vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 // jsdom has no SVG character-position API; compare engraving before browser
 // text resolution here. Full PDF parity covers real browser text placement.
 vi.mock('./svg-text.js', () => ({ resolveStaffText: vi.fn() }))
-import { scorePhysicalSpacing, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
+import { planScoreTier, scorePhysicalSpacing, scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { analyzeM3N } from '@m3n/notation'
 import { prepareStaffScore } from './staff-score.js'
 import { projectStaffDocument } from './staff-document.js'
@@ -68,9 +68,13 @@ describe('staff page packing', () => {
     const info = (await prepareStaffScore(score, { width: 768 })).layoutInfo()
     expect(info.pageCount).toBe(1)
     for (const spacing of scoreLayoutConfig.staff.noteGapCandidates) {
-      const lines = planStaffLines(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
+      const graph = prepareStaffLineGraph(projectStaffDocument(score), 766, false, textMeasurer(), spacing)
+      const ends = planScoreTier(graph.candidates, spacing === scoreLayoutConfig.staff.noteGapCandidates.at(-1) ? .5 : 2/3,
+        end => end === graph.measured.length || Boolean(graph.measured[end]?.measure.force || graph.measured[end]?.measure.section))
+      if (!ends) continue
+      const lines = graph.makeLines(ends)
       const space = scoreLayoutConfig.staff.music / 4
-      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), space * scoreLayoutConfig.staff.noteGapCandidates[1]!, space * scoreLayoutConfig.staff.noteGapCandidates[0]!,
+      const quality = scorePhysicalSpacing(lines.flatMap(line => line.rhythmicGaps ?? []), space * scoreLayoutConfig.staff.noteGapCandidates.at(-1)!, space * scoreLayoutConfig.staff.noteGapCandidates[0]!,
         lines.flatMap(line => line.unitRhythmicGap === undefined ? [] : [line.unitRhythmicGap]))
       expect(info.quality.spacingCost).toBeLessThanOrEqual(quality.spacingCost + 1e-9)
     }
@@ -83,7 +87,7 @@ describe('staff page packing', () => {
     expect(info.lines).toHaveLength(1)
     expect(info.quality.lineDensityVariation).toBe(0)
     expect(info.quality.lastLineSlack).toBe(0)
-    expect(info.spacing).toBe(scoreLayoutConfig.staff.noteGapCandidates[1])
+    expect(info.spacing).toBe(scoreLayoutConfig.staff.noteGapCandidates.at(-1))
     expect(render.pageCount(false)).toBe(1)
     expect(render.pageCount(true)).toBe(1)
   })

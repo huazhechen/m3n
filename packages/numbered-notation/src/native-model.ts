@@ -210,7 +210,7 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const musicKey=!glyphGraces.length && !event.postfixes.includes('arp') ? `${noteKey}:${JSON.stringify(innerMarks)}` : undefined
           const musicTemplate=musicKey===undefined ? undefined : musicTemplates.get(musicKey)
           glyph.markLayout = musicTemplate ? musicTemplate.marks.map(mark=>({...mark}))
-            : nativeGlyphMarkStack(glyph, innerMarks, painter.measurer, nativeCoreGap(document), metrics.top).items
+            : nativeGlyphMarkStack(glyph, innerMarks, painter.measurer, nativeCoreGap(), metrics.top).items
           // Local marks remain centered on their host, so reserve their full
           // width before wrapping instead of shifting them outside relations.
           glyph.musicLeft = Math.max(glyph.musicLeft ?? 0, ...glyph.markLayout.map(mark => -mark.left))

@@ -1,4 +1,4 @@
-import { scoreLayoutConfig, scoreCoreGap, scoreMaximumCoreGap, scoreLyricGapScale, interpolateScoreCoreGap } from '@m3n/numbered-notation/layout'
+import { scoreLayoutConfig, scoreVerticalSpacing } from '@m3n/numbered-notation/layout'
 import { staffMusicSize } from './staff-music-font.js'
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
@@ -294,8 +294,7 @@ describe('staff layout contract', () => {
     let pairs = 0
     expect(info.pageCount).toBe(1)
     const upperPlaced = info.pages[0]!.systems[lowerIndex - 1]!, lowerPlaced = info.pages[0]!.systems[lowerIndex]!
-    const minimumGap = scoreCoreGap(score)
-    const gap = interpolateScoreCoreGap(minimumGap, scoreMaximumCoreGap(minimumGap), info.pages[0]!.gap, scoreLyricGapScale(minimumGap))
+    const gap = info.pages[0]!.gap
     for (const a of upper.spacingPieces) for (const b of ending) if (overlapsX(a, b)) {
       expect(lowerPlaced.y + b.top - upperPlaced.y - a.bottom).toBeGreaterThanOrEqual(gap * .5 - 1e-6)
       pairs++
@@ -388,9 +387,9 @@ describe('staff layout contract', () => {
     const tuplet = projectStaffDocument(analyzeM3N('{4/4}\nN: [123:2] 4 5 |||').score).measures[0]!
     expect(splitStaffMeasure(tuplet, 0.25)[0]!.melody[0]!.children).toHaveLength(3)
   })
-  it('fits measured header text, supports leading, and stretches gaps within fixed pages', async () => {
+  it('fits measured header text, stretches gaps within fixed pages', async () => {
     const render = await prepare(
-      '{title=长标题测试长标题测试长标题测试长标题测试}{leading=0.8}{4/4}\nN: ' +
+      '{title=长标题测试长标题测试长标题测试长标题测试}{4/4}\nN: ' +
         Array.from({ length: 12 }, () => '1 2 3 4 | {br}').join(' ') +
         '1 2 3 4 |||',
       540,
@@ -400,7 +399,7 @@ describe('staff layout contract', () => {
     expect(info.spacing).toBeGreaterThanOrEqual(0.25)
     for (const page of info.pages) {
       expect(page.gap).toBeGreaterThanOrEqual(20.8)
-      expect(page.gap).toBeLessThanOrEqual(22.88 + 1e-9)
+      expect(page.gap).toBeLessThanOrEqual(scoreVerticalSpacing('staff').maximum + 1e-9)
       for (const system of page.systems) {
         expect(system.ink.top + system.y).toBeGreaterThanOrEqual(-1e-6)
         expect(system.ink.bottom + system.y).toBeLessThanOrEqual(page.height + 1e-6)

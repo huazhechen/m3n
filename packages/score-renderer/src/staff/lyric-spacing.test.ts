@@ -44,8 +44,8 @@ it('uses the shared lyric font and staff attachment clearance for both vertical 
   const music = findAll(system.node, node => hasClass(node, 'staff')).flatMap(staff => geometry.withoutClasses(staff, ['verse']))
   const lyricPieces = first.flatMap(verse => geometry.pieces(verse))
   const clearances = lyricPieces.flatMap(lyric => music.filter(piece => overlapsX(piece, lyric)).map(piece => (lyric.top - piece.bottom) * STAFF_SCALE))
-  expect(Math.min(...clearances)).toBeCloseTo(scoreAttachmentGap(undefined, 'staff'))
-  expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(scoreAttachmentGap(undefined, 'staff'))
+  expect(Math.min(...clearances)).toBeCloseTo(scoreAttachmentGap('staff'))
+  expect((secondTop - firstBottom) * STAFF_SCALE).toBeCloseTo(scoreAttachmentGap('staff'))
 })
 
 it('includes lyric underline stroke caps in the 2px minimum clearance', () => {

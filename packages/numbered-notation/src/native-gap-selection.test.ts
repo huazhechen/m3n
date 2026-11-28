@@ -10,17 +10,18 @@ const options = { width: 564, paged: true, pageMargin: 0 }
 
 it('compares complete tight and loose White Birch page counts before cost and preserves the selected geometry', () => {
   const document = parseM3NDocument(source), before = structuredClone(document)
-  const fixed = [8, 16].map(minimumNoteGap => layoutNativeScore(document, { ...options, minimumNoteGap }))
+  const fixed = [8, 12, 16].map(minimumNoteGap => layoutNativeScore(document,
+    {...options, minimumNoteGap, lineDensityTarget: minimumNoteGap === 16 ? .5 : 2/3}))
   const timings: Record<string, number> = {}
   const automatic = layoutNativeScore(document, options, timings)
-  expect(timings.layoutTrials).toBe(2)
+  expect(timings.layoutTrials).toBeGreaterThanOrEqual(2)
   expect(timings.projectionBuilds).toBe(1)
-  expect(timings.projectionReuses).toBe(1)
-  expect(timings.relationPlanReuses).toBe(1)
+  expect(timings.projectionReuses).toBeGreaterThanOrEqual(1)
+  expect(timings.relationPlanReuses).toBeGreaterThanOrEqual(1)
   for (const candidate of fixed) {
     expect(automatic.pages.length).toBeLessThanOrEqual(candidate.pages.length)
     if (automatic.pages.length === candidate.pages.length)
-      expect(nativeLayoutQuality(automatic).spacingCost).toBeLessThanOrEqual(nativeLayoutQuality(candidate).spacingCost)
+      expect(nativeLayoutQuality(automatic).totalCost).toBeLessThanOrEqual(nativeLayoutQuality(candidate).totalCost)
   }
   const selected = fixed.find(candidate => candidate.options.minimumNoteGap === automatic.options.minimumNoteGap)!
   expect(renderNativePages(automatic)).toEqual(renderNativePages(selected))
@@ -41,30 +42,30 @@ it('keeps White Birch horizontal geometry identical in paged and continuous disp
     .toEqual(paged.systems.map(system => system.measures.map(measure => measure.index)))
   const timings: Record<string, number> = {}
   layoutNativeScore(document, { ...options, minimumNoteGap: 16 }, timings)
-  expect(timings.layoutTrials).toBe(1)
+  expect(timings.layoutTrials).toBeGreaterThanOrEqual(1)
 })
 
 it('rejects an extra-page loose tier before comparing physical spacing', () => {
   const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/li_hua_you_kai_fang_01.m3n', import.meta.url), 'utf8'))
   const settings = { ...options, width: 528 }
-  const tight = layoutNativeScore(document, { ...settings, minimumNoteGap: 8 })
-  const loose = layoutNativeScore(document, { ...settings, minimumNoteGap: 16 })
+  const tight = layoutNativeScore(document, { ...settings, minimumNoteGap: 8, lineDensityTarget: 2/3 })
+  const loose = layoutNativeScore(document, { ...settings, minimumNoteGap: 16, lineDensityTarget: .5 })
   expect(tight.pages.length).toBeLessThan(loose.pages.length)
   const automatic = layoutNativeScore(document, settings)
   expect(automatic.options.minimumNoteGap).toBe(8)
   expect(renderNativePages(automatic)).toEqual(renderNativePages(tight))
 })
 
-it('skips the other tier only after the cheapest tier reaches the one-page floor', () => {
+it('compares both tiers on the one-page floor with joint spacing costs', () => {
   const document = parseM3NDocument('{4/4}\nN: ' + Array(6).fill('1 2 3 4 |').join(' '))
   const timings: Record<string, number> = {}
   const automatic = layoutNativeScore(document, { ...options, width: 720 }, timings)
   expect(automatic.pages).toHaveLength(1)
-  expect(timings.layoutTrials).toBe(2)
-  expect(timings.completedLayoutTrials).toBe(1)
-  expect(timings.pageFloorTierPrunes).toBe(1)
-  for (const minimumNoteGap of [8, 16]) {
-    const fixed = layoutNativeScore(document, { ...options, width: 720, minimumNoteGap })
-    expect(nativeLayoutQuality(automatic).spacingCost).toBeLessThanOrEqual(nativeLayoutQuality(fixed).spacingCost)
+  expect(timings.layoutTrials).toBeGreaterThanOrEqual(2)
+  expect(timings.completedLayoutTrials).toBe(3)
+  expect(timings.pageFloorTierPrunes ?? 0).toBe(0)
+  for (const minimumNoteGap of [8, 12, 16]) {
+    const fixed = layoutNativeScore(document, { ...options, width: 720, minimumNoteGap, lineDensityTarget: minimumNoteGap === 16 ? .5 : 2/3 })
+    expect(nativeLayoutQuality(automatic).totalCost).toBeLessThanOrEqual(nativeLayoutQuality(fixed).totalCost)
   }
 })

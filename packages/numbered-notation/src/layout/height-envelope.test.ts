@@ -27,7 +27,7 @@ it('keeps the opening expression below the actual header after precise element p
     const lane = system.lanes.find(lane => lane.id === glyph.lane)!
     const expressionTop = system.top + lane.y - expression.top
     const headerBottom = Math.max(...nativeSvgPieces(layout.pages[0]!.header!, layout.measurer).map(piece => piece.bottom))
-    expect(expressionTop - headerBottom).toBeGreaterThanOrEqual(nativeCoreGap(document) * .8 - 1e-6)
+    expect(expressionTop - headerBottom).toBeGreaterThanOrEqual(nativeCoreGap() * .8 - 1e-6)
   }
 })
 

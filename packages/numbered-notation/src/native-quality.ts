@@ -2,7 +2,7 @@ import { scoreLineQuality, scoreNumberedCost, scoreNumberedSpacing } from './lay
 import type { NativeLayout } from './native-layout-model.js'
 import { scoreLayoutConfig } from './score-layout-config.js'
 
-export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
+export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages' | 'verticalCost'>) {
   const width = layout.options.width
   const available = Math.max(1, width - layout.margin * 2)
   const densities = layout.systems.map(system => system.horizontalDensity ?? system.measures.reduce((sum, measure) => sum + measure.minimum, 0) / available)
@@ -11,15 +11,16 @@ export function nativeLayoutQuality(layout: Pick<NativeLayout, 'options' | 'marg
   const rightEdge = width - layout.margin
   const lastLineSlack = lastMeasure ? Math.max(0, Math.min(1, (rightEdge - lastMeasure.end) / available)) : 0
   const costs = scoreNumberedCost(width, densities)
-  const [tight, loose] = scoreLayoutConfig.numbered.noteGapCandidates
+  const tight = scoreLayoutConfig.numbered.noteGapCandidates[0]!, loose = scoreLayoutConfig.numbered.noteGapCandidates.at(-1)!
   const spacing = scoreNumberedSpacing(layout.systems.flatMap(system => system.rhythmicGaps ?? []), loose, tight,
     layout.systems.flatMap(system => system.unitRhythmicGap === undefined ? [] : [system.unitRhythmicGap]))
-  return { ...costs, ...spacing, totalCost: spacing.spacingCost + costs.overflowCost + costs.fontSizeCost, pageCount: layout.pages.length, ...scoreLineQuality(densities, lastLineSlack) }
+  const verticalCost = layout.verticalCost ?? 0
+  return { ...costs, ...spacing, verticalCost, totalCost: spacing.spacingCost + costs.overflowCost + costs.fontSizeCost + verticalCost, pageCount: layout.pages.length, ...scoreLineQuality(densities, lastLineSlack) }
 }
 
 
 /** Compatibility quality is a monotone transform of the additive total cost. */
-export function nativeLayoutScore(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages'>) {
+export function nativeLayoutScore(layout: Pick<NativeLayout, 'options' | 'margin' | 'systems' | 'pages' | 'verticalCost'>) {
   const quality = nativeLayoutQuality(layout)
   return 1 / (1 + quality.totalCost)
 }

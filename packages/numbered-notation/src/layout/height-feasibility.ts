@@ -1,3 +1,4 @@
+import type { ScoreVerticalSpacing } from './policy.js'
 import { scorePageCollision, scorePageDistance } from './page-collision.js'
 import { scorePageGeometry, type ScorePageGeometry } from './page-geometry.js'
 import type { ScorePageBlock } from './geometry.js'
@@ -6,7 +7,7 @@ import type { ScoreLineCandidate } from './line-breaking.js'
 /** Optimistic pagination of a fixed plan. Keep core clearance and page edges,
  * omit every painted-ink collision. Every actual page is feasible in this
  * model; taking the longest fitting prefix therefore cannot use more pages. */
-export function scoreCorePageLowerBound(blocks:readonly ScorePageBlock[],options:{pageHeight:number;margin:number;gap:number;headerGap:number}):number {
+export function scoreCorePageLowerBound(blocks:readonly ScorePageBlock[],options:{pageHeight:number;margin:number;gap:number;vertical?:ScoreVerticalSpacing;headerGap:number}):number {
   const {pageHeight,margin,gap,headerGap}=options
   let page=1,baseline=0,previous:{bottom:number;music:boolean;scale:number}|undefined
   for(const block of blocks) {
@@ -15,7 +16,7 @@ export function scoreCorePageLowerBound(blocks:readonly ScorePageBlock[],options
     if(bottom-top>pageHeight-2*margin+1e-6)return Infinity
     const coreTop=block.core ? block.core.top-axis : top,coreBottom=block.core ? block.core.bottom-axis : bottom
     const first=margin-top
-    const next=previous ? Math.max(first,baseline+previous.bottom-coreTop+(previous.music && block.core ? block.coreGapBefore ?? gap*previous.scale : headerGap))+(block.gapBefore ?? 0) : first
+    const next=previous ? Math.max(first,baseline+previous.bottom-coreTop+(previous.music && block.core ? (options.vertical ? gap : block.coreGapBefore ?? gap*previous.scale) : headerGap))+(block.gapBefore ?? 0) : first
     if(previous && next+bottom>pageHeight-margin+1e-6){page++;baseline=first}else baseline=next
     previous={bottom:coreBottom,music:Boolean(block.core),scale:block.coreGapScale ?? 1}
   }
@@ -38,7 +39,7 @@ const box = (block: ScorePageBlock): Box => {
  * Tail redistribution and gap fitting never change the number of pages. */
 export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCandidate[])[],
   blockFor: (start: number, end: number) => ScorePageBlock, headers: readonly ScorePageBlock[],
-  options: { pageHeight: number; margin: number; gap: number; headerGap: number; onWitness?: (ends: number[]) => void; witnessCache?: { ends?: number[] } }) {
+  options: { pageHeight: number; margin: number; gap: number; vertical?: ScoreVerticalSpacing; headerGap: number; onWitness?: (ends: number[]) => void; witnessCache?: { ends?: number[] } }) {
   const { pageHeight, margin, gap, headerGap } = options
   const tracksWitness=Boolean(options.onWitness || options.witnessCache)
   const boxes = Array<Map<number,Box>|undefined>(candidates.length)
@@ -54,7 +55,7 @@ export function scorePageFeasibility(candidates: readonly (readonly ScoreLineCan
     if (item.bottom - item.top > pageHeight - 2 * margin + 1e-6) return
     let baseline = margin - item.top, page = previous?.page ?? 0
     if (previous) {
-      const localGap = item.gap ?? gap * previous.box.scale
+      const localGap = options.vertical ? (previous.box.music && item.music ? gap : Math.min(gap, headerGap / .8)) : item.gap ?? gap * previous.box.scale
       const separation = previous.box.music && item.music ? localGap : headerGap
       const pair = previous.box.resolved && item.resolved
         ? scorePageCollision(previous.box, item) : {collision:-Infinity,edge:-Infinity}

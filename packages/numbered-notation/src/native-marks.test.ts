@@ -101,7 +101,8 @@ describe('native articulation occupancy', () => {
     for (let index = 1; index < score.systems.length; index++) {
       const upper = nativeSystemCore(score.systems[index - 1]!, score.measurer)!
       const lower = nativeSystemCore(score.systems[index]!, score.measurer)!
-      expect(lower.top - upper.bottom).toBeCloseTo(28.8)
+      expect(lower.top - upper.bottom).toBeGreaterThanOrEqual(19.2 - 1e-6)
+      expect(lower.top - upper.bottom).toBeLessThanOrEqual(20.4 + 1e-6)
     }
     expect(score.systems[0]!.lanes[0]!.top).toBeCloseTo(29.28)
   })

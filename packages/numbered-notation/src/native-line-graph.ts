@@ -1,3 +1,4 @@
+import { planScoreTier } from './layout/tier-breaking.js'
 import type { NativeMeasure } from './native-model.js'
 import type { NativeRenderOptions } from './native-layout-model.js'
 import { splitNativeMeasure } from './native-wrapping.js'
@@ -60,7 +61,10 @@ export function breakMeasures(measures: NativeMeasure[], width: number, options:
   const planningStarted = timings ? performance.now() : 0
   const lines: { measures: NativeMeasure[]; density: number }[] = []
   let start = 0
-  const ends = endsOverride ? [...endsOverride] : planScoreLinesGlobally(candidates, timings)
+  const ends = endsOverride ? [...endsOverride] : options.lineDensityTarget === undefined ? planScoreLinesGlobally(candidates, timings)
+    : planScoreTier(candidates, options.lineDensityTarget, end => end === fragments.length || Boolean(fragments[end]?.breakBefore || fragments[end - 1]?.breakAfter)
+      || startsNativeSection(fragments[end]!, fragments[end - 1]))
+  if (!ends) throw new Error('换行候选无法覆盖完整内容。')
   for (const end of ends) {
     lines.push({ measures: fragments.slice(start, end), density: candidates[start]!.find(row => row.end === end)!.density }); start = end
   }

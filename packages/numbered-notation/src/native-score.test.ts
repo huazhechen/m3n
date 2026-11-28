@@ -147,7 +147,7 @@ it.each([false, true])('selects a complete elastic spacing tier in paged=%s layo
     for (const width of [320, 800]) {
       const defaults = render(source, { width, paged })
       const chosen = layoutNativeScore(defaults.document, { width, paged, numericLayout: true }).options.minimumNoteGap
-      expect([8, 16]).toContain(chosen)
+      expect([8, 12, 16]).toContain(chosen)
       expect(defaults.pages).toEqual(render(source, { width, paged, minimumNoteGap: chosen }).pages)
       expect(defaults.score.diagnostics).toEqual([])
     }

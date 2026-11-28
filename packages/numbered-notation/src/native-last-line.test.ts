@@ -12,7 +12,7 @@ const options = { width: 800, paged: false, textMeasurer: new DefaultTextMeasure
 describe('short final rows', () => {
   it.each([0, 32])('fills the C-section ending at measure 61 of Turkish March, margin=%s', pageMargin => {
     const document = parseM3NDocument(readFileSync(new URL('../../../src/scores/turkish_march_01.m3n', import.meta.url), 'utf8'))
-    const layout = layoutNativeScore(document, { ...options, width: 672, pageMargin })
+    const layout = layoutNativeScore(document, { ...options, width: 672, pageMargin, minimumNoteGap: 8 })
     const ending = layout.systems.find(system => system.measures.some(measure => measure.number === 61))!
     expect(ending.measures.at(-1)!.number).toBe(61)
     expect(ending.measures.at(-1)!.end).toBeCloseTo(672 - pageMargin, 6)

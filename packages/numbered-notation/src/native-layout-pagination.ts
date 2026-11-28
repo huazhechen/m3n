@@ -1,11 +1,12 @@
 import { A4_CONTENT_ASPECT_RATIO } from '@m3n/notation'
-import { scoreMaximumCoreGap } from './layout/policy.js'
+import { scoreVerticalSpacing, scoreFixedVerticalSpacing } from './layout/policy.js'
 import { paginateScoreBlocks } from './layout/pagination.js'
-import { nativeCoreGap, nativeHeaderGap } from './native-style.js'
+import { nativeHeaderGap } from './native-style.js'
 import type { NativeLayout, NativePage } from './native-layout-model.js'
 
 export function positionNativeLayout(layout: NativeLayout, pagination: ReturnType<typeof paginateScoreBlocks>) {
   const { options, systems, headerBlocks, verticalBlocks } = layout
+  if (options.paged) layout.verticalCost = pagination.verticalCost ?? 0
   const pages: NativePage[] = pagination.heights.map((height, index) => ({ index, width: options.width, height, systems: [], coreGap: pagination.coreGaps?.[index] }))
   for (const [index, block] of headerBlocks.entries()) {
     const position = pagination.positions[index]!
@@ -26,15 +27,16 @@ export function positionNativeLayout(layout: NativeLayout, pagination: ReturnTyp
 }
 
 export function nativeContinuousPagination(layout: NativeLayout, coreGap: number) {
-  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, headerGap: nativeHeaderGap(layout.document) })
+  return layout.pagination({ pageHeight: Infinity, margin: layout.margin, gap: coreGap, vertical: scoreVerticalSpacing(), headerGap: nativeHeaderGap() })
 }
 
 /** Change page membership and vertical spacing without repeating horizontal layout. */
 export function repaginateNativeLayout(layout: NativeLayout, paged: boolean, coreGap?: number) {
-  const gap = coreGap ?? (nativeCoreGap(layout.document))
+  const vertical = coreGap === undefined ? scoreVerticalSpacing() : scoreFixedVerticalSpacing(coreGap)
+  const gap = coreGap ?? vertical!.minimum
   const pagination = layout.pagination({
     pageHeight: paged ? Math.floor(layout.options.width * A4_CONTENT_ASPECT_RATIO) : Infinity,
-    margin: layout.margin, gap, headerGap: nativeHeaderGap(layout.document), maxGap: coreGap ?? (paged ? Math.max(scoreMaximumCoreGap(nativeCoreGap(layout.document)), gap) : gap),
+    margin: layout.margin, gap, vertical, headerGap: nativeHeaderGap(), maxGap: coreGap ?? (paged ? vertical!.maximum : gap),
   })
   layout.options = { ...layout.options, paged, coreGap }
   positionNativeLayout(layout, pagination)

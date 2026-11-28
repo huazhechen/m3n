@@ -1,19 +1,18 @@
 import { scorePageGeometry } from './page-geometry.js'
 import { balanceScorePageTail } from './page-tail.js'
-import { interpolateScoreCoreGap, scoreCoreGap } from './policy.js'
+import { interpolateScoreCoreGap, scoreCoreGap, scoreVerticalCost, type ScoreVerticalSpacing } from './policy.js'
 import { scoreLayoutConfig } from '../score-layout-config.js'
 import { scorePageCollision, scorePageDistance, type ScoreCollision } from './page-collision.js'
 import type { ScoreInk, ScorePageBlock, ScoreBlockPosition } from './geometry.js'
 export type { ScorePageBlock, ScoreBlockPosition } from './geometry.js'
-type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number }
+type ElasticOptions = { pageHeight: number; margin: number; gap: number; maxGap?: number; headerGap?: number; vertical?: ScoreVerticalSpacing; pageCeiling?: number }
 type NormalizedBlock={block:ScorePageBlock;axis:number;ink:ScoreInk[];top:number;lower:number;core:{top:number;bottom:number};boundaryInk:ScoreInk[];edgeInk:(ScoreInk & {gap:number})[];edgeGap:number;sortState:{sorted:boolean}}
 const normalizedBlocks=new WeakMap<ScorePageBlock,NormalizedBlock>()
 const immutableCollisions=new WeakMap<ScorePageBlock,WeakMap<ScorePageBlock,ScoreCollision>>()
-
 /** Place measured blocks; elastic pages fit one core parameter after breaking. */
 export function paginateScoreBlocks(blocks: readonly ScorePageBlock[], options: {
-  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; headerGap?: number
-}): { positions: ScoreBlockPosition[]; heights: number[]; coreGaps?: number[] } {
+  pageHeight: number; margin: number; gap: number; elastic?: boolean; maxGap?: number; headerGap?: number; vertical?: ScoreVerticalSpacing
+}): { positions: ScoreBlockPosition[]; heights: number[]; coreGaps?: number[]; verticalCost?: number } {
   const { pageHeight, margin, gap } = options
   if (options.elastic) return prepareScorePagination(blocks)(options)
   const capacity = pageHeight - margin * 2
@@ -93,7 +92,7 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
     }
     return distance
   }
-  return ({ pageHeight, margin, gap, maxGap = gap, headerGap = scoreCoreGap() * .8 }: ElasticOptions) => {
+  return ({ pageHeight, margin, gap, maxGap = gap, headerGap = scoreCoreGap() * .8, vertical, pageCeiling }: ElasticOptions): {positions: ScoreBlockPosition[]; heights: number[]; coreGaps: number[]; verticalCost?: number} => {
     for (const item of normalized)
       if (item.lower - item.top > pageHeight - margin * 2 + 1e-6) throw new Error('单个谱行高于页面，请增加版宽或使用连续布局。')
     const nextBaseline = (item: typeof normalized[number], placed: Placed[], coreGap: number) => {
@@ -103,11 +102,11 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
         // Header separation stays fixed as the music's core parameter changes.
         // Lyrics reduce the starting clearance, while retaining the same page
         // stretch ceiling. Inline sections instead use their fixed core clearance.
-        const musicGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
+        const musicGap = vertical ? coreGap : item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, previous.block.coreGapScale)
         const separation = item.block.core && previous.block.core ? musicGap : headerGap
         baseline = Math.max(baseline, previous.baseline + previous.core.bottom - item.core.top + separation)
         for (const prior of placed) {
-          const localGap = item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
+          const localGap = vertical ? (prior.block.core && item.block.core ? coreGap : headerGap / .8) : item.block.coreGapBefore ?? interpolateScoreCoreGap(gap, maxGap, coreGap, prior.block.coreGapScale)
           // A collision cannot exceed the two complete ink envelopes. Distant
           // rows already clear this upper bound; avoid sweeping their pieces.
           const clearance=Math.max(localGap*scoreLayoutConfig.page.collisionGapRatio,prior.edgeGap,item.edgeGap)
@@ -118,6 +117,40 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
         baseline += item.block.gapBefore ?? 0
       }
       return baseline
+    }
+    if (vertical && Number.isFinite(pageHeight)) {
+      // One immutable break plan, one shared N. Natural pagination is
+      // monotone in N; refit page membership on every feasibility probe.
+      const arrange = (n: number) => {
+        const positions: ScoreBlockPosition[] = [], heights: number[] = []
+        let page = 0, current: Placed[] = []
+        for (const item of normalized) {
+          let baseline = nextBaseline(item, current, n)
+          if (current.length && baseline + item.lower > pageHeight - margin + 1e-6) {
+            page++; current = []; baseline = nextBaseline(item, current, n)
+          }
+          if (baseline + item.lower > pageHeight - margin + 1e-6)
+            throw new Error('单个谱行无法放入A4页面。')
+          positions.push({page, top: baseline - item.axis})
+          current.push(atBaseline(item, baseline)); heights[page] = pageHeight
+        }
+        return {positions, heights}
+      }
+      const minimum = arrange(vertical.minimum), pages = minimum.heights.length
+      if (pageCeiling !== undefined && pages > pageCeiling)
+        throw Object.assign(new Error('谱行超过当前候选页数上限。'), {code:'M3N_PAGE_BOUND_REJECTED',pageCount:pages})
+      let low = vertical.minimum, high = vertical.maximum
+      if (arrange(high).heights.length <= pages) low = high
+      else for (let iteration = 0; iteration < 24; iteration++) {
+        const middle = (low + high) / 2
+        if (arrange(middle).heights.length <= pages) low = middle
+        else high = middle
+      }
+      const fitted = low === vertical.minimum ? minimum : arrange(low)
+      const musicPerPage = Array<number>(pages).fill(0)
+      normalized.forEach((item, index) => { if (item.block.core) musicPerPage[fitted.positions[index]!.page]!++ })
+      return {...fitted, coreGaps: Array<number>(pages).fill(low),
+        verticalCost: musicPerPage.some(count => count > 1) ? scoreVerticalCost(low, vertical) : 0}
     }
     // Determine membership once using the minimum; fitting never moves a block
     // to another page or changes a line's horizontal layout.

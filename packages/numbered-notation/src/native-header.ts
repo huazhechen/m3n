@@ -20,7 +20,7 @@ export { wrapNativeText }
 export type NativeHeaderPreparation = Map<string, unknown>
 
 /** Shared measured geometry for header painting and the first system's position. */
-export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeHeaderGap(document), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation, commonPreparation?: NativeHeaderPreparation) {
+export function nativeHeaderGeometry(document: ScoreDocument, width: number, margin: number, measurer: TextMeasurer, minimumCoreGap = nativeHeaderGap(), options: {fixedDo?:boolean;transpose?:number;tempoScale?:number;minimumNoteGap?:number} = {}, preparation?: NativeHeaderPreparation, commonPreparation?: NativeHeaderPreparation) {
   const once = <T>(key: string, create: () => T): T => {
     if (!preparation) return create()
     if (preparation.has(key)) return preparation.get(key) as T
@@ -49,7 +49,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   let subtitleHeight = 0
   const subtitleRows = subtitleBlocks.flatMap((lines, index) => {
     const block = textBlock(lines, nativeStyle.subtitle)
-    const top = subtitleHeight + (index ? (nativeCoreGap(document) * .2) : 0)
+    const top = subtitleHeight + (index ? (nativeCoreGap() * .2) : 0)
     subtitleHeight = top + block.height
     return block.rows.map(row => ({ ...row, baseline: top + row.baseline }))
   })
@@ -58,7 +58,7 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
   let creditBottom = 0
   const creditSvg = headerContent.credits.map((text, index) => {
     const raw = painter.text(text, width - margin, 0, nativeStyle.credit, SCORE_TEXT_FONT, { 'text-anchor': 'end' })
-    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? (nativeCoreGap(document) * .2) : 0) - ink.top
+    const ink = nativeSvgInk(raw, measurer), y = creditBottom + (index ? (nativeCoreGap() * .2) : 0) - ink.top
     creditBounds.push({ left: ink.left, right: ink.right, top: y + ink.top, bottom: y + ink.bottom })
     creditBottom = y + ink.bottom
     return `<g transform="translate(0 ${n(y)})">${raw}</g>`
@@ -100,25 +100,25 @@ export function nativeHeaderGeometry(document: ScoreDocument, width: number, mar
     const rangeInk = nativeSvgInk(rangeSvg, measurer)
     const wrap = signatureX + rangeInk.right > width - margin
     const rangeX = wrap ? margin : signatureX
-    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + (nativeCoreGap(document) * .2) - rangeInk.top : 0
+    const rangeY = wrap ? nativeSvgInk(signaturePieces.join(''), measurer).bottom + (nativeCoreGap() * .2) - rangeInk.top : 0
     signaturePieces.push(`<g data-m3n-role="pitch-range" transform="translate(${n(rangeX)} ${n(rangeY)})">${rangeSvg}</g>`)
   }
   const signatureSvg = signaturePieces.join('')
   const signatureInk = nativeSvgInk(signatureSvg, measurer)
   const signaturesHeight = signatureInk.bottom - signatureInk.top
   const titleBottom = margin + titleHeight
-  const sideTop = titleBottom + (titleHeight ? (nativeCoreGap(document) * .6) : 0)
-  const subtitleTop = titleBottom + (titleHeight ? (nativeCoreGap(document) * .3) : 0)
+  const sideTop = titleBottom + (titleHeight ? (nativeCoreGap() * .6) : 0)
+  const subtitleTop = titleBottom + (titleHeight ? (nativeCoreGap() * .3) : 0)
   const subtitleSvg = subtitleRows.map(row => painter.text(row.text, width / 2, subtitleTop + row.baseline, nativeStyle.subtitle, SCORE_TEXT_FONT, { 'text-anchor': 'middle', 'data-m3n-role': 'subtitle' })).join('')
   const centerBounds = nativeSvgPieces(subtitleSvg, measurer).filter(ink => ink.right > ink.left && ink.bottom > ink.top).map(ink => ({ ...ink, top: ink.top - sideTop, bottom: ink.bottom - sideTop }))
   const signatureBounds = signaturePieces.flatMap(piece => nativeSvgPieces(piece, measurer)).map(ink => ({
     ...ink, top: ink.top - signatureInk.top, bottom: ink.bottom - signatureInk.top,
   }))
   type Bounds = { left: number; right: number; top: number; bottom: number }
-  const centeredGap = (nativeCoreGap(document) * .3)
+  const centeredGap = (nativeCoreGap() * .3)
   const forbidden = (moving: Bounds[], obstacles: Bounds[], centered = false) => moving.flatMap(ink => obstacles.flatMap(other =>
     ink.right + nativeStyle.text > other.left + 1e-6 && other.right + (centered ? nativeStyle.text : 0) > ink.left + 1e-6
-      ? [{ start: other.top - ink.bottom - (centered ? centeredGap : 0), end: other.bottom + (centered ? centeredGap : (nativeCoreGap(document) * .2)) - ink.top }] : []))
+      ? [{ start: other.top - ink.bottom - (centered ? centeredGap : 0), end: other.bottom + (centered ? centeredGap : (nativeCoreGap() * .2)) - ink.top }] : []))
   const minimumOffset = (intervals: { start: number; end: number }[]) => {
     let offset = 0
     for (const interval of intervals.sort((a, b) => a.start - b.start)) {

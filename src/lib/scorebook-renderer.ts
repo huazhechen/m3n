@@ -1,5 +1,5 @@
 import type { ScoreDocument } from '@m3n/notation'
-import { scoreCoreGap, scoreMaximumCoreGap, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, PreparedNumberedNotationScore } from '@m3n/numbered-notation'
+import { scoreVerticalSpacing, NumberedTextMeasurementCache, NumberedLayoutTask, renderSharedPreparedNumberedNotationScores, PreparedNumberedNotationScore } from '@m3n/numbered-notation'
 import { a4SourcePageHeight } from '@m3n/score-renderer/view'
 import type { prepareStaffScore, StaffMeasurementTask } from '@m3n/score-renderer/staff'
 import { measureNumberedWidth, type WidthTimings } from '../../tools/lib/numbered-width-measurement.mjs'
@@ -112,7 +112,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
     },
     async shared(scores: PreparedBookScore[], width: number, scoreGap: number) {
       if (!staff) return renderSharedPreparedNumberedNotationScores(scores.map(score => score.numbered!), scoreGap)
-      const minimum = Math.max(...scores.map(score => scoreCoreGap(score.staff!.document, 'staff')))
+      const minimum = scoreVerticalSpacing('staff').minimum
       const capacity = a4SourcePageHeight(width)
       // Row engraving does not depend on the shared page's vertical gap.
       // Keep only this group's prepared rows while fitting scalar pagination.
@@ -125,7 +125,7 @@ export async function prepareScorebookRenderer(settings: ScorebookDisplaySetting
       const started = performance.now()
       if (height(minimum) > capacity) throw new Error('五线谱合页内容超出页面。')
       cacheStats.finalLayoutMs += performance.now() - started
-      let lower = minimum, upper = scoreMaximumCoreGap(minimum)
+      let lower = minimum, upper = scoreVerticalSpacing('staff').maximum
       for (let i = 0; i < 8 && upper - lower > .1; i++) {
         await (globalThis.scheduler?.postTask?.(() => {}) ?? new Promise(resolve => setTimeout(resolve, 0)))
         signal.throwIfAborted()
