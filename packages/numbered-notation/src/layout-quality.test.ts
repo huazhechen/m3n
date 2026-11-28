@@ -44,7 +44,7 @@ it('scores individual gaps before averaging and includes comfortable gaps in the
   expect(cost([6, 12, 16, 24]).spacingCrampedCost).toBeCloseTo(1 / 4)
   expect(cost([12, 16, 24, 48]).spacingExpandedCost).toBeCloseTo(1 / 4)
   const gaps = [6, 48, 12, 24]
-  expect(cost(gaps).spacingCost - cost(gaps).spacingUnevenCost).toBeCloseTo(.5)
+  expect(cost(gaps).spacingCost - cost(gaps).spacingUnevenCost).toBeCloseTo(1.25)
   expect(cost([...gaps, ...gaps]).spacingCost).toBeCloseTo(cost(gaps).spacingCost)
 })
 
@@ -103,4 +103,16 @@ it('compares row uniformity separately from individual interval comfort', async 
   expect(uneven.spacingCrampedCost).toBe(balanced.spacingCrampedCost)
   expect(uneven.spacingExpandedCost).toBe(balanced.spacingExpandedCost)
   expect(cost(gaps, 16, 8, []).spacingUnevenCost).toBe(0)
+})
+
+it('prefers comfortable spacing over uniformly crowded rows at both notation scales', async () => {
+  const { scoreNumberedSpacing: cost } = await import('./layout/quality.js')
+  for (const scale of [1, .65]) {
+    const crowded = cost([8 * scale], 16 * scale, 8 * scale, [8 * scale, 8 * scale])
+    const comfortable = cost([16 * scale, 20 * scale], 16 * scale, 8 * scale, [12 * scale, 28 * scale])
+    expect(crowded.spacingCrampedCost).toBeCloseTo(.25)
+    expect(crowded.spacingCost).toBeCloseTo(1)
+    expect(comfortable.spacingCost).toBeCloseTo(.32)
+    expect(crowded.spacingCost).toBeGreaterThan(comfortable.spacingCost)
+  }
 })

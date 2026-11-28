@@ -67,5 +67,5 @@ export function scoreNumberedSpacing(gaps: readonly number[], referenceGap = 16,
   const spacingCrampedCost = crampedSum / gaps.length
   const spacingExpandedCost = expandedSum / gaps.length
   return { meanRhythmicGap, spacingUnevenCost, spacingMeanUnevenCost, spacingWorstUnevenCost, spacingCrampedCost, spacingExpandedCost,
-    spacingCost: spacingUnevenCost + spacingCrampedCost + spacingExpandedCost }
+    spacingCost: spacingUnevenCost + 4 * spacingCrampedCost + spacingExpandedCost }
 }
