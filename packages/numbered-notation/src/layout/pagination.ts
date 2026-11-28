@@ -156,10 +156,22 @@ export function prepareScorePagination(blocks: readonly ScorePageBlock[], policy
         else high = middle
       }
       const fitted = low === vertical.minimum ? minimum : arrange(low)!
-      const musicPerPage = Array<number>(pages).fill(0)
-      normalized.forEach((item, index) => { if (item.block.core) musicPerPage[fitted.positions[index]!.page]!++ })
+      // Score the final core-to-core clearances, including space introduced
+      // by ink avoidance. N remains the shared placement parameter only.
+      let previous: { page: number; bottom: number } | undefined
+      let verticalCost = 0, samples = 0
+      for (const item of atGap(low)) {
+        if (!item.block.core) continue
+        const position = fitted.positions[item.index]!
+        const baseline = position.top + item.axis
+        if (previous?.page === position.page) {
+          verticalCost += scoreVerticalCost(baseline + item.core.top - previous.bottom, vertical)
+          samples++
+        }
+        previous = { page: position.page, bottom: baseline + item.core.bottom }
+      }
       return {...fitted, coreGaps: Array<number>(pages).fill(low),
-        verticalCost: musicPerPage.some(count => count > 1) ? scoreVerticalCost(low, vertical) : 0}
+        verticalCost: samples ? verticalCost / samples : 0}
     }
     // Determine membership once using the minimum; fitting never moves a block
     // to another page or changes a line's horizontal layout.

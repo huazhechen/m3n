@@ -4,6 +4,7 @@ import { nativeLanePieces } from '../native-lanes.js';
 import { layoutNativeScore, repaginateNativeLayout } from '../native-layout.js';
 import { nativeSystemCore } from '../native-core.js';
 import { paginateScoreBlocks, prepareScorePagination, fitSharedScorePage } from './pagination.js';
+import { scoreVerticalSpacing } from './policy.js';
 import type { ScoreInk, ScorePageBlock } from './geometry.js';
 const options = { pageHeight: 400, margin: 20, gap: 10 };
 describe('native measured-block pagination', () => {
@@ -260,4 +261,32 @@ it.each([24,26])('fits a shared page with one N across every member at music siz
   expect(result.scoreGap).toBeCloseTo(result.coreGap*1.2)
   expect(heights.reduce((sum,height)=>sum+height(result.coreGap),result.scoreGap)).toBeLessThanOrEqual(220)
   expect(heights.reduce((sum,height)=>sum+height(result.coreGap+.001),(result.coreGap+.001)*1.2)).toBeGreaterThan(220)
+})
+
+
+it.each(['numbered', 'staff'] as const)('scores actual core clearances after ink avoidance for %s', notation => {
+  const vertical = scoreVerticalSpacing(notation), n = vertical.minimum
+  const row = (bottom: number): ScorePageBlock => ({
+    height: bottom, baseline: 7, core: {top: 7, bottom: 17},
+    ink: [{left: 0, right: 20, top: 7, bottom: 7 + bottom}],
+  })
+  // First gap is enlarged by ink avoidance, second stays at N. The page
+  // fits exactly at the minimum N; score the two gaps separately (0 and 1).
+  const result = prepareScorePagination([row(40), row(10), row(10)])({
+    pageHeight: 60 + 1.5 * n, margin: 0, gap: n, vertical,
+  })
+  expect(result.heights).toHaveLength(1)
+  expect(result.coreGaps[0]).toBeCloseTo(n, 5)
+  expect(result.positions[1]!.top - result.positions[0]!.top - 10).toBeGreaterThan(vertical.comfortable)
+  expect(result.positions[2]!.top - result.positions[1]!.top - 10).toBeCloseTo(n, 5)
+  expect(result.verticalCost).toBeCloseTo(.5, 5)
+})
+
+it('excludes headers and cross-page gaps from actual core clearance scoring', () => {
+  const vertical = scoreVerticalSpacing('staff')
+  const row: ScorePageBlock = {height: 40, core: {top: 0, bottom: 10}, ink: [{left: 0, right: 20, top: 0, bottom: 40}]}
+  const header: ScorePageBlock = {height: 5, ink: [{left: 0, right: 20, top: 0, bottom: 5}]}
+  const result = prepareScorePagination([header, row, row])({pageHeight: 60, margin: 0, gap: 15, vertical})
+  expect(result.heights).toHaveLength(2)
+  expect(result.verticalCost).toBe(0)
 })
