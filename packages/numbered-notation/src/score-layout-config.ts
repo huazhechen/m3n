@@ -90,7 +90,7 @@ const staff = {
   annotationLineHeight: typography.annotation,
   tempo: typography.text, chord: typography.annotation, dynamic: typography.expression,
   restCount: typography.text, octave: typography.expression,
-  space: 6.75,
+  space: 7.5,
   get music(): number { return 4 * this.space },
   // Compatibility for consumers adjusting the music em: S remains the source.
   set music(value: number) { this.space = value / 4 },

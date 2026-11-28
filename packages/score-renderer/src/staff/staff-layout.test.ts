@@ -279,9 +279,10 @@ describe('staff layout contract', () => {
     const score = analyzeM3N(readFileSync(resolve(import.meta.dirname, '../../../../src/scores/ai_ru_chao_shui_01.m3n'), 'utf8')).score
     const info = (await prepareStaffScore(score, { width: 720 })).layoutInfo()
     const document = projectStaffDocument(score), measure = textMeasurer()
-    const graph = prepareStaffLineGraph(document, 718, false, measure, info.spacing)
+    const musicWidth = info.availableWidth + scoreLayoutConfig.staff.contentEdgeInset
+    const graph = prepareStaffLineGraph(document, musicWidth, false, measure, info.spacing)
     const ends = info.lines.map(line => graph.measured.findIndex(member => member.id === line.measures.at(-1)) + 1)
-    const systems = engraveStaffSystems(document, graph.makeLines(ends), 718, measure, info.spacing, false)
+    const systems = engraveStaffSystems(document, graph.makeLines(ends), musicWidth, measure, info.spacing, false)
     const lowerIndex = systems.findIndex((system, index) => index > 0 && findAll(system.node, node => hasClass(node, 'ending')).length > 0)
     expect(lowerIndex).toBeGreaterThan(0)
     const upper = systems[lowerIndex - 1]!, lower = systems[lowerIndex]!

@@ -5,7 +5,7 @@ import { scoreVerticalSpacing, scoreVerticalCost, scoreRhythmicGapWeight } from 
 
 it('preserves the configured staff space and physical print readability', () => {
   const staffHeight = scoreLayoutConfig.staff.music
-  expect(staffHeight / 4).toBe(6.75)
+  expect(staffHeight / 4).toBe(7.5)
   const widestAutomaticWidth = scoreLayoutConfig.pageWidth.unit * scoreLayoutConfig.pageWidth.maximumMultiple
   expect(staffHeight / 4 * A4_CONTENT_WIDTH_MM / widestAutomaticWidth).toBeGreaterThanOrEqual(1.6)
 })
