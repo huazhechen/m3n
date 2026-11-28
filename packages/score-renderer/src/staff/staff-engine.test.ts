@@ -560,3 +560,28 @@ it.each([false, true])('only avoids ledger segments that overlap the staccato do
   const ordinary = drawStaffMeasure(current, current.minimum, 0)
   expect(new SvgGeometry(numeric, measureText).pieces(numeric)).toEqual(new SvgGeometry(ordinary, measureText).pieces(ordinary))
 })
+
+
+it('retracts only staff-exterior ordinary stem ends, preserving flag length and translation', () => {
+  const space = staffMusicSize() / 4
+  const cases: Array<[string, number[]]> = [
+    ['1 2 3 4 5 6 7 1e 2e 3e', [3.5, 3.5, 3.5, 3.5, 3, 3, 3, 3, 3, 3.5]],
+    ['[1 3 5:h] [5 7 2e:h]', [3, 3]],
+    ['(((5)))', [3.5]], // Thirty-second flag still requires 3.5S.
+    ['((((5))))', [4]], // Sixty-fourth flag still requires 4S.
+  ]
+  for (const [music, expected] of cases) {
+    const result = model(`{4/4}\nN: ${music} |||`)
+    for (const offset of [0, 137.25]) {
+      result.staves[0]!.y = offset
+      drawStaffMeasure(result, result.minimum + 100, 0)
+      const notes = result.entries[0]!.flatMap(entry => entry.notes)
+      expect(notes).toHaveLength(expected.length)
+      for (const [i, note] of notes.entries()) {
+        expect(note.beam).toBeUndefined()
+        const outer = note.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
+        expect(note.direction * (outer - note.stemEnd) / space).toBeCloseTo(expected[i]!)
+      }
+    }
+  }
+})

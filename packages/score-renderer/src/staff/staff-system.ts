@@ -4,7 +4,7 @@ import { scoreLayoutConfig } from '@m3n/numbered-notation/layout'
 import { SCORE_TEXT_FONT, scoreDynamicGlyph, lyricSpacing, hasLyricHyphen, connectsLyricWord, lyricHyphenGeometry } from '@m3n/numbered-notation'
 import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
-import { staffMusicSize, staffGlyph, staffNavigationGlyph } from './staff-music-font.js'
+import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffNavigationGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
 import type { StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
@@ -328,7 +328,10 @@ export function engraveStaffSystems(document: StaffDocument, lines: StaffLine[],
             const staff = nodes(m).filter(n => hasClass(n, 'staff'))[lane]
             return staff ? [element('g', staff.attributes, nodes(staff).filter(n => !hasClass(n, 'verse')))] : []
           })))
-          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left), attachmentGap)
+          const headTop = (note: StaffNoteAnchor | undefined) => note
+            ? Math.min(...note.ys) + staffGlyphMetrics(note.prepared.head, note.prepared.size).top : yTop
+          const slur = staffSlur(left, right, yTop, music.filter(p => p.left < right && p.right > left), attachmentGap,
+            { left: headTop(a?.first), right: headTop(b?.last) })
           slur.attributes['data-m3n-staff'] = String(lane)
           node.children.push(slur)
           music.push(...tieGeometry.pieces(slur))

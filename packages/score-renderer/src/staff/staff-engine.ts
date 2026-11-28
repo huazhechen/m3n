@@ -580,7 +580,7 @@ function noteGeometry(note: PreparedNote): FixedNoteGeometry {
   fixedNoteGeometry.set(note, saved)
   return saved
 }
-function positionNote(note: StaffNoteAnchor, x: number, y: number) {
+function positionNote(note: StaffNoteAnchor, x: number, y: number, compact = true) {
   const p = note.prepared, fixed = noteGeometry(p)
   note.x = x; note.direction = p.direction
   note.ys = p.heads.map(h => y + h.y)
@@ -589,7 +589,18 @@ function positionNote(note: StaffNoteAnchor, x: number, y: number) {
   const mainWidth = fixed.glyph.right
   note.stemX = x + (p.direction === 1 ? mainWidth - (p.size / 4 * 0.05) : (p.size / 4 * 0.05))
   const outer = p.direction === 1 ? Math.min(...note.ys) : Math.max(...note.ys)
-  note.stemEnd = outer - p.direction * Math.max(p.size * 0.875, p.size * 0.625 + Math.max(0, Math.log2(p.dur / 8)) * (p.size / 4 * 0.5))
+  const space = p.size / 4
+  const flagMinimum = space * (2.5 + Math.max(0, Math.log2(p.dur / 8)) * .5)
+  const normal = Math.max(style.stemDefaultSpaces * space, flagMinimum)
+  note.stemEnd = outer - p.direction * normal
+  if (compact && !p.rest) {
+    // Retract only the part projecting beyond the staff. Keep ordinary
+    // interior stems and all flag requirements; grace stems keep their scale.
+    const boundary = y + staffMusicSize() * (p.direction === 1 ? 1 : 2)
+    const excess = Math.max(0, p.direction * (boundary - note.stemEnd))
+    const minimum = Math.max(style.stemCompactMinimumSpaces * space, flagMinimum)
+    note.stemEnd += p.direction * Math.min(normal - minimum, excess)
+  }
 }
 function supportsNumericNote(note: StaffNoteAnchor): boolean {
   const p = note.prepared
@@ -690,7 +701,7 @@ function drawNote(note: StaffNoteAnchor, staveY: number, numericOnly = false, ou
   const graceGroups = new Map<number, Array<{ anchor: StaffNoteAnchor; slash: boolean }>>()
   for (const child of p.graces) {
     const anchor: StaffNoteAnchor = { prepared: child.note, x: 0, ys: [], headLeft: 0, headRight: 0, direction: 1, stemX: 0, stemEnd: 0 }
-    positionNote(anchor, note.x - p.left + p.signature.width + (p.signature.width ? (staffMusicSize() / 4 * 0.6) : 0) + child.x, staveY)
+    positionNote(anchor, note.x - p.left + p.signature.width + (p.signature.width ? (staffMusicSize() / 4 * 0.6) : 0) + child.x, staveY, false)
     const group = graceGroups.get(child.group) ?? []
     group.push({ anchor, slash: child.slash })
     graceGroups.set(child.group, group)
@@ -716,7 +727,7 @@ function positionBeam(beam: StaffBeam) {
   const first = beam.notes[0]!, last = beam.notes.at(-1)!, direction = first.direction
   const dx = last.stemX - first.stemX
   const slope = dx ? Math.max(-0.2, Math.min(0.2, (last.stemEnd - first.stemEnd) / dx)) : 0
-  // Keep the ordinary stem length on average. Requiring that full length
+  // Keep the individually permitted stem lengths on average. Requiring that full length
   // at every extreme of a leap makes all the other stems needlessly long.
   let origin = beam.notes.reduce((sum, note) => sum + note.stemEnd - slope * (note.stemX - first.stemX), 0) / beam.notes.length
   for (const note of beam.notes) {

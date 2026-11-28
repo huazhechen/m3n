@@ -126,3 +126,31 @@ it('does not lift tempo above the temporary position of an inline section frame'
   expect((39.5 - far.tempo.bottom) * scoreLayoutConfig.staff.engine.scale).toBeCloseTo(scoreLayoutConfig.staff.attachmentGap)
   expect((far.heading.top + far.heading.bottom) / 2).toBeCloseTo(60)
 })
+
+
+it.each([{ left: 100, right: 60 }, { left: 60, right: 100 }, { left: -400, right: 100 }])(
+  'bounds asymmetric slur ink exactly and clears endpoint and central obstacles: %j', endpoints => {
+    const obstacles = [{ left: 0, right: 5, top: 30, bottom: 50 }, { left: 93, right: 117, top: 10, bottom: 40 }]
+    const shape = staffSlur(0, 200, 100, obstacles, undefined, endpoints)
+    const path = nodes(shape)[0]!
+    const values = path.attributes.d!.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g)!.map(Number)
+    const cubic = (t: number, coordinates: number[]) => (1-t)**3 * coordinates[1]! + 3*(1-t)**2*t*coordinates[3]! + 3*(1-t)*t*t*coordinates[5]! + t**3*coordinates[7]!
+    const upper = values.slice(0, 8), lower = values.slice(6, 14)
+    const delta = upper[7]! - upper[1]!
+    expect(Math.abs(delta)).toBeGreaterThan(0)
+    expect(Math.abs(delta)).toBeLessThanOrEqual(200 * scoreLayoutConfig.staff.slurMaximumEndpointSlope + 1e-8)
+    const gap = scoreLayoutConfig.staff.attachmentGap / scoreLayoutConfig.staff.engine.scale
+    for (const obstacle of obstacles) for (let x = obstacle.left; x <= obstacle.right; x += .25) {
+      expect(obstacle.top - cubic(1 - x/200, lower)).toBeGreaterThanOrEqual(gap - 1e-8)
+    }
+    for (const box of path.pathInk!.boxes) {
+      // Independent cubic evaluation checks the analytic bounds and their
+      // attained extrema, including the vertex shifted by endpoint slope.
+      const samples = Array.from({length: 101}, (_, i) => (box.left + (box.right-box.left)*i/100)/200)
+      const top = Math.min(...samples.map(t => cubic(t, upper)))
+      const bottom = Math.max(...samples.map(t => cubic(1-t, lower)))
+      expect(box.top).toBeLessThanOrEqual(top + 1e-8)
+      expect(box.top).toBeCloseTo(top, 4)
+      expect(box.bottom).toBeCloseTo(bottom, 8)
+    }
+  })
