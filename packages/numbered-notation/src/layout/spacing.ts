@@ -1,3 +1,4 @@
+import { prepareScoreStretch, scoreStretchForce, type ScoreStretch } from './stretch-spacing.js'
 import { solveElasticSprings } from './elastic-spacing.js'
 
 /** Geometry consumed by the project-owned horizontal solver. All units are px. */
@@ -19,6 +20,10 @@ export type SpacingCell = {
   preferredAfter?: number
   /** Soft centre-to-centre reading advance, in this notation's own scale. */
   preferredAdvance?: number
+  /** Reference music geometry including the selected rhythmic minimum.
+   * Any hard reservation beyond this reference earns stretch credit. */
+  stretchLeft?: number
+  stretchRight?: number
   /** Music reservation before voice-local lyrics and parentheses are added. */
   placeholderLeft?: number
   placeholderRight?: number
@@ -36,8 +41,8 @@ export function applyScorePairGap(columns: readonly SpacingColumn[], gap: number
   }
 }
 
-export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number; naturalWidth?: number; compressionPenalty?: number }
-type MinimumPlan={positions:number[];cumulative:number[];minimumWidth:number;stretchWeight:number;occupied:number;shift:number}
+export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number; naturalWidth?: number; compressionPenalty?: number; stretch?: ScoreStretch }
+type MinimumPlan={positions:number[];minimumWidth:number;stretchWeight:number;occupied:number;shift:number;stretch:ScoreStretch}
   | {groups:SpacingColumn[];members:{group:number;offset:number}[]}
 const minimumPlans=new WeakMap<readonly SpacingColumn[],Map<string,MinimumPlan>>()
 /** Explicitly opt an immutable task-owned constraint chain into reuse. */
@@ -115,9 +120,7 @@ export function solveScoreSpacing(columns: readonly SpacingColumn[], width = Inf
       const solved=solveScoreSpacing(prepared.groups,width,justify,fillEdges)
       return {...solved,positions:prepared.members.map(member=>solved.positions[member.group]!+member.offset)}
     }
-    const free=Math.max(0,width-prepared.occupied),unit=prepared.stretchWeight>0 ? free/prepared.stretchWeight : 0
-    return {positions:prepared.positions.map((position,index)=>position+prepared.cumulative[index]!*unit+prepared.shift),
-      minimumWidth:prepared.minimumWidth,stretchWeight:prepared.stretchWeight}
+    return fillMinimumPlan(prepared, width)
   }
   const laneSet = new Set<string>(), sparse = new Set<string>()
   for (const column of columns) for (const cell of column.cells) {
@@ -191,6 +194,8 @@ export function solveScoreSpacing(columns: readonly SpacingColumn[], width = Inf
           ...occupied[0]!.cell, lane,
           left: Math.max(...occupied.map(({ cell, offset }) => cell.left - offset)),
           right: Math.max(...occupied.map(({ cell, offset }) => offset + cell.right)),
+          stretchLeft: Math.max(...occupied.map(({ cell, offset }) => (cell.stretchLeft ?? cell.left) - offset)),
+          stretchRight: Math.max(...occupied.map(({ cell, offset }) => offset + (cell.stretchRight ?? cell.right))),
           afterStretch: occupied.at(-1)!.cell.afterStretch,
           afterNatural: occupied.at(-1)!.cell.afterNatural,
           after: occupied.at(-1)!.cell.after,
@@ -233,11 +238,21 @@ export function solveScoreSpacing(columns: readonly SpacingColumn[], width = Inf
     const weights = cumulative.map((value, index) => value - (cumulative[index - 1] ?? 0))
     weights.push(fillEdges.right ? 1 : 0)
     if (fillEdges.minimumOnly) {
-      // Numbered notation has only hard minima and positive justification.
-      plans?.set(planKey,{positions:[...positions],cumulative,minimumWidth,stretchWeight,occupied,shift})
-      const unit = stretchWeight > 0 ? free / stretchWeight : 0
-      positions.forEach((position, index) => { positions[index] = position + cumulative[index]! * unit + shift })
-      return { positions, minimumWidth, stretchWeight }
+      // Credit every source of extra space beyond the reference music minimum.
+      // The allocation never classifies the constraint that opened an interval.
+      const credits = weights.map(() => 0)
+      for (let edge = 1; edge < positions.length; edge++) {
+        let music = 0
+        for (let lane = 0; lane < lanes.length; lane++) {
+          const a = rows[edge - 1]![lane]!, b = rows[edge]![lane]!
+          if (!a.sparse && !b.sparse) music = Math.max(music, (a.stretchRight ?? a.right) + a.after + (b.stretchLeft ?? b.left) + b.before)
+        }
+        credits[edge] = Math.max(0, positions[edge]! - positions[edge - 1]! - music)
+      }
+      const stretch = prepareScoreStretch(weights, credits)
+      const plan = { positions: [...positions], minimumWidth, stretchWeight, occupied, shift, stretch }
+      plans?.set(planKey, plan)
+      return fillMinimumPlan(plan, width)
     }
     const measured = fitSpacingSprings(columns, positions, weights, free)
     naturalWidth = occupied + measured.naturalExtra
@@ -253,4 +268,19 @@ export function solveScoreSpacing(columns: readonly SpacingColumn[], width = Inf
 export function solveScoreMinimumSpacing(columns: readonly SpacingColumn[], width = Infinity, justify = false,
   fillEdges: { left?: boolean; right?: boolean } = {}): SpacingSolution {
   return solveScoreSpacing(columns, width, justify, { ...fillEdges, minimumOnly: true })
+}
+
+function fillMinimumPlan(plan: Exclude<MinimumPlan, { groups: SpacingColumn[] }>, width: number): SpacingSolution {
+  const force = scoreStretchForce(plan.stretch, Math.max(0, width - plan.occupied))
+  let addition = 0
+  const positions = plan.positions.map((position, index) => {
+    addition += Math.max(0, force * plan.stretch.weights[index]! - plan.stretch.credits[index]!)
+    return position + addition + plan.shift
+  })
+  return { positions, minimumWidth: plan.minimumWidth, stretchWeight: plan.stretchWeight, stretch: plan.stretch }
+}
+
+/** Detached pressure curve, including exact rigid-group and sparse-lane geometry. */
+export function scoreSpacingStretch(columns: readonly SpacingColumn[]): ScoreStretch {
+  return solveScoreMinimumSpacing(columns, Number.EPSILON, true).stretch ?? prepareScoreStretch([])
 }

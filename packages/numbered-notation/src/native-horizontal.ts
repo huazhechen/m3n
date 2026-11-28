@@ -2,10 +2,11 @@ import { lyricPairGap } from './lyric-spacing.js'
 import { measureScoreRhythmicIntervals } from './layout/rhythmic-spacing.js'
 import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './layout/policy.js'
 import { nativeStyle } from './native-style.js'
+import { prepareScoreStretch, inheritScoreStretchWidth } from './layout/stretch-spacing.js'
 import { lastLineWidth } from './layout/last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
-import { applyScorePairGap, cacheScoreMinimumSpacing, solveScoreMinimumSpacing, type SpacingCell } from './layout/spacing.js'
+import { applyScorePairGap, cacheScoreMinimumSpacing, scoreSpacingStretch, solveScoreMinimumSpacing, type SpacingCell } from './layout/spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
@@ -77,7 +78,7 @@ export function nativeMeasureBars(measures: NativeMeasure[], index: number) {
 }
 const minimumCell = (lane: string, left: number, right: number, duration: number, alpha: number, gapScale: number): SpacingCell => {
   const durationScale = scoreRhythmicWeight(duration > 0 ? duration : 1)
-  // Rhythm alone determines stretch; ink and lyrics only constrain minima.
+  // Rhythm determines stretch weights; extra hard reservations earn stretch credit.
   // Zero-time controls have a neutral weight, as do quarter-clearance bars.
   const stretch = duration > 0 ? durationScale : 1
   return { lane, left, right, before: durationScale * alpha * gapScale, after: durationScale * alpha * gapScale,
@@ -208,6 +209,7 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
     const left = index === 0 ? 0 : Math.max(cell.before, floor)
     const right = index === items.length - 1 ? 0 : Math.max(cell.after, floor)
     cell.left += left; cell.right += right; cell.before = cell.after = 0
+    cell.stretchLeft = cell.left; cell.stretchRight = cell.right
     // Note clearance and lyric ink share physical space; do not add both widths.
     if (glyph) {
       // An absent voice gets music-only minimum clearance. Lyrics and
@@ -377,6 +379,8 @@ function equalMeasureSlice(items: HorizontalItem[], index: number, range: {start
   return slice
 }
 
+const stretchSources = new WeakMap<NativeHorizontalSpacing, HorizontalItem[]>()
+
 export type NativeHorizontalSpacing = {
   minimumWidth: number; stretchWeight: number
   equalCells?: { count: number; tailRight: number }
@@ -429,7 +433,7 @@ function rhythmicGapIntervals(items:HorizontalItem[]):RhythmicGapIntervals {
  * placeholders, lyrics and visible boundary ink. Shared by row planning and placement. */
 export function nativeHorizontalSpacing(measures: NativeMeasure[], options: HorizontalOptions): NativeHorizontalSpacing {
   const items = itemsFor(measures, options, measures, true), solved = solveScoreSpacing(items)
-  if (!options.equalMeasures) return solved
+  if (!options.equalMeasures) { stretchSources.set(solved, items); return solved }
   const ranges = equalMeasureRanges(items)
   if (!ranges.length) return solved
   const leftOf = (index: number) => Math.max(...items[index]!.cells.map(cell => cell.left))
@@ -457,8 +461,10 @@ export function nativeLastLineWidth(current: NativeHorizontalSpacing, width: num
     const cellWidth = Math.max(0, previousWidth - previous.equalCells.tailRight) / previous.equalCells.count
     inherited = Math.max(current.minimumWidth, cellWidth * current.equalCells.count + current.equalCells.tailRight)
   } else {
-    const extra = previous.stretchWeight > 0 ? Math.max(0, previousWidth - previous.minimumWidth) / previous.stretchWeight : 0
-    inherited = current.minimumWidth + extra * current.stretchWeight
+    const previousItems = stretchSources.get(previous), currentItems = stretchSources.get(current)
+    inherited = inheritScoreStretchWidth(
+      { minimumWidth: current.minimumWidth, stretch: currentItems ? scoreSpacingStretch(currentItems) : prepareScoreStretch([current.stretchWeight]) },
+      { minimumWidth: previous.minimumWidth, stretch: previousItems ? scoreSpacingStretch(previousItems) : prepareScoreStretch([previous.stretchWeight]) }, previousWidth)
   }
   return lastLineWidth(current.minimumWidth, inherited, width,
     current.equalCells && previous.equalCells ? current.equalCells.tailRight : current.minimumWidth)

@@ -6,7 +6,7 @@ import { displayedTempo, numberedHeadingLines } from '@m3n/notation'
 import { createStaffPreparation, createStaffMeasure, borrowStaffMeasure, drawStaffMeasure, drawStaffTie, STAFF_SCALE, type StaffMeasureLayout, type StaffPreparation, type StaffNoteAnchor } from './staff-engine.js'
 import { staffMusicSize, staffGlyph, staffGlyphMetrics, staffNavigationGlyph } from './staff-music-font.js'
 import type { StaffDocument, StaffEvent } from './staff-document.js'
-import type { StaffLine } from './line-layout.js'
+import { staffLineExtras, type StaffLine } from './line-layout.js'
 import { staffLyricDrawing } from './staff-lyric-drawing.js'
 import { arrangeStaffSystem, placeStaffTuplets, type StaffSystem } from './system-layout.js'
 import { element, nodes, findAll, readXml, hasClass, SvgGeometry, translate, type XmlNode, type Ink, type MeasureText } from './layout-svg.js'
@@ -173,11 +173,11 @@ function engraveStaffSystemsAtDirections(document: StaffDocument, lines: StaffLi
       const lyricAnchors: Array<{ lyric: StaffEvent['lyrics'][number]; verse: XmlNode; lane: number; y: number; left: number; right: number }> = []
       const anchors = new Map<string, { first: StaffNoteAnchor; last: StaffNoteAnchor; item: StaffEvent; measure: XmlNode; staff: XmlNode }>()
       const inset = line.measures[0]!.inset
-      const total = line.target - inset
+      const extras = staffLineExtras(line, Boolean(document.score.equalMeasures))
       let x = 0
       for (const [index, member] of line.measures.entries()) {
         const model = (numericOnly ? borrowStaffMeasure : createStaffMeasure)(member.measure, index === 0, document.hasBass, measureText, spacing, bassY, preparation)
-        const target = document.score.equalMeasures ? (total - (line.measures[0]!.head - inset)) / line.measures.length + (index ? 0 : member.head - inset) : member.body + (index ? 0 : member.head - inset) + (line.target - line.minimum) * member.weight / line.weight
+        const target = member.body + (index ? 0 : member.head - inset) + extras[index]!
         const next = line.measures[index + 1]?.measure
         const suppressEndRepeat = Boolean(next?.joinsPreviousRepeat ||
           next?.source.left?.startsWith('rpt'))
