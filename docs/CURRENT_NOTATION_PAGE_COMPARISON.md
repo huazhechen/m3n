@@ -1,8 +1,6 @@
 # 当前双谱式选宽与分页对比
 
-> 本报告为跳音避线修复前的统计快照。当前已移除不存在的加线对跳音点的避让，以下全库选宽与页数尚未重新测量。
-
-2026-11-28，基于提交 `cdabaca363b1abd70dac9d06e8fe17e775c9584f`，重新计算全部117份五线谱，简谱复用已有结果；两者使用同一批谱源（`src/scores`、`src/works`、`src/examples`）。当前五线谱S=7.5px、音乐字号4S=30px、倚音比例0.6；两种谱式共用M=24px和动态行距N。最小行距18px，舒适区27～36px。
+2026-11-28，基于提交 `0626b5fc7d5437da4a6610feb8ec154ed3b9b72a`，跳音避线修复后重新计算全部117份五线谱，简谱复用已有结果；两者使用同一批谱源（`src/scores`、`src/works`、`src/examples`）。当前五线谱S=7.5px、音乐字号4S=30px、倚音比例0.6；两种谱式共用M=24px和动态行距N。最小行距18px，舒适区27～36px。
 
 简谱横向三档为8／12／16px，舒适区16～24px；五线谱横向三档为0.8S／1.2S／1.6S，即6／9／12px，舒适区12～18px。
 
@@ -11,6 +9,8 @@
 页数按每首独立排入A4统计，不含谱集合页、封面或目录。逻辑宽度增大意味着固定A4版心内的整体显示比例缩小，不表示纸张变宽。
 
 ## 总体结果
+
+与修复前S=7.5版本逐曲核对，117首的自动选宽、行数和页数全部一致。本次跳音修复没有改变最终分页：五线谱140页，简谱基线126页，103首页数一致，14首五线谱各多1页。
 
 | 指标 | 简谱 | 五线谱 | 五线谱减简谱 |
 |---|---:|---:|---:|
@@ -122,12 +122,12 @@
 
 [117首逐曲CSV](CURRENT_NOTATION_PAGE_COMPARISON.csv)包含曲名、路径、页数、选宽、差值、行数及谱源SHA-256，同名曲目用路径区分。
 
-简谱原始报告复用`.tmp/notation-comparison-s675/numbered.json`（提交`5c30b332`），本轮五线谱报告位于`.tmp/notation-comparison-s75/staff.json`。简谱相关配置与算法未变；两次版本之间的共享选宽文件仅更新缓存版本号，音乐尺度变更仅涉及五线谱。两份检查点均完整结束，逐首核对了117份当前谱源SHA-256、曲目集合及共享字体哈希；赢家精确复核没有失败记录。本轮未开启逐笔画碰撞审计，未运行完整回归测试，不作为全库无碰撞证明。
+简谱原始报告复用`.tmp/notation-comparison-s675/numbered.json`（提交`5c30b332`），本轮五线谱报告位于`.tmp/notation-comparison-staccato/staff.json`，修复前对照为`.tmp/notation-comparison-s75/staff.json`。简谱相关配置与算法未变；与简谱基线相比，共享选宽文件仅更新缓存版本号，音乐尺度及跳音避线变更仅涉及五线谱。两份检查点均完整结束，逐首核对了117份当前谱源SHA-256、曲目集合及共享字体哈希；赢家精确复核没有失败记录。本轮未开启逐笔画碰撞审计，未运行完整回归测试，不作为全库无碰撞证明。
 
 本轮仅运行以下五线谱命令，简谱没有重跑：
 
 ```sh
-python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staff --prune --production-policy --external-fonts --minify --output=.tmp/notation-comparison-s75/staff.json
+python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staff --prune --production-policy --external-fonts --minify --output=.tmp/notation-comparison-staccato/staff.json
 ```
 
 | 字体 | SHA-256 |
@@ -136,4 +136,4 @@ python3 tools/run-low-memory.py node tools/benchmark-numbered-spacing.mjs --staf
 | BarlowSemiCondensed-Medium.ttf | `4998b693a190b76f2b11315844345a8546c1e2e6a320905507a9eed04edf8b48` |
 | Bravura.ttf | `7fc22989c142ed60715cafe452da9f01d61812f6895419adbad6ea97586fbb32` |
 
-五线谱统计在聚合内存守卫下运行，遇到其他工作区重任务时自动停止并等待空闲，从已校验的检查点恢复。最终完成批次峰值聚合RSS为799MiB。
+本轮五线谱统计在聚合内存守卫下完整结束，峰值聚合RSS为804MiB。确认测量包哈希与修复前不同，搜索策略为v83；117首的谱源与共享字体哈希均与简谱基线一致。
