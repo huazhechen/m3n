@@ -5,7 +5,7 @@
  */
 // 歌词横向两两间距随音乐三档选择；纵向净空共用M/8。
 const numberedMusic = 24
-const lyrics = { fontSize: numberedMusic * 2 / 3, pairGaps: [numberedMusic / 24, numberedMusic / 12, numberedMusic / 8] } as const
+const lyrics = { fontSize: numberedMusic * 2 / 3, pairGaps: [0, numberedMusic / 12, numberedMusic / 6] } as const
 
 const fontFamilies = {
   latin: 'Barlow Semi Condensed', cjk: 'Noto Sans SC', music: 'Bravura',

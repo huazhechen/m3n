@@ -14,7 +14,7 @@ import { engraveStaffSystems } from './staff-system.js'
 const measureText: MeasureText = (text, size) => ({ width: text.length * size, left: 0, right: text.length * size, ascent: size * 0.8, descent: size * 0.2 })
 const source = '{2/4}\nN: ||: (1 2 3 4) :|||\nL1: Spring summer autumn winter\nL2: Morning evening sunshine moonlight'
 
-it.each([[0.8, 0], [1.6, 1], [2.4, 2]])('reserves a pair gap for music spacing %s without adding music clearance', (spacing, gap) => {
+it.each([[0.8, 0], [1.6, 2], [2.4, 4]])('reserves a pair gap for music spacing %s without adding music clearance', (spacing, gap) => {
   const document = projectStaffDocument(analyzeM3N(source).score)
   const measure = document.measures[0]!
   const model = createStaffMeasure(measure, false, false, measureText, spacing)
