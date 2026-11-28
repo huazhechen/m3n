@@ -1,6 +1,5 @@
 import { SCORE_NUMBER_FONT, SCORE_TEXT_FONT } from './font-family.js'
 import { scoreSectionCoreGap } from './layout/policy.js'
-import { lyricSpacing } from './lyric-spacing.js'
 import type { NativeMeterGeometry } from './native-meter.js'
 import { nativeArpeggioGeometry } from './native-arpeggio.js'
 import { measureNativeNavigation, type NativeNavigation } from './native-navigation.js'
@@ -181,11 +180,11 @@ export function projectNativeScore(document: ScoreDocument, options: NativeModel
           const lyricTiers = [...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => {
             if (!row.annotation && !row.texts.some(text => text.replaceAll('\u200B', '').trim())) return undefined
             const ink = nativeLyricInk(row, options.textMeasurer)
-            lyricLeft = Math.max(lyricLeft, -ink.left + lyricSpacing.horizontalPadding)
-            lyricRight = Math.max(lyricRight, ink.right + lyricSpacing.horizontalPadding)
+            lyricLeft = Math.max(lyricLeft, -ink.left)
+            lyricRight = Math.max(lyricRight, ink.right)
             left = Math.max(left, -ink.left)
             right = Math.max(right, ink.right)
-            return { left: -ink.left + lyricSpacing.horizontalPadding, right: ink.right + lyricSpacing.horizontalPadding }
+            return { left: -ink.left, right: ink.right }
           })
           const noteKey=JSON.stringify([pitches,writtenBeats,sustain])
           let metrics=noteMetrics.get(noteKey)

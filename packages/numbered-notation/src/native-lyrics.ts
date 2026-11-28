@@ -88,7 +88,7 @@ function lyricFragment(data: LyricRowData, x: number, baseline: number, measurer
     const h = lyricHyphenGeometry(ink.right, baseline, size, nextLeft)
     svg += `<g data-m3n-role="lyric" class="lyric-hyphen">${line(h.left, h.y, h.right, h.y, h.stroke)}</g>`
   }
-  if (data.annotation) svg += painter.text(data.annotation, left - lyricSpacing.horizontalPadding * 2, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
+  if (data.annotation) svg += painter.text(data.annotation, left - lyricSpacing.fontSize / 8, baseline, size, SCORE_TEXT_FONT, { ...meta, 'text-anchor': 'end', 'data-m3n-role': 'lyric-prefix' })
   return svg
 }
 
@@ -124,7 +124,7 @@ export function nativeLyricPieces(data: LyricRowData, x: number, baseline: numbe
       pieces.push({ left: n(ink.left) - half, right: n(ink.right) + half, top: y - half, bottom: y + half })
     }
   }
-  if (data.annotation) pieces.push(textInk(data.annotation, left - lyricSpacing.horizontalPadding * 2, true))
+  if (data.annotation) pieces.push(textInk(data.annotation, left - lyricSpacing.fontSize / 8, true))
   return pieces
 }
 

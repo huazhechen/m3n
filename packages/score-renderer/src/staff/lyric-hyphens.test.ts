@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { expect, it } from 'vitest'
 import { analyzeM3N } from '@m3n/notation'
-import { lyricHyphenMetrics } from '@m3n/numbered-notation'
+import { lyricHyphenMetrics, lyricHyphenAdvance, lyricSpacing } from '@m3n/numbered-notation'
 import { projectStaffDocument } from './staff-document.js'
 import { planStaffLines } from './line-layout.js'
 import { engraveStaffSystems } from './staff-system.js'
@@ -43,6 +43,8 @@ it('reserves a whole dash and clearances when lyrics determine the minimum width
     const center = (j: number) => (notes[j]!.headLeft + notes[j]!.headRight) / 2
     const gap = center(i + 1) - center(i) - (measure(model.entries[0]![i]!.item.lyrics[0]!.text, 16 / STAFF_SCALE).width
       + measure(model.entries[0]![i + 1]!.item.lyrics[0]!.text, 16 / STAFF_SCALE).width) / 2
-    expect(gap * STAFF_SCALE).toBeGreaterThanOrEqual(8)
+    expect(gap * STAFF_SCALE).toBeCloseTo(lyricHyphenAdvance(lyricSpacing.fontSize) + lyricSpacing.pairGaps[0])
+    const dash = lyricHyphenMetrics(lyricSpacing.fontSize)
+    expect((gap * STAFF_SCALE - dash.width - dash.stroke) / 2).toBeGreaterThanOrEqual(lyricSpacing.pairGaps[0])
   }
 })

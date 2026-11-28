@@ -88,8 +88,8 @@ describe('native lyric and music lower envelopes', () => {
     expect(prefix.textContent).toBe('2.3.')
     expect(prefix.getAttribute('font-size')).toBe(lyric.getAttribute('font-size'))
     const ink = nativeSvgInk(root.body.innerHTML, measurer)
-    expect(glyph.lyricLeft).toBeGreaterThanOrEqual(glyph.x - ink.left + 1 - 0.001)
-    expect(glyph.lyricRight).toBeGreaterThanOrEqual(ink.right - glyph.x + 1 - 0.001)
+    expect(glyph.lyricLeft).toBeGreaterThanOrEqual(glyph.x - ink.left - 0.001)
+    expect(glyph.lyricRight).toBeGreaterThanOrEqual(ink.right - glyph.x - 0.001)
   })
 
   it('reserves punctuation ink without a full-width invisible character cell', () => {

@@ -106,7 +106,7 @@ describe('staff rhythm engraving', () => {
     const size = scoreLayoutConfig.lyrics.fontSize / scoreLayoutConfig.staff.engine.scale
     const widths = ['abcdefghij', 'i'].map(value => text(value, size).width)
     const lyricGap = centers[1]! - widths[1]! / 2 - (centers[0]! + widths[0]! / 2)
-    expect(lyricGap).toBeGreaterThanOrEqual(2 * scoreLayoutConfig.lyrics.horizontalPadding / scoreLayoutConfig.staff.engine.scale - 1e-7)
+    expect(lyricGap).toBeGreaterThanOrEqual(scoreLayoutConfig.lyrics.pairGaps[0] / scoreLayoutConfig.staff.engine.scale - 1e-7)
     const columns = result.metrics.columns
     const unrelatedSum = Math.max(columns[0]!.after + gap / 2, columns[0]!.lyricAfter)
       + Math.max(columns[1]!.left + gap / 2, columns[1]!.lyricLeft)

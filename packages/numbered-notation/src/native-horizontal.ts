@@ -1,10 +1,11 @@
+import { lyricPairGap } from './lyric-spacing.js'
 import { measureScoreRhythmicIntervals } from './layout/rhythmic-spacing.js'
 import { scoreRhythmicWeight, scoreRhythmicGapWeight } from './layout/policy.js'
 import { nativeStyle } from './native-style.js'
 import { lastLineWidth } from './layout/last-line-width.js'
 import type { NativeColumn, NativeControl, NativeGlyph, NativeMeasure } from './native-model.js'
 import { nativeBeamCount } from './native-note-metrics.js'
-import { cacheScoreMinimumSpacing, solveScoreMinimumSpacing, type SpacingCell } from './layout/spacing.js'
+import { applyScorePairGap, cacheScoreMinimumSpacing, solveScoreMinimumSpacing, type SpacingCell } from './layout/spacing.js'
 
 /** Bar geometry uses the same music size and proportional strokes as the reference. */
 function createBarMetrics(kind: string) {
@@ -231,6 +232,8 @@ function itemsFor(measures: NativeMeasure[], options: HorizontalOptions, surroun
         left: ink.left, right: ink.right, before: 0, after: 0, beforeStretch: 0, afterStretch: 0 })
     }
   }
+  applyScorePairGap(items, lyricPairGap(options.minimumNoteGap ?? nativeStyle.minimumNoteGap, nativeStyle.noteGapCandidates),
+    lane => lane.includes(':lyric:'))
   // Multi-measure rest symbols form compact rigid blocks with adjacent bars.
   // All simultaneous lanes still contribute their physical clearance.
   for (const [index, item] of items.entries()) {

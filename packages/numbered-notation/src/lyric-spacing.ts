@@ -3,6 +3,14 @@ import { scoreLayoutConfig } from './score-layout-config.js'
 /** Shared lyric settings live in the central layout configuration. */
 export const lyricSpacing = scoreLayoutConfig.lyrics
 
+/** Use the matching music tier. Custom spacings retain the highest tier
+ * they have reached, clamped to the configured three lyric gaps. */
+export function lyricPairGap(spacing: number, musicTiers: readonly number[]): number {
+  let tier = 0
+  for (let index = 1; index < musicTiers.length; index++) if (spacing >= musicTiers[index]!) tier = index
+  return lyricSpacing.pairGaps[Math.min(tier, lyricSpacing.pairGaps.length - 1)]!
+}
+
 /** Source adjacency distinguishes syllables of one word from nearby words,
  * verses and repeated visits without guessing from the rendered text. */
 export type LyricWordSyllable = { wordpos?: 'i' | 'm' | 't'; sourceStart: number; sourceEnd: number }

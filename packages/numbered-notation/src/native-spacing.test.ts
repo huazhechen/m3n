@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cacheScoreMinimumSpacing, solveScoreSpacing, solveScoreMinimumSpacing, type SpacingCell, type SpacingColumn } from './layout/spacing.js'
+import { applyScorePairGap, cacheScoreMinimumSpacing, solveScoreSpacing, solveScoreMinimumSpacing, type SpacingCell, type SpacingColumn } from './layout/spacing.js'
 const cell = (lane = 'melody', overrides: Partial<SpacingCell> = {}): SpacingCell => ({ lane, left: 5, right: 5, before: 6, after: 6, ...overrides })
 it('reuses minimum-spacing preparation with exact parity across widths and edge policies', () => {
   let seed=7823
@@ -24,7 +24,7 @@ describe('native spacing constraints', () => {
     expect(solved.positions).toEqual([8, 18, 46])
     // The prefix can reach left of the intervening bar at x=18.
     expect(solved.positions[2]! - 30).toBeLessThan(solved.positions[1]!)
-    // Both lyric boxes include the normal single-side padding.
+    // Both lyric boxes retain their complete visible ink.
     expect(solved.positions[2]! - 30).toBe(solved.positions[0]! + 8)
     for (const width of [solved.minimumWidth, 200]) {
       const filled = solveScoreSpacing(columns, width, true)
@@ -155,4 +155,24 @@ it('minimum-only numbered spacing distributes positive surplus without natural c
   expect(filled.positions[1]! - filled.positions[0]!).toBeGreaterThan(minimum.positions[1]! - minimum.positions[0]!)
   expect(below.positions[1]! - below.positions[0]!).toBeGreaterThanOrEqual(minimum.positions[1]! - minimum.positions[0]!)
   expect(filled.positions.at(-1)! + 5).toBeCloseTo(100)
+})
+
+it.each([1, 2, 3])('applies a %spx pair gap across sparse lyric slots without exterior padding', gap => {
+  const lyric = (lane: string) => cell(lane, { sparse: true, left: 20, right: 20, before: 9, after: 9, beforeStretch: 0, afterStretch: 0 })
+  const music = () => cell('music', { left: 1, right: 1, before: 0, after: 0 })
+  const columns = [{ cells: [music(), lyric('lyric-1')] }, { cells: [music(), lyric('lyric-2')] },
+    { cells: [music()] }, { cells: [music(), lyric('lyric-1'), lyric('lyric-2')] }]
+  applyScorePairGap(columns, gap, lane => lane.startsWith('lyric-'))
+  expect(columns[0]!.cells[1]!.before).toBe(0)
+  expect(columns[1]!.cells[1]!.before).toBe(0)
+  expect(columns[3]!.cells.slice(1).map(c => [c.before, c.after])).toEqual([[gap, 0], [gap, 0]])
+  const fresh = structuredClone(columns)
+  cacheScoreMinimumSpacing(columns)
+  for (const width of [1, 200]) {
+    const solved = solveScoreMinimumSpacing(columns, width, true)
+    expect(solved).toEqual(solveScoreMinimumSpacing(fresh, width, true))
+    expect(solved.positions[0]).toBe(20)
+    expect(solved.positions[3]! - solved.positions[1]! - 40).toBeGreaterThanOrEqual(gap - 1e-9)
+    expect(solved.positions[3]! + 20).toBeCloseTo(solved.minimumWidth > width ? solved.minimumWidth : width)
+  }
 })

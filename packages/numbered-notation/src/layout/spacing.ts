@@ -24,6 +24,18 @@ export type SpacingCell = {
   placeholderRight?: number
 }
 export type SpacingColumn = { cells: SpacingCell[]; fixedAfter?: number }
+/** One hard clearance between successive visible cells in a sparse lane.
+ * First/last ink stays flush: gaps never become exterior box padding. */
+export function applyScorePairGap(columns: readonly SpacingColumn[], gap: number, accepts: (lane: string) => boolean) {
+  const seen = new Set<string>()
+  for (const column of columns) for (const cell of column.cells) {
+    if (!accepts(cell.lane)) continue
+    cell.before = seen.has(cell.lane) ? gap : 0
+    cell.after = 0
+    seen.add(cell.lane)
+  }
+}
+
 export type SpacingSolution = { positions: number[]; minimumWidth: number; stretchWeight: number; naturalWidth?: number; compressionPenalty?: number }
 type MinimumPlan={positions:number[];cumulative:number[];minimumWidth:number;stretchWeight:number;occupied:number;shift:number}
   | {groups:SpacingColumn[];members:{group:number;offset:number}[]}

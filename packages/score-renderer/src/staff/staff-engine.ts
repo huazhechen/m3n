@@ -1,5 +1,5 @@
-import { scoreLayoutConfig, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
-import { SCORE_TEXT_FONT, lyricSpacing, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
+import { scoreLayoutConfig, applyScorePairGap, scoreAttachmentGap, scoreAttachmentHeight, solveScoreSpacing, scoreRhythmicGapWeight, scoreReadingWindows, measureScoreRhythmicIntervals, type ScoreRhythmicInterval, type SpacingColumn } from '@m3n/numbered-notation/layout'
+import { SCORE_TEXT_FONT, lyricSpacing, lyricPairGap, hasLyricHyphen, lyricHyphenAdvance } from '@m3n/numbered-notation'
 import type { StaffDocument, StaffEvent, StaffMeasure } from './staff-document.js'
 import { element, setNumericPath, type Ink, type MeasureText, type XmlNode, SvgGeometry } from './layout-svg.js'
 import type { StaffLyricText } from './staff-lyric-drawing.js'
@@ -67,6 +67,7 @@ function staffColumnSpacing(metrics: StaffMeasureMetrics, spacing: number) {
     before.afterStretch = weight; after.beforeStretch = weight
     intervals.push({ start: i - 1, end: i, left: right.left, right: left.right, weight })
   }
+  applyScorePairGap(columns, lyricPairGap(spacing, style.noteGapCandidates) / STAFF_SCALE, lane => lane.startsWith('lyrics-'))
   const solution = solveScoreSpacing(columns)
   const result = { columns, notes, intervals, minimumWidth: solution.minimumWidth, stretchWeight: solution.stretchWeight }
   variants.set(spacing, result)
@@ -412,10 +413,10 @@ function prepareMeasure(measure: StaffMeasure, first: boolean, hasBass: boolean,
       for (const lyric of note.item.lyrics) {
         if (lyric.kind !== 'text' || !lyric.text.replace(/[\s\u200B\u2800]/g, '')) continue
         const ink = measureText(lyric.text.replaceAll('~', ' '), lyricSpacing.fontSize / STAFF_SCALE)
-        const half = ink.width / 2, padding = lyricSpacing.horizontalPadding / STAFF_SCALE
+        const half = ink.width / 2
         const underline = lyric.underlined ? style.lyricUnderlineHalfWidth / STAFF_SCALE : 0
-        const left = half - Math.min(0, ink.left, -underline) - center + padding
-        const after = Math.max(half + underline, ink.right - half) + center + padding
+        const left = half - Math.min(0, ink.left, -underline) - center
+        const after = Math.max(half + underline, ink.right - half) + center
           + (hasLyricHyphen(lyric) ? lyricHyphenAdvance(lyricSpacing.fontSize) / STAFF_SCALE : 0)
         column.lyricLeft = Math.max(column.lyricLeft, left)
         column.lyricAfter = Math.max(column.lyricAfter, after)
